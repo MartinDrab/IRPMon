@@ -1,0 +1,44 @@
+
+#ifndef __UM_SERVICES_H__
+#define __UM_SERVICES_H__
+
+#include <ntifs.h>
+#include "kernel-shared.h"
+
+typedef struct _UM_DEVICE_INFO {
+	PDEVICE_OBJECT DeviceObject;
+	PDEVICE_OBJECT AttachedDevice;
+	UNICODE_STRING DeviceName;
+} UM_DEVICE_INFO, *PUM_DEVICE_INFO;
+
+typedef struct _UM_DRIVER_INFO {
+	PDRIVER_OBJECT DriverObject;
+	UNICODE_STRING DriverName;
+	ULONG DeviceCount;
+	PDEVICE_OBJECT *Devices;
+	PUM_DEVICE_INFO DeviceInfo;
+} UM_DRIVER_INFO, *PUM_DRIVER_INFO;
+
+
+NTSTATUS UMHookDriver(PIOCTL_IRPMNDRV_HOOK_DRIVER_INPUT InputBuffer, ULONG InputBufferLength, PIOCTL_IRPMNDRV_HOOK_DRIVER_OUTPUT OutputBuffer, ULONG OutputBufferLength);
+NTSTATUS UMUnhookDriver(PIOCTL_IRPMNDRV_UNHOOK_DRIVER_INPUT InputBuffer, ULONG InputBufferLength);
+NTSTATUS UMHookAddDevice(PIOCTL_IRPMNDRV_HOOK_ADD_DEVICE_INPUT InputBUffer, ULONG InputBufferLength, PIOCTL_IRPMNDRV_HOOK_ADD_DEVICE_OUTPUT OutputBuffer, ULONG OutputBufferLength);
+NTSTATUS UMHookDeleteDevice(PIOCTL_IRPMNDRV_HOOK_REMOVE_DEVICE_INPUT InputBuffer, ULONG InputBufferLength);
+NTSTATUS UMGetRequestRecord(PVOID Buffer, ULONG BufferLength, PULONG ReturnLength);
+NTSTATUS UMEnumDriversDevices(PVOID OutputBuffer, ULONG OutputBufferLength, PULONG ReturnLength);
+NTSTATUS UMRequestQueueConnect(PIOCTL_IRPMNDRV_CONNECT_INPUT InputBuffer, ULONG InputBufferLength);
+VOID UMRequestQueueDisconnect(VOID);
+NTSTATUS UMHookedDriverSetInfo(PIOCTL_IRPMNDRV_HOOK_DRIVER_SET_INFO_INPUT InputBuffer, ULONG InputBufferLength);
+NTSTATUS UMHookedDriverMonitoringEnable(PIOCTL_IRPMNDRV_HOOK_DRIVER_MONITORING_CHANGE_INPUT InputBuffer, ULONG InputBufferLength);
+NTSTATUS UMHookedObjectsEnumerate(PIOCTL_IRPMONDRV_HOOK_GET_INFO_OUTPUT OutputBuffer, ULONG OutputBufferLength);
+VOID UMDeleteHandlesForProcess(PEPROCESS Process);
+
+NTSTATUS UMOpenObjectById(PIOCTL_IRPMONDRV_HOOK_OPEN_INPUT InputBuffer, ULONG InputBufferLength, PIOCTL_IRPMONDRV_HOOK_OPEN_OUTPUT OutputBuffer, ULONG OutputBufferLength);
+NTSTATUS UMCloseHandle(PIOCTL_IRPMONDRV_HOOK_CLOSE_INPUT InputBuffer, ULONG InputBufferLength);
+
+NTSTATUS UMServicesModuleInit(PDRIVER_OBJECT DriverObject, PVOID Context);
+VOID UMServicesModuleFinit(PDRIVER_OBJECT DriverObject, PVOID Context);
+
+
+
+#endif 
