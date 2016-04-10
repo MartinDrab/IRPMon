@@ -1,5 +1,5 @@
 bin/
 gui/__history
-lib/
+*.lib
 tmp/
 *.sdf
