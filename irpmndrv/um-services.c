@@ -198,8 +198,6 @@ NTSTATUS UMUnhookDriver(PIOCTL_IRPMNDRV_UNHOOK_DRIVER_INPUT InputBuffer, ULONG I
 NTSTATUS UMHookAddDevice(PIOCTL_IRPMNDRV_HOOK_ADD_DEVICE_INPUT InputBUffer, ULONG InputBufferLength, PIOCTL_IRPMNDRV_HOOK_ADD_DEVICE_OUTPUT OutputBuffer, ULONG OutputBufferLength)
 {
 	PWCHAR deviceName = NULL;
-	PUCHAR irpSettings = NULL;
-	PUCHAR fastIoSettings = NULL;
 	IOCTL_IRPMNDRV_HOOK_ADD_DEVICE_INPUT input = {0};
 	IOCTL_IRPMNDRV_HOOK_ADD_DEVICE_OUTPUT output = {0};
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
@@ -208,6 +206,9 @@ NTSTATUS UMHookAddDevice(PIOCTL_IRPMNDRV_HOOK_ADD_DEVICE_INPUT InputBUffer, ULON
 	if (InputBufferLength == sizeof(IOCTL_IRPMNDRV_HOOK_ADD_DEVICE_INPUT) &&
 		OutputBufferLength == sizeof(IOCTL_IRPMNDRV_HOOK_ADD_DEVICE_OUTPUT)) {
 		if (ExGetPreviousMode() == UserMode) {
+			PUCHAR irpSettings = NULL;
+			PUCHAR fastIoSettings = NULL;
+			
 			__try {
 				status = STATUS_SUCCESS;
 				ProbeForRead(InputBUffer, InputBufferLength, 1);
@@ -223,23 +224,26 @@ NTSTATUS UMHookAddDevice(PIOCTL_IRPMNDRV_HOOK_ADD_DEVICE_INPUT InputBUffer, ULON
 					} else status = STATUS_INSUFFICIENT_RESOURCES;
 				} else input.DeviceName = NULL;
 
-				if (input.IRPSettings != NULL) {
+				if (NT_SUCCESS(status) && input.IRPSettings != NULL) {
 					irpSettings = (PUCHAR)HeapMemoryAllocPaged(sizeof(UCHAR)*(IRP_MJ_MAXIMUM_FUNCTION + 1));
 					if (irpSettings != NULL) {
 						ProbeForRead(input.IRPSettings, sizeof(UCHAR)*(IRP_MJ_MAXIMUM_FUNCTION + 1), 1);
 						memcpy(irpSettings, input.IRPSettings, sizeof(UCHAR)*(IRP_MJ_MAXIMUM_FUNCTION + 1));
 						input.IRPSettings = irpSettings;
-					}
+					} else status = STATUS_INSUFFICIENT_RESOURCES;
 				}
 
-				if (input.FastIoSettings != NULL) {
+				if (NT_SUCCESS(status) && input.FastIoSettings != NULL) {
 					fastIoSettings = (PUCHAR)HeapMemoryAllocPaged(sizeof(UCHAR)*FastIoMax);
 					if (irpSettings != NULL) {
 						ProbeForRead(input.FastIoSettings, sizeof(UCHAR)*FastIoMax, 1);
 						memcpy(fastIoSettings, input.FastIoSettings, sizeof(UCHAR)*FastIoMax);
 						input.FastIoSettings = fastIoSettings;
-					}
+					} else status = STATUS_INSUFFICIENT_RESOURCES;
 				}
+
+				if (!NT_SUCCESS(status))
+					ExRaiseStatus(status);
 			} __except (EXCEPTION_EXECUTE_HANDLER) {
 				status = GetExceptionCode();
 				if (fastIoSettings != NULL)
@@ -300,14 +304,16 @@ NTSTATUS UMHookAddDevice(PIOCTL_IRPMNDRV_HOOK_ADD_DEVICE_INPUT InputBUffer, ULON
 				ObDereferenceObject(targetDevice);
 			}
 
-			if (input.FastIoSettings != NULL)
-				HeapMemoryFree(input.FastIoSettings);
+			if (ExGetPreviousMode() == UserMode) {
+				if (input.FastIoSettings != NULL)
+					HeapMemoryFree(input.FastIoSettings);
 
-			if (input.IRPSettings != NULL)
-				HeapMemoryFree(input.IRPSettings);
+				if (input.IRPSettings != NULL)
+					HeapMemoryFree(input.IRPSettings);
 
-			if (deviceName != NULL)
-				HeapMemoryFree(deviceName);
+				if (deviceName != NULL)
+					HeapMemoryFree(deviceName);
+			}
 		}
 	} else status = STATUS_INFO_LENGTH_MISMATCH;
 

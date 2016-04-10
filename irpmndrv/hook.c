@@ -712,11 +712,11 @@ NTSTATUS DriverHookRecordAddDevice(PDRIVER_HOOK_RECORD DriverRecord, PDEVICE_OBJ
 			DeviceHookRecordReference(existingDeviceRecord);
 			KeReleaseSpinLock(&DriverRecord->SelectedDevicesLock, irql);
 			if (existingDeviceRecord->CreateReason == edrcrDriverHooked) {
-				memset(existingDeviceRecord->IRPMonitorSettings, 0, (IRP_MJ_MAXIMUM_FUNCTION + 1)*sizeof(UCHAR));
+				memset(existingDeviceRecord->IRPMonitorSettings, TRUE, (IRP_MJ_MAXIMUM_FUNCTION + 1)*sizeof(UCHAR));
 				if (IRPSettings != NULL)
 					memcpy(existingDeviceRecord->IRPMonitorSettings, IRPSettings, (IRP_MJ_MAXIMUM_FUNCTION + 1)*sizeof(UCHAR));
 
-				memset(existingDeviceRecord->FastIoMonitorSettings, 0, FastIoMax*sizeof(UCHAR));
+				memset(existingDeviceRecord->FastIoMonitorSettings, TRUE, FastIoMax*sizeof(UCHAR));
 				if (IRPSettings != NULL)
 					memcpy(existingDeviceRecord->FastIoMonitorSettings, FastIoSettings,  FastIoMax*sizeof(UCHAR));
 
