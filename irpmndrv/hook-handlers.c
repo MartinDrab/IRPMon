@@ -1142,6 +1142,7 @@ static NTSTATUS _HookHandlerIRPCompletion(PDEVICE_OBJECT DeviceObject, PIRP Irp,
 	return status;
 }
 
+
 static VOID _HookIRPCompletionRoutine(PIRP Irp, PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT DeviceObject)
 {
 	PIO_STACK_LOCATION irpStack = NULL;
@@ -1173,6 +1174,7 @@ static VOID _HookIRPCompletionRoutine(PIRP Irp, PDRIVER_OBJECT DriverObject, PDE
 	return;
 }
 
+
 NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 {
 	PREQUEST_IRP request = NULL;
@@ -1186,30 +1188,34 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 	if (driverRecord != NULL) {
 		deviceRecord = DriverHookRecordGetDevice(driverRecord, Deviceobject);
 		if (_CatchRequest(driverRecord, deviceRecord)) {
-			request = (PREQUEST_IRP)HeapMemoryAllocNonPaged(sizeof(REQUEST_IRP));
-			if (request != NULL) {
-				request->Header.Type = ertIRP;
-				KeQuerySystemTime(&request->Header.Time);
-				request->Header.Driver = Deviceobject->DriverObject;
-				request->Header.Device = Deviceobject;
-				request->Header.Result = (PVOID)STATUS_PENDING;
-				request->IRPAddress = Irp;
-				request->MajorFunction = IrpStack->MajorFunction;
-				request->MinorFunction = IrpStack->MinorFunction;
-				request->PreviousMode = ExGetPreviousMode();
-				request->RequestorMode = Irp->RequestorMode;
-				request->ThreadId = PsGetCurrentThreadId();
-				request->ProcessId = PsGetCurrentProcessId();
-				request->Arg1 = IrpStack->Parameters.Others.Argument1;
-				request->Arg2 = IrpStack->Parameters.Others.Argument2;
-				request->Arg3 = IrpStack->Parameters.Others.Argument3;
-				request->Arg4 = IrpStack->Parameters.Others.Argument4;
-				request->IrpFlags = Irp->Flags;
-				request->FileObject = IrpStack->FileObject;
-			}
+			if (deviceRecord == NULL || deviceRecord->IRPMonitorSettings[IrpStack->MajorFunction]) {
+				if (driverRecord->MonitorIRP) {
+					request = (PREQUEST_IRP)HeapMemoryAllocNonPaged(sizeof(REQUEST_IRP));
+					if (request != NULL) {
+						request->Header.Type = ertIRP;
+						KeQuerySystemTime(&request->Header.Time);
+						request->Header.Driver = Deviceobject->DriverObject;
+						request->Header.Device = Deviceobject;
+						request->Header.Result = (PVOID)STATUS_PENDING;
+						request->IRPAddress = Irp;
+						request->MajorFunction = IrpStack->MajorFunction;
+						request->MinorFunction = IrpStack->MinorFunction;
+						request->PreviousMode = ExGetPreviousMode();
+						request->RequestorMode = Irp->RequestorMode;
+						request->ThreadId = PsGetCurrentThreadId();
+						request->ProcessId = PsGetCurrentProcessId();
+						request->Arg1 = IrpStack->Parameters.Others.Argument1;
+						request->Arg2 = IrpStack->Parameters.Others.Argument2;
+						request->Arg3 = IrpStack->Parameters.Others.Argument3;
+						request->Arg4 = IrpStack->Parameters.Others.Argument4;
+						request->IrpFlags = Irp->Flags;
+						request->FileObject = IrpStack->FileObject;
+					}
+				}
 
-			if (driverRecord->MonitorIRPCompletion)
-				_HookIRPCompletionRoutine(Irp, Deviceobject->DriverObject, Deviceobject);
+				if (driverRecord->MonitorIRPCompletion)
+					_HookIRPCompletionRoutine(Irp, Deviceobject->DriverObject, Deviceobject);
+			}
 		}
 		
 		status = driverRecord->OldMajorFunction[IrpStack->MajorFunction](Deviceobject, Irp);
@@ -1230,6 +1236,7 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 	DEBUG_EXIT_FUNCTION("0x%x", status);
 	return status;
 }
+
 
 NTSTATUS HookHandlerAddDeviceDispatch(PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT PhysicalDeviceObject)
 {
@@ -1265,6 +1272,7 @@ NTSTATUS HookHandlerAddDeviceDispatch(PDRIVER_OBJECT DriverObject, PDEVICE_OBJEC
 	DEBUG_EXIT_FUNCTION("0x%x", status);
 	return status;
 }
+
 
 VOID HookHandlerDriverUnloadDisptach(PDRIVER_OBJECT DriverObject)
 {

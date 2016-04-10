@@ -96,6 +96,15 @@ static NTSTATUS _HandleCDORequest(ULONG ControlCode, PVOID InputBuffer, ULONG In
 		case IOCTL_IRPMNDRV_HOOK_DRIVER_SET_INFO:
 			status = UMHookedDriverSetInfo((PIOCTL_IRPMNDRV_HOOK_DRIVER_SET_INFO_INPUT)InputBuffer, InputBufferLength);
 			break;
+		case IOCTL_IRPMNDRV_HOOK_DRIVER_GET_INFO:
+			status = UMHookedDriverGetInfo((PIOCTL_IRPMNDRV_HOOK_DRIVER_GET_INFO_INPUT)InputBuffer, InputBufferLength, (PIOCTL_IRPMNDRV_HOOK_DRIVER_GET_INFO_OUTPUT)OutputBuffer, OutputBufferLength);
+			break;
+		case IOCTL_IRPMNDRV_HOOK_DEVICE_SET_INFO:
+			status = UMHookedDeviceSetInfo((PIOCTL_IRPMNDRV_HOOK_DEVICE_SET_INFO_INPUT)InputBuffer, InputBufferLength);
+			break;
+		case IOCTL_IRPMNDRV_HOOK_DEVICE_GET_INFO:
+			status = UMHookedDeviceGetInfo((PIOCTL_IRPMNDRV_HOOK_DEVICE_GET_INFO_INPUT)InputBuffer, InputBufferLength, (PIOCTL_IRPMNDRV_HOOK_DEVICE_GET_INFO_OUTPUT)OutputBuffer, OutputBufferLength);
+			break;
 		case IOCTL_IRPMNDRV_HOOK_DRIVER_MONITORING_CHANGE:
 			status = UMHookedDriverMonitoringEnable((PIOCTL_IRPMNDRV_HOOK_DRIVER_MONITORING_CHANGE_INPUT)InputBuffer, InputBufferLength);
 			break;

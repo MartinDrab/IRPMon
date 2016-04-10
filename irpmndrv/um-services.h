@@ -28,7 +28,12 @@ NTSTATUS UMGetRequestRecord(PVOID Buffer, ULONG BufferLength, PULONG ReturnLengt
 NTSTATUS UMEnumDriversDevices(PVOID OutputBuffer, ULONG OutputBufferLength, PULONG ReturnLength);
 NTSTATUS UMRequestQueueConnect(PIOCTL_IRPMNDRV_CONNECT_INPUT InputBuffer, ULONG InputBufferLength);
 VOID UMRequestQueueDisconnect(VOID);
+
 NTSTATUS UMHookedDriverSetInfo(PIOCTL_IRPMNDRV_HOOK_DRIVER_SET_INFO_INPUT InputBuffer, ULONG InputBufferLength);
+NTSTATUS UMHookedDriverGetInfo(PIOCTL_IRPMNDRV_HOOK_DRIVER_GET_INFO_INPUT InputBuffer, ULONG InputBufferLength, PIOCTL_IRPMNDRV_HOOK_DRIVER_GET_INFO_OUTPUT OutputBuffer, ULONG OutputBufferLength);
+NTSTATUS UMHookedDeviceSetInfo(PIOCTL_IRPMNDRV_HOOK_DEVICE_SET_INFO_INPUT InputBuffer, ULONG InputBufferLength);
+NTSTATUS UMHookedDeviceGetInfo(PIOCTL_IRPMNDRV_HOOK_DEVICE_GET_INFO_INPUT InputBuffer, ULONG InputBufferLength, PIOCTL_IRPMNDRV_HOOK_DEVICE_GET_INFO_OUTPUT OutputBuffer, ULONG OutputBufferLength);
+
 NTSTATUS UMHookedDriverMonitoringEnable(PIOCTL_IRPMNDRV_HOOK_DRIVER_MONITORING_CHANGE_INPUT InputBuffer, ULONG InputBufferLength);
 NTSTATUS UMHookedObjectsEnumerate(PIOCTL_IRPMONDRV_HOOK_GET_INFO_OUTPUT OutputBuffer, ULONG OutputBufferLength);
 VOID UMDeleteHandlesForProcess(PEPROCESS Process);

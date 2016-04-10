@@ -382,6 +382,12 @@ static NTSTATUS _DeviceHookRecordCreate(PDRIVER_HOOK_RECORD DriverRecord, PDEVIC
 			tmpRecord->DeviceObject = DeviceObject;
 			tmpRecord->MonitoringEnabled = MonitoringEnabled;
 			tmpRecord->CreateReason = CreateReason;
+			for (size_t i = 0; i < IRP_MJ_MAXIMUM_FUNCTION + 1; ++i)
+				tmpRecord->IRPMonitorSettings[i] = TRUE;
+
+			for (size_t i = 0; i < FastIoMax; ++i)
+				tmpRecord->FastIoMonitorSettings[i] = TRUE;
+			
 			if (IRPSettings != NULL)
 				memcpy(&tmpRecord->IRPMonitorSettings, IRPSettings, sizeof(tmpRecord->IRPMonitorSettings));
 	
@@ -635,6 +641,25 @@ NTSTATUS DriverHookRecordSetInfo(PDRIVER_HOOK_RECORD Record, PDRIVER_MONITOR_SET
 	return status;
 }
 
+VOID DriverHookRecordGetInfo(PDRIVER_HOOK_RECORD Record, PDRIVER_MONITOR_SETTINGS DriverSettings, PBOOLEAN Enabled)
+{
+	DEBUG_ENTER_FUNCTION("Record=0x%p; DriverSettings=0x%p; Enabled=0x%p", Record, DriverSettings, Enabled);
+
+	DriverSettings->MonitorAddDevice = Record->MonitorAddDevice;
+	DriverSettings->MonitorFastIo = Record->MonitorFastIo;
+	DriverSettings->MonitorIRP = Record->MonitorIRP;
+	DriverSettings->MonitorIRPCompletion = Record->MonitorIRPCompletion;
+	DriverSettings->MonitorNewDevices = Record->MonitorNewDevices;
+	DriverSettings->MonitorStartIo = Record->MonitorStartIo;
+	DriverSettings->MonitorUnload = Record->MonitorDriverUnload;
+	*Enabled = Record->MonitoringEnabled;
+
+	DEBUG_EXIT_FUNCTION("void, *Enabled=%u", *Enabled);
+	return;
+}
+
+
+
 NTSTATUS DriverHookRecordEnable(PDRIVER_HOOK_RECORD Record, BOOLEAN Enable)
 {
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
@@ -767,6 +792,37 @@ PDEVICE_HOOK_RECORD DriverHookRecordGetDevice(PDRIVER_HOOK_RECORD Record, PDEVIC
 	DEBUG_EXIT_FUNCTION("0x%p", ret);
 	return ret;
 }
+
+NTSTATUS DeviceHookRecordSetInfo(PDEVICE_HOOK_RECORD Record, PUCHAR IRPSettings, PUCHAR FastIoSettings, BOOLEAN MonitoringEnabled)
+{
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION("Record=0x%p; IRPSettings=0x%p; FastIoSettings=0x%p; MonitoringEnabled=%u", Record, IRPSettings, FastIoSettings, MonitoringEnabled);
+
+	if (IRPSettings != NULL)
+		memcpy(Record->IRPMonitorSettings, IRPSettings, sizeof(Record->IRPMonitorSettings));
+	
+	if (FastIoSettings != NULL)
+		memcpy(Record->FastIoMonitorSettings, FastIoSettings, sizeof(Record->FastIoMonitorSettings));
+	
+	Record->MonitoringEnabled = MonitoringEnabled;
+	status = STATUS_SUCCESS;
+
+	DEBUG_EXIT_FUNCTION("0x%x", status);
+	return status;
+}
+
+VOID DeviceHookRecordGetInfo(PDEVICE_HOOK_RECORD Record, PUCHAR IRPSettings, PUCHAR FastIoSettings, PBOOLEAN MonitoringEnabled)
+{
+	DEBUG_ENTER_FUNCTION("Record=0x%p; IRPSettings=0x%p; FastIoSettings=0x%p; MonitoringEnabled=0x%p", Record, IRPSettings, FastIoSettings, MonitoringEnabled);
+
+	memcpy(IRPSettings, Record->IRPMonitorSettings, sizeof(Record->IRPMonitorSettings));
+	memcpy(FastIoSettings, Record->FastIoMonitorSettings, sizeof(Record->FastIoMonitorSettings));
+	*MonitoringEnabled = Record->MonitoringEnabled;
+
+	DEBUG_EXIT_FUNCTION("void, *MonitoringEnabled=%u", *MonitoringEnabled);
+	return;
+}
+
 
 NTSTATUS HookObjectsEnumerate(PVOID Buffer, ULONG BufferLength, PULONG ReturnLength)
 {

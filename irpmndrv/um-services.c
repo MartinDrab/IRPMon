@@ -677,6 +677,186 @@ NTSTATUS UMHookedDriverSetInfo(PIOCTL_IRPMNDRV_HOOK_DRIVER_SET_INFO_INPUT InputB
 	return status;
 }
 
+NTSTATUS UMHookedDriverGetInfo(PIOCTL_IRPMNDRV_HOOK_DRIVER_GET_INFO_INPUT InputBuffer, ULONG InputBufferLength, PIOCTL_IRPMNDRV_HOOK_DRIVER_GET_INFO_OUTPUT OutputBuffer, ULONG OutputBufferLength)
+{
+	IOCTL_IRPMNDRV_HOOK_DRIVER_GET_INFO_INPUT input = {0};
+	IOCTL_IRPMNDRV_HOOK_DRIVER_GET_INFO_OUTPUT output;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION("InputBuffer=0x%p; InputBufferLength=%u; OutputBuffer=0x%p; OutputBufferLength=%u", InputBuffer, InputBufferLength, OutputBuffer, OutputBufferLength);
+
+	if (InputBufferLength >= sizeof(input) && OutputBufferLength >= sizeof(output)) {
+		if (ExGetPreviousMode() == UserMode) {
+			__try {
+				ProbeForRead(InputBuffer, sizeof(input), 1);
+				input = *InputBuffer;
+				ProbeForWrite(OutputBuffer, sizeof(output), 1);
+				status = STATUS_SUCCESS;
+			} __except (EXCEPTION_EXECUTE_HANDLER) {
+				status = GetExceptionCode();
+			}
+		} else {
+			input = *InputBuffer;
+			status = STATUS_SUCCESS;
+		}
+
+		if (NT_SUCCESS(status)) {
+			PDRIVER_HOOK_RECORD driverRecord = NULL;
+
+			status = HandleTablehandleTranslate(_driverHandleTable, input.DriverHandle, &driverRecord);
+			if (NT_SUCCESS(status)) {
+				DriverHookRecordGetInfo(driverRecord, &output.Settings, &output.MonitoringEnabled);
+				DriverHookRecordDereference(driverRecord);
+				if (ExGetPreviousMode() == UserMode) {
+					__try {
+						*OutputBuffer = output;
+					} __except (EXCEPTION_EXECUTE_HANDLER) {
+						status = GetExceptionCode();
+					}
+				} else {
+					*OutputBuffer = output;
+				}
+			}
+		}
+	} else status = STATUS_BUFFER_TOO_SMALL;
+
+	DEBUG_EXIT_FUNCTION("0x%x", status);
+	return status;
+}
+
+
+NTSTATUS UMHookedDeviceSetInfo(PIOCTL_IRPMNDRV_HOOK_DEVICE_SET_INFO_INPUT InputBuffer, ULONG InputBufferLength)
+{
+	IOCTL_IRPMNDRV_HOOK_DEVICE_SET_INFO_INPUT input = { 0 };
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION("InputBuffer=0x%p; InputBufferLength=%u", InputBuffer, InputBufferLength);
+
+	if (InputBufferLength >= sizeof(input)) {
+		if (ExGetPreviousMode() == UserMode) {
+			__try {
+				PUCHAR tmp = NULL;
+
+				ProbeForRead(InputBuffer, sizeof(input), 1);
+				input = *InputBuffer;
+				status = STATUS_SUCCESS;
+				if (input.IRPSettings != NULL) {
+					tmp = (PUCHAR)HeapMemoryAllocNonPaged(sizeof(UCHAR)*0x1C);
+					if (tmp != NULL) {
+						__try {
+							ProbeForRead(input.IRPSettings, sizeof(UCHAR) * 0x1C, 1);
+							memcpy(tmp, input.IRPSettings, sizeof(UCHAR) * 0x1C);
+							input.IRPSettings = tmp;
+							status = STATUS_SUCCESS;
+						} __except (EXCEPTION_EXECUTE_HANDLER) {
+							status = GetExceptionCode();
+						}
+
+						if (!NT_SUCCESS(status))
+							HeapMemoryFree(tmp);
+					} else status = STATUS_INSUFFICIENT_RESOURCES;
+				}
+
+				if (NT_SUCCESS(status)) {
+					if (input.FastIoSettings != NULL) {
+						tmp = (PUCHAR)HeapMemoryAllocNonPaged(sizeof(UCHAR) * FastIoMax);
+						if (tmp != NULL) {
+							__try {
+								ProbeForRead(input.FastIoSettings, sizeof(UCHAR) * FastIoMax, 1);
+								memcpy(tmp, input.FastIoSettings, sizeof(UCHAR) * FastIoMax);
+								input.FastIoSettings = tmp;
+								status = STATUS_SUCCESS;
+							} __except (EXCEPTION_EXECUTE_HANDLER) {
+								status = GetExceptionCode();
+							}
+
+							if (!NT_SUCCESS(status))
+								HeapMemoryFree(tmp);
+						} else status = STATUS_INSUFFICIENT_RESOURCES;
+					}
+
+					if (!NT_SUCCESS(status)) {
+						if (input.IRPSettings != NULL)
+							HeapMemoryFree(input.IRPSettings);
+					}
+				}
+			} __except (EXCEPTION_EXECUTE_HANDLER) {
+				status = GetExceptionCode();
+			}
+		}
+		else {
+			input = *InputBuffer;
+			status = STATUS_SUCCESS;
+		}
+
+		if (NT_SUCCESS(status)) {
+			PDEVICE_HOOK_RECORD deviceRecord = NULL;
+
+			status = HandleTablehandleTranslate(_deviceHandleTable, input.DeviceHandle, &deviceRecord);
+			if (NT_SUCCESS(status)) {
+				status = DeviceHookRecordSetInfo(deviceRecord, input.IRPSettings, input.FastIoSettings, input.MonitoringEnabled);
+				DeviceHookRecordDereference(deviceRecord);
+			}
+
+			if (ExGetPreviousMode() == UserMode) {
+				if (input.FastIoSettings != NULL)
+					HeapMemoryFree(input.FastIoSettings);
+
+				if (input.IRPSettings != NULL)
+					HeapMemoryFree(input.IRPSettings);
+			}
+		}
+	} else status = STATUS_BUFFER_TOO_SMALL;
+
+	DEBUG_EXIT_FUNCTION("0x%x", status);
+	return status;
+}
+
+NTSTATUS UMHookedDeviceGetInfo(PIOCTL_IRPMNDRV_HOOK_DEVICE_GET_INFO_INPUT InputBuffer, ULONG InputBufferLength, PIOCTL_IRPMNDRV_HOOK_DEVICE_GET_INFO_OUTPUT OutputBuffer, ULONG OutputBufferLength)
+{
+	IOCTL_IRPMNDRV_HOOK_DEVICE_GET_INFO_INPUT input = {0};
+	IOCTL_IRPMNDRV_HOOK_DEVICE_GET_INFO_OUTPUT output;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION("InputBuffer=0x%p; InputBufferLength=%u; OutputBuffer=0x%p; OutputBufferLength=%u", InputBuffer, InputBufferLength, OutputBuffer, OutputBufferLength);
+
+	if (InputBufferLength >= sizeof(input) && OutputBufferLength >= sizeof(output)) {
+		if (ExGetPreviousMode() == UserMode) {
+			__try {
+				ProbeForRead(InputBuffer, sizeof(input), 1);
+				input = *InputBuffer;
+				ProbeForWrite(OutputBuffer, sizeof(output), 1);
+				status = STATUS_SUCCESS;
+			}
+			__except (EXCEPTION_EXECUTE_HANDLER) {
+				status = GetExceptionCode();
+			}
+		}
+		else {
+			input = *InputBuffer;
+			status = STATUS_SUCCESS;
+		}
+
+		if (NT_SUCCESS(status)) {
+			PDEVICE_HOOK_RECORD deviceRecord = NULL;
+
+			status = HandleTablehandleTranslate(_deviceHandleTable, input.DeviceHandle, &deviceRecord);
+			if (NT_SUCCESS(status)) {
+				DeviceHookRecordGetInfo(deviceRecord, output.IRPSettings, output.FastIoSettings, &output.MonitoringEnabled);
+				DeviceHookRecordDereference(deviceRecord);
+				if (ExGetPreviousMode() == UserMode) {
+					__try {
+						*OutputBuffer = output;
+					} __except (EXCEPTION_EXECUTE_HANDLER) {
+						status = GetExceptionCode();
+					}
+				} else *OutputBuffer = output;
+			}
+		}
+	} else status = STATUS_BUFFER_TOO_SMALL;
+
+	DEBUG_EXIT_FUNCTION("0x%x", status);
+	return status;
+}
+
+
 NTSTATUS UMHookedDriverMonitoringEnable(PIOCTL_IRPMNDRV_HOOK_DRIVER_MONITORING_CHANGE_INPUT InputBuffer, ULONG InputBufferLength)
 {
 	NTSTATUS status = STATUS_UNSUCCESSFUL;

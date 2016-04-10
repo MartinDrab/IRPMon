@@ -111,12 +111,15 @@ BOOLEAN DeviceHookRecordValid(PDEVICE_HOOK_RECORD DeviceRecord);
 NTSTATUS HookDriverObject(PDRIVER_OBJECT DriverObject, PDRIVER_MONITOR_SETTINGS MonitorSettings, PDRIVER_HOOK_RECORD *DriverRecord);
 NTSTATUS UnhookDriverObject(PDRIVER_HOOK_RECORD DriverRecord);
 NTSTATUS DriverHookRecordSetInfo(PDRIVER_HOOK_RECORD Record, PDRIVER_MONITOR_SETTINGS DriverSettings);
+VOID DriverHookRecordGetInfo(PDRIVER_HOOK_RECORD Record, PDRIVER_MONITOR_SETTINGS DriverSettings, PBOOLEAN Enabled);
 NTSTATUS DriverHookRecordEnable(PDRIVER_HOOK_RECORD Record, BOOLEAN Enable);
 PDRIVER_HOOK_RECORD DriverHookRecordGet(PDRIVER_OBJECT DriverObject);
 
 NTSTATUS DriverHookRecordAddDevice(PDRIVER_HOOK_RECORD Record, PDEVICE_OBJECT DeviceObject, PUCHAR IRPSettings, PUCHAR FastIoSettings, BOOLEAN MonitoringEanbled, PDEVICE_HOOK_RECORD *DeviceRecord);
 NTSTATUS DriverHookRecordDeleteDevice(PDEVICE_HOOK_RECORD DeviceRecord);
 PDEVICE_HOOK_RECORD DriverHookRecordGetDevice(PDRIVER_HOOK_RECORD Record, PDEVICE_OBJECT DeviceObject);
+NTSTATUS DeviceHookRecordSetInfo(PDEVICE_HOOK_RECORD Record, PUCHAR IRPSettings, PUCHAR FastIoSettings, BOOLEAN MonitoringEnabled);
+VOID DeviceHookRecordGetInfo(PDEVICE_HOOK_RECORD Record, PUCHAR IRPSettings, PUCHAR FastIoSettings, PBOOLEAN MonitoringEnabled);
 
 NTSTATUS HookObjectsEnumerate(PVOID Buffer, ULONG BufferLength, PULONG ReturnLength);
 

@@ -350,6 +350,25 @@ DWORD DriverComHookedDriverSetInfo(HANDLE Driverhandle, PDRIVER_MONITOR_SETTINGS
 	return ret;
 }
 
+DWORD DriverComHookedDriverGetInfo(HANDLE Driverhandle, PDRIVER_MONITOR_SETTINGS Settings, PBOOLEAN MonitoringEnabled)
+{
+	DWORD ret = ERROR_GEN_FAILURE;
+	IOCTL_IRPMNDRV_HOOK_DRIVER_GET_INFO_INPUT input;
+	IOCTL_IRPMNDRV_HOOK_DRIVER_GET_INFO_OUTPUT output;
+	DEBUG_ENTER_FUNCTION("DriverHandle=0x%p; Settings=0x%p; MonitoringEnabled=0x%p", Driverhandle, Settings, MonitoringEnabled);
+
+	input.DriverHandle = Driverhandle;
+	ret = _SynchronousOtherIOCTL(IOCTL_IRPMNDRV_HOOK_DRIVER_GET_INFO, &input, sizeof(input), &output, sizeof(output));
+	if (ret == ERROR_SUCCESS) {
+		*Settings = output.Settings;
+		*MonitoringEnabled = output.MonitoringEnabled;
+	}
+
+	DEBUG_EXIT_FUNCTION("%u, *MonitoringEnabled=%u", ret, *MonitoringEnabled);
+	return ret;
+}
+
+
 DWORD DriverComHookedDriverActivate(HANDLE DriverHandle, BOOLEAN Activate)
 {
 	DWORD ret = ERROR_GEN_FAILURE;
@@ -455,6 +474,44 @@ DWORD DriverComHookDeviceByAddress(PVOID DeviceObject, PHANDLE HookHandle)
 		*HookHandle = output.DeviceHandle;
 
 	DEBUG_EXIT_FUNCTION("%u, *HookHandle=0x%p", ret, *HookHandle);
+	return ret;
+}
+
+DWORD DriverComDeviceGetInfo(HANDLE DeviceHandle, PUCHAR IRPSettings, PUCHAR FastIoSettings, PBOOLEAN MonitoringEnabled)
+{
+	IOCTL_IRPMNDRV_HOOK_DEVICE_GET_INFO_INPUT input;
+	IOCTL_IRPMNDRV_HOOK_DEVICE_GET_INFO_OUTPUT output;
+	DWORD ret = ERROR_GEN_FAILURE;
+	DEBUG_ENTER_FUNCTION("DeviceHandle=0x%p; IRPSettings=0x%p; FastIoSettings=0x%p; MonitoringEnabled=0x%p", DeviceHandle, IRPSettings, FastIoSettings, MonitoringEnabled);
+
+	input.DeviceHandle = DeviceHandle;
+	ret = _SynchronousOtherIOCTL(IOCTL_IRPMNDRV_HOOK_DEVICE_GET_INFO, &input, sizeof(input), &output, sizeof(output));
+	if (ret == ERROR_SUCCESS) {
+		*MonitoringEnabled = output.MonitoringEnabled;
+		if (IRPSettings != NULL)
+			memcpy(IRPSettings, output.IRPSettings, sizeof(output.IRPSettings));
+
+		if (FastIoSettings != NULL)
+			memcpy(FastIoSettings, output.FastIoSettings, sizeof(output.FastIoSettings));
+	}
+
+	DEBUG_EXIT_FUNCTION("%u, *MonitoringEnabled=%u", ret, *MonitoringEnabled);
+	return ret;
+}
+
+DWORD DriverComDeviceSetInfo(HANDLE DeviceHandle, PUCHAR IRPSettings, PUCHAR FastIoSettings, BOOLEAN MonitoringEnabled)
+{
+	DWORD ret = ERROR_GEN_FAILURE;
+	IOCTL_IRPMNDRV_HOOK_DEVICE_SET_INFO_INPUT input;
+	DEBUG_ENTER_FUNCTION("DeviceHandle=0x%p; IRPSettings=0x%p; FastIoSettings=0x%p; MonitoringEnabled=%u", DeviceHandle, IRPSettings, FastIoSettings, MonitoringEnabled);
+
+	input.DeviceHandle = DeviceHandle;
+	input.IRPSettings = IRPSettings;
+	input.FastIoSettings = FastIoSettings;
+	input.MonitoringEnabled = MonitoringEnabled;
+	ret = _SynchronousWriteIOCTL(IOCTL_IRPMNDRV_HOOK_DEVICE_SET_INFO, &input, sizeof(input));
+
+	DEBUG_EXIT_FUNCTION("%u", ret);
 	return ret;
 }
 
