@@ -703,7 +703,7 @@ VOID HookAndMonitor(int argc, PWCHAR *argv)
 
 					err = IRPMonDllOpenHookedDriver(objectId, &handle);
 					if (err == ERROR_SUCCESS) {
-						err = IRPMonDllUnhookDriver((HANDLE)handle);
+						err = IRPMonDllUnhookDriver(handle);
 						if (err == ERROR_SUCCESS) {
 							printf("The driver has been unhooked successfully\n");
 						} else {
