@@ -129,36 +129,16 @@ std::wstring GetRequestResult(PREQUEST_HEADER h)
 {
 	std::wstring res;
 
-	switch (h->Type) {
-		case ertAddDevice:
-		case ertIRP:
-		case ertIRPCompletion:
-		case ertStartIo:
-			res = LibTranslateGeneralIntegerValueToString(ltivtNTSTATUS, FALSE, (ULONG)h->Result);
+	switch (h->ResultType) {
+		case rrtNTSTATUS:
+			res = LibTranslateGeneralIntegerValueToString(ltivtNTSTATUS, FALSE, h->Result.NTSTATUSValue);
 			break;
-		case ertDriverUnload:
+		case rrtBOOLEAN:
+			res = (h->Result.BOOLEANValue) ? L"TRUE" : L"FALSE";
+			break;
+		default:
 			res = L"None";
 			break;
-		case ertFastIo: {
-			PREQUEST_FASTIO f = CONTAINING_RECORD(h, REQUEST_FASTIO, Header);
-
-			switch (f->FastIoType) {
-				case AcquireFileForNtCreateSection:
-				case AcquireForModWrite:
-				case ReleaseForModWrite:
-				case AcquireForCcFlush:
-				case ReleaseForCcFlush:
-					res = LibTranslateGeneralIntegerValueToString(ltivtNTSTATUS, FALSE, (ULONG)h->Result);
-					break;
-				case FastIoDetachDevice:
-				case ReleaseFileForNtCreateSection:
-					res = L"None";
-					break;
-				default:
-					res = ((BOOLEAN)h->Result) ? L"TRUE" : L"FALSE";
-					break;
-			}
-		} break;
 	}
 
 	return res;
@@ -316,7 +296,7 @@ std::vector<std::pair<std::wstring, std::wstring>> GetRequestDetails(PREQUEST_HE
 					args.push_back(std::make_pair(L"Operation", ((ULONG)f->Arg4 != 0) ? L"Read" : L"Write"));
 					args.push_back(std::make_pair(L"Wait", ((ULONG)f->Arg5) ? L"Yes" : L"No"));
 					args.push_back(std::make_pair(L"Lock key", std::to_wstring((ULONG)f->Arg6)));
-					iosbValid = ((BOOLEAN)f->Header.Result != FALSE);
+					iosbValid = (f->Header.Result.BOOLEANValue != FALSE);
 				} break;
 				case FastIoRead:  // the same as the FastIoWrite case
 				case FastIoWrite: {
@@ -327,10 +307,10 @@ std::vector<std::pair<std::wstring, std::wstring>> GetRequestDetails(PREQUEST_HE
 					args.push_back(std::make_pair(L"Lock key", std::to_wstring((ULONG)f->Arg4)));
 					args.push_back(std::make_pair(L"Wait", ((ULONG)f->Arg5) ? L"Yes" : L"No"));
 					args.push_back(std::make_pair(L"Buffer", Ptr2Hex(f->Arg6)));
-					iosbValid = ((BOOLEAN)f->Header.Result != FALSE);
+					iosbValid = (f->Header.Result.BOOLEANValue != FALSE);
 				} break;
 				case FastIoQueryBasicInfo: {
-					iosbValid = ((BOOLEAN)f->Header.Result != FALSE);
+					iosbValid = (f->Header.Result.BOOLEANValue != FALSE);
 					if (iosbValid && f->IOSBStatus >= 0) {
 						ULONG64 creationTime = (ULONG64)f->Arg1 + ((ULONG64)f->Arg2 << 32);
 						LONG64 lastAccessTime = (ULONG64)f->Arg3 + ((ULONG64)f->Arg4 << 32);
@@ -350,7 +330,7 @@ std::vector<std::pair<std::wstring, std::wstring>> GetRequestDetails(PREQUEST_HE
 					}
 				} break;
 				case FastIoQueryStandardInfo: {
-					iosbValid = ((BOOLEAN)f->Header.Result != FALSE);
+					iosbValid = (f->Header.Result.BOOLEANValue != FALSE);
 					if (iosbValid && f->IOSBStatus >= 0) {
 						ULONG64 allocationSize = (ULONG64)f->Arg1 + ((ULONG64)f->Arg2 << 32);
 						LONG64 endOfFile = (ULONG64)f->Arg3 + ((ULONG64)f->Arg4 << 32);
@@ -376,7 +356,7 @@ std::vector<std::pair<std::wstring, std::wstring>> GetRequestDetails(PREQUEST_HE
 					args.push_back(std::make_pair(L"Exclusive", (flags & 1) ? L"Yes" : L"No"));
 					args.push_back(std::make_pair(L"ProcessId", Ptr2Hex(f->Arg6)));
 					args.push_back(std::make_pair(L"Lock key", std::to_wstring((ULONG)f->Arg7)));
-					iosbValid = ((BOOLEAN)f->Header.Result != FALSE);
+					iosbValid = (f->Header.Result.BOOLEANValue != FALSE);
 				} break;
 				case FastIoUnlockSingle: {
 					ULONG64 fileOffset = (ULONG64)f->Arg1 + ((ULONG64)f->Arg2 << 32);
@@ -386,30 +366,30 @@ std::vector<std::pair<std::wstring, std::wstring>> GetRequestDetails(PREQUEST_HE
 					args.push_back(std::make_pair(L"Length", std::to_wstring(regionLength)));
 					args.push_back(std::make_pair(L"ProcessId", Ptr2Hex(f->Arg5)));
 					args.push_back(std::make_pair(L"Lock key", std::to_wstring((ULONG)f->Arg6)));
-					iosbValid = ((BOOLEAN)f->Header.Result != FALSE);
+					iosbValid = (f->Header.Result.BOOLEANValue != FALSE);
 				} break;
 				case FastIoUnlockAll: {
 					args.push_back(std::make_pair(L"ProcessId", Ptr2Hex(f->Arg1)));
-					iosbValid = ((BOOLEAN)f->Header.Result != FALSE);
+					iosbValid = (f->Header.Result.BOOLEANValue != FALSE);
 				} break;
 				case FastIoUnlockAllByKey: {
 					args.push_back(std::make_pair(L"ProcessId", Ptr2Hex(f->Arg1)));
 					args.push_back(std::make_pair(L"Lock key", std::to_wstring((ULONG)f->Arg2)));
-					iosbValid = ((BOOLEAN)f->Header.Result != FALSE);
+					iosbValid = (f->Header.Result.BOOLEANValue != FALSE);
 				} break;
 				case FastIoDeviceControl: {
 					args.push_back(std::make_pair(L"IOCTL", LibTranslateGeneralIntegerValueToString(ltivtDeviceControl, FALSE, (ULONG)f->Arg1)));
 					args.push_back(std::make_pair(L"Input buffer length", std::to_wstring((ULONG)f->Arg2)));
 					args.push_back(std::make_pair(L"Output buffer length", std::to_wstring((ULONG)f->Arg3)));
 					args.push_back(std::make_pair(L"Wait", ((ULONG)f->Arg5) ? L"Yes" : L"No"));
-					iosbValid = ((BOOLEAN)f->Header.Result != FALSE);
+					iosbValid = (f->Header.Result.BOOLEANValue != FALSE);
 				} break;
 				case FastIoDetachDevice: {
 					args.push_back(std::make_pair(L"Source device", Ptr2Hex(f->Arg1)));
 					args.push_back(std::make_pair(L"Target device", Ptr2Hex(f->Arg2)));
 				} break;
 				case FastIoQueryNetworkOpenInfo: {
-					iosbValid = ((BOOLEAN)f->Header.Result != FALSE);
+					iosbValid = (f->Header.Result.BOOLEANValue != FALSE);
 					if (iosbValid && f->IOSBStatus >= 0) {
 						ULONG64 creationTime = (ULONG64)f->Arg1 + ((ULONG64)f->Arg2 << 32);
 						LONG64 lastAccessTime = (ULONG64)f->Arg3 + ((ULONG64)f->Arg4 << 32);
@@ -432,7 +412,7 @@ std::vector<std::pair<std::wstring, std::wstring>> GetRequestDetails(PREQUEST_HE
 					ULONG64 fileOffset = (ULONG64)f->Arg1 + ((ULONG64)f->Arg2 << 32);
 
 					args.push_back(std::make_pair(L"File offset", std::to_wstring(fileOffset)));
-					if ((LONG)f->Header.Result >= 0)
+					if (f->Header.Result.NTSTATUSValue >= 0)
 						args.push_back(std::make_pair(L"Lock", Ptr2Hex(f->Arg3)));
 				} break;
 				case PrepareMdlWrite:
@@ -443,7 +423,7 @@ std::vector<std::pair<std::wstring, std::wstring>> GetRequestDetails(PREQUEST_HE
 					args.push_back(std::make_pair(L"Length", std::to_wstring((ULONG)f->Arg3)));
 					args.push_back(std::make_pair(L"Lock key", std::to_wstring((ULONG)f->Arg4)));
 					args.push_back(std::make_pair(L"MDL", Ptr2Hex(f->Arg5)));
-					iosbValid = ((BOOLEAN)f->Header.Result != FALSE);
+					iosbValid = (f->Header.Result.BOOLEANValue != FALSE);
 				} break;
 				case MdlReadComplete: 
 				case MdlReadCompleteCompressed: { // the same as the MdlReadComplete case
@@ -468,10 +448,10 @@ std::vector<std::pair<std::wstring, std::wstring>> GetRequestDetails(PREQUEST_HE
 					if (f->IOSBStatus >= 0) 
 						args.push_back(std::make_pair(L"MDL", Ptr2Hex(f->Arg7)));
 
-					iosbValid = ((BOOLEAN)f->Header.Result != FALSE);
+					iosbValid = (f->Header.Result.BOOLEANValue != FALSE);
 				} break;
 				case FastIoQueryOpen: {
-					if ((BOOLEAN)f->Header.Result) {
+					if (f->Header.Result.BOOLEANValue) {
 						ULONG64 creationTime = (ULONG64)f->Arg1 + ((ULONG64)f->Arg2 << 32);
 						LONG64 lastAccessTime = (ULONG64)f->Arg3 + ((ULONG64)f->Arg4 << 32);
 						ULONG64 lastWriteTime = (ULONG64)f->Arg5 + ((ULONG64)f->Arg6 << 32);

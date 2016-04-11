@@ -61,6 +61,16 @@ typedef enum _ERequestType {
 	ertStartIo,
 } ERequesttype, *PERequestPype;
 
+/** Determines the type returned in the Result union of the @link(REQUEST_HEADER) structure. */
+typedef enum _ERequestResultType {
+	/** The result value is either not yet initialized, or not defined for a given request type. */
+	rrtUndefined,
+	/** The type is NTSTATUS. */
+	rrtNTSTATUS,
+	/** The type is BOOLEAN. */
+	rrtBOOLEAN,
+} ERequestResultType, *PERequstResultType;
+
 /** Header, containing information common for all request types. */
 typedef struct _REQUEST_HEADER {
 	LIST_ENTRY Entry;
@@ -78,11 +88,29 @@ typedef struct _REQUEST_HEADER {
 		
 		 * NTSTATUS (ertIRP, ertAddDevice, ertStartIo).
 		 * Not relevant to the request type (ertDriverUnload, erpUndefined).
-		
+		 * BOOLEAN for most Fast I/Os
 		@todo Dopsat fast I/O
 	  */
-	PVOID Result;
+	ERequestResultType ResultType;
+	union {
+		NTSTATUS NTSTATUSValue;
+		BOOLEAN BOOLEANValue;
+		PVOID Other;
+	} Result;
 } REQUEST_HEADER, *PREQUEST_HEADER;
+
+/** @brief
+ *  Sets results of a given request, both its value and type. The result is written to the header.
+ *  
+ *  @param aHeader Header of the request. 
+ *  @param aRequestType Data type of the request (BOOLEAN or NTSTATUS).
+ *  @param aRequestValue Value of the result.
+ */
+#define RequestHeaderSetResult(aHeader, aResultType, aResultValue)			\
+	{																		\
+		(aHeader).ResultType = rrt##aResultType;								\
+		(aHeader).Result.aResultType##Value = (aResultValue);							\
+	}																		\
 
 /** Represents an IRP request. */
 typedef struct _REQUEST_IRP {
