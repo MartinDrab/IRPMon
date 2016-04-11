@@ -842,6 +842,7 @@ VOID HookAndMonitor(int argc, PWCHAR *argv)
 
 										printf("  Result: %S\n", res.data());
 										printf("\n");
+										fflush(stdout);
 									} else printf("ERROR: failed to get request: %u\n", err);
 									break;
 								case WAIT_OBJECT_0 + 1:
@@ -875,6 +876,8 @@ VOID HookAndMonitor(int argc, PWCHAR *argv)
 
 		hookedDrivers.clear();
 	}
+
+	fflush(stdout);
 
 	DEBUG_EXIT_FUNCTION_VOID();
 	return;
