@@ -7,23 +7,23 @@ The tool should compile fine in Microsoft Visual Studio 2013. MSVS 2015 seems to
 </p>
 <h2>How to Test It</h2>
 <p>
-To test the program, you have to compile it and than use the irpmonconsole applicaton. 
+To test the program, you may compile it and than use the <strong>irpmonconsole</strong> applicaton. If you cannot or do not want to compile the project yourself, use the binaries in the <code>binaries</code>
 </p>
 <ol>
-<li>Install the driver by irpmonconsole --install </li>
-<li>Hook the driver you wish by irpmonconsole --hook-driver <DriverObjectName></li>
-<li>Specify devices you wish to monitor by a sequence of these commands:
-irpmonconsole --hook-device-name <DeviceObjectName>
-irpmonconsole --hook-device-address <DeviceObjectAddress>
+<li>Install the driver by <code>irpmonconsole --install</code> </li>
+<li>Hook the driver you wish by <code>irpmonconsole --hook-driver &lt;DriverObjectName&gt</code></li>
+<li>Specify devices you wish to monitor by a sequence of these commands:<br/>
+<code>irpmonconsole --hook-device-name &lt;DeviceObjectName&gt;</code><br/>
+<code>irpmonconsole --hook-device-address &lt;DeviceObjectAddress&gt;</code>
 </li>
-<li>Use irpmonconsole --monitor to log the requests (to the standard output).
+<li>Use <code>irpmonconsole --monitor</code> to log the requests (to the standard output).
 </li>
 </ol>
 <p>
-If you wish to monitor only new devices created by certain driver (the term "new" refers to a device created after the driver had been hooked) use irpmonconsole --hook-driver-nd <DriverObjectName> instead of the --hook-driver command.
+If you wish to monitor only new devices created by a certain driver (the term "new" refers to devices created after the driver had been hooked) use <code>irpmonconsole --hook-driver-nd &lt;DriverObjectName&gt;</code> instead of the <code>--hook-driver</code> command.
 </p>
-<p>To get information about driver and device objects present in the system, you may either use the irpmonconsole --enumerate command, or take advantage of my VrtuleTree utility.
+<p>To get information about driver and device objects present in the system, you may either use the <code>irpmonconsole --enumerate</code> command, or take advantage of my <a href='https://github.com/MartinDrab/VrtuleTree' title='VrtuleTree'>VrtuleTree</a> utility.
 </p>
-<p>To enumerate hooked objects and their IDs (handles), use the irpmonconsole --enumerate-hooks command. You can use the handles returned to unhook certain drivers or devices (--unhook-driver, --unhook
--device).
+<p>To enumerate hooked objects and their IDs (handles), use the <code>irpmonconsole --enumerate-hooks</code> command. You can use the handles returned to unhook certain drivers or devices (<code>--unhook-driver</code>, <code>--unhook
+-device</code>).
 </p>
