@@ -1105,6 +1105,7 @@ typedef struct _IRP_COMPLETION_CONTEXT {
 static NTSTATUS _HookHandlerIRPCompletion(PDEVICE_OBJECT DeviceObject, PIRP Irp, PVOID Context)
 {
 	NTSTATUS status = STATUS_CONTINUE_COMPLETION;
+	NTSTATUS irpStatus = Irp->IoStatus.Status;
 	PREQUEST_IRP_COMPLETION completionRequest = NULL;
 	PIRP_COMPLETION_CONTEXT cc = (PIRP_COMPLETION_CONTEXT)Context;
 	DEBUG_ENTER_FUNCTION("DeviceObject=0x%p; Irp=0x%p; Context=0x%p", DeviceObject, Irp, Context);
@@ -1125,22 +1126,19 @@ static NTSTATUS _HookHandlerIRPCompletion(PDEVICE_OBJECT DeviceObject, PIRP Irp,
 		completionRequest->ThreadId = PsGetCurrentThread();
 	}
 
-	if (cc->OriginalRoutine == NULL) {
-		if (Irp->PendingReturned)
-			IoMarkIrpPending(Irp);
-	} else {
-		NTSTATUS irpStatus = Irp->IoStatus.Status;
-
-		if ((irpStatus == STATUS_CANCELLED && (cc->OriginalControl & SL_INVOKE_ON_CANCEL)) ||
-			(irpStatus != STATUS_CANCELLED && !NT_SUCCESS(irpStatus) && (cc->OriginalControl & SL_INVOKE_ON_ERROR)) ||
-			(NT_SUCCESS(irpStatus) && (cc->OriginalControl & SL_INVOKE_ON_SUCCESS)))
-			status = cc->OriginalRoutine(DeviceObject, Irp, cc->OriginalContext);
-		else if (Irp->PendingReturned)
-			IoMarkIrpPending(Irp);
+	if (cc->OriginalRoutine != NULL &&
+		((Irp->Cancel && (cc->OriginalControl & SL_INVOKE_ON_CANCEL)) ||
+		(!NT_SUCCESS(irpStatus) && (cc->OriginalControl & SL_INVOKE_ON_ERROR)) ||
+		(NT_SUCCESS(irpStatus) && (cc->OriginalControl & SL_INVOKE_ON_SUCCESS))))
+		status = cc->OriginalRoutine(DeviceObject, Irp, cc->OriginalContext);
+	else if (Irp->PendingReturned) {
+		// This is actually inspired by a helper completion routine set by
+		// the IoSetCompletionRoutineEx
+		IoMarkIrpPending(Irp);
+		status = STATUS_PENDING;
 	}
 
-	ExFreePool(cc);
-
+	HeapMemoryFree(cc);
 	if (completionRequest != NULL) {
 		RequestHeaderSetResult(completionRequest->Header, NTSTATUS, status);
 		RequestQueueInsert(&completionRequest->Header);
@@ -1157,22 +1155,18 @@ static VOID _HookIRPCompletionRoutine(PIRP Irp, PDRIVER_OBJECT DriverObject, PDE
 	PIRP_COMPLETION_CONTEXT cc = NULL;
 	DEBUG_ENTER_FUNCTION("Irp=0x%p; DriverObject=0x%p; DeviceObject=0x%p", Irp, DriverObject, DeviceObject);
 
-	cc = (PIRP_COMPLETION_CONTEXT)ExAllocatePool(NonPagedPool, sizeof(IRP_COMPLETION_CONTEXT));
+	cc = (PIRP_COMPLETION_CONTEXT)HeapMemoryAllocNonPaged(sizeof(IRP_COMPLETION_CONTEXT));
 	if (cc != NULL) {
+		RtlSecureZeroMemory(cc, sizeof(IRP_COMPLETION_CONTEXT));
+		cc->DriverObject = DriverObject;
+		cc->DeviceObject = DeviceObject;
 		irpStack = IoGetCurrentIrpStackLocation(Irp);
 		if (irpStack->CompletionRoutine != NULL) {
 			cc->OriginalContext = irpStack->Context;
 			cc->OriginalRoutine = irpStack->CompletionRoutine;
 			cc->OriginalControl = irpStack->Control;
-		} else {
-			cc->OriginalContext = NULL;
-			cc->OriginalRoutine = NULL;
-			cc->OriginalControl = 0;
-			irpStack->Control = 0;
 		}
 
-		cc->DriverObject = DriverObject;
-		cc->DeviceObject = DeviceObject;
 		irpStack->Control |= (SL_INVOKE_ON_SUCCESS | SL_INVOKE_ON_ERROR | SL_INVOKE_ON_CANCEL);
 		irpStack->CompletionRoutine = _HookHandlerIRPCompletion;
 		irpStack->Context = cc;
