@@ -375,7 +375,7 @@ NTSTATUS UMGetRequestRecord(PVOID Buffer, ULONG BufferLength, PULONG ReturnLengt
 		} else status = STATUS_SUCCESS;
 
 		if (NT_SUCCESS(status)) {
-			status = RequestQueueGet(&request.RequestTypes.Header, &BufferLength);
+			status = RequestQueueGet(&request.RequestTypes.Other, &BufferLength);
 			if (NT_SUCCESS(status)) {
 				if (ExGetPreviousMode() == UserMode) {
 					__try {

@@ -18,22 +18,31 @@
 /*                        HELPER ROUTINES                               */
 /************************************************************************/
 
+static VOID _RequestHeaderInit(PREQUEST_HEADER Header, PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT DeviceObject, ERequesttype RequestType)
+{
+	InitializeListHead(&Header->Entry);
+	KeQuerySystemTime(&Header->Time);
+	Header->Device = DeviceObject;
+	Header->Driver = DriverObject;
+	Header->Type = RequestType;
+	Header->ResultType = rrtUndefined;
+	Header->Result.Other = NULL;
+	Header->ProcessId = PsGetCurrentProcessId();
+	Header->ThreadId = PsGetCurrentThreadId();
+	Header->Irql = KeGetCurrentIrql();
+
+	return;
+}
+
 static PREQUEST_FASTIO _CreateFastIoRequest(EFastIoOperationType FastIoType, PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT DeviceObject, PVOID FileObject, PVOID Arg1, PVOID Arg2, PVOID Arg3, PVOID Arg4, PVOID Arg5, PVOID Arg6, PVOID Arg7)
 {
 	PREQUEST_FASTIO ret = NULL;
 
 	ret = (PREQUEST_FASTIO)HeapMemoryAllocNonPaged(sizeof(REQUEST_FASTIO));
 	if (ret != NULL) {
-		KeQuerySystemTime(&ret->Header.Time);
-		ret->Header.Device = DeviceObject;
-		ret->Header.Driver = DriverObject;
-		ret->Header.Type = ertFastIo;
-		ret->Header.ResultType = rrtUndefined;
-		ret->Header.Result.Other = NULL;
+		_RequestHeaderInit(&ret->Header, DriverObject, DeviceObject, ertFastIo);
 		ret->FastIoType = FastIoType;
 		ret->FileObject = FileObject;
-		ret->ThreadId = PsGetCurrentThreadId();
-		ret->ProcessId = PsGetCurrentProcessId();
 		ret->PreviousMode = ExGetPreviousMode();
 		ret->Arg1 = Arg1;
 		ret->Arg2 = Arg2;
@@ -1055,12 +1064,7 @@ VOID HookHandlerStartIoDispatch(PDEVICE_OBJECT DeviceObject, PIRP Irp)
 		if (driverRecord->MonitorStartIo && _CatchRequest(driverRecord, deviceRecord)) {
 			request = (PREQUEST_STARTIO)HeapMemoryAllocNonPaged(sizeof(REQUEST_STARTIO));
 			if (request != NULL) {
-				request->Header.Type = ertStartIo;
-				KeQuerySystemTime(&request->Header.Time);
-				request->Header.Driver = DeviceObject->DriverObject;
-				request->Header.Device = DeviceObject;
-				request->Header.ResultType = rrtUndefined;
-				request->Header.Result.Other = NULL;
+				_RequestHeaderInit(&request->Header, DeviceObject->DriverObject, DeviceObject, ertStartIo);
 				request->IRPAddress = Irp;
 				request->MajorFunction = IrpStack->MajorFunction;
 				request->MinorFunction = IrpStack->MinorFunction;
@@ -1104,6 +1108,7 @@ typedef struct _IRP_COMPLETION_CONTEXT {
 
 static NTSTATUS _HookHandlerIRPCompletion(PDEVICE_OBJECT DeviceObject, PIRP Irp, PVOID Context)
 {
+	PIO_STACK_LOCATION nextStack = NULL;
 	NTSTATUS status = STATUS_CONTINUE_COMPLETION;
 	NTSTATUS irpStatus = Irp->IoStatus.Status;
 	PREQUEST_IRP_COMPLETION completionRequest = NULL;
@@ -1112,28 +1117,30 @@ static NTSTATUS _HookHandlerIRPCompletion(PDEVICE_OBJECT DeviceObject, PIRP Irp,
 
 	completionRequest = (PREQUEST_IRP_COMPLETION)HeapMemoryAllocNonPaged(sizeof(REQUEST_IRP_COMPLETION));
 	if (completionRequest != NULL) {
-		completionRequest->Header.Type = ertIRPCompletion;
-		InitializeListHead(&completionRequest->Header.Entry);
-		KeQuerySystemTime(&completionRequest->Header.Time);
-		completionRequest->Header.Driver = cc->DriverObject;
-		completionRequest->Header.Device = cc->DeviceObject;
-		completionRequest->Header.ResultType = rrtUndefined;
-		completionRequest->Header.Result.Other = NULL;
+		_RequestHeaderInit(&completionRequest->Header, cc->DriverObject, cc->DeviceObject, ertIRPCompletion);
 		completionRequest->IRPAddress = Irp;
 		completionRequest->CompletionInformation = Irp->IoStatus.Information;
 		completionRequest->CompletionStatus = Irp->IoStatus.Status;
-		completionRequest->ProcessId = PsGetCurrentProcessId();
-		completionRequest->ThreadId = PsGetCurrentThread();
 	}
 
+	// Change the next (well, its the previous one in the completion path)
+	// location Context and CompletionRoutine to the original data specified
+	// by the higher driver.
+	nextStack = IoGetNextIrpStackLocation(Irp);
+	if (nextStack->Context == cc)
+		nextStack->Context = cc->OriginalContext;
+	
+	if (nextStack->CompletionRoutine == _HookHandlerIRPCompletion)
+		nextStack->CompletionRoutine = cc->OriginalRoutine;
+
 	if (cc->OriginalRoutine != NULL &&
+		// Inspired by IoCompleteRequest
 		((Irp->Cancel && (cc->OriginalControl & SL_INVOKE_ON_CANCEL)) ||
 		(!NT_SUCCESS(irpStatus) && (cc->OriginalControl & SL_INVOKE_ON_ERROR)) ||
 		(NT_SUCCESS(irpStatus) && (cc->OriginalControl & SL_INVOKE_ON_SUCCESS))))
 		status = cc->OriginalRoutine(DeviceObject, Irp, cc->OriginalContext);
-	else if (Irp->PendingReturned) {
-		// This is actually inspired by a helper completion routine set by
-		// the IoSetCompletionRoutineEx
+	else if (Irp->PendingReturned && Irp->CurrentLocation < Irp->StackCount) {
+		// Inspired by IoCompleteRequest
 		IoMarkIrpPending(Irp);
 		status = STATUS_PENDING;
 	}
@@ -1166,10 +1173,10 @@ static VOID _HookIRPCompletionRoutine(PIRP Irp, PDRIVER_OBJECT DriverObject, PDE
 			cc->OriginalRoutine = irpStack->CompletionRoutine;
 			cc->OriginalControl = irpStack->Control;
 		}
-
-		irpStack->Control |= (SL_INVOKE_ON_SUCCESS | SL_INVOKE_ON_ERROR | SL_INVOKE_ON_CANCEL);
-		irpStack->CompletionRoutine = _HookHandlerIRPCompletion;
-		irpStack->Context = cc;
+		
+		IoSkipCurrentIrpStackLocation(Irp);
+		IoSetCompletionRoutine(Irp, _HookHandlerIRPCompletion, cc, TRUE, TRUE, TRUE);
+		IoSetNextIrpStackLocation(Irp);
 	}
 
 	DEBUG_EXIT_FUNCTION_VOID();
@@ -1194,18 +1201,13 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 				if (driverRecord->MonitorIRP) {
 					request = (PREQUEST_IRP)HeapMemoryAllocNonPaged(sizeof(REQUEST_IRP));
 					if (request != NULL) {
-						request->Header.Type = ertIRP;
-						KeQuerySystemTime(&request->Header.Time);
-						request->Header.Driver = Deviceobject->DriverObject;
-						request->Header.Device = Deviceobject;
+						_RequestHeaderInit(&request->Header, Deviceobject->DriverObject, Deviceobject, ertIRP);
 						RequestHeaderSetResult(request->Header, NTSTATUS, STATUS_PENDING);
 						request->IRPAddress = Irp;
 						request->MajorFunction = IrpStack->MajorFunction;
 						request->MinorFunction = IrpStack->MinorFunction;
 						request->PreviousMode = ExGetPreviousMode();
 						request->RequestorMode = Irp->RequestorMode;
-						request->ThreadId = PsGetCurrentThreadId();
-						request->ProcessId = PsGetCurrentProcessId();
 						request->Arg1 = IrpStack->Parameters.Others.Argument1;
 						request->Arg2 = IrpStack->Parameters.Others.Argument2;
 						request->Arg3 = IrpStack->Parameters.Others.Argument3;
@@ -1251,12 +1253,8 @@ NTSTATUS HookHandlerAddDeviceDispatch(PDRIVER_OBJECT DriverObject, PDEVICE_OBJEC
 	if (driverRecord != NULL) {
 		if (driverRecord->MonitoringEnabled && driverRecord->MonitorAddDevice) {
 			request = (PREQUEST_ADDDEVICE)HeapMemoryAllocNonPaged(sizeof(REQUEST_ADDDEVICE));
-			if (request != NULL) {
-				KeQuerySystemTime(&request->Header.Time);
-				request->Header.Type = ertAddDevice;
-				request->Header.Driver = DriverObject;
-				request->Header.Device = PhysicalDeviceObject;
-			}
+			if (request != NULL)
+				_RequestHeaderInit(&request->Header, DriverObject, PhysicalDeviceObject, ertAddDevice);
 		}
 
 		status = driverRecord->OldAddDevice(DriverObject, PhysicalDeviceObject);
@@ -1286,14 +1284,8 @@ VOID HookHandlerDriverUnloadDisptach(PDRIVER_OBJECT DriverObject)
 	if (driverRecord != NULL) {
 		if (driverRecord->MonitoringEnabled && driverRecord->MonitorDriverUnload) {
 			request = (PREQUEST_UNLOAD)HeapMemoryAllocNonPaged(sizeof(REQUEST_UNLOAD));
-			if (request != NULL) {
-				KeQuerySystemTime(&request->Header.Time);
-				request->Header.Type = ertDriverUnload;
-				request->Header.Driver = DriverObject;
-				request->Header.Device = NULL;
-				request->Header.ResultType = rrtUndefined;
-				request->Header.Result.Other = NULL;
-			}
+			if (request != NULL)
+				_RequestHeaderInit(&request->Header, DriverObject, NULL, ertDriverUnload);
 		}
 
 		ObReferenceObject(DriverObject);

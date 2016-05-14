@@ -717,7 +717,7 @@ NTSTATUS DriverHookRecordAddDevice(PDRIVER_HOOK_RECORD DriverRecord, PDEVICE_OBJ
 					memcpy(existingDeviceRecord->IRPMonitorSettings, IRPSettings, (IRP_MJ_MAXIMUM_FUNCTION + 1)*sizeof(UCHAR));
 
 				memset(existingDeviceRecord->FastIoMonitorSettings, TRUE, FastIoMax*sizeof(UCHAR));
-				if (IRPSettings != NULL)
+				if (FastIoSettings != NULL)
 					memcpy(existingDeviceRecord->FastIoMonitorSettings, FastIoSettings,  FastIoMax*sizeof(UCHAR));
 
 				existingDeviceRecord->CreateReason = edrcrUserRequest;

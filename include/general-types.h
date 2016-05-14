@@ -83,7 +83,10 @@ typedef struct _REQUEST_HEADER {
 	PVOID Device;
 	/** Driver object associated with the request. */
 	PVOID Driver;
-	/** Result of the request servicing. The type of this field 
+	HANDLE ProcessId;
+	HANDLE ThreadId;
+	UCHAR Irql;
+	/** Result of the request servicing. The type of this field
 	    differs depending the type of the request. 
 		
 		 * NTSTATUS (ertIRP, ertAddDevice, ertStartIo).
@@ -127,6 +130,10 @@ typedef struct _REQUEST_IRP {
 	UCHAR RequestorMode;
 	/** Address of the IRP structure representing the request. */
 	PVOID IRPAddress;
+	/** Irp->Flags */
+	ULONG IrpFlags;
+	/** Irp->FileObject*/
+	PVOID FileObject;
 	/** The first argument of the request. */
 	PVOID Arg1;
 	/** The second argument of the request. */
@@ -135,14 +142,6 @@ typedef struct _REQUEST_IRP {
 	PVOID Arg3;
 	/** The fourth argument of the request. */
 	PVOID Arg4;
-	/** PID of the process in context of which the request was received. */
-	PVOID ProcessId;
-	/** TID of the thread in context of which the request was received. */
-	PVOID ThreadId;
-	/** Irp->Flags */
-	ULONG IrpFlags;
-	/** Irp->FileObject*/
-	PVOID FileObject;
 } REQUEST_IRP, *PREQUEST_IRP;
 
 typedef struct _REQUEST_IRP_COMPLETION {
@@ -150,8 +149,6 @@ typedef struct _REQUEST_IRP_COMPLETION {
 	PVOID IRPAddress;
 	NTSTATUS CompletionStatus;
 	ULONG_PTR CompletionInformation;
-	HANDLE ProcessId;
-	HANDLE ThreadId;
 } REQUEST_IRP_COMPLETION, *PREQUEST_IRP_COMPLETION;
 
 /** Represents a fast I/O request. */
@@ -176,10 +173,6 @@ typedef struct _REQUEST_FASTIO {
 	PVOID Arg7;
 	PVOID Arg8;
 	PVOID Arg9;
-	/** PID of the process in context of which the operation was requested. */
-	PVOID ProcessId;
-	/** TID of the thread in context of which the operation was requested. */
-	PVOID ThreadId;
 	PVOID FileObject;
 	LONG IOSBStatus;
 	ULONG_PTR IOSBInformation;
@@ -228,7 +221,7 @@ typedef struct _REQUEST_STARTIO {
 
 typedef struct _REQUEST_GENERAL {
 	union {
-		REQUEST_HEADER Header;
+		REQUEST_HEADER Other;
 		REQUEST_IRP Irp;
 		REQUEST_IRP_COMPLETION IrpComplete;
 		REQUEST_FASTIO FastIo;
