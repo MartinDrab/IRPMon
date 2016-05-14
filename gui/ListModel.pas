@@ -1,0 +1,290 @@
+Unit ListModel;
+
+Interface
+
+Uses
+  Menus, ComCtrls, Generics.Collections;
+
+Type
+  TListModelColumn = Class
+  Private
+    FCaption : WideString;
+    FWidth : Cardinal;
+    FAUtoSize : Boolean;
+    FTag : NativeUInt;
+    FColumn : TListColumn;
+    FVisible : Boolean;
+  Public
+    Constructor Create(ACaption:WideString; ATag:NativeUInt; AAutoSize:Boolean = False; AWidth:Cardinal = 50); Reintroduce;
+
+    Property Caption : WideString Read FCaption;
+    Property Width : Cardinal Read FWidth;
+    Property AutoSize : Boolean Read FAutoSize;
+    Property Tag : NativeUInt Read FTag;
+    Property Visible : Boolean Read FVisible;
+  end;
+
+  TListModel<T> = Class
+  Private
+    FDisplayer : TListView;
+    FColumns : TList<TListModelColumn>;
+  Protected
+    Procedure OnDataCallback(Sender:TObject; Item:TListItem);
+    Function GetColumn(AItem:T; ATag:NativeUInt):WideString; Virtual; Abstract;
+    Function GetImageIndex(AItem:T):Integer; Virtual;
+    Procedure RefreshColumns;
+    Procedure FreeItem(AItem:T); Virtual; Abstract;
+    Function _Item(AIndex:Integer):T; Virtual; Abstract;
+    Function _Column(AIndex:Integer):TListModelColumn;
+    Procedure OnColumnNemuItemClick(Sender:TObject);
+    Function GetSelected:T;
+  Public
+    Constructor Create(ADisplayer:TListView); Reintroduce;
+    Destructor Destroy; Override;
+
+    Function RowCount : Cardinal; Virtual; Abstract;
+    Function ColumnCount : Cardinal;
+    Function Item(ARow:Cardinal; AColumn:cardinal):WideString;
+    Function Update:Cardinal; Virtual;
+    Procedure SetDisplayer(AObject:TListView);
+
+    Procedure ColumnUpdateBegin;
+    Procedure ColumnClear;
+    Function ColumnAdd(AColumn:TListModelColumn):TListModel<T>; Overload;
+    Function ColumnAdd(ACaption:WideString; ATag:NativeUInt; AAutoSize:Boolean = False; AWidth:Cardinal = 50):TListModel<T>; Overload;
+    Procedure ColumnSetVisible(AIndex:Integer; AVisible:Boolean);
+    Procedure ColumnUpdateEnd;
+    Procedure CreateColumnsMenu(AParent:TMenuItem);
+
+    Procedure Clear; Virtual;
+
+    Property Displayer : TListView Read FDisplayer;
+    Property Items [Index:Integer] : T Read _Item;
+    Property Columns [Index:Integer] : TListModelColumn Read _Column;
+    Property Selected:T Read GetSelected;
+  end;
+
+Implementation
+
+Uses
+  SysUtils;
+
+
+Constructor TListModel<T>.Create(ADisplayer:TListView);
+begin
+Inherited Create;
+FColumns := TList<TListModelColumn>.Create;
+If Assigned(ADisplayer) Then
+  SetDisplayer(ADisplayer)
+Else Update;
+end;
+
+Destructor TListModel<T>.Destroy;
+begin
+If Assigned(FDisplayer) Then
+  begin
+  FDisplayer.OnData := Nil;
+  FDisplayer := Nil;
+  end;
+
+FColumns.Free;
+Inherited Destroy;
+end;
+
+Function TListModel<T>.GetImageIndex(AItem:T):Integer;
+begin
+Result := -1;
+end;
+
+Function TListModel<T>._Column(AIndex:Integer):TListModelColumn;
+begin
+Result := FColumns[AIndex];
+end;
+
+Procedure TListModel<T>.OnDataCallback(Sender:TObject; Item:TListItem);
+Var
+  colIndex : Cardinal;
+  c : TListModelColumn;
+begin
+colIndex := 0;
+With Item Do
+  begin
+  ImageIndex := GetImageIndex(_Item(Index));
+  For c In FColumns Do
+    begin
+    If colIndex = 0 Then
+      Caption := Self.Item(Index, colIndex)
+    Else If c.Visible Then
+      SubItems.Add(Self.Item(Index, colIndex));
+
+    Inc(colIndex);
+    end;
+  end;
+end;
+
+Procedure TListModel<T>.SetDisplayer(AObject:TListView);
+begin
+FDisplayer := AObject;
+FDisplayer.ViewStyle := vsReport;
+FDisplayer.OnData := OnDataCallback;
+FDisplayer.OwnerData := True;
+FDisplayer.Items.Count := 0;
+RefreshColumns;
+Update;
+end;
+
+Function TListModel<T>.ColumnCount:Cardinal;
+begin
+Result := FColumns.Count;
+end;
+
+Function TListModel<T>.Item(ARow:Cardinal; AColumn:cardinal):WideString;
+Var
+  rd : T;
+begin
+Result := '';
+rd := _Item(ARow);
+Result := GetColumn(rd, FColumns[AColumn].Tag);
+end;
+
+Procedure TListModel<T>.ColumnUpdateBegin;
+begin
+If Assigned(FDisplayer) Then
+  FDisplayer.Columns.BeginUpdate;
+end;
+
+Procedure TListModel<T>.ColumnClear;
+Var
+  c : TListModelColumn;
+begin
+For c In FColumns Do
+  c.Free;
+
+FColumns.Clear;
+end;
+
+Function TListModel<T>.ColumnAdd(AColumn:TListModelColumn):TListModel<T>;
+begin
+FColumns.Add(AColumn);
+Result := Self;
+end;
+
+Function TListModel<T>.ColumnAdd(ACaption:WideString; ATag:NativeUInt; AAutoSize:Boolean = False; AWidth:Cardinal = 50):TListModel<T>;
+begin
+FColumns.Add(TListModelColumn.Create(ACaption, ATag, AAutoSize,AWidth));
+Result := Self;
+end;
+
+Procedure TListModel<T>.ColumnUpdateEnd;
+begin
+If Assigned(FDisplayer) Then
+  begin
+  RefreshColumns;
+  FDisplayer.Columns.EndUpdate;
+  end;
+end;
+
+
+Procedure TListModel<T>.ColumnSetVisible(AIndex:Integer; AVisible:Boolean);
+begin
+FColumns[AIndex].FVisible := AVisible;
+end;
+
+Procedure TListModel<T>.RefreshColumns;
+Var
+  c : TListColumn;
+  I : Integer;
+  m : TListModelColumn;
+begin
+FDisplayer.Columns.Clear;
+For I := 0 To FColumns.Count - 1 Do
+  begin
+  m := FColumns[I];
+  If m.Visible Then
+    begin
+    With FDisplayer.Columns.Add Do
+      begin
+      Caption := m.Caption;
+      AutoSize := m.AutoSize;
+      Tag := m.Tag;
+      Width := m.Width;
+      end;
+    end;
+  end;
+end;
+
+Procedure TListModel<T>.OnColumnNemuItemClick(Sender:TObject);
+Var
+  M : TMenuItem;
+begin
+M := (Sender As TMenuItem);
+M.Checked := Not M.Checked;
+ColumnUpdateBegin;
+ColumnSetVisible(M.MenuIndex, M.Checked);
+ColumnUpdateEnd;
+end;
+
+Procedure TListModel<T>.CreateColumnsMenu(AParent:TMenuItem);
+Var
+  I : Integer;
+  M : TMenuItem;
+  c : TListModelColumn;
+begin
+For c In FColumns Do
+  begin
+  M := TMenuItem.Create(AParent);
+  M.Caption := c.Caption;
+  M.Checked := c.Visible;
+  M.OnClick := OnColumnNemuItemClick;
+  AParent.Add(M);
+  end;
+end;
+
+Function TListModel<T>.GetSelected:T;
+Var
+  L : TListItem;
+begin
+Result := T(Nil);
+If Assigned(Displayer) Then
+  begin
+  L := Displayer.Selected;
+  If Assigned(L) Then
+    Result := _Item(L.Index);
+  end;
+end;
+
+
+(*** TListModelColumn ***)
+
+Constructor TListModelColumn.Create(ACaption:WideString; ATag:NativeUInt; AAutoSize:Boolean = False; AWidth:Cardinal = 50);
+begin
+Inherited Create;
+FCaption := ACaption;
+FWidth := AWidth;
+FTag := ATag;
+FAutoSize := AAutoSize;
+FColumn := Nil;
+FVisible := True;
+end;
+
+
+Procedure TListModel<T>.Clear;
+begin
+If Assigned(FDisplayer) Then
+  begin
+  FDisplayer.Items.Count := 0;
+  FDisplayer.Invalidate;
+  end;
+end;
+
+Function TListModel<T>.Update:Cardinal;
+begin
+If Assigned(FDisplayer) Then
+  begin
+  FDisplayer.Items.Count := RowCount;
+  FDisplayer.Invalidate;
+  end;
+end;
+
+End.
+
