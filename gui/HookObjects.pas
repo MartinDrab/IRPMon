@@ -1,288 +1,217 @@
-﻿Unit HookObjects;
+Unit HookObjects;
 
-interface
+Interface
 
 Uses
-  Generics.Collections,
-  Windows, IRPMonDll;
+  Windows, IRPMonDll, Vcl.ComCtrls, Generics.Collections;
 
 Type
-  THookedObject = Class
+  EHookObjectOperation = (hooHook, hooUnhook, hooChange, hooStart, hooStop);
+  THookObjectOperations = Set Of EHookObjectOperation;
+
+  THookObject = Class
   Private
+    FObjectType : WIdeString;
+    FSupportedOperations : THookObjectOperations;
+  Protected
+    FAddress : Pointer;
+    FName : WideString;
     FObjectId : Pointer;
-  Protected
-    FHandle : THandle;
-    Function OpenHandle:Cardinal; Virtual; Abstract;
-    Function CloseHandle:Cardinal; Virtual; Abstract;
+    FHooked : Boolean;
+    FTreeNode : TTreeNode;
   Public
-    Constructor Create(AObjectId:Pointer); Reintroduce;
-    Destructor Destroy; Override;
+    Constructor Create(AType:WideString; AAddress:Pointer; AName:PWideChar; ASupportedOperations:THookObjectOperations = []); Reintroduce;
+    Function Unhook:Cardinal; Virtual; Abstract;
+    Function Hook:Cardinal; Virtual; Abstract;
+    Function Change:Cardinal; Virtual; Abstract;
+    Function Start:Cardinal; Virtual; Abstract;
+    Function Stop:Cardinal; Virtual; Abstract;
+
+    Property SupportedOperations : THookObjectOperations Read FSupportedOperations;
+    Property Address : Pointer Read FAddress;
+    Property Name : WideString Read FName;
+    Property ObjectId : Pointer Read FObjectId Write FObjectId;
+    Property Hooked : Boolean Read FHooked Write FHooked;
+    Property TreeNode : TTreeNode Read FTreenode Write FTreeNode;
+    Property ObjectTpye : WideString Read FObjectType;
   end;
 
-  THookedDevice = Class (THookedObject)
+  TDriverHookObject = Class (THookObject)
   Private
-    FDeviceObject : Pointer;
-    FDeviceName : WideString;
-    FIRPSettings : TIRPSettings;
-    FFastIoSettings : TFastIoSettings;
-    FMonitoringEnabled : Boolean;
-  Protected
-    Function OpenHandle:Cardinal; Override;
-    Function CloseHandle:Cardinal; Override;
   Public
-    Constructor Create(Var ARecord:HOOKED_DEVICE_UMINFO); Reintroduce;
-    Function Unhook:Cardinal;
-    Function SetInfo(AMonitoringEnabled:Boolean; AIRPSettings:PIRPSettings = Nil; AFastIoSettings:PFastIoSettings = Nil):Cardinal;
-    Function GetInfo:Cardinal;
-
-    Class Function Hook(AName:WideString):Cardinal; Overload;
-    Class Function Hook(AAddress:Pointer):Cardinal; Overload;
-
-    Property DeviceObject : Pointer Read FDeviceObject;
-    Property DeviceName : WideString Read FDeviceName;
-    Property IRPSettings : TIRPSettings Read FIRPSettings;
-    Property FastIoSettings : TFastIoSettings Read FFastIoSettings;
-    Property MonitoringEnabled : Boolean Read FMonitoringEnabled;
+    NumberOfHookedDevices : Cardinal;
+    Settings : DRIVER_MONITOR_SETTINGS;
+    Constructor Create(AAddress:Pointer; AName:PWideChar); Reintroduce;
+    Function Unhook:Cardinal; Override;
+    Function Hook:Cardinal; Override;
+    Function Change:Cardinal; Override;
+    Function Start:Cardinal; Override;
+    Function Stop:Cardinal; Override;
   end;
 
-  THookedDriver = Class (THookedObject)
-    Private
-      FDriverObject : Pointer;
-      FDriverName : WideString;
-      FMonitoringEnabled : Boolean;
-      FMonitorSettings : DRIVER_MONITOR_SETTINGS;
-      FHookedDevices : TList<THookedDevice>;
-    Protected
-      Function OpenHandle:Cardinal; Override;
-      Function CloseHandle:Cardinal; Override;
-    Public
-      Constructor Create(Var ARecord:HOOKED_DRIVER_UMINFO); Reintroduce;
-      Destructor Destroy; Override;
+  TDeviceHookObject = Class (THookObject)
+  Private
+    FDriverObject : Pointer;
+    FAttachedDevice : Pointer;
+  Public
+    IRPSettings : TIRPSettings;
+    FastIOSettings : TFastIoSettings;
+    Constructor Create(AAddress:Pointer; ADriverObject:Pointer; AAttachedDevice:Pointer; AName:PWideChar); Reintroduce;
 
-      Function Unhook:Cardinal;
-      Function StartMonitoring:Cardinal;
-      Function StopMonitoring:Cardinal;
-      Function SetInfo(ASettings:DRIVER_MONITOR_SETTINGS):Cardinal;
-      Function GetInfo:Cardinal;
+    Function Unhook:Cardinal; Override;
+    Function Hook:Cardinal; Override;
+    Function Change:Cardinal; Override;
 
-      Class Function Enumerate(AList:TList<THookedDriver>):Cardinal;
-
-      Property DriverObject : Pointer Read FDriverObject;
-      Property DriverName : WideString Read FDriverName;
-      Property MonitoringEnabled : Boolean Read FMonitoringEnabled;
-      Property MonitorSettings : DRIVER_MONITOR_SETTINGS Read FMonitorSettings;
-      Property HookedDevices : TList<THookedDevice> Read FHookedDevices;
-    end;
+    Property Driverobject : Pointer Read FDriverObject;
+    Property AttachedDevice : Pointer Read FAttachedDevice;
+  end;
 
 
-implementation
+Implementation
 
 Uses
   SysUtils;
 
-(** THookedObject **)
+(** THookObject **)
 
-Constructor THookedObject.Create(AObjectId:Pointer);
+Constructor THookObject.Create(AType:WideString; AAddress:Pointer; AName:PWideChar; ASupportedOperations:THookObjectOperations = []);
 Var
-  err : Cardinal;
+  len : Cardinal;
 begin
-FObjectId := AObjectId;
-FHandle := 0;
-err := OpenHandle;
-If err <> ERROR_SUCCESS Then
-  Raise Exception.Create(Format('Failed to obtain handle: %s (%d)', [SysErrorMessage(err), err]));
-
 Inherited Create;
+FSupportedOperations := ASupportedOperations;
+FObjectType := AType;
+len := strlen(AName);
+FAddress := AAddress;
+FObjectId := Nil;
+FHooked := False;
+SetLength(FName, len);
+CopyMemory(PWideChar(FName), AName, len*SizeOf(WideChar));
 end;
 
-Destructor THookedObject.Destroy;
+(** TDriverHookObject **)
+
+Constructor TDriverHookObject.Create(AAddress:Pointer; AName:PWideChar);
 begin
-If FHandle <> 0 Then
-  CloseHandle;
-
-Inherited Destroy;
+Inherited Create('Driver', AAddress, AName, [hooHook, hooUnhook, hooChange, hooStart, hooStop]);
+NumberOfHookedDevices := 0;
+Settings.MonitorNewDevices := False;
+Settings.MonitorAddDevice := False;
+Settings.MonitorStartIo := False;
+Settings.MonitorFastIo := True;
+Settings.MonitorIRP := True;
+Settings.MonitorIRPCompletion := True;
+Settings.MonitorUnload := False;
 end;
 
-(** THookedDevice **)
-
-Constructor THookedDevice.Create(Var ARecord:HOOKED_DEVICE_UMINFO);
-begin
-Inherited Create(ARecord.ObjectId);
-FObjectId := ARecord.ObjectId;
-FDeviceObject := ARecord.DeviceObject;
-SetLength(FDeviceName, ARecord.DeviceNameLen Div SizeOf(WideChar));
-CopyMemory(PWideChar(FDeviceName), ARecord.DeviceName, ARecord.DeviceNameLen);
-FIRPSettings := ARecord.IRPSettings;
-FFastIoSettings := ARecord.FastIoSettings;
-FMonitoringEnabled := ARecord.MonitoringEnabled;
-end;
-
-Function THookedDevice.OpenHandle:Cardinal;
-begin
-Result := IRPMonDllOpenHookedDevice(FObjectId, FHandle);
-end;
-
-Function THookedDevice.CloseHandle:Cardinal;
-begin
-Result := IRPMonDllCloseHookedDeviceHandle(FHandle);
-If Result = 0 Then
-  FHandle := 0;
-end;
-
-Function THookedDevice.Unhook:Cardinal;
-begin
-Result := IRPMonDllUnhookDevice(FHandle);
-end;
-
-Function THookedDevice.SetInfo(AMonitoringEnabled:Boolean; AIRPSettings:PIRPSettings = Nil; AFastIoSettings:PFastIoSettings = Nil):Cardinal;
-begin
-Result := IRPMonDllHookedDeviceSetInfo(FHandle, @AIRPSettings, @AFastIoSettings, AMonitoringEnabled);
-If Result = ERROR_SUCCESS Then
-  Result := GetInfo;
-end;
-
-Function THookedDevice.GetInfo:Cardinal;
-Var
-  me : ByteBool;
-  irs : Packed Array [0..$1B] Of Byte;
-  fs : Packed Array [0..Ord(FastIoMax) - 1] Of Byte;
-begin
-Result := IRPMonDllHookedDeviceGetInfo(FHandle, @irs, @fs, me);
-If Result = ERROR_SUCCESS Then
-  begin
-  CopyMemory(@FIRPSettings, @irs, SizeOf(irs));
-  CopyMemory(@FFastIoSettings, @fs, SizeOf(fs));
-  FMonitoringEnabled := me;
-  end;
-end;
-
-Class Function THookedDevice.Hook(AName:WideString):Cardinal;
+Function TDriverHookObject.Unhook:Cardinal;
 Var
   h : THandle;
 begin
-Result := IRPMonDllHookDeviceByName(PWideChar(AName), h);
+Result := IRPMonDllOpenHookedDriver(FObjectId, h);
 If Result = ERROR_SUCCESS Then
-  IRPMonDllCloseHookedDeviceHandle(h);
+  begin
+  Result := IRPMonDllUnhookDriver(h);
+  IRPMonDllCloseHookedDriverHandle(h);
+  end;
 end;
 
-Class Function THookedDevice.Hook(AAddress:Pointer):Cardinal;
+Function TDriverHookObject.Hook:Cardinal;
 Var
   h : THandle;
 begin
-Result := IRPMonDllHookDeviceByAddress(AAddress, h);
+Result := IRPMonDllHookDriver(PWideChar(FName), Settings, h, FObjectId);
 If Result = ERROR_SUCCESS Then
+  IRPMonDllCloseHookedDriverHandle(h);
+end;
+
+Function TDriverHookObject.Change:Cardinal;
+Var
+  h : THandle;
+begin
+Result := IRPMonDllOpenHookedDriver(FObjectId, h);
+If Result = ERROR_SUCCESS Then
+  begin
+  Result := IRPMonDllDriverSetInfo(h, Settings);
+  IRPMonDllCloseHookedDriverHandle(h);
+  end;
+end;
+
+Function TDriverHookObject.Start:Cardinal;
+Var
+  h : THandle;
+begin
+Result := IRPMonDllOpenHookedDriver(FObjectId, h);
+If Result = ERROR_SUCCESS Then
+  begin
+  Result := IRPMonDllDriverStartMonitoring(h);
+  IRPMonDllCloseHookedDriverHandle(h);
+  end;
+end;
+
+Function TDriverHookObject.Stop:Cardinal;
+Var
+  h : THandle;
+begin
+Result := IRPMonDllOpenHookedDriver(FObjectId, h);
+If Result = ERROR_SUCCESS Then
+  begin
+  Result := IRPMonDllDriverStopMonitoring(h);
+  IRPMonDllCloseHookedDriverHandle(h);
+  end;
+end;
+
+
+(** TDeviceHookObject **)
+
+Constructor TDeviceHookObject.Create(AAddress:Pointer; ADriverObject:Pointer; AAttachedDevice:Pointer; AName:PWideChar);
+begin
+Inherited Create('Device', AAddress, AName, [hooHook, hooUnhook, hooChange]);
+FDriverObject := ADriverObject;
+FAttachedDevice := AAttachedDevice;
+FillChar(IRPSettings, SizeOf(IRPSettings), Ord(True));
+FillChar(FastIoSettings, SizeOf(FastIoSettings), Ord(True));
+end;
+
+Function TDeviceHookObject.Unhook:Cardinal;
+Var
+  h : THandle;
+begin
+Result := IRPMonDllOpenHookedDevice(FObjectId, h);
+If Result = ERROR_SUCCESS Then
+  begin
+  Result := IRPMonDllUnhookDevice(h);
   IRPMonDllCloseHookedDeviceHandle(h);
-end;
-
-
-(** THookedDriver **)
-
-
-Constructor THookedDriver.Create(Var ARecord:HOOKED_DRIVER_UMINFO);
-Var
-  I : Integer;
-  hd : THookedDevice;
-  phdr : PHOOKED_DEVICE_UMINFO;
-begin
-Inherited Create(ARecord.ObjectId);
-FHookedDevices := TList<THookedDevice>.Create;
-FObjectId := ARecord.ObjectId;
-FDriverObject := ARecord.DriverObject;
-SetLength(FDriverName, ARecord.DriverNameLen Div SizeOf(WideChar));
-CopyMemory(PWideChar(FDriverName), ARecord.DriverName, ARecord.DriverNameLen);
-FMonitoringEnabled := ARecord.MonitoringEnabled;
-phdr := ARecord.HookedDevices;
-For I := 0 To ARecord.NumberOfHookedDevices - 1 Do
-  begin
-  hd := THookedDevice.Create(phdr^);
-  FHookedDevices.Add(hd);
-  Inc(phdr);
   end;
 end;
 
-Destructor THookedDriver.Destroy;
+Function TDeviceHookObject.Hook:Cardinal;
 Var
-  hd : THookedDevice;
+  h : THandle;
 begin
-For hd In FHookedDevices Do
-  hd.Free;
-
-FHookedDevices.Free;
-Inherited Destroy;
-end;
-
-Function THookedDriver.OpenHandle:Cardinal;
-begin
-Result := IRPMonDllOpenHookedDriver(FObjectId, FHandle);
-end;
-
-Function THookedDriver.CloseHandle:Cardinal;
-begin
-Result := IRPMonDllCloseHookedDriverHandle(FHandle);
-If Result = ERROR_SUCCESS Then
-  FHandle := 0;
-end;
-
-Function THookedDriver.Unhook:Cardinal;
-begin
-Result := IRPMonDllUnhookDriver(FHandle);
-end;
-
-Function THookedDriver.StartMonitoring:Cardinal;
-begin
-Result := IRPMonDllDriverStartMonitoring(FHandle);
-end;
-
-Function THookedDriver.StopMonitoring:Cardinal;
-begin
-Result := IRPMonDllDriverStopMonitoring(FHandle);
-end;
-
-Function THookedDriver.SetInfo(ASettings:DRIVER_MONITOR_SETTINGS):Cardinal;
-begin
-Result := IRPMonDllDriverSetInfo(FHandle, ASettings);
-If Result = ERROR_SUCCESS Then
-  Result := GetInfo;
-end;
-
-Function THookedDriver.GetInfo:Cardinal;
-Var
-  ds : DRIVER_MONITOR_SETTINGS;
-  me : ByteBool;
-begin
-Result := IRPMonDllHookedDriverGetInfo(FHandle, ds, me);
+Result := IRPMonDllHookDeviceByAddress(FAddress, h, FObjectId);
 If Result = ERROR_SUCCESS Then
   begin
-  FMonitorSettings := ds;
-  FMonitoringEnabled := me;
+  Result := IRPMonDllHookedDeviceSetInfo(h, @IRPSettings, @FastIoSettings, True);
+  If Result <> ERROR_SUCCESS Then
+    IRPMonDllUnhookDevice(h);
+
+  IRPMonDllCloseHookedDeviceHandle(h);
   end;
 end;
 
-
-Class Function THookedDriver.Enumerate(AList:TList<THookedDriver>):Cardinal;
+Function TDeviceHookObject.Change:Cardinal;
 Var
-  I : Integer;
-  hd : THookedDriver;
-  hdi : PHOOKED_DRIVER_UMINFO;
-  tmp : PHOOKED_DRIVER_UMINFO;
-  count : Cardinal;
+  h : THandle;
 begin
-Result := IRPMonDllDriverHooksEnumerate(hdi, count);
+Result := IRPMonDllOpenHookedDevice(FObjectId, h);
 If Result = ERROR_SUCCESS Then
   begin
-  tmp := hdi;
-  For I := 0 To count - 1 Do
-    begin
-    hd := THookedDriver.Create(tmp^);
-    AList.Add(hd);
-    Inc(tmp);
-    end;
-
-  IRPMonDllDriverHooksFree(hdi, count);
+  Result := IRPMonDllHookedDeviceSetInfo(h, @IRPSettings, @FastIoSettings, True);
+  IRPMonDllCloseHookedDeviceHandle(h);
   end;
 end;
 
 
 
-end.
-
+End.

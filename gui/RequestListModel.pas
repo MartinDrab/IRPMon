@@ -108,6 +108,8 @@ Type
   TFastIoRequest = Class (TDriverRequest)
   Public
     Constructor Create(Var ARequest:REQUEST_FASTIO); Reintroduce;
+
+    Class Function FastIoToString(AType:EFastIoOperationType):WideString;
   end;
 
   TStartIoRequest = Class (TDriverRequest)
@@ -125,6 +127,7 @@ Type
       Procedure FreeItem(AItem:TDriverRequest); Override;
       Function _Item(AIndex:Integer):TDriverRequest; Override;
     Public
+      UpdateRequest : PREQUEST_GENERAL;
       Constructor Create; Reintroduce;
       Destructor Destroy; Override;
       Function RefreshMaps:Cardinal;
@@ -137,7 +140,7 @@ Type
 Implementation
 
 Uses
-  SysUtils, NameTables, IRPRequest;
+  SysUtils, NameTables, IRPRequest, Utils;
 
 (** TDriverRequest **)
 
@@ -172,6 +175,7 @@ Var
   s : SYSTEMTIME;
 begin
 Result := True;
+AResult := 'N/A';
 Case AColumnType Of
   rlmctTime : begin
     FileTimeToSystemTime(FILETIME(FTime), s);
@@ -454,6 +458,41 @@ begin
 Inherited Create(ARequest.Header);
 end;
 
+Class Function TFastIoRequest.FastIoToString(AType:EFastIoOperationType):WideString;
+begin
+Case AType Of
+  FastIoCheckIfPossible: Result := 'FastIoCheckIfPossible';
+  FastIoRead: Result := 'FastIoRead';
+  FastIoWrite: Result := 'FastIoWrite';
+  FastIoQueryBasicInfo: Result := 'FastIoQueryBasicInfo';
+  FastIoQueryStandardInfo: Result := 'FastIoQueryStandardInfo';
+  FastIoLock: Result := 'FastIoLock';
+  FastIoUnlockSingle: Result := 'FastIoUnlockSingle';
+  FastIoUnlockAll: Result := 'FastIoUnlockAll';
+  FastIoUnlockAllByKey: Result := 'FastIoUnlockAllByKey';
+  FastIoDeviceControl: Result := 'FastIoDeviceControl';
+  AcquireFileForNtCreateSection: Result := 'AcquireFileForNtCreateSection';
+  ReleaseFileForNtCreateSection: Result := 'ReleaseFileForNtCreateSection';
+  FastIoDetachDevice: Result := 'FastIoDetachDevice';
+  FastIoQueryNetworkOpenInfo: Result := 'FastIoQueryNetworkOpenInfo';
+  AcquireForModWrite: Result := 'AcquireForModWrite';
+  MdlRead: Result := 'MdlRead';
+  MdlReadComplete: Result := 'MdlReadComplete';
+  PrepareMdlWrite: Result := 'PrepareMdlWrite';
+  MdlWriteComplete: Result := 'MdlWriteComplete';
+  FastIoReadCompressed: Result := 'FastIoReadCompressed';
+  FastIoWriteCompressed: Result := 'FastIoWriteCompressed';
+  MdlReadCompleteCompressed: Result := 'MdlReadCompleteCompressed';
+  MdlWriteCompleteCompressed: Result := 'MdlWriteCompleteCompressed';
+  FastIoQueryOpen: Result := 'FastIoQueryOpen';
+  ReleaseForModWrite: Result := 'ReleaseForModWrite';
+  AcquireForCcFlush: Result := 'AcquireForCcFlush';
+  ReleaseForCcFlush: Result := 'ReleaseForCcFlush';
+  FastIoMax: Result := 'FastIoMax';
+  Else Result := Format('<unknown> (%u)', [Ord(AType)]);
+  end;
+end;
+
 (** TStartIoRequest **)
 
 Constructor TStartIoRequest.Create(Var ARequest:REQUEST_STARTIO);
@@ -487,24 +526,20 @@ end;
 Function TRequestListModel.Update:Cardinal;
 Var
   dr : TDriverRequest;
-  rq : REQUEST_GENERAL;
   deviceName : WideString;
   driverName : WideString;
 begin
 Result := ERROR_SUCCESS;
-Repeat
-Result := IRPMonDllGetRequest(@rq.Header, SizeOf(rq));
-If Result = ERROR_SUCCESS Then
+If Assigned(UpdateRequest) Then
   begin
-  Case rq.Header.RequestType Of
-    ertUndefined: ;
-    ertIRP: dr := TIRPRequest.Build(rq.Irp);
-    ertIRPCompletion: dr := TIRPCompleteRequest.Create(rq.IrpComplete);
-    ertAddDevice: dr := TAddDeviceRequest.Create(rq.AddDevice);
-    ertDriverUnload: dr := TDriverUnloadRequest.Create(rq.DriverUnload);
-    ertFastIo: dr := TFastIoRequest.Create(rq.FastIo);
-    ertStartIo: dr := TStartIoRequest.Create(rq.StartIo);
-    Else dr := TDriverRequest.Create(rq.Header);
+  Case UpdateRequest.Header.RequestType Of
+    ertIRP: dr := TIRPRequest.Build(UpdateRequest.Irp);
+    ertIRPCompletion: dr := TIRPCompleteRequest.Create(UpdateRequest.IrpComplete);
+    ertAddDevice: dr := TAddDeviceRequest.Create(UpdateRequest.AddDevice);
+    ertDriverUnload: dr := TDriverUnloadRequest.Create(UpdateRequest.DriverUnload);
+    ertFastIo: dr := TFastIoRequest.Create(UpdateRequest.FastIo);
+    ertStartIo: dr := TStartIoRequest.Create(UpdateRequest.StartIo);
+    Else dr := TDriverRequest.Create(UpdateRequest.Header);
     end;
 
   If FDriverMap.TryGetValue(dr.DriverObject, driverName) Then
@@ -514,14 +549,10 @@ If Result = ERROR_SUCCESS Then
     dr.DeviceName := deviceName;
 
   FRequests.Add(dr);
+  UpdateRequest := Nil;
   end;
 
-Until Result <> ERROR_SUCCESS;
-If Result = ERROR_NO_MORE_ITEMS Then
-  begin
-  Inherited Update;
-  Result := ERROR_SUCCESS;
-  end;
+Inherited Update;
 end;
 
 Function TRequestListModel.RefreshMaps:Cardinal;
@@ -574,6 +605,7 @@ end;
 Constructor TRequestListModel.Create;
 begin
 Inherited Create(Nil);
+UpdateRequest := Nil;
 FRequests := TList<TDriverRequest>.Create;
 FDriverMap := TDictionary<Pointer, WideString>.Create;
 FDeviceMap := TDictionary<Pointer, WideString>.Create;

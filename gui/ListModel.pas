@@ -103,19 +103,26 @@ end;
 
 Procedure TListModel<T>.OnDataCallback(Sender:TObject; Item:TListItem);
 Var
+  first : Boolean;
   colIndex : Cardinal;
   c : TListModelColumn;
 begin
-colIndex := 0;
+first := True;
 With Item Do
   begin
   ImageIndex := GetImageIndex(_Item(Index));
+  colIndex := 0;
   For c In FColumns Do
     begin
-    If colIndex = 0 Then
-      Caption := Self.Item(Index, colIndex)
-    Else If c.Visible Then
-      SubItems.Add(Self.Item(Index, colIndex));
+    If c.Visible Then
+      begin
+      If first Then
+        begin
+        Caption := Self.Item(Index, colIndex);
+        first := False;
+        end
+      Else SubItems.Add(Self.Item(Index, colIndex));
+      end;
 
     Inc(colIndex);
     end;
@@ -138,7 +145,7 @@ begin
 Result := FColumns.Count;
 end;
 
-Function TListModel<T>.Item(ARow:Cardinal; AColumn:cardinal):WideString;
+Function TListModel<T>.Item(ARow:Cardinal; AColumn:Cardinal):WideString;
 Var
   rd : T;
 begin
@@ -254,6 +261,25 @@ If Assigned(Displayer) Then
 end;
 
 
+Procedure TListModel<T>.Clear;
+begin
+If Assigned(FDisplayer) Then
+  begin
+  FDisplayer.Items.Count := 0;
+  FDisplayer.Invalidate;
+  end;
+end;
+
+Function TListModel<T>.Update:Cardinal;
+begin
+Result := 0;
+If Assigned(FDisplayer) Then
+  begin
+  FDisplayer.Items.Count := RowCount;
+  FDisplayer.Invalidate;
+  end;
+end;
+
 (*** TListModelColumn ***)
 
 Constructor TListModelColumn.Create(ACaption:WideString; ATag:NativeUInt; AAutoSize:Boolean = False; AWidth:Cardinal = 50);
@@ -267,24 +293,6 @@ FColumn := Nil;
 FVisible := True;
 end;
 
-
-Procedure TListModel<T>.Clear;
-begin
-If Assigned(FDisplayer) Then
-  begin
-  FDisplayer.Items.Count := 0;
-  FDisplayer.Invalidate;
-  end;
-end;
-
-Function TListModel<T>.Update:Cardinal;
-begin
-If Assigned(FDisplayer) Then
-  begin
-  FDisplayer.Items.Count := RowCount;
-  FDisplayer.Invalidate;
-  end;
-end;
 
 End.
 

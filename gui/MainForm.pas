@@ -6,62 +6,45 @@ Uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ComCtrls, Vcl.Menus,
   Generics.Collections,
-  IRPMonDll, RequestListModel, Vcl.ExtCtrls;
+  IRPMonDll, RequestListModel, Vcl.ExtCtrls,
+  HookObjects, RequestThread, Vcl.AppEvnts;
 
 Type
   TMainFrm = Class (TForm)
     MainMenu1: TMainMenu;
     ActionMenuItem: TMenuItem;
-    HookDriverMenuItem: TMenuItem;
-    HookDeviceNameMenuItem: TMenuItem;
-    HookDeviceAddressMenuItem: TMenuItem;
     TreeMenuItem: TMenuItem;
-    N1: TMenuItem;
-    UnhookDriverMenuItem: TMenuItem;
-    UnhookDeviceMenuItem: TMenuItem;
-    N2: TMenuItem;
     ExitMenuItem: TMenuItem;
-    N3: TMenuItem;
-    ViewIRPMenuItem: TMenuItem;
-    ViewFastIoMenuItem: TMenuItem;
-    ViewIRPCompleteMenuItem: TMenuItem;
-    ViewAddDeviceMenuItem: TMenuItem;
-    ViewUnloadMenuItem: TMenuItem;
-    ViewStartIoMenuItem: TMenuItem;
     MonitoringMenuItem: TMenuItem;
     ClearMenuItem: TMenuItem;
-    N4: TMenuItem;
-    StartMenuItem: TMenuItem;
-    StopMenuItem: TMenuItem;
     HelpMenuItem: TMenuItem;
     AboutMenuItem: TMenuItem;
     N5: TMenuItem;
-    SaveMenuItem: TMenuItem;
     ColumnsMenuItem: TMenuItem;
     PageControl1: TPageControl;
     RequestTabSheet: TTabSheet;
     Hooks: TTabSheet;
-    HookDriverNDMenuItem: TMenuItem;
     RequestListView: TListView;
-    Timer1: TTimer;
     CaptureEventsMenuItem: TMenuItem;
-    MonitorMenuItem: TMenuItem;
     N6: TMenuItem;
-    Procedure HookDriverMenuItemClick(Sender: TObject);
-    Procedure MonitoringMenuItemClick(Sender: TObject);
-    Procedure ViewMenuItemClick(Sender: TObject);
+    RefreshNameCacheMenuItem: TMenuItem;
+    IrpMonAppEvents: TApplicationEvents;
     Procedure ClearMenuItemClick(Sender: TObject);
-    procedure UnhookDriverMenuItemClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
-    procedure Timer1Timer(Sender: TObject);
     procedure CaptureEventsMenuItemClick(Sender: TObject);
     procedure ExitMenuItemClick(Sender: TObject);
-    procedure HookDeviceNameMenuItemClick(Sender: TObject);
+    procedure RefreshNameCacheMenuItemClick(Sender: TObject);
+    procedure TreeMenuItemClick(Sender: TObject);
+    procedure IrpMonAppEventsMessage(var Msg: tagMSG; var Handled: Boolean);
+    procedure IrpMonAppEventsException(Sender: TObject; E: Exception);
   Private
     FModel : TRequestListModel;
-    FMS : DRIVER_MONITOR_SETTINGS;
-    FHookedDrivers : TDictionary<THandle, WideString>;
-    Procedure DriverMonitorSettingsFromGUI;
+    FHookedDrivers : TDictionary<Pointer, TDriverHookObject>;
+    FHookedDevices : TDictionary<Pointer, TDeviceHookObject>;
+    FHookedDeviceDriverMap : TDictionary<Pointer, Pointer>;
+    FRequestTHread : TRequestThread;
+    FRequestMsgCode : Cardinal;
+    Procedure EnumerateHooks;
   end;
 
 Var
@@ -72,16 +55,59 @@ Implementation
 {$R *.DFM}
 
 Uses
-  Utils;
+  Utils, TreeForm;
 
-Procedure TMainFrm.DriverMonitorSettingsFromGUI;
+
+
+Procedure TMainFrm.EnumerateHooks;
+Var
+  phde : TPair<Pointer, TDeviceHookObject>;
+  phdr : TPair<Pointer, TDriverHookObject>;
+  hdr : TDriverHookObject;
+  hde : TDeviceHookObject;
+  err : Cardinal;
+  I, J : Integer;
+  count : Cardinal;
+  dri : PHOOKED_DRIVER_UMINFO;
+  tmp : PHOOKED_DRIVER_UMINFO;
+  dei : PHOOKED_DEVICE_UMINFO;
 begin
-FMS.MonitorAddDevice := ViewAddDeviceMenuItem.Checked;
-FMS.MonitorStartIo := ViewStartIoMenuItem.Checked;
-FMS.MonitorUnload := ViewUnloadMenuItem.Checked;
-FMS.MonitorFastIo := ViewFastIoMenuItem.Checked;
-FMS.MonitorIRP := ViewIRPMenuItem.Checked;
-FMS.MonitorIRPCompletion := ViewIRPCompleteMenuItem.Checked;
+err := IRPMonDllDriverHooksEnumerate(dri, count);
+If err = ERROR_SUCCESS Then
+  begin
+  For phde In FHookedDevices Do
+    phde.Value.Free;
+
+  FHookedDevices.Clear;
+  For phdr In FHookedDrivers Do
+    phdr.Value.Free;
+
+  FHookedDrivers.Clear;
+  FHookedDeviceDriverMap.Clear;
+  tmp := dri;
+  For I := 0 To count - 1 Do
+    begin
+    hdr := TDriverHookObject.Create(tmp.DriverObject, tmp.DriverName);
+    hdr.ObjectId := tmp.ObjectId;
+    hdr.Hooked := True;
+    FHookedDrivers.Add(hdr.Address, hdr);
+    dei := tmp.HookedDevices;
+    For J := 0 To tmp.NumberOfHookedDevices - 1 Do
+      begin
+      hde := TDeviceHookObject.Create(dei.DeviceObject, tmp.DriverObject, Nil, dei.DeviceName);
+      hde.ObjectId := dei.ObjectId;
+      hde.Hooked := True;
+      FHookedDevices.Add(hde.Address, hde);
+      FHookedDeviceDriverMap.Add(hde.Address, hdr.Address);
+      Inc(dei);
+      end;
+
+    Inc(tmp);
+    end;
+
+  IRPMonDllDriverHooksFree(dri, count);
+  end
+Else WInErrorMessage('Failed to enumerate hooked objects', err);
 end;
 
 Procedure TMainFrm.ExitMenuItemClick(Sender: TObject);
@@ -91,7 +117,16 @@ end;
 
 Procedure TMainFrm.FormCreate(Sender: TObject);
 begin
-FHookedDrivers := TDictionary<THandle, WideString>.Create;
+FRequestMsgCode := RegisterWindowMessage('IRPMON');
+If FRequestMsgCode = 0 Then
+  begin
+  WinErrorMessage('Failed to register internal message', GetLastError);
+  Exit;
+  end;
+
+FHookedDrivers := TDictionary<Pointer, TDriverHookObject>.Create;
+FHookedDevices := TDictionary<Pointer, TDeviceHookObject>.Create;
+FHookedDeviceDriverMap := TDictionary<Pointer, Pointer>.Create;
 FModel := TRequestListModel.Create;
 FModel.ColumnUpdateBegin;
 FModel.
@@ -120,12 +155,30 @@ FModel.
 FModel.ColumnUpdateEnd;
 FModel.CreateColumnsMenu(ColumnsMenuItem);
 FModel.SetDisplayer(RequestListView);
-DriverMonitorSettingsFromGUI;
+end;
+
+Procedure TMainFrm.IrpMonAppEventsException(Sender: TObject; E: Exception);
+begin
+ErrorMessage(E.Message);
+end;
+
+Procedure TMainFrm.IrpMonAppEventsMessage(var Msg: tagMSG;
+  Var Handled: Boolean);
+Var
+  rq : PREQUEST_GENERAL;
+begin
+If Msg.message = FRequestMsgCode Then
+  begin
+  rq := PREQUEST_GENERAL(Msg.lParam);
+  FModel.UpdateRequest := rq;
+  FModel.Update;
+  FreeMem(rq);
+  Handled := True;
+  end;
 end;
 
 Procedure TMainFrm.CaptureEventsMenuItemClick(Sender: TObject);
 Var
-  err : Cardinal;
   connect : Boolean;
   M : TMenuItem;
 begin
@@ -133,20 +186,15 @@ M := Sender As TMenuItem;
 connect := Not M.Checked;
 If connect Then
   begin
-  err := IRPMonDllConnect(0);
-  Timer1.Enabled := (err = ERROR_SUCCESS);
-  If err <> ERROR_SUCCESS Then
-    WinErrorMessage('Unable to capture events', err);
+  FRequestThread := TRequestTHread.Create(False, FRequestMsgCode);
+  M.Checked := connect;
   end
 Else begin
-  err := IRPMonDllDisconnect;
-  Timer1.Enabled := Not (err = ERROR_SUCCESS);
-  If err <> ERROR_SUCCESS Then
-    WinErrorMessage('Unable to stop capturing events', err);
-  end;
-
-If err = ERROR_SUCCESS Then
+  FRequestThread.SignalTerminate;
+  FRequestThread.WaitFor;
+  FreeAndNil(FRequestTHread);
   M.Checked := connect;
+  end;
 end;
 
 Procedure TMainFrm.ClearMenuItemClick(Sender: TObject);
@@ -154,128 +202,24 @@ begin
 FModel.Clear;
 end;
 
-Procedure TMainFrm.HookDeviceNameMenuItemClick(Sender: TObject);
-Var
-  err : Cardinal;
-  deviceName : WideString;
-  deviceHandle : THandle;
-  strValue : WideString;
-  deviceAddress : Pointer;
-begin
-If Sender = HookDeviceNameMenuItem Then
-  begin
-  deviceName := InputBox('Device Name', 'Enter name of a device to monitor', '\Device\');
-  If deviceName <> '' Then
-    begin
-    err := IRPMonDllHookDeviceByName(PWideChar(deviceName), deviceHandle);
-    If err = ERROR_SUCCESS Then
-    Else WinErrorMessage('Unable to hook the given device', err);
-    end;
-  end
-Else If Sender = HookDeviceAddressMenuItem Then
-  begin
-  strValue := InputBox('Device Address', 'Enter address of a device object to monitor', '\Device\');
-  If strValue <> '' Then
-    begin
-    deviceAddress := Pointer(StrToInt64(strValue));
-    err := IRPMonDllHookDeviceByAddress(deviceAddress, deviceHandle);
-    If err = ERROR_SUCCESS Then
-    Else WinErrorMessage('Unable to hook the given device', err);
-    end;
-  end;
-end;
-
-Procedure TMainFrm.HookDriverMenuItemClick(Sender: TObject);
-Var
-  err : Cardinal;
-  driverHandle : THandle;
-  driverName : WideString;
-  M : TMenuItem;
-begin
-driverName := InputBox('Driver Name', 'Enter name of the driver object to hook', '\Driver\');
-If driverName <> '' Then
-  begin
-  FMS.MonitorNewDevices := (Sender <> HookDriverMenuItem);
-  err := IRPMonDllHookDriver(PWideChar(driverName), FMS, driverHandle);
-  If err = ERROR_SUCCESS Then
-    begin
-    FHookedDrivers.Add(driverHandle, driverName);
-    M := TMenuItem.Create(UnhookDriverMenuItem);
-    M.Tag := driverHandle;
-    M.Caption := driverName;
-    M.OnClick := UnhookDriverMenuItemClick;
-    UnhookDriverMenuItem.Add(M);
-    end
-  Else Utils.WinErrorMessage('Unable to hook the dríver', err);
-  end;
-end;
-
-Procedure TMainFrm.MonitoringMenuItemClick(Sender: TObject);
-Var
-  err : Cardinal;
-  p : TPair<THandle, WideString>;
-begin
-If Sender = StartMenuItem Then
-  begin
-  For p In FHookedDrivers Do
-    begin
-    err := IRPMonDllDriverStartMonitoring(p.Key);
-    If err <> ERROR_SUCCESS Then
-      WinErrorMessage('Failed to start monitoring ' + p.Value, err);
-    end;
-  end
-Else If Sender = StopMenuItem Then
-  begin
-  For p In FHookedDrivers Do
-    begin
-    err := IRPMonDllDriverStopMonitoring(p.Key);
-    If err <> ERROR_SUCCESS Then
-      WinErrorMessage('Failed to stop monitoring ' + p.Value, err);
-    end;
-  end;
-end;
-
-Procedure TMainFrm.Timer1Timer(Sender: TObject);
+Procedure TMainFrm.RefreshNameCacheMenuItemClick(Sender: TObject);
 Var
   err : Cardinal;
 begin
-err := FModel.Update;
+err := FModel.RefreshMaps;
 If err <> ERROR_SUCCESS Then
-  begin
-  IRPMonDllDisconnect;
-  Timer1.Enabled := False;
-  CaptureEventsMenuItem.Checked := False;
-  WinErrorMessage('Unable to obtain data from the driver', err);
-  end;
+  WinErrorMessage('Unable to refresh name cache', err);
 end;
 
-Procedure TMainFrm.UnhookDriverMenuItemClick(Sender: TObject);
-Var
-  err : Cardinal;
-  p : TPair<THandle, WideString>;
-  child : TMenuItem;
-  M : TMenuItem;
+Procedure TMainFrm.TreeMenuItemClick(Sender: TObject);
 begin
-M := Sender As TMenuItem;
-If M.Parent = UnhookDriverMenuItem Then
+With TTreeFrm.Create(Self) Do
   begin
-  err := IRPMonDllUnhookDriver(M.Tag);
-  If err = ERROR_SUCCESS Then
-    begin
-    FHookedDrivers.Remove(M.Tag);
-    M.Free;
-    end
-  Else WinErrorMessage('Unable to unhook the driver', err);
+  ShowModal;
+  Free;
   end;
-end;
 
-Procedure TMainFrm.ViewMenuItemClick(Sender: TObject);
-Var
-  M : TMenuItem;
-begin
-M := Sender As TMenuItem;
-M.Checked := Not M.Checked;
-DriverMonitorSettingsFromGUI;
+EnumerateHooks;
 end;
 
 

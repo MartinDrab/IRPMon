@@ -627,7 +627,7 @@ VOID HookAndMonitor(int argc, PWCHAR *argv)
 				ms.MonitorUnload = TRUE;
 				++i;
 				driverName = argv[i];
-				err = IRPMonDllHookDriver(driverName, &ms, &hookHandle);
+				err = IRPMonDllHookDriver(driverName, &ms, &hookHandle, NULL);
 				if (err == ERROR_SUCCESS) {
 					hookedDrivers.push_back(hookHandle);
 					printf("The driver %S has been hooked successfully\n", driverName);
@@ -646,7 +646,7 @@ VOID HookAndMonitor(int argc, PWCHAR *argv)
 				ms.MonitorUnload = TRUE;
 				++i;
 				driverName = argv[i];
-				err = IRPMonDllHookDriver(driverName, &ms, &hookHandle);
+				err = IRPMonDllHookDriver(driverName, &ms, &hookHandle, NULL);
 				if (err == ERROR_SUCCESS) {
 					hookedDrivers.push_back(hookHandle);
 					printf("The driver %S has been hooked successfully\n", driverName);
@@ -657,7 +657,7 @@ VOID HookAndMonitor(int argc, PWCHAR *argv)
 
 				++i;
 				deviceAddress = (PVOID)wcstoul(argv[i], NULL, 0);
-				err = IRPMonDllHookDeviceByAddress(deviceAddress, &hookHandle);
+				err = IRPMonDllHookDeviceByAddress(deviceAddress, &hookHandle, NULL);
 				if (err == ERROR_SUCCESS) {
 					hookedDevices.push_back(hookHandle);
 					printf("The device object (0x%p) has been hooked successfully\n", deviceAddress);
@@ -668,7 +668,7 @@ VOID HookAndMonitor(int argc, PWCHAR *argv)
 
 				++i;
 				deviceName = argv[i];
-				err = IRPMonDllHookDeviceByName(deviceName, &hookHandle);
+				err = IRPMonDllHookDeviceByName(deviceName, &hookHandle, NULL);
 				if (err == ERROR_SUCCESS) {
 					hookedDevices.push_back(hookHandle);
 					printf("The device object \"%S\" has been hooked successfully\n", deviceName);

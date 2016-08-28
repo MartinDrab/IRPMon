@@ -110,7 +110,7 @@ Case AColumnType Of
   rlmctArg3: AResult := Format('0x%p', [FArgs.Other.Arg3]);
   rlmctArg4: AResult := Format('0x%p', [FArgs.Other.Arg4]);
   rlmctPreviousMode: AResult := AccessModeToString(FPreviousMode);
-  rlmctRequestorMode: AccessModeToString(FRequestorMode);
+  rlmctRequestorMode: AResult := AccessModeToString(FRequestorMode);
   Else Result := Inherited GetColumn(AColumnType, AResult);
   end;
 end;
@@ -278,8 +278,7 @@ end;
 
 Function TCloseCleanupRequest.GetColumn(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
 begin
-AResult := '';
-Result := True;
+Result := Inherited GetColumn(AColumnType, AResult);
 end;
 
 

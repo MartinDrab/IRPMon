@@ -444,13 +444,13 @@ Type
 Function IRPMonDllDriverHooksEnumerate(Var AHookedDrivers:PHOOKED_DRIVER_UMINFO; Var ACount:Cardinal):Cardinal; StdCall;
 Procedure IRPMonDllDriverHooksFree(AHookedDrivers:PHOOKED_DRIVER_UMINFO; ACount:Cardinal); StdCall;
 
-Function IRPMonDllHookDriver(ADriverName:PWideChar; Var AMonitorSettings:DRIVER_MONITOR_SETTINGS; Var ADriverHandle:THandle):Cardinal; StdCall;
+Function IRPMonDllHookDriver(ADriverName:PWideChar; Var AMonitorSettings:DRIVER_MONITOR_SETTINGS; Var ADriverHandle:THandle; Var AObjectId:Pointer):Cardinal; StdCall;
 Function IRPMonDllDriverStartMonitoring(ADriverhandle:THandle):Cardinal; StdCall;
 Function IRPMonDllDriverStopMonitoring(ADriverhandle:THandle):Cardinal; StdCall;
 Function IRPMonDllDriverSetInfo(ADriverHandle:THandle; Var ASettings:DRIVER_MONITOR_SETTINGS):Cardinal; StdCall;
 Function IRPMonDllUnhookDriver(ADriverHandle:THandle):Cardinal; StdCall;
-Function IRPMonDllHookDeviceByName(ADeviceName:PWideChar; Var AHookHandle:THandle):Cardinal; StdCall;
-Function IRPMonDllHookDeviceByAddress(ADeviceObject:Pointer; Var AHookHandle:THandle):Cardinal; StdCall;
+Function IRPMonDllHookDeviceByName(ADeviceName:PWideChar; Var AHookHandle:THandle; Var AObjectId:Pointer):Cardinal; StdCall;
+Function IRPMonDllHookDeviceByAddress(ADeviceObject:Pointer; Var AHookHandle:THandle; Var AObjectId:Pointer):Cardinal; StdCall;
 Function IRPMonDllUnhookDevice(AHookHandle:THandle):Cardinal; StdCall;
 Function IRPMonDllHookedDeviceGetInfo(AHandle:THandle; AIRPSettings:PByte; AFastIOSettings:PByte; Var AMonitoringEnabled:ByteBool):Cardinal; StdCall;
 Function IRPMonDllHookedDeviceSetInfo(AHandle:THandle; AIRPSettings:PByte; AFastIOSettings:PByte; AMonitoringEnabled:ByteBool):Cardinal; StdCall;
@@ -481,13 +481,13 @@ Const
 Function IRPMonDllDriverHooksEnumerate(Var AHookedDrivers:PHOOKED_DRIVER_UMINFO; Var ACount:Cardinal):Cardinal; StdCall; External LibraryName;
 Procedure IRPMonDllDriverHooksFree(AHookedDrivers:PHOOKED_DRIVER_UMINFO; ACount:Cardinal); StdCall; External LibraryName;
 
-Function IRPMonDllHookDriver(ADriverName:PWideChar; Var AMonitorSettings:DRIVER_MONITOR_SETTINGS; Var ADriverHandle:THandle):Cardinal; StdCall; External LibraryName;
+Function IRPMonDllHookDriver(ADriverName:PWideChar; Var AMonitorSettings:DRIVER_MONITOR_SETTINGS; Var ADriverHandle:THandle; Var AObjectId:Pointer):Cardinal; StdCall; External LibraryName;
 Function IRPMonDllDriverStartMonitoring(ADriverhandle:THandle):Cardinal; StdCall; External LibraryName;
 Function IRPMonDllDriverStopMonitoring(ADriverhandle:THandle):Cardinal; StdCall; External LibraryName;
 Function IRPMonDllDriverSetInfo(ADriverHandle:THandle; Var ASettings:DRIVER_MONITOR_SETTINGS):Cardinal; StdCall; External LibraryName;
 Function IRPMonDllUnhookDriver(ADriverHandle:THandle):Cardinal; StdCall; External LibraryName;
-Function IRPMonDllHookDeviceByName(ADeviceName:PWideChar; Var AHookHandle:THandle):Cardinal; StdCall; External LibraryName;
-Function IRPMonDllHookDeviceByAddress(ADeviceObject:Pointer; Var AHookHandle:THandle):Cardinal; StdCall; External LibraryName;
+Function IRPMonDllHookDeviceByName(ADeviceName:PWideChar; Var AHookHandle:THandle; Var AObjectId:Pointer):Cardinal; StdCall; External LibraryName;
+Function IRPMonDllHookDeviceByAddress(ADeviceObject:Pointer; Var AHookHandle:THandle; Var AObjectId:Pointer):Cardinal; StdCall; External LibraryName;
 Function IRPMonDllUnhookDevice(AHookHandle:THandle):Cardinal; StdCall; External LibraryName;
 Function IRPMonDllHookedDeviceGetInfo(AHandle:THandle; AIRPSettings:PByte; AFastIOSettings:PByte; Var AMonitoringEnabled:ByteBool):Cardinal; StdCall; External LibraryName;
 Function IRPMonDllHookedDeviceSetInfo(AHandle:THandle; AIRPSettings:PByte; AFastIOSettings:PByte; AMonitoringEnabled:ByteBool):Cardinal; StdCall; External LibraryName;
@@ -513,13 +513,13 @@ Procedure IRPMonDllFinalize; StdCall; External LibraryName;
 Function IRPMonDllDriverHooksEnumerate(Var AHookedDrivers:PHOOKED_DRIVER_UMINFO; Var ACount:Cardinal):Cardinal; StdCall; External LibraryName name '_IRPMonDllDriverHooksEnumerate@8';
 Procedure IRPMonDllDriverHooksFree(AHookedDrivers:PHOOKED_DRIVER_UMINFO; ACount:Cardinal); StdCall; External LibraryName name '_IRPMonDllDriverHooksFree@8';
 
-Function IRPMonDllHookDriver(ADriverName:PWideChar; Var AMonitorSettings:DRIVER_MONITOR_SETTINGS; Var ADriverHandle:THandle):Cardinal; StdCall; External LibraryName name '_IRPMonDllHookDriver@12';
+Function IRPMonDllHookDriver(ADriverName:PWideChar; Var AMonitorSettings:DRIVER_MONITOR_SETTINGS; Var ADriverHandle:THandle; Var AObjectId:Pointer):Cardinal; StdCall; External LibraryName name '_IRPMonDllHookDriver@16';
 Function IRPMonDllDriverStartMonitoring(ADriverhandle:THandle):Cardinal; StdCall; External LibraryName name '_IRPMonDllDriverStartMonitoring@4';
 Function IRPMonDllDriverStopMonitoring(ADriverhandle:THandle):Cardinal; StdCall; External LibraryName name '_IRPMonDllDriverStopMonitoring@4';
 Function IRPMonDllDriverSetInfo(ADriverHandle:THandle; Var ASettings:DRIVER_MONITOR_SETTINGS):Cardinal; StdCall; External LibraryName name '_IRPMonDllDriverSetInfo@8';
 Function IRPMonDllUnhookDriver(ADriverHandle:THandle):Cardinal; StdCall; External LibraryName name '_IRPMonDllUnhookDriver@4';
-Function IRPMonDllHookDeviceByName(ADeviceName:PWideChar; Var AHookHandle:THandle):Cardinal; StdCall; External LibraryName name '_IRPMonDllHookDeviceByName@8';
-Function IRPMonDllHookDeviceByAddress(ADeviceObject:Pointer; Var AHookHandle:THandle):Cardinal; StdCall; External LibraryName name '_IRPMonDllHookDeviceByAddress@8';
+Function IRPMonDllHookDeviceByName(ADeviceName:PWideChar; Var AHookHandle:THandle; Var AObjectId:Pointer):Cardinal; StdCall; External LibraryName name '_IRPMonDllHookDeviceByName@12';
+Function IRPMonDllHookDeviceByAddress(ADeviceObject:Pointer; Var AHookHandle:THandle; Var AObjectId:Pointer):Cardinal; StdCall; External LibraryName name '_IRPMonDllHookDeviceByAddress@12';
 Function IRPMonDllUnhookDevice(AHookHandle:THandle):Cardinal; StdCall; External LibraryName name '_IRPMonDllUnhookDevice@4';
 Function IRPMonDllHookedDeviceGetInfo(AHandle:THandle; AIRPSettings:PByte; AFastIOSettings:PByte; Var AMonitoringEnabled:ByteBool):Cardinal; StdCall; External LibraryName name '_IRPMonDllHookedDeviceGetInfo@16';
 Function IRPMonDllHookedDeviceSetInfo(AHandle:THandle; AIRPSettings:PByte; AFastIOSettings:PByte; AMonitoringEnabled:ByteBool):Cardinal; StdCall; External LibraryName name '_IRPMonDllHookedDeviceSetInfo@16';

@@ -68,7 +68,7 @@ static VOID _RequestQueueClear(VOID)
 		HeapMemoryFree(old);
 	}
 
-	_requestCount = 0;
+	InterlockedExchange(&_requestCount, 0);
 
 	return;
 }
@@ -136,7 +136,6 @@ VOID RequestQueueDisconnect(VOID)
 
 VOID RequestQueueInsert(PREQUEST_HEADER Header)
 {
-	KIRQL irql;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("Header=0x%p", Header);
 	DEBUG_IRQL_LESS_OR_EQUAL(DISPATCH_LEVEL);
@@ -144,24 +143,25 @@ VOID RequestQueueInsert(PREQUEST_HEADER Header)
 	if (_connected) {
 		status = IoAcquireRemoveLock(&_removeLock, NULL);
 		if (NT_SUCCESS(status)) {
-			KeAcquireSpinLock(&_requestListLock, &irql);
-			InsertTailList(&_requestListHead, &Header->Entry);
-			++_requestCount;
-			KeReleaseSpinLock(&_requestListLock, irql);
+			ExInterlockedInsertTailList(&_requestListHead, &Header->Entry, &_requestListLock);
+			InterlockedIncrement(&_requestCount);
 			if (_requestListSemaphore != NULL)
 				KeReleaseSemaphore(_requestListSemaphore, IO_NO_INCREMENT, 1, FALSE);
 			
 			IoReleaseRemoveLock(&_removeLock, NULL);
 		}
-	} else HeapMemoryFree(Header);
+	} else status = STATUS_CONNECTION_DISCONNECTED;
+	
+	if (!NT_SUCCESS(status))
+		HeapMemoryFree(Header);
 
 	DEBUG_EXIT_FUNCTION_VOID();
 	return;
 }
 
+
 NTSTATUS RequestQueueGet(PREQUEST_HEADER Buffer, PULONG Length)
 {
-	KIRQL irql;
 	ULONG reqSize = 0;
 	PREQUEST_HEADER h = NULL;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
@@ -171,25 +171,24 @@ NTSTATUS RequestQueueGet(PREQUEST_HEADER Buffer, PULONG Length)
 	if (_connected) {
 		status = IoAcquireRemoveLock(&_removeLock, NULL);
 		if (NT_SUCCESS(status)) {
-			KeAcquireSpinLock(&_requestListLock, &irql);
-			if (!IsListEmpty(&_requestListHead)) {
-				h = CONTAINING_RECORD(_requestListHead.Flink, REQUEST_HEADER, Entry);
+			PLIST_ENTRY l = NULL;
+			
+			l = ExInterlockedRemoveHeadList(&_requestListHead, &_requestListLock);
+			if (l != NULL) {
+				h = CONTAINING_RECORD(l, REQUEST_HEADER, Entry);
 				reqSize = _GetRequestSize(h);
 				if (reqSize <= *Length) {
-					RemoveEntryList(&h->Entry);
-					--_requestCount;
+					InterlockedDecrement(&_requestCount);
 					memcpy(Buffer, h, reqSize);
+					HeapMemoryFree(h);
 					status = STATUS_SUCCESS;
-				} else status = STATUS_BUFFER_TOO_SMALL;
+				} else {
+					ExInterlockedInsertHeadList(&_requestListHead, l, &_requestListLock);
+					status = STATUS_BUFFER_TOO_SMALL;
+				}
 			} else status = STATUS_NO_MORE_ENTRIES;
 
-			KeReleaseSpinLock(&_requestListLock, irql);
 			*Length = reqSize;
-			if (NT_SUCCESS(status)) {
-				if (h != NULL)
-					HeapMemoryFree(h);
-			}
-
 			IoReleaseRemoveLock(&_removeLock, NULL);
 		}
 	} else status = STATUS_CONNECTION_DISCONNECTED;

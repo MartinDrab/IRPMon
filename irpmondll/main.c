@@ -28,9 +28,9 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllDisconnect(VOID)
 }
 
 
-IRPMONDLL_API DWORD WINAPI IRPMonDllHookDriver(PWCHAR DriverName, PDRIVER_MONITOR_SETTINGS MonitorSettings, PHANDLE DriverHandle)
+IRPMONDLL_API DWORD WINAPI IRPMonDllHookDriver(PWCHAR DriverName, PDRIVER_MONITOR_SETTINGS MonitorSettings, PHANDLE DriverHandle, PVOID *ObjectId)
 {
-	return DriverComHookDriver(DriverName, MonitorSettings, DriverHandle);
+	return DriverComHookDriver(DriverName, MonitorSettings, DriverHandle, ObjectId);
 }
 
 IRPMONDLL_API DWORD WINAPI IRPMonDllUnhookDriver(HANDLE HookHandle)
@@ -51,14 +51,14 @@ IRPMONDLL_API VOID WINAPI IRPMonDllSnapshotFree(PIRPMON_DRIVER_INFO *DriverInfo,
 	return;
 }
 
-IRPMONDLL_API DWORD WINAPI IRPMonDllHookDeviceByName(PWCHAR DeviceName, PHANDLE HookHandle)
+IRPMONDLL_API DWORD WINAPI IRPMonDllHookDeviceByName(PWCHAR DeviceName, PHANDLE HookHandle, PVOID *ObjectId)
 {
-	return DriverComHookDeviceByName(DeviceName, HookHandle);
+	return DriverComHookDeviceByName(DeviceName, HookHandle, ObjectId);
 }
 
-IRPMONDLL_API DWORD WINAPI IRPMonDllHookDeviceByAddress(PVOID DeviceObject, PHANDLE HookHandle)
+IRPMONDLL_API DWORD WINAPI IRPMonDllHookDeviceByAddress(PVOID DeviceObject, PHANDLE HookHandle, PVOID *ObjectId)
 {
-	return DriverComHookDeviceByAddress(DeviceObject, HookHandle);
+	return DriverComHookDeviceByAddress(DeviceObject, HookHandle, ObjectId);
 }
 
 IRPMONDLL_API DWORD WINAPI IRPMonDllHookedDeviceGetInfo(HANDLE Handle, PUCHAR IRPSettings, PUCHAR FastIOSettings, PBOOLEAN MonitoringEnabled)

@@ -129,6 +129,7 @@ NTSTATUS UMHookDriver(PIOCTL_IRPMNDRV_HOOK_DRIVER_INPUT InputBuffer, ULONG Input
 				if (NT_SUCCESS(status)) {
 					status = HandleTableHandleCreate(_driverHandleTable, driverRecord, &output.HookHandle);
 					if (NT_SUCCESS(status)) {
+						output.ObjectId = driverRecord;
 						if (ExGetPreviousMode() == UserMode) {
 							__try {
 								*OutputBuffer = output;
@@ -280,6 +281,7 @@ NTSTATUS UMHookAddDevice(PIOCTL_IRPMNDRV_HOOK_ADD_DEVICE_INPUT InputBUffer, ULON
 					if (NT_SUCCESS(status)) {
 						status = HandleTableHandleCreate(_deviceHandleTable, deviceRecord, &output.DeviceHandle);
 						if (NT_SUCCESS(status)) {
+							output.ObjectId = deviceRecord;
 							if (ExGetPreviousMode() == UserMode) {
 								__try {
 									*OutputBuffer = output;
@@ -667,13 +669,7 @@ NTSTATUS UMHookedDriverSetInfo(PIOCTL_IRPMNDRV_HOOK_DRIVER_SET_INFO_INPUT InputB
 		
 			status = HandleTablehandleTranslate(_driverHandleTable, input.DriverHandle, &driverRecord);
 			if (NT_SUCCESS(status)) {
-				DRIVER_MONITOR_SETTINGS settings;
-
-				settings.MonitorNewDevices = input.MonitorNewDevices;
-				settings.MonitorAddDevice = input.MonitorAddDevice;
-				settings.MonitorStartIo = input.MonitorStartIo;
-				settings.MonitorUnload = input.MonitorUnload;
-				status = DriverHookRecordSetInfo(driverRecord, &settings);
+				status = DriverHookRecordSetInfo(driverRecord, &input.Settings);
 				DriverHookRecordDereference(driverRecord);
 			}
 		}

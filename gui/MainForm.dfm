@@ -25,8 +25,6 @@ object MainFrm: TMainFrm
     TabOrder = 0
     object RequestTabSheet: TTabSheet
       Caption = 'Requests'
-      ExplicitLeft = 8
-      ExplicitTop = 28
       object RequestListView: TListView
         Left = 0
         Top = 0
@@ -39,10 +37,6 @@ object MainFrm: TMainFrm
         RowSelect = True
         TabOrder = 0
         ViewStyle = vsReport
-        ExplicitLeft = 96
-        ExplicitTop = 104
-        ExplicitWidth = 105
-        ExplicitHeight = 73
       end
     end
     object Hooks: TTabSheet
@@ -55,42 +49,9 @@ object MainFrm: TMainFrm
     Top = 96
     object ActionMenuItem: TMenuItem
       Caption = 'Action'
-      object HookDriverMenuItem: TMenuItem
-        Caption = 'Hook driver...'
-        OnClick = HookDriverMenuItemClick
-      end
-      object HookDriverNDMenuItem: TMenuItem
-        Caption = 'Hook driver (new devices)...'
-        OnClick = HookDriverMenuItemClick
-      end
-      object UnhookDriverMenuItem: TMenuItem
-        Caption = 'Unhook driver'
-      end
-      object N3: TMenuItem
-        Caption = '-'
-      end
-      object HookDeviceNameMenuItem: TMenuItem
-        Caption = 'Hook device (name)...'
-        OnClick = HookDeviceNameMenuItemClick
-      end
-      object HookDeviceAddressMenuItem: TMenuItem
-        Caption = 'Hook device (address)...'
-        OnClick = HookDeviceNameMenuItemClick
-      end
-      object UnhookDeviceMenuItem: TMenuItem
-        Caption = 'Unhook device...'
-      end
-      object N1: TMenuItem
-        Caption = '-'
-      end
       object TreeMenuItem: TMenuItem
         Caption = 'Tree...'
-      end
-      object N2: TMenuItem
-        Caption = '-'
-      end
-      object SaveMenuItem: TMenuItem
-        Caption = 'Save...'
+        OnClick = TreeMenuItemClick
       end
       object N5: TMenuItem
         Caption = '-'
@@ -102,53 +63,13 @@ object MainFrm: TMainFrm
     end
     object MonitoringMenuItem: TMenuItem
       Caption = 'Monitoring'
-      object StartMenuItem: TMenuItem
-        Caption = 'Start'
-        OnClick = MonitoringMenuItemClick
-      end
-      object StopMenuItem: TMenuItem
-        Caption = 'Stop'
-        OnClick = MonitoringMenuItemClick
-      end
-      object N4: TMenuItem
-        Caption = '-'
-      end
       object CaptureEventsMenuItem: TMenuItem
         Caption = 'Capture events'
         OnClick = CaptureEventsMenuItemClick
       end
-      object MonitorMenuItem: TMenuItem
-        Caption = 'Monitor'
-        object ViewIRPMenuItem: TMenuItem
-          Caption = 'IRP'
-          Checked = True
-          OnClick = ViewMenuItemClick
-        end
-        object ViewIRPCompleteMenuItem: TMenuItem
-          Caption = 'IRP completion'
-          Checked = True
-          OnClick = ViewMenuItemClick
-        end
-        object ViewFastIoMenuItem: TMenuItem
-          Caption = 'Fast I/O'
-          Checked = True
-          OnClick = ViewMenuItemClick
-        end
-        object ViewAddDeviceMenuItem: TMenuItem
-          Caption = 'AddDevice'
-          Checked = True
-          OnClick = ViewMenuItemClick
-        end
-        object ViewUnloadMenuItem: TMenuItem
-          Caption = 'Unload'
-          Checked = True
-          OnClick = ViewMenuItemClick
-        end
-        object ViewStartIoMenuItem: TMenuItem
-          Caption = 'StartIo'
-          Checked = True
-          OnClick = ViewMenuItemClick
-        end
+      object RefreshNameCacheMenuItem: TMenuItem
+        Caption = 'Refresh name cache'
+        OnClick = RefreshNameCacheMenuItemClick
       end
       object N6: TMenuItem
         Caption = '-'
@@ -168,10 +89,10 @@ object MainFrm: TMainFrm
       end
     end
   end
-  object Timer1: TTimer
-    Enabled = False
-    OnTimer = Timer1Timer
-    Left = 200
+  object IrpMonAppEvents: TApplicationEvents
+    OnException = IrpMonAppEventsException
+    OnMessage = IrpMonAppEventsMessage
+    Left = 148
     Top = 96
   end
 end

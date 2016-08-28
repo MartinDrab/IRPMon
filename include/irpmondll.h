@@ -119,7 +119,7 @@ IRPMONDLL_API VOID WINAPI IRPMonDllDriverHooksFree(PHOOKED_DRIVER_UMINFO HookedD
  *  Driver names accepted by this function can be obtained from a list of drivers present in the system, returned by the
  *  @link(IRPMonDllSnapshotRetrieve) function.
  */
-IRPMONDLL_API DWORD WINAPI IRPMonDllHookDriver(PWCHAR DriverName, PDRIVER_MONITOR_SETTINGS MonitorSettings, PHANDLE DriverHandle);
+IRPMONDLL_API DWORD WINAPI IRPMonDllHookDriver(PWCHAR DriverName, PDRIVER_MONITOR_SETTINGS MonitorSettings, PHANDLE DriverHandle, PVOID *ObjectId);
 
 
 /** Starts monitoring of a driver. 
@@ -202,7 +202,7 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllDriverSetInfo(HANDLE DriverHandle, PDRIVER_M
  *  must be stopped by a call to the @Link(IRPMonDllDriverStopMonitoring) functiion first.
  *
  *  The routine causes the IRPMon driver to forget all information about the given hooked
- *  driver which makes it being o longer hooked. The actual unhooking (removing hooks from
+ *  driver which makes it being no longer hooked. The actual unhooking (removing hooks from
  *  driver's DRIVER_OBJECT structure) is done by the @link(IRPMonDllDriverStopMonitoring) routine.
  *
  *  After the successful call to this routine, the handle passed in the first argument to the call
@@ -230,7 +230,7 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllUnhookDriver(HANDLE DriverHandle);
  *  be hooked. Otherwise, the function fails. Drivers can be hooked by a call to the
  *  @link(IRPMonDllHookDriver) routine.
  */
-IRPMONDLL_API DWORD WINAPI IRPMonDllHookDeviceByName(PWCHAR DeviceName, PHANDLE HookHandle);
+IRPMONDLL_API DWORD WINAPI IRPMonDllHookDeviceByName(PWCHAR DeviceName, PHANDLE HookHandle, PVOID *ObjectId);
 
 
 /** Starts monitoring events related to a given device, identified by a kernel address of its object.
@@ -252,7 +252,7 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllHookDeviceByName(PWCHAR DeviceName, PHANDLE 
  *  be hooked. Otherwise, the function fails. Drivers can be hooked by a call to the
  *  @link(IRPMonDllHookDriver) routine.
  */
-IRPMONDLL_API DWORD WINAPI IRPMonDllHookDeviceByAddress(PVOID DeviceObject, PHANDLE HookHandle);
+IRPMONDLL_API DWORD WINAPI IRPMonDllHookDeviceByAddress(PVOID DeviceObject, PHANDLE HookHandle, PVOID *ObjectId);
 
 
 /** Stops monitoring events related to a given device object.

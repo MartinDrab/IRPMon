@@ -5,8 +5,8 @@
 			<FrameworkType>VCL</FrameworkType>
 			<MainSource>IRPMon.dpr</MainSource>
 			<Base>True</Base>
-			<Config Condition="'$(Config)'==''">Debug</Config>
-			<Platform Condition="'$(Platform)'==''">Win32</Platform>
+			<Config Condition="'$(Config)'==''">Release</Config>
+			<Platform Condition="'$(Platform)'==''">Win64</Platform>
 			<TargetedPlatforms>3</TargetedPlatforms>
 			<AppType>Application</AppType>
 		</PropertyGroup>
@@ -109,13 +109,22 @@
 			</DCCReference>
 			<DCCReference Include="IRPMonDll.pas"/>
 			<DCCReference Include="IRPMonRequest.pas"/>
-			<DCCReference Include="HookObjects.pas"/>
 			<DCCReference Include="Utils.pas"/>
 			<DCCReference Include="ListModel.pas"/>
 			<DCCReference Include="RequestListModel.pas"/>
-			<DCCReference Include="DriverRequest.pas"/>
 			<DCCReference Include="IRPRequest.pas"/>
 			<DCCReference Include="NameTables.pas"/>
+			<DCCReference Include="RequestFilter.pas"/>
+			<DCCReference Include="TreeForm.pas">
+				<Form>TreeFrm</Form>
+				<FormType>dfm</FormType>
+			</DCCReference>
+			<DCCReference Include="HookObjects.pas"/>
+			<DCCReference Include="HookProgressForm.pas">
+				<Form>HookProgressFrm</Form>
+				<FormType>dfm</FormType>
+			</DCCReference>
+			<DCCReference Include="RequestThread.pas"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>
 				<CfgParent>Base</CfgParent>

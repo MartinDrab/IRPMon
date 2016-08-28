@@ -6,13 +6,16 @@ uses
   MainForm in 'MainForm.pas' {MainFrm},
   IRPMonDll in 'IRPMonDll.pas',
   IRPMonRequest in 'IRPMonRequest.pas',
-  HookObjects in 'HookObjects.pas',
   Utils in 'Utils.pas',
   ListModel in 'ListModel.pas',
   RequestListModel in 'RequestListModel.pas',
-  DriverRequest in 'DriverRequest.pas',
   IRPRequest in 'IRPRequest.pas',
-  NameTables in 'NameTables.pas';
+  NameTables in 'NameTables.pas',
+  RequestFilter in 'RequestFilter.pas',
+  TreeForm in 'TreeForm.pas' {TreeFrm},
+  HookObjects in 'HookObjects.pas',
+  HookProgressForm in 'HookProgressForm.pas' {HookProgressFrm},
+  RequestThread in 'RequestThread.pas';
 
 {$R *.RES}
 
@@ -28,7 +31,7 @@ If err = ERROR_SUCCESS Then
   If err = ERROR_SUCCESS Then
     begin
     Application.CreateForm(TMainFrm, MainFrm);
-    Application.Run;
+  Application.Run;
     IRPMonDllFinalize;
     end
   Else WinErrorMessage('Unable to initialize irpmondll.dll', err);

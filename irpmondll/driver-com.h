@@ -5,7 +5,7 @@
 #include <windows.h>
 
 
-DWORD DriverComHookDriver(PWCHAR DriverName, PDRIVER_MONITOR_SETTINGS MonitorSettings, PHANDLE HookHandle);
+DWORD DriverComHookDriver(PWCHAR DriverName, PDRIVER_MONITOR_SETTINGS MonitorSettings, PHANDLE HookHandle, PVOID *ObjectId);
 DWORD DriverComHookedDriverSetInfo(HANDLE Driverhandle, PDRIVER_MONITOR_SETTINGS Settings);
 DWORD DriverComHookedDriverGetInfo(HANDLE Driverhandle, PDRIVER_MONITOR_SETTINGS Settings, PBOOLEAN MonitoringEnabled);
 DWORD DriverComHookedDriverActivate(HANDLE DriverHandle, BOOLEAN Activate);
@@ -15,8 +15,8 @@ DWORD DriverComConnect(HANDLE hSemaphore);
 DWORD DriverComDisconnect(VOID);
 DWORD DriverComGetRequest(PREQUEST_HEADER Request, DWORD Size);
 
-DWORD DriverComHookDeviceByName(PWCHAR DeviceName, PHANDLE HookHandle);
-DWORD DriverComHookDeviceByAddress(PVOID DeviceObject, PHANDLE HookHandle);
+DWORD DriverComHookDeviceByName(PWCHAR DeviceName, PHANDLE HookHandle, PVOID *ObjectId);
+DWORD DriverComHookDeviceByAddress(PVOID DeviceObject, PHANDLE HookHandle, PVOID *ObjectId);
 DWORD DriverComDeviceGetInfo(HANDLE DeviceHandle, PUCHAR IRPSettings, PUCHAR FastIoSettings, PBOOLEAN MonitoringEnabled);
 DWORD DriverComDeviceSetInfo(HANDLE DeviceHandle, PUCHAR IRPSettings, PUCHAR FastIoSettings, BOOLEAN MonitoringEnabled);
 DWORD DriverComUnhookDevice(HANDLE HookHandle);

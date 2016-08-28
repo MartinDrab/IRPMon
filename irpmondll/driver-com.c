@@ -311,20 +311,23 @@ VOID DriverComSnapshotFree(PIRPMON_DRIVER_INFO *DriverInfo, ULONG Count)
 	return;
 }
 
-DWORD DriverComHookDriver(PWCHAR DriverName, PDRIVER_MONITOR_SETTINGS MonitorSettings, PHANDLE HookHandle)
+DWORD DriverComHookDriver(PWCHAR DriverName, PDRIVER_MONITOR_SETTINGS MonitorSettings, PHANDLE HookHandle, PVOID *ObjectId)
 {
 	DWORD ret = ERROR_GEN_FAILURE;
 	IOCTL_IRPMNDRV_HOOK_DRIVER_INPUT input;
 	IOCTL_IRPMNDRV_HOOK_DRIVER_OUTPUT output;
-	DEBUG_ENTER_FUNCTION("DriverName=\"%S\"; MonitorSettings=0x%p; HookHandle=0x%p", DriverName, MonitorSettings, HookHandle);
+	DEBUG_ENTER_FUNCTION("DriverName=\"%S\"; MonitorSettings=0x%p; HookHandle=0x%p; ObjectId=0x%p", DriverName, MonitorSettings, HookHandle, ObjectId);
 
 	input.DriverName = _CopyString(DriverName);
 	if (input.DriverName != NULL) {
 		input.DriverNameLength = (ULONG)wcslen(input.DriverName)*sizeof(WCHAR);
 		input.MonitorSettings = *MonitorSettings;
 		ret = _SynchronousOtherIOCTL(IOCTL_IRPMNDRV_HOOK_DRIVER, &input, sizeof(input), &output, sizeof(output));
-		if (ret == ERROR_SUCCESS)
+		if (ret == ERROR_SUCCESS) {
 			*HookHandle = output.HookHandle;
+			if (ObjectId != NULL)
+				*ObjectId = output.ObjectId;
+		}
 
 		HeapFree(GetProcessHeap(), 0, input.DriverName);
 	} else ret = ERROR_NOT_ENOUGH_MEMORY;
@@ -340,10 +343,7 @@ DWORD DriverComHookedDriverSetInfo(HANDLE Driverhandle, PDRIVER_MONITOR_SETTINGS
 	DEBUG_ENTER_FUNCTION("Driverhandle=0x%p; Settings=0x%p", Driverhandle, Settings);
 
 	input.DriverHandle = Driverhandle;
-	input.MonitorAddDevice = Settings->MonitorAddDevice;
-	input.MonitorNewDevices = Settings->MonitorNewDevices;
-	input.MonitorStartIo = Settings->MonitorStartIo;
-	input.MonitorUnload = Settings->MonitorUnload;
+	input.Settings = *Settings;
 	ret = _SynchronousWriteIOCTL(IOCTL_IRPMNDRV_HOOK_DRIVER_SET_INFO, &input, sizeof(input));
 
 	DEBUG_EXIT_FUNCTION("%u", ret);
@@ -431,12 +431,12 @@ DWORD DriverComGetRequest(PREQUEST_HEADER Request, DWORD Size)
 	return ret;
 }
 
-DWORD DriverComHookDeviceByName(PWCHAR DeviceName, PHANDLE HookHandle)
+DWORD DriverComHookDeviceByName(PWCHAR DeviceName, PHANDLE HookHandle, PVOID *ObjectId)
 {
 	DWORD ret = ERROR_GEN_FAILURE;
 	IOCTL_IRPMNDRV_HOOK_ADD_DEVICE_INPUT input;
 	IOCTL_IRPMNDRV_HOOK_ADD_DEVICE_OUTPUT output;
-	DEBUG_ENTER_FUNCTION("DeviceName=\"%S\"; HookHandle=0x%p", DeviceName, HookHandle);
+	DEBUG_ENTER_FUNCTION("DeviceName=\"%S\"; HookHandle=0x%p; ObjectId=0x%p", DeviceName, HookHandle, ObjectId);
 
 	input.HookByName = TRUE;
 	input.IRPSettings = NULL;
@@ -446,8 +446,11 @@ DWORD DriverComHookDeviceByName(PWCHAR DeviceName, PHANDLE HookHandle)
 	if (input.DeviceName != NULL) {
 		input.DeviceNameLength = (ULONG)wcslen(input.DeviceName)*sizeof(WCHAR);
 		ret = _SynchronousOtherIOCTL(IOCTL_IRPMNDRV_HOOK_ADD_DEVICE, &input, sizeof(input), &output, sizeof(output));
-		if (ret == ERROR_SUCCESS)
+		if (ret == ERROR_SUCCESS) {
 			*HookHandle = output.DeviceHandle;
+			if (ObjectId != NULL)
+				*ObjectId = output.ObjectId;
+		}
 
 		HeapFree(GetProcessHeap(), 0, input.DeviceName);
 	} else ret = ERROR_NOT_ENOUGH_MEMORY;
@@ -456,12 +459,12 @@ DWORD DriverComHookDeviceByName(PWCHAR DeviceName, PHANDLE HookHandle)
 	return ret;
 }
 
-DWORD DriverComHookDeviceByAddress(PVOID DeviceObject, PHANDLE HookHandle)
+DWORD DriverComHookDeviceByAddress(PVOID DeviceObject, PHANDLE HookHandle, PVOID *ObjectId)
 {
 	DWORD ret = ERROR_GEN_FAILURE;
 	IOCTL_IRPMNDRV_HOOK_ADD_DEVICE_INPUT input;
 	IOCTL_IRPMNDRV_HOOK_ADD_DEVICE_OUTPUT output;
-	DEBUG_ENTER_FUNCTION("DeviceObject=0x%p; HookHandle=0x%p", DeviceObject, HookHandle);
+	DEBUG_ENTER_FUNCTION("DeviceObject=0x%p; HookHandle=0x%p; ObjectId=0x%p", DeviceObject, HookHandle, ObjectId);
 
 	input.HookByName = FALSE;
 	input.DeviceName = NULL;
@@ -470,8 +473,11 @@ DWORD DriverComHookDeviceByAddress(PVOID DeviceObject, PHANDLE HookHandle)
 	input.FastIoSettings = NULL;
 	input.IRPSettings = NULL;
 	ret = _SynchronousOtherIOCTL(IOCTL_IRPMNDRV_HOOK_ADD_DEVICE, &input, sizeof(input), &output, sizeof(output));
-	if (ret == ERROR_SUCCESS)
+	if (ret == ERROR_SUCCESS) {
 		*HookHandle = output.DeviceHandle;
+		if (ObjectId != NULL)
+			*ObjectId = output.ObjectId;
+	}
 
 	DEBUG_EXIT_FUNCTION("%u, *HookHandle=0x%p", ret, *HookHandle);
 	return ret;
