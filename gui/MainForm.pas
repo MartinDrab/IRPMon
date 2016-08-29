@@ -29,6 +29,8 @@ Type
     N6: TMenuItem;
     RefreshNameCacheMenuItem: TMenuItem;
     IrpMonAppEvents: TApplicationEvents;
+    RequestMenuItem: TMenuItem;
+    RequestDetailsMenuItem: TMenuItem;
     Procedure ClearMenuItemClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure CaptureEventsMenuItemClick(Sender: TObject);
@@ -37,6 +39,8 @@ Type
     procedure TreeMenuItemClick(Sender: TObject);
     procedure IrpMonAppEventsMessage(var Msg: tagMSG; var Handled: Boolean);
     procedure IrpMonAppEventsException(Sender: TObject; E: Exception);
+    procedure RequestDetailsMenuItemClick(Sender: TObject);
+    procedure AboutMenuItemClick(Sender: TObject);
   Private
     FModel : TRequestListModel;
     FHookedDrivers : TDictionary<Pointer, TDriverHookObject>;
@@ -55,7 +59,7 @@ Implementation
 {$R *.DFM}
 
 Uses
-  Utils, TreeForm;
+  Utils, TreeForm, RequestDetailsForm, AboutForm;
 
 
 
@@ -177,6 +181,15 @@ If Msg.message = FRequestMsgCode Then
   end;
 end;
 
+Procedure TMainFrm.AboutMenuItemClick(Sender: TObject);
+begin
+With TAboutBox.Create(Self) Do
+  begin
+  ShowModal;
+  Free;
+  end;
+end;
+
 Procedure TMainFrm.CaptureEventsMenuItemClick(Sender: TObject);
 Var
   connect : Boolean;
@@ -209,6 +222,25 @@ begin
 err := FModel.RefreshMaps;
 If err <> ERROR_SUCCESS Then
   WinErrorMessage('Unable to refresh name cache', err);
+end;
+
+Procedure TMainFrm.RequestDetailsMenuItemClick(Sender: TObject);
+Var
+  rq : TDriverRequest;
+begin
+rq := FModel.Selected;
+If Assigned(rq) Then
+  begin
+  With TRequestDetailsFrm.Create(Self, rq) Do
+    begin
+    ShowModal;
+    Free;
+    end;
+  end
+Else begin
+  If Sender <> RequestListView Then
+    WarningMessage('No request selected');
+  end;
 end;
 
 Procedure TMainFrm.TreeMenuItemClick(Sender: TObject);

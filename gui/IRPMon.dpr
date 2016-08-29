@@ -15,7 +15,9 @@ uses
   TreeForm in 'TreeForm.pas' {TreeFrm},
   HookObjects in 'HookObjects.pas',
   HookProgressForm in 'HookProgressForm.pas' {HookProgressFrm},
-  RequestThread in 'RequestThread.pas';
+  RequestThread in 'RequestThread.pas',
+  RequestDetailsForm in 'RequestDetailsForm.pas' {RequestDetailsFrm},
+  AboutForm in 'AboutForm.pas' {AboutBox};
 
 {$R *.RES}
 
@@ -31,7 +33,7 @@ If err = ERROR_SUCCESS Then
   If err = ERROR_SUCCESS Then
     begin
     Application.CreateForm(TMainFrm, MainFrm);
-  Application.Run;
+    Application.Run;
     IRPMonDllFinalize;
     end
   Else WinErrorMessage('Unable to initialize irpmondll.dll', err);

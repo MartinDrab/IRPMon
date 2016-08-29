@@ -32,11 +32,14 @@ object MainFrm: TMainFrm
         Height = 276
         Align = alClient
         Columns = <>
+        DoubleBuffered = True
         OwnerData = True
         ReadOnly = True
         RowSelect = True
+        ParentDoubleBuffered = False
         TabOrder = 0
         ViewStyle = vsReport
+        OnDblClick = RequestDetailsMenuItemClick
       end
     end
     object Hooks: TTabSheet
@@ -79,6 +82,13 @@ object MainFrm: TMainFrm
         OnClick = ClearMenuItemClick
       end
     end
+    object RequestMenuItem: TMenuItem
+      Caption = 'Request'
+      object RequestDetailsMenuItem: TMenuItem
+        Caption = 'Details...'
+        OnClick = RequestDetailsMenuItemClick
+      end
+    end
     object ColumnsMenuItem: TMenuItem
       Caption = 'Columns'
     end
@@ -86,6 +96,7 @@ object MainFrm: TMainFrm
       Caption = 'Help'
       object AboutMenuItem: TMenuItem
         Caption = 'About IRPMon...'
+        OnClick = AboutMenuItemClick
       end
     end
   end

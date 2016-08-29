@@ -33,6 +33,36 @@ Type
     rlmctIOSBInformation);
   PERequestListModelColumnType = ^ERequestListModelColumnType;
 
+  RequestListModelColumnSet = Set Of ERequestListModelColumnType;
+
+Const
+  RequestListModelColumnNames : Array [0..Ord(rlmctIOSBInformation)] Of String = (
+    'Time',
+    'Type',
+    'Device object',
+    'Device name',
+    'Driver object',
+    'Driver name',
+    'Result',
+    'Subtype',
+    'IRP address',
+    'File object',
+    'IRP flags',
+    'Argument1',
+    'Argument2',
+    'Argument3',
+    'Argument4',
+    'Thread ID',
+    'Process ID',
+    'IRQL',
+    'Previous mode',
+    'Requestor mode',
+    'IOSB.Status',
+    'IOSB.Information'
+  );
+
+Type
+
   TDriverRequest = Class
   Private
     FDriverName : WideString;
@@ -47,11 +77,13 @@ Type
     FProcessId : THandle;
     FIRQL : Byte;
   Protected
-    Function GetColumn(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Virtual;
     Procedure SetDriverName(AName:WideString);
     Procedure SetDeviceName(AName:WideString);
   Public
     Constructor Create(Var ARequest:REQUEST_HEADER); Reintroduce;
+
+    Function GetColumnName(AColumnType:ERequestListModelColumnType):WideString; Virtual;
+    Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Virtual;
 
     Class Function IOCTLToString(AControlCode:Cardinal):WideString;
     Class Function RequestTypeToString(ARequestType:ERequestType):WideString;
@@ -93,11 +125,10 @@ Type
     FIOSBInformation : NativeUInt;
     FProcessId : THandle;
     FThreadId : THandle;
-  Protected
-    Function GetColumn(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
   Public
     Constructor Create(Var ARequest:REQUEST_IRP_COMPLETION); Reintroduce;
 
+    Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
     Property Address : Pointer Read FIRPAddress;
     Property IOSBStatus : Cardinal Read FIOSBStatus;
     Property IOSBInformation : NativeUInt Read FIOSBInformation;
@@ -170,12 +201,12 @@ begin
 FDeviceName := AName;
 end;
 
-Function TDriverRequest.GetColumn(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
+Function TDriverRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
 Var
   s : SYSTEMTIME;
 begin
 Result := True;
-AResult := 'N/A';
+AResult := '';
 Case AColumnType Of
   rlmctTime : begin
     FileTimeToSystemTime(FILETIME(FTime), s);
@@ -192,6 +223,11 @@ Case AColumnType Of
   rlmctIRQL : AResult := IRQLToString(FIRQL);
   Else Result := False;
   end;
+end;
+
+Function TDriverRequest.GetColumnName(AColumnType:ERequestListModelColumnType):WideString;
+begin
+Result := RequestListModelColumnNames[Ord(AColumnType)];
 end;
 
 Class Function TDriverRequest.IOCTLToString(AControlCode:Cardinal):WideString;
@@ -440,14 +476,14 @@ FIOSBStatus := ARequest.CompletionStatus;
 FIOSBInformation := ARequest.CompletionInformation;
 end;
 
-Function TIRPCompleteRequest.GetColumn(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
+Function TIRPCompleteRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
 begin
 Result := True;
 Case AColumnType Of
   rlmctIRPAddress: AResult := Format('0x%p', [FIRPAddress]);
   rlmctIOSBStatus : AResult := Format('%s (0x%x)', [NTSTATUSToString(FIOSBStatus), FIOSBStatus]);
   rlmctIOSBInformation : AResult := Format('0x%p', [Pointer(IOSBInformation)]);
-  Else Result := Inherited GetColumn(AColumnType, AResult);
+  Else Result := Inherited GetColumnValue(AColumnType, AResult);
   end;
 end;
 
@@ -505,7 +541,7 @@ end;
 Function TRequestListModel.GetColumn(AItem:TDriverRequest; ATag:NativeUInt):WideString;
 begin
 Result := '';
-AItem.GetColumn(ERequestListModelColumnType(ATag), Result);
+AItem.GetColumnValue(ERequestListModelColumnType(ATag), Result);
 end;
 
 Procedure TRequestListModel.FreeItem(AItem:TDriverRequest);

@@ -19,11 +19,10 @@ Type
     FIRPFlags : Cardinal;
     FProcessId : THandle;
     FThreadId : THandle;
-  Protected
-    Function GetColumn(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
   Public
     Constructor Create(Var ARequest:REQUEST_IRP); Reintroduce;
 
+    Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
     Class Function PowerStateTypeToString(AType:Cardinal):WideString;
     Class Function PowerStateToString(AType:Cardinal; AState:Cardinal):WideString;
     Class Function ShutdownTypeToString(AType:Cardinal):WideString;
@@ -42,38 +41,38 @@ Type
   end;
 
   TDeviceControlRequest = Class (TIRPRequest)
-    Protected
-      Function GetColumn(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
+    Public
+      Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
     end;
 
   TReadWriteRequest = Class (TIRPRequest)
-    Protected
-      Function GetColumn(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
+    Public
+      Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
     end;
 
   TQuerySetRequest = Class (TIRPRequest)
-    Protected
-      Function GetColumn(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
+    Public
+      Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
     end;
 
   TWaitWakeRequest = Class (TIRPRequest)
-    Protected
-      Function GetColumn(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
+    Public
+      Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
     end;
 
   TPowerSequenceRequest = Class (TIRPRequest)
-    Protected
-      Function GetColumn(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
+    Public
+      Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
     end;
 
   TQuerySetPowerRequest = Class (TIRPRequest)
-    Protected
-      Function GetColumn(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
+    Public
+      Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
     end;
 
   TCloseCleanupRequest = Class (TIRPRequest)
-    Protected
-      Function GetColumn(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
+    Public
+      Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
     end;
 
 Implementation
@@ -97,7 +96,7 @@ FArgs := ARequest.Args;
 end;
 
 
-Function TIRPRequest.GetColumn(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
+Function TIRPRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
 begin
 Result := True;
 Case AColumnType Of
@@ -111,7 +110,7 @@ Case AColumnType Of
   rlmctArg4: AResult := Format('0x%p', [FArgs.Other.Arg4]);
   rlmctPreviousMode: AResult := AccessModeToString(FPreviousMode);
   rlmctRequestorMode: AResult := AccessModeToString(FRequestorMode);
-  Else Result := Inherited GetColumn(AColumnType, AResult);
+  Else Result := Inherited GetColumnValue(AColumnType, AResult);
   end;
 end;
 
@@ -193,7 +192,7 @@ end;
 
 (** TDeviceControlRequest **)
 
-Function TDeviceControlRequest.GetColumn(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
+Function TDeviceControlRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
 begin
 Result := True;
 case AColumnType of
@@ -201,13 +200,13 @@ case AColumnType of
   rlmctArg2: AResult := Format('I: %u', [FArgs.DeviceControl.InputBufferLength]);
   rlmctArg3: AResult := IOCTLToString(FArgs.DeviceControl.IoControlCode);
   rlmctArg4: AResult := '';
-  Else Result := Inherited GetColumn(AColumnType, AResult);
+  Else Result := Inherited GetColumnValue(AColumnType, AResult);
   end;
 end;
 
 (** TReadWriteRequest **)
 
-Function TReadWriteRequest.GetColumn(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
+Function TReadWriteRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
 begin
 Result := True;
 case AColumnType of
@@ -215,13 +214,13 @@ case AColumnType of
   rlmctArg2: AResult := Format('K: 0x%x', [FArgs.ReadWrite.Key]);
   rlmctArg3: AResult := Format('O: 0x%x', [FArgs.ReadWrite.ByteOffset]);
   rlmctArg4: AResult := '';
-  Else Result := Inherited GetColumn(AColumnType, AResult);
+  Else Result := Inherited GetColumnValue(AColumnType, AResult);
   end;
 end;
 
 (** TQuerySetRequest **)
 
-Function TQuerySetRequest.GetColumn(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
+Function TQuerySetRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
 begin
 Result := True;
 case AColumnType of
@@ -229,13 +228,13 @@ case AColumnType of
   rlmctArg2: AResult := Format('I: %u', [FArgs.QuerySetInformation.FileInformationClass]);
   rlmctArg3,
   rlmctArg4: AResult := '';
-  Else Result := Inherited GetColumn(AColumnType, AResult);
+  Else Result := Inherited GetColumnValue(AColumnType, AResult);
   end;
 end;
 
 (** TWaitWakeRequest **)
 
-Function TWaitWakeRequest.GetColumn(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
+Function TWaitWakeRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
 begin
 Result := True;
 case AColumnType of
@@ -243,13 +242,13 @@ case AColumnType of
   rlmctArg2 : AResult := '';
   rlmctArg3 : AResult := '';
   rlmctArg4 : AResult := '';
-  Else Result := Inherited GetColumn(AColumnType, AResult);
+  Else Result := Inherited GetColumnValue(AColumnType, AResult);
   end;
 end;
 
 (** TPowerSequenceRequest **)
 
-Function TPowerSequenceRequest.GetColumn(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
+Function TPowerSequenceRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
 begin
 Result := True;
 case AColumnType of
@@ -257,13 +256,13 @@ case AColumnType of
   rlmctArg2 : AResult := '';
   rlmctArg3 : AResult := '';
   rlmctArg4 : AResult := '';
-  Else Result := Inherited GetColumn(AColumnType, AResult);
+  Else Result := Inherited GetColumnValue(AColumnType, AResult);
   end;
 end;
 
 (** TQuerySetPowerRequest **)
 
-Function TQuerySetPowerRequest.GetColumn(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
+Function TQuerySetPowerRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
 begin
 Result := True;
 case AColumnType of
@@ -271,14 +270,14 @@ case AColumnType of
   rlmctArg2 : AResult := PowerStateTypeToString(FArgs.QuerySetPower.PowerStateType);
   rlmctArg3 : AResult := PowerStateToString(FArgs.QuerySetPower.PowerStateType, FArgs.QuerySetPower.PowerState);
   rlmctArg4 : AResult := ShutdownTypeToString(FArgs.QuerySetPower.ShutdownType);
-  Else Result := Inherited GetColumn(AColumnType, AResult);
+  Else Result := Inherited GetColumnValue(AColumnType, AResult);
   end;
 end;
 
 
-Function TCloseCleanupRequest.GetColumn(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
+Function TCloseCleanupRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
 begin
-Result := Inherited GetColumn(AColumnType, AResult);
+Result := Inherited GetColumnValue(AColumnType, AResult);
 end;
 
 
