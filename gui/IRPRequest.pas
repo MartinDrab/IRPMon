@@ -42,21 +42,25 @@ Type
 
   TDeviceControlRequest = Class (TIRPRequest)
     Public
+      Function GetColumnName(AColumnType:ERequestListModelColumnType):WideString; Override;
       Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
     end;
 
   TReadWriteRequest = Class (TIRPRequest)
     Public
+      Function GetColumnName(AColumnType:ERequestListModelColumnType):WideString; Override;
       Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
     end;
 
   TQuerySetRequest = Class (TIRPRequest)
     Public
+      Function GetColumnName(AColumnType:ERequestListModelColumnType):WideString; Override;
       Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
     end;
 
   TWaitWakeRequest = Class (TIRPRequest)
     Public
+      Function GetColumnName(AColumnType:ERequestListModelColumnType):WideString; Override;
       Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
     end;
 
@@ -67,6 +71,7 @@ Type
 
   TQuerySetPowerRequest = Class (TIRPRequest)
     Public
+      Function GetColumnName(AColumnType:ERequestListModelColumnType):WideString; Override;
       Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
     end;
 
@@ -195,12 +200,23 @@ end;
 Function TDeviceControlRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
 begin
 Result := True;
-case AColumnType of
-  rlmctArg1: AResult := Format('O: %u', [FArgs.DeviceControl.OutputBufferLength]);
-  rlmctArg2: AResult := Format('I: %u', [FArgs.DeviceControl.InputBufferLength]);
+Case AColumnType Of
+  rlmctArg1: AResult := Format('O: %u (0x%p)', [FArgs.DeviceControl.OutputBufferLength, Pointer(Args.DeviceControl.OutputBufferLength)]);
+  rlmctArg2: AResult := Format('I: %u (0x%p)', [FArgs.DeviceControl.InputBufferLength, Pointer(Args.DeviceControl.InputBufferLength)]);
   rlmctArg3: AResult := IOCTLToString(FArgs.DeviceControl.IoControlCode);
-  rlmctArg4: AResult := '';
+  rlmctArg4: Result := False;
   Else Result := Inherited GetColumnValue(AColumnType, AResult);
+  end;
+end;
+
+Function TDeviceControlRequest.GetColumnName(AColumnType:ERequestListModelColumnType):WideString;
+begin
+Case AColumnType Of
+  rlmctArg1 : Result := 'Output length';
+  rlmctArg2 : Result := 'Input length';
+  rlmctArg3 : Result := 'IOCTL';
+  rlmctArg4 : Result := 'Type3 input';
+  Else Result := Inherited GetColumnName(AColumnType);
   end;
 end;
 
@@ -209,12 +225,23 @@ end;
 Function TReadWriteRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
 begin
 Result := True;
-case AColumnType of
+Case AColumnType Of
   rlmctArg1: AResult := Format('L: %u', [FArgs.ReadWrite.Length]);
   rlmctArg2: AResult := Format('K: 0x%x', [FArgs.ReadWrite.Key]);
   rlmctArg3: AResult := Format('O: 0x%x', [FArgs.ReadWrite.ByteOffset]);
-  rlmctArg4: AResult := '';
+  rlmctArg4: Result := False;
   Else Result := Inherited GetColumnValue(AColumnType, AResult);
+  end;
+end;
+
+Function TReadWriteRequest.GetColumnName(AColumnType:ERequestListModelColumnType):WideString;
+begin
+Case AColumnType Of
+  rlmctArg1 : Result := 'Length';
+  rlmctArg2 : Result := 'Key';
+  rlmctArg3 : Result := 'Offset';
+  rlmctArg4 : Result := '';
+  Else Result := Inherited GetColumnName(AColumnType);
   end;
 end;
 
@@ -223,12 +250,21 @@ end;
 Function TQuerySetRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
 begin
 Result := True;
-case AColumnType of
+Case AColumnType Of
   rlmctArg1: AResult := Format('L: %u', [FArgs.QuerySetInformation.Lenth]);
   rlmctArg2: AResult := Format('I: %u', [FArgs.QuerySetInformation.FileInformationClass]);
   rlmctArg3,
-  rlmctArg4: AResult := '';
+  rlmctArg4: Result := False
   Else Result := Inherited GetColumnValue(AColumnType, AResult);
+  end;
+end;
+
+Function TQuerySetRequest.GetColumnName(AColumnType:ERequestListModelColumnType):WideString;
+begin
+Case AColumnType Of
+  rlmctArg1 : Result := 'Length';
+  rlmctArg2 : Result := 'Information class';
+  Else Result := Inherited GetColumnName(AColumnType);
   end;
 end;
 
@@ -237,12 +273,20 @@ end;
 Function TWaitWakeRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
 begin
 Result := True;
-case AColumnType of
+Case AColumnType Of
   rlmctArg1 : AResult := PowerStateToString(1, FArgs.WaitWake.PowerState);
-  rlmctArg2 : AResult := '';
-  rlmctArg3 : AResult := '';
-  rlmctArg4 : AResult := '';
+  rlmctArg2,
+  rlmctArg3,
+  rlmctArg4 : Result := False;
   Else Result := Inherited GetColumnValue(AColumnType, AResult);
+  end;
+end;
+
+Function TWaitWakeRequest.GetColumnName(AColumnType:ERequestListModelColumnType):WideString;
+begin
+Case AColumnType Of
+  rlmctArg1 : Result := 'Power state';
+  Else Result := Inherited GetColumnName(AColumnType);
   end;
 end;
 
@@ -251,11 +295,11 @@ end;
 Function TPowerSequenceRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
 begin
 Result := True;
-case AColumnType of
-  rlmctArg1 : AResult := '';
-  rlmctArg2 : AResult := '';
-  rlmctArg3 : AResult := '';
-  rlmctArg4 : AResult := '';
+Case AColumnType Of
+  rlmctArg1,
+  rlmctArg2,
+  rlmctArg3,
+  rlmctArg4 : Result := False;
   Else Result := Inherited GetColumnValue(AColumnType, AResult);
   end;
 end;
@@ -265,7 +309,7 @@ end;
 Function TQuerySetPowerRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
 begin
 Result := True;
-case AColumnType of
+Case AColumnType Of
   rlmctArg1 : AResult := Format('%u', [FArgs.QuerySetPower.SystemContext]);
   rlmctArg2 : AResult := PowerStateTypeToString(FArgs.QuerySetPower.PowerStateType);
   rlmctArg3 : AResult := PowerStateToString(FArgs.QuerySetPower.PowerStateType, FArgs.QuerySetPower.PowerState);
@@ -274,10 +318,28 @@ case AColumnType of
   end;
 end;
 
+Function TQuerySetPowerRequest.GetColumnName(AColumnType:ERequestListModelColumnType):WideString;
+begin
+Case AColumnType Of
+  rlmctArg1 : Result := 'System context';
+  rlmctArg2 : Result := 'Power state type';
+  rlmctArg3 : Result := 'Power state';
+  rlmctArg4 : Result := 'Shutdown type';
+  end;
+end;
+
+(** TCloseCleanupRequest **)
 
 Function TCloseCleanupRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
 begin
-Result := Inherited GetColumnValue(AColumnType, AResult);
+Result := True;
+Case AColumnType Of
+  rlmctArg1,
+  rlmctArg2,
+  rlmctArg3,
+  rlmctArg4 : Result := False;
+  Else Result := Inherited GetColumnValue(AColumnType, AResult);
+  end;
 end;
 
 
