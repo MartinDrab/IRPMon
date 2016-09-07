@@ -3,7 +3,7 @@ Unit RequestListModel;
 Interface
 
 Uses
-  Windows, Generics.Collections,
+  Windows, Classes, Generics.Collections,
   IRPMonDll, ListModel;
 
 
@@ -84,6 +84,8 @@ Type
 
     Function GetColumnName(AColumnType:ERequestListModelColumnType):WideString; Virtual;
     Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Virtual;
+    Procedure SaveToStream(AStream:TStream); Virtual;
+    Procedure SaveToFile(AFileName:WideString); Virtual;
 
     Class Function IOCTLToString(AControlCode:Cardinal):WideString;
     Class Function RequestTypeToString(ARequestType:ERequestType):WideString;
@@ -166,6 +168,8 @@ Type
       Procedure Clear; Override;
       Function RowCount : Cardinal; Override;
       Function Update:Cardinal; Override;
+      Procedure SaveToStream(AStream:TStream);
+      Procedure SaveToFile(AFileName:WideString);
     end;
 
 Implementation
@@ -189,6 +193,36 @@ FResultValue := NativeUInt(ARequest.Other);
 FProcessId := ARequest.ProcessId;
 FThreadId := ARequest.ThreadId;
 FIRQL := ARequest.Irql;
+end;
+
+Procedure TDriverRequest.SaveToStream(AStream: TStream);
+Var
+  s : TStringList;
+  value : WideString;
+  ct : ERequestListModelColumnType;
+begin
+s := TStringList.Create;
+For ct := Low(ERequestListModelColumnType) To High(ERequestListModelColumnType) Do
+  begin
+  If GetColumnValue(ct, value) Then
+    s.Add(Format('%s = %s', [GetColumnName(ct), value]));
+  end;
+
+s.Add('');
+s.SaveToStream(AStream);
+s.Free;
+end;
+
+Procedure TDriverRequest.SaveToFile(AFileName: WideString);
+Var
+  F : TFileStream;
+begin
+F := TFileStream.Create(AFileName, fmCreate Or fmOpenWrite);
+Try
+  SaveToStream(F);
+Finally
+  F.Free;
+  end;
 end;
 
 Procedure TDriverRequest.SetDriverName(AName:WideString);
@@ -657,5 +691,30 @@ FRequests.Free;
 Inherited Destroy;
 end;
 
+Procedure TRequestListModel.SaveToStream(AStream:TStream);
+Var
+  I : Integer;
+  dr : TDriverRequest;
+begin
+For I := 0 To RowCount - 1 Do
+  begin
+  dr := _Item(I);
+  dr.SaveToStream(AStream);
+  end;
+end;
+
+Procedure TRequestListModel.SaveToFile(AFileName:WideString);
+Var
+  F : TFileStream;
+begin
+F := TFileStream.Create(AFileName, fmCreate Or fmOpenWrite);
+Try
+  SaveToStream(F);
+Finally
+  F.Free;
+  end;
+end;
+
 
 End.
+

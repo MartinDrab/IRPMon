@@ -56,6 +56,13 @@ object MainFrm: TMainFrm
         Caption = 'Tree...'
         OnClick = TreeMenuItemClick
       end
+      object N1: TMenuItem
+        Caption = '-'
+      end
+      object SaveMenuItem: TMenuItem
+        Caption = 'Save...'
+        OnClick = SaveMenuItemClick
+      end
       object N5: TMenuItem
         Caption = '-'
       end
@@ -105,5 +112,10 @@ object MainFrm: TMainFrm
     OnMessage = IrpMonAppEventsMessage
     Left = 148
     Top = 96
+  end
+  object LogSaveDialog: TSaveDialog
+    Filter = 'Log files [*.log]|*.log|All files [*.*]|*.*'
+    Left = 152
+    Top = 128
   end
 end

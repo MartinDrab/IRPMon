@@ -31,6 +31,9 @@ Type
     IrpMonAppEvents: TApplicationEvents;
     RequestMenuItem: TMenuItem;
     RequestDetailsMenuItem: TMenuItem;
+    SaveMenuItem: TMenuItem;
+    LogSaveDialog: TSaveDialog;
+    N1: TMenuItem;
     Procedure ClearMenuItemClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure CaptureEventsMenuItemClick(Sender: TObject);
@@ -41,6 +44,7 @@ Type
     procedure IrpMonAppEventsException(Sender: TObject; E: Exception);
     procedure RequestDetailsMenuItemClick(Sender: TObject);
     procedure AboutMenuItemClick(Sender: TObject);
+    procedure SaveMenuItemClick(Sender: TObject);
   Private
     FModel : TRequestListModel;
     FHookedDrivers : TDictionary<Pointer, TDriverHookObject>;
@@ -240,6 +244,20 @@ If Assigned(rq) Then
 Else begin
   If Sender <> RequestListView Then
     WarningMessage('No request selected');
+  end;
+end;
+
+Procedure TMainFrm.SaveMenuItemClick(Sender: TObject);
+Var
+  fn : WideString;
+begin
+If LogSaveDialog.Execute Then
+  begin
+  fn := LogSaveDialog.FileName;
+  If LogSaveDialog.FilterIndex = 0 Then
+    fn := ChangeFIleExt(fn, '.log');
+
+  FModel.SaveToFile(fn);
   end;
 end;
 
