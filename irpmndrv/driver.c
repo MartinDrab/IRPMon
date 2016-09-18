@@ -165,6 +165,8 @@ BOOLEAN DriverFastIoDeviceControl(PFILE_OBJECT FileObject, BOOLEAN Wait, PVOID I
 
 	UNREFERENCED_PARAMETER(FileObject);
 	UNREFERENCED_PARAMETER(DeviceObject);
+	UNREFERENCED_PARAMETER(Wait);
+	
 	_HandleCDORequest(ControlCode, InputBuffer, InputBufferLength, OutputBuffer, OutputBufferLength, IoStatusBlock);
 	ret = TRUE;
 

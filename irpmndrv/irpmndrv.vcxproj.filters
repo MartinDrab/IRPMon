@@ -21,34 +21,34 @@
     <ClCompile Include="driver.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="handle-table.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="hash_table.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="hook.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="hook-handlers.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="modules.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="req-queue.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="string-hash-table.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="um-services.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="utils.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="utils-dym-array.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="hook-handlers.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="hook.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="um-services.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="req-queue.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="handle-table.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -59,7 +59,16 @@
     <ClInclude Include="driver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="handle-table.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="hash_table.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="hook.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="hook-handlers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="modules.h">
@@ -68,7 +77,13 @@
     <ClInclude Include="preprocessor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="req-queue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="string-hash-table.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="um-services.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="utils.h">
@@ -80,28 +95,13 @@
     <ClInclude Include="utils-dym-array-types.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\general-types.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\include\ioctls.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\include\kernel-shared.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="hook-handlers.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="hook.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="um-services.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="req-queue.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\general-types.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="handle-table.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

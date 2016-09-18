@@ -208,6 +208,7 @@ NTSTATUS RequestQueueModuleInit(PDRIVER_OBJECT DriverObject, PVOID Context)
 
 	UNREFERENCED_PARAMETER(DriverObject);
 	UNREFERENCED_PARAMETER(Context);
+	
 	InitializeListHead(&_requestListHead);
 	KeInitializeSpinLock(&_requestListLock);
 	IoInitializeRemoveLock(&_removeLock, 0, 0, 0x7fffffff);
@@ -220,6 +221,9 @@ NTSTATUS RequestQueueModuleInit(PDRIVER_OBJECT DriverObject, PVOID Context)
 VOID RequestQueueModuleFinit(PDRIVER_OBJECT DriverObject, PVOID Context)
 {
 	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; Context=0x%p", DriverObject, Context);
+
+	UNREFERENCED_PARAMETER(DriverObject);
+	UNREFERENCED_PARAMETER(Context);
 
 	_RequestQueueClear();
 	ExDeleteResourceLite(&_connectLock);

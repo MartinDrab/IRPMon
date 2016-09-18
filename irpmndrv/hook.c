@@ -978,6 +978,9 @@ NTSTATUS HookModuleInit(PDRIVER_OBJECT DriverObject, PVOID Context)
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; Context=0x%p", DriverObject, Context);
 
+	UNREFERENCED_PARAMETER(DriverObject);
+	UNREFERENCED_PARAMETER(Context);
+
 	KeInitializeSpinLock(&_driverValidationTableLock);
 	status = HashTableCreate(httNoSynchronization, 37, _HashFunction, _DriverValidationCompareFunction, NULL, &_driverValidationTable);
 	if (NT_SUCCESS(status)) {
@@ -1002,6 +1005,9 @@ VOID HookModuleFinit(PDRIVER_OBJECT DriverObject, PVOID Context)
 {
 	LARGE_INTEGER time;
 	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; Context=0x%p", DriverObject, Context);
+
+	UNREFERENCED_PARAMETER(DriverObject);
+	UNREFERENCED_PARAMETER(Context);
 
 	HashTableDestroy(_deviceValidationTable);
 	HashTableDestroy(_driverValidationTable);

@@ -27,6 +27,9 @@ static VOID NTAPI _DriverHandleCreated(PCHANDLE_TABLE HandleTable, PVOID Object,
 {
 	PDRIVER_HOOK_RECORD driverRecord = (PDRIVER_HOOK_RECORD)Object;
 
+	UNREFERENCED_PARAMETER(HandleTable);
+	UNREFERENCED_PARAMETER(Handle);
+
 	DriverHookRecordReference(driverRecord);
 
 	return;
@@ -35,6 +38,9 @@ static VOID NTAPI _DriverHandleCreated(PCHANDLE_TABLE HandleTable, PVOID Object,
 static VOID NTAPI _DriverHandleTranslated(PCHANDLE_TABLE HandleTable, PVOID Object, HANDLE Handle)
 {
 	PDRIVER_HOOK_RECORD driverRecord = (PDRIVER_HOOK_RECORD)Object;
+
+	UNREFERENCED_PARAMETER(HandleTable);
+	UNREFERENCED_PARAMETER(Handle);
 
 	DriverHookRecordReference(driverRecord);
 
@@ -45,6 +51,9 @@ static VOID NTAPI _DriverHandleDeleted(PCHANDLE_TABLE HandleTable, PVOID Object,
 {
 	PDRIVER_HOOK_RECORD driverRecord = (PDRIVER_HOOK_RECORD)Object;
 	
+	UNREFERENCED_PARAMETER(HandleTable);
+	UNREFERENCED_PARAMETER(Handle);
+
 	DriverHookRecordDereference(driverRecord);
 
 	return;
@@ -55,6 +64,9 @@ static VOID NTAPI _DeviceHandleCreated(PCHANDLE_TABLE HandleTable, PVOID Object,
 {
 	PDEVICE_HOOK_RECORD deviceRecord = (PDEVICE_HOOK_RECORD)Object;
 
+	UNREFERENCED_PARAMETER(HandleTable);
+	UNREFERENCED_PARAMETER(Handle);
+
 	DeviceHookRecordReference(deviceRecord);
 
 	return;
@@ -64,6 +76,9 @@ static VOID NTAPI _DevicerHandleTranslated(PCHANDLE_TABLE HandleTable, PVOID Obj
 {
 	PDEVICE_HOOK_RECORD deviceRecord = (PDEVICE_HOOK_RECORD)Object;
 
+	UNREFERENCED_PARAMETER(HandleTable);
+	UNREFERENCED_PARAMETER(Handle);
+
 	DeviceHookRecordReference(deviceRecord);
 
 	return;
@@ -72,6 +87,9 @@ static VOID NTAPI _DevicerHandleTranslated(PCHANDLE_TABLE HandleTable, PVOID Obj
 static VOID NTAPI _DeviceHandleDeleted(PCHANDLE_TABLE HandleTable, PVOID Object, HANDLE Handle)
 {
 	PDEVICE_HOOK_RECORD deviceRecord = (PDEVICE_HOOK_RECORD)Object;
+
+	UNREFERENCED_PARAMETER(HandleTable);
+	UNREFERENCED_PARAMETER(Handle);
 
 	DeviceHookRecordDereference(deviceRecord);
 
@@ -946,6 +964,8 @@ VOID UMDeleteHandlesForProcess(PEPROCESS Process)
 {
 	DEBUG_ENTER_FUNCTION("Process=0x%p", Process);
 
+	UNREFERENCED_PARAMETER(Process);
+
 	HandleTableClear(_deviceHandleTable);
 	HandleTableClear(_driverHandleTable);
 
@@ -1088,6 +1108,9 @@ NTSTATUS UMServicesModuleInit(PDRIVER_OBJECT DriverObject, PVOID Context)
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; Context=0x%p", DriverObject, Context);
 
+	UNREFERENCED_PARAMETER(DriverObject);
+	UNREFERENCED_PARAMETER(Context);
+
 	status = HandleTableCreate(httPassiveLevel, _DriverHandleCreated, _DriverHandleDeleted, _DriverHandleTranslated, &_driverHandleTable);
 	if (NT_SUCCESS(status)) {
 		status = HandleTableCreate(httPassiveLevel, _DeviceHandleCreated, _DeviceHandleDeleted, _DevicerHandleTranslated, &_deviceHandleTable);
@@ -1102,6 +1125,9 @@ NTSTATUS UMServicesModuleInit(PDRIVER_OBJECT DriverObject, PVOID Context)
 VOID UMServicesModuleFinit(PDRIVER_OBJECT DriverObject, PVOID Context)
 {
 	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; Context=0x%p", DriverObject, Context);
+
+	UNREFERENCED_PARAMETER(DriverObject);
+	UNREFERENCED_PARAMETER(Context);
 
 	HandleTableDestroy(_deviceHandleTable);
 	HandleTableDestroy(_driverHandleTable);

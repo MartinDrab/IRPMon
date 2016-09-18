@@ -281,6 +281,7 @@ NTSTATUS HandleTableHandleDuplicate(PCHANDLE_TABLE HandleTable, HANDLE Handle, P
 			newMapping->HandleValue = (HANDLE)InterlockedIncrement(&HandleTable->NextFreeHandle);
 			HashTableInsert(HandleTable->HashTable, &newMapping->HashItem, newMapping->HandleValue);
 			_HandleTableUnlock(HandleTable, irql);
+			*NewHandle = newMapping->HandleValue;
 		}
 
 		if (!NT_SUCCESS(status))
