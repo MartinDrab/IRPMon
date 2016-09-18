@@ -6,7 +6,7 @@
 #include "hash_table.h"
 
 
-typedef struct _CHANDLE_TABLE;
+struct _CHANDLE_TABLE;
 
 
 typedef VOID (NTAPI CHANDLE_TABLE_HANDLE_CREATED)(struct _CHANDLE_TABLE *HandleTable, PVOID Object, HANDLE Handle);
