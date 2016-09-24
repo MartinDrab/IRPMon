@@ -6,7 +6,7 @@
 			<MainSource>IRPMon.dpr</MainSource>
 			<Base>True</Base>
 			<Config Condition="'$(Config)'==''">Release</Config>
-			<Platform Condition="'$(Platform)'==''">Win64</Platform>
+			<Platform Condition="'$(Platform)'==''">Win32</Platform>
 			<TargetedPlatforms>3</TargetedPlatforms>
 			<AppType>Application</AppType>
 		</PropertyGroup>
@@ -51,9 +51,15 @@
 			<Cfg_2>true</Cfg_2>
 			<Base>true</Base>
 		</PropertyGroup>
+		<PropertyGroup Condition="('$(Platform)'=='Win32' and '$(Cfg_2)'=='true') or '$(Cfg_2_Win32)'!=''">
+			<Cfg_2_Win32>true</Cfg_2_Win32>
+			<CfgParent>Cfg_2</CfgParent>
+			<Cfg_2>true</Cfg_2>
+			<Base>true</Base>
+		</PropertyGroup>
 		<PropertyGroup Condition="'$(Base)'!=''">
 			<VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
-			<Manifest_File>None</Manifest_File>
+			<Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
 			<VerInfo_Locale>1029</VerInfo_Locale>
 			<DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;Vcl;Vcl.Imaging;Vcl.Touch;Vcl.Samples;Vcl.Shell;$(DCC_Namespace)</DCC_Namespace>
 			<Icon_MainIcon>$(BDS)\bin\delphi_PROJECTICON.ico</Icon_MainIcon>
@@ -72,7 +78,6 @@
 			<DCC_Namespace>Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;$(DCC_Namespace)</DCC_Namespace>
 			<VerInfo_Locale>1033</VerInfo_Locale>
 			<Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
-			<VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Base_Win32)'!=''">
 			<DCC_UsePackage>bindcompvcl;vcltouch;vcldbx;VclSmp;vcl;CloudService;vclib;dsnapcon;vclx;svnui;ibxpress;svn;vclimg;fmi;bdertl;vclactnband;vcldb;adortl;vcldsnap;$(DCC_UsePackage)</DCC_UsePackage>
@@ -80,7 +85,6 @@
 			<DCC_Namespace>Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;Bde;$(DCC_Namespace)</DCC_Namespace>
 			<VerInfo_Locale>1033</VerInfo_Locale>
 			<Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
-			<VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Cfg_1)'!=''">
 			<DCC_Define>DEBUG;$(DCC_Define)</DCC_Define>
@@ -90,10 +94,12 @@
 			<DCC_RemoteDebug>true</DCC_RemoteDebug>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Cfg_1_Win64)'!=''">
+			<Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
 			<VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
 			<VerInfo_Locale>1033</VerInfo_Locale>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Cfg_1_Win32)'!=''">
+			<Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
 			<DCC_ExeOutput>..\bin\$(Platform)\$(Config)</DCC_ExeOutput>
 			<VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
 			<VerInfo_Locale>1033</VerInfo_Locale>
@@ -107,6 +113,7 @@
 			<DCC_DebugInformation>false</DCC_DebugInformation>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Cfg_2_Win64)'!=''">
+			<Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
 			<VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
 			<VerInfo_AutoGenVersion>true</VerInfo_AutoGenVersion>
 			<VerInfo_MajorVer>0</VerInfo_MajorVer>
@@ -115,12 +122,19 @@
 			<VerInfo_Locale>1033</VerInfo_Locale>
 			<VerInfo_Release>100</VerInfo_Release>
 			<VerInfo_Keys>CompanyName=Martin Dráb;FileDescription=IRP Monitor GUI Application;FileVersion=0.5.100.100;InternalName=IRPMon.exe;LegalCopyright=Copyright (c) Martin Dráb, 2015-2016;LegalTrademarks=;OriginalFilename=IRPMon.exe;ProductName=IRP Monitor;ProductVersion=0.5.0.0;Comments=</VerInfo_Keys>
+		</PropertyGroup>
+		<PropertyGroup Condition="'$(Cfg_2_Win32)'!=''">
 			<Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
+			<VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
+			<VerInfo_Locale>1033</VerInfo_Locale>
 		</PropertyGroup>
 		<ItemGroup>
 			<DelphiCompile Include="$(MainSource)">
 				<MainSource>MainSource</MainSource>
 			</DelphiCompile>
+			<RcCompile Include="uac.rc">
+				<Form>uac.res</Form>
+			</RcCompile>
 			<DCCReference Include="MainForm.pas">
 				<Form>MainFrm</Form>
 			</DCCReference>
@@ -134,17 +148,14 @@
 			<DCCReference Include="RequestFilter.pas"/>
 			<DCCReference Include="TreeForm.pas">
 				<Form>TreeFrm</Form>
-				<FormType>dfm</FormType>
 			</DCCReference>
 			<DCCReference Include="HookObjects.pas"/>
 			<DCCReference Include="HookProgressForm.pas">
 				<Form>HookProgressFrm</Form>
-				<FormType>dfm</FormType>
 			</DCCReference>
 			<DCCReference Include="RequestThread.pas"/>
 			<DCCReference Include="RequestDetailsForm.pas">
 				<Form>RequestDetailsFrm</Form>
-				<FormType>dfm</FormType>
 			</DCCReference>
 			<DCCReference Include="AboutForm.pas">
 				<Form>AboutBox</Form>
