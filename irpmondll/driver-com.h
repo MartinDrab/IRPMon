@@ -3,6 +3,8 @@
 #define __IRPMONDLL_DRIVER_COM_H__
 
 #include <windows.h>
+#include "general-types.h"
+#include "kernel-shared.h"
 
 
 DWORD DriverComHookDriver(PWCHAR DriverName, PDRIVER_MONITOR_SETTINGS MonitorSettings, PHANDLE HookHandle, PVOID *ObjectId);
@@ -31,6 +33,16 @@ DWORD DriverComDriverOpen(PVOID ID, PHANDLE Handle);
 DWORD DriverComDriverHandleClose(HANDLE Handle);
 DWORD DriverComDeviceOpen(PVOID ID, PHANDLE Handle);
 DWORD DriverComDeviceHandleClose(HANDLE Handle);
+
+DWORD DriverComClassWatchRegister(PWCHAR ClassGuid, BOOLEAN UpperFilter, BOOLEAN Beginning);
+DWORD DriverComClassWatchUnregister(PWCHAR ClassGuid, BOOLEAN UpperFilter, BOOLEAN Beginning);
+DWORD DriverComClassWatchEnum(PCLASS_WATCH_RECORD *Array, PULONG Count);
+VOID DriverComClassWatchEnumFree(PCLASS_WATCH_RECORD Array, ULONG Count);
+
+DWORD DriverComDriverNameWatchRegister(PWCHAR DriverName, PDRIVER_MONITOR_SETTINGS MonitorSettings);
+DWORD DriverComDriverNameWatchUnregister(PWCHAR DriverName);
+DWORD DriverComDriverNameWatchEnum(PDRIVER_NAME_WATCH_RECORD *Array, PULONG Count);
+VOID DriverComDriverNameWatchEnumFree(PDRIVER_NAME_WATCH_RECORD Array, ULONG Count);
 
 DWORD DriverComModuleInit(VOID);
 VOID DriverComModuleFinit(VOID);

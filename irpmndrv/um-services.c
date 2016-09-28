@@ -9,6 +9,7 @@
 #include "handle-table.h"
 #include "hook.h"
 #include "req-queue.h"
+#include "pnp-driver-watch.h"
 #include "um-services.h"
 
 
@@ -1097,6 +1098,187 @@ NTSTATUS UMCloseHandle(PIOCTL_IRPMONDRV_HOOK_CLOSE_INPUT InputBuffer, ULONG Inpu
 	DEBUG_EXIT_FUNCTION("0x%x", status);
 	return status;
 }
+
+
+NTSTATUS UMClassWatchRegister(PIOCTL_IRPMNDRV_CLASS_WATCH_REGISTER_INPUT InputBuffer, ULONG InputBufferLength)
+{
+	GUID classGuid;
+	UNICODE_STRING uClassGuid;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	IOCTL_IRPMNDRV_CLASS_WATCH_REGISTER_INPUT input = {0};
+	DEBUG_ENTER_FUNCTION("InputBuffer=0x%p; InputBufferLength=%u", InputBuffer, InputBufferLength);
+
+	if (InputBufferLength >= sizeof(IOCTL_IRPMNDRV_CLASS_WATCH_REGISTER_INPUT)) {
+		status = STATUS_SUCCESS;
+		if (ExGetPreviousMode() == UserMode) {
+			__try {
+				ProbeForRead(InputBuffer, sizeof(input), 1);
+				input = *InputBuffer;
+			} __except (EXCEPTION_EXECUTE_HANDLER) {
+				status = GetExceptionCode();
+			}
+		} else input = *InputBuffer;
+
+		if (NT_SUCCESS(status)) {
+			if ((input.Flags & CLASS_WATCH_FLAG_BINARY) == 0) {
+				uClassGuid.Length = sizeof(input.Data.ClassGuidString);
+				uClassGuid.MaximumLength = uClassGuid.Length;
+				uClassGuid.Buffer = input.Data.ClassGuidString;
+				status = RtlGUIDFromString(&uClassGuid, &classGuid);
+			} else classGuid = input.Data.ClassGuidBinary;
+
+			if (NT_SUCCESS(status))
+				status = PDWClassRegister(&classGuid, (input.Flags & CLASS_WATCH_FLAG_UPPERFILTER), (input.Flags & CLASS_WATCH_FLAG_BEGINNING));
+		}
+	} else status = STATUS_BUFFER_TOO_SMALL;
+
+	DEBUG_EXIT_FUNCTION("0x%x", status);
+	return status;
+}
+
+
+NTSTATUS UMClassWatchUnregister(PIOCTL_IRPMNDRV_CLASS_WATCH_UNREGISTER_INPUT InputBuffer, ULONG InputBUfferLength)
+{
+	GUID classGuid;
+	UNICODE_STRING uClassGuid;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	IOCTL_IRPMNDRV_CLASS_WATCH_UNREGISTER_INPUT input = { 0 };
+	DEBUG_ENTER_FUNCTION("InputBuffer=0x%p; InputBUfferLength=%u", InputBuffer, InputBUfferLength);
+
+	if (InputBUfferLength >= sizeof(IOCTL_IRPMNDRV_CLASS_WATCH_UNREGISTER_INPUT)) {
+		status = STATUS_SUCCESS;
+		if (ExGetPreviousMode() == UserMode) {
+			__try {
+				ProbeForRead(InputBuffer, sizeof(input), 1);
+				input = *InputBuffer;
+			} __except (EXCEPTION_EXECUTE_HANDLER) {
+				status = GetExceptionCode();
+			}
+		} else input = *InputBuffer;
+
+		if (NT_SUCCESS(status)) {
+			if ((input.Flags & CLASS_WATCH_FLAG_BINARY) == 0) {
+				uClassGuid.Length = sizeof(input.Data.ClassGuidString);
+				uClassGuid.MaximumLength = uClassGuid.Length;
+				uClassGuid.Buffer = input.Data.ClassGuidString;
+				status = RtlGUIDFromString(&uClassGuid, &classGuid);
+			} else classGuid = input.Data.ClassGuidBinary;
+
+			if (NT_SUCCESS(status))
+				status = PDWClassUnregister(&classGuid, (input.Flags & CLASS_WATCH_FLAG_UPPERFILTER), (input.Flags & CLASS_WATCH_FLAG_BEGINNING));
+		}
+	} else status = STATUS_BUFFER_TOO_SMALL;
+
+	DEBUG_EXIT_FUNCTION("0x%x", status);
+	return status;
+}
+
+
+NTSTATUS UMDriverNameWatchRegister(PIOCTL_IRPMNDRV_DRIVER_WATCH_REGISTER_INPUT InputBuffer, ULONG InputBufferLength)
+{
+	UNICODE_STRING uDriverName;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	IOCTL_IRPMNDRV_DRIVER_WATCH_REGISTER_INPUT input = {0};
+	DEBUG_ENTER_FUNCTION("InputBuffer=0x%p; InputBufferLength=%u", InputBuffer, InputBufferLength);
+
+	if (InputBufferLength >= sizeof(IOCTL_IRPMNDRV_DRIVER_WATCH_REGISTER_INPUT)) {
+		RtlSecureZeroMemory(&uDriverName, sizeof(uDriverName));
+		InputBufferLength -= sizeof(IOCTL_IRPMNDRV_DRIVER_WATCH_REGISTER_INPUT);
+		if (ExGetPreviousMode() == UserMode) {
+			__try {
+				ProbeForRead(InputBuffer, sizeof(input), 1);
+				input = *InputBuffer;
+				if (input.NameLength <= InputBufferLength) {
+					ProbeForRead(InputBuffer + 1, input.NameLength, 1);
+					uDriverName.Length = input.NameLength;
+					uDriverName.MaximumLength = uDriverName.Length;
+					uDriverName.Buffer = (PWCHAR)HeapMemoryAllocPaged(uDriverName.Length);
+					if (uDriverName.Buffer != NULL) {
+						memcpy(uDriverName.Buffer, InputBuffer + 1, uDriverName.Length);
+						status = STATUS_SUCCESS;
+					} else status = STATUS_INSUFFICIENT_RESOURCES;
+				} else status = STATUS_BUFFER_TOO_SMALL;
+			} __except (EXCEPTION_EXECUTE_HANDLER) {
+				status = GetExceptionCode();
+				if (uDriverName.Buffer != NULL)
+					HeapMemoryFree(uDriverName.Buffer);
+			}
+		} else {
+			input = *InputBuffer;
+			if (input.NameLength <= InputBufferLength) {
+				uDriverName.Length = input.NameLength;
+				uDriverName.MaximumLength = uDriverName.Length;
+				uDriverName.Buffer = (PWCHAR)HeapMemoryAllocPaged(uDriverName.Length);
+				if (uDriverName.Buffer != NULL) {
+					memcpy(uDriverName.Buffer, InputBuffer + 1, uDriverName.Length);
+					status = STATUS_SUCCESS;
+				} else status = STATUS_INSUFFICIENT_RESOURCES;
+			} else status = STATUS_BUFFER_TOO_SMALL;
+		}
+
+		if (NT_SUCCESS(status)) {
+			status = PWDDriverNameRegister(&uDriverName, &input.MonitorSettings);
+			HeapMemoryFree(uDriverName.Buffer);
+		}
+	} else status = STATUS_BUFFER_TOO_SMALL;
+
+	DEBUG_EXIT_FUNCTION("0x%x", status);
+	return status;
+}
+
+
+NTSTATUS UMDriverNamehUnregister(PIOCTL_IRPMNDRV_DRIVER_WATCH_UNREGISTER_INPUT InputBuffer, ULONG InputBUfferLength)
+{
+	UNICODE_STRING uDriverName;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	IOCTL_IRPMNDRV_DRIVER_WATCH_UNREGISTER_INPUT input = { 0 };
+	DEBUG_ENTER_FUNCTION("InputBuffer=0x%p; InputBufferLength=%u", InputBuffer, InputBufferLength);
+
+	if (InputBUfferLength >= sizeof(IOCTL_IRPMNDRV_DRIVER_WATCH_UNREGISTER_INPUT)) {
+		RtlSecureZeroMemory(&uDriverName, sizeof(uDriverName));
+		InputBUfferLength -= sizeof(IOCTL_IRPMNDRV_DRIVER_WATCH_UNREGISTER_INPUT);
+		if (ExGetPreviousMode() == UserMode) {
+			__try {
+				ProbeForRead(InputBuffer, sizeof(input), 1);
+				input = *InputBuffer;
+				if (input.NameLength <= InputBUfferLength) {
+					ProbeForRead(InputBuffer + 1, input.NameLength, 1);
+					uDriverName.Length = input.NameLength;
+					uDriverName.MaximumLength = uDriverName.Length;
+					uDriverName.Buffer = (PWCHAR)HeapMemoryAllocPaged(uDriverName.Length);
+					if (uDriverName.Buffer != NULL) {
+						memcpy(uDriverName.Buffer, InputBuffer + 1, uDriverName.Length);
+						status = STATUS_SUCCESS;
+					} else status = STATUS_INSUFFICIENT_RESOURCES;
+				} else status = STATUS_BUFFER_TOO_SMALL;
+			} __except (EXCEPTION_EXECUTE_HANDLER) {
+				status = GetExceptionCode();
+				if (uDriverName.Buffer != NULL)
+					HeapMemoryFree(uDriverName.Buffer);
+			}
+		} else {
+			input = *InputBuffer;
+			if (input.NameLength <= InputBUfferLength) {
+				uDriverName.Length = input.NameLength;
+				uDriverName.MaximumLength = uDriverName.Length;
+				uDriverName.Buffer = (PWCHAR)HeapMemoryAllocPaged(uDriverName.Length);
+				if (uDriverName.Buffer != NULL) {
+					memcpy(uDriverName.Buffer, InputBuffer + 1, uDriverName.Length);
+					status = STATUS_SUCCESS;
+				} else status = STATUS_INSUFFICIENT_RESOURCES;
+			} else status = STATUS_BUFFER_TOO_SMALL;
+		}
+
+		if (NT_SUCCESS(status)) {
+			status = PWDDriverNameUnregister(&uDriverName);
+			HeapMemoryFree(uDriverName.Buffer);
+		}
+	} else status = STATUS_BUFFER_TOO_SMALL;
+
+	DEBUG_EXIT_FUNCTION("0x%x", status);
+	return status;
+}
+
 
 
 /************************************************************************/

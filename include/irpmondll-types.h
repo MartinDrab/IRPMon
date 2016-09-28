@@ -35,6 +35,25 @@ typedef struct _IRPMON_DRIVER_INFO {
 	PIRPMON_DEVICE_INFO *Devices;
 } IRPMON_DRIVER_INFO, *PIRPMON_DRIVER_INFO;
 
+/************************************************************************/
+/*                  CLASS WATCHES                                       */
+/************************************************************************/
+
+typedef struct _CLASS_WATCH_RECORD {
+	GUID ClassGuid;
+	BOOLEAN UpperFilter;
+	BOOLEAN Beginning;
+} CLASS_WATCH_RECORD, *PCLASS_WATCH_RECORD;
+
+/************************************************************************/
+/*                DRIVER NAME WATCHES                                   */
+/************************************************************************/
+
+typedef struct _DRIVER_NAME_WATCH_RECORD {
+	DRIVER_MONITOR_SETTINGS MonitorSettings;
+	PWCHAR DriverName;
+} DRIVER_NAME_WATCH_RECORD, *PDRIVER_NAME_WATCH_RECORD;
+
 
 
 #endif 

@@ -51,6 +51,9 @@
     <ClCompile Include="utils-dym-array.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="pnp-driver-watch.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="allocator.h">
@@ -102,6 +105,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\include\kernel-shared.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="pnp-driver-watch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

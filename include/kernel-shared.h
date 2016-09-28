@@ -82,4 +82,24 @@ typedef struct _HOOKED_OBJECTS_INFO {
 	// HOOKED_DRIVER_INFO
 } HOOKED_OBJECTS_INFO, *PHOOKED_OBJECTS_INFO;
 
+/************************************************************************/
+/*                    WATCHES                                           */
+/************************************************************************/
+
+#define CLASS_WATCH_FLAG_BINARY					0x1
+#define CLASS_WATCH_FLAG_UPPERFILTER			0x2
+#define CLASS_WATCH_FLAG_BEGINNING				0x4
+#define CLASS_WATCH_VALID_FLAGS					(CLASS_WATCH_FLAG_BINARY | CLASS_WATCH_FLAG_UPPERFILTER | CLASS_WATCH_FLAG_BEGINNING)
+
+typedef struct _CLASS_WATCH_ENTRY {
+	GUID ClassGuid;
+	ULONG Flags;
+} CLASS_WATCH_ENTRY, *PCLASS_WATCH_ENTRY;
+
+typedef struct _DRIVER_NAME_WATCH_ENTRY {
+	DRIVER_MONITOR_SETTINGS MonitorSettings;
+	ULONG NameLength;
+} DRIVER_NAME_WATCH_ENTRY, *PDRIVER_NAME_WATCH_ENTRY;
+
+
 #endif 

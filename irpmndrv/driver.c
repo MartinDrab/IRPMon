@@ -9,6 +9,7 @@
 #include "modules.h"
 #include "req-queue.h"
 #include "um-services.h"
+#include "pnp-driver-watch.h"
 #include "driver.h"
 
 
@@ -120,6 +121,26 @@ static NTSTATUS _HandleCDORequest(ULONG ControlCode, PVOID InputBuffer, ULONG In
 			break;
 		case IOCTL_IRPMONDRV_HOOK_CLOSE:
 			status = UMCloseHandle((PIOCTL_IRPMONDRV_HOOK_CLOSE_INPUT)InputBuffer, InputBufferLength);
+			break;
+
+		case IOCTL_IRPMNDRV_CLASS_WATCH_REGISTER:
+			status = UMClassWatchRegister((PIOCTL_IRPMNDRV_CLASS_WATCH_REGISTER_INPUT)InputBuffer, InputBufferLength);
+			break;
+		case IOCTL_IRPMNDRV_CLASS_WATCH_UNREGISTER:
+			status = UMClassWatchUnregister((PIOCTL_IRPMNDRV_CLASS_WATCH_UNREGISTER_INPUT)InputBuffer, InputBufferLength);
+			break;
+		case IOCTL_IRPMNDRV_CLASS_WATCH_ENUM:
+			status = PDWClassEnumerate((PIOCTL_IRPMNDRV_CLASS_WATCH_OUTPUT)InputBuffer, InputBufferLength, &IoStatus->Information, ExGetPreviousMode());
+			break;
+
+		case IOCTL_IRPMNDRV_DRIVER_WATCH_REGISTER:
+			status = UMDriverNameWatchRegister((PIOCTL_IRPMNDRV_DRIVER_WATCH_REGISTER_INPUT)InputBuffer, InputBufferLength);
+			break;
+		case IOCTL_IRPMNDRV_DRIVER_WATCH_UNREGISTER:
+			status = UMDriverNamehUnregister((PIOCTL_IRPMNDRV_DRIVER_WATCH_UNREGISTER_INPUT)InputBuffer, InputBufferLength);
+			break;
+		case IOCTL_IRPMNDRV_DRIVER_WATCH_ENUM:
+			status = PWDDriverNameEnumerate((PIOCTL_IRPMNDRV_DRIVER_WATCH_ENUM_OUTPUT)InputBuffer, InputBufferLength, &IoStatus->Information, ExGetPreviousMode());
 			break;
 		default:
 			status = STATUS_INVALID_DEVICE_REQUEST;
@@ -265,6 +286,7 @@ static DRIVER_MODULE_ENTRY_PARAMETERS _moduleEntries[] = {
 	{HookModuleInit, HookModuleFinit, NULL},
 	{RequestQueueModuleInit, RequestQueueModuleFinit, NULL},
 	{UMServicesModuleInit, UMServicesModuleFinit, NULL},
+	{PWDModuleInit, PWDModuleFinit, NULL},
 	{DriverInit, DriverFinit, NULL},
 };
 
@@ -273,7 +295,7 @@ NTSTATUS DriverEntry(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath)
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=0x%p", DriverObject, RegistryPath);
 
-	UNREFERENCED_PARAMETER(RegistryPath);
+	_moduleEntries[3].Context = RegistryPath;
 	status= ModuleFrameworkInit(DriverObject);
 	if (NT_SUCCESS(status)) {
 		status = ModuleFrameworkAddModules(_moduleEntries, sizeof(_moduleEntries) / sizeof(DRIVER_MODULE_ENTRY_PARAMETERS));

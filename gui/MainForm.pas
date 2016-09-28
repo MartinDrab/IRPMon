@@ -34,6 +34,7 @@ Type
     SaveMenuItem: TMenuItem;
     LogSaveDialog: TSaveDialog;
     N1: TMenuItem;
+    FilterHighlightMenuItem: TMenuItem;
     Procedure ClearMenuItemClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure CaptureEventsMenuItemClick(Sender: TObject);

@@ -48,8 +48,8 @@ object MainFrm: TMainFrm
     end
   end
   object MainMenu1: TMainMenu
-    Left = 232
-    Top = 96
+    Left = 168
+    Top = 176
     object ActionMenuItem: TMenuItem
       Caption = 'Action'
       object TreeMenuItem: TMenuItem
@@ -81,6 +81,9 @@ object MainFrm: TMainFrm
         Caption = 'Refresh name cache'
         OnClick = RefreshNameCacheMenuItemClick
       end
+      object FilterHighlightMenuItem: TMenuItem
+        Caption = 'Filter / Highlight...'
+      end
       object N6: TMenuItem
         Caption = '-'
       end
@@ -110,12 +113,12 @@ object MainFrm: TMainFrm
   object IrpMonAppEvents: TApplicationEvents
     OnException = IrpMonAppEventsException
     OnMessage = IrpMonAppEventsMessage
-    Left = 148
-    Top = 96
+    Left = 164
+    Top = 128
   end
   object LogSaveDialog: TSaveDialog
     Filter = 'Log files [*.log]|*.log|All files [*.*]|*.*'
-    Left = 152
-    Top = 128
+    Left = 160
+    Top = 88
   end
 end

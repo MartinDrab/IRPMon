@@ -3,6 +3,7 @@
 #include "debug.h"
 #include "ioctls.h"
 #include "kernel-shared.h"
+#include "general-types.h"
 #include "irpmondll-types.h"
 #include "driver-com.h"
 
@@ -10,13 +11,16 @@
 /*                           GLOBAL VARIABLES                           */
 /************************************************************************/
 
+
 static HANDLE _deviceHandle = INVALID_HANDLE_VALUE;
 static BOOLEAN _initialized = FALSE;
 static BOOLEAN _connected = FALSE;
 
+
 /************************************************************************/
 /*                          HELPER ROUTINES                             */
 /************************************************************************/
+
 
 static DWORD _SynchronousNoIOIOCTL(DWORD Code)
 {
@@ -32,6 +36,7 @@ static DWORD _SynchronousNoIOIOCTL(DWORD Code)
 	return ret;
 }
 
+
 static DWORD _SynchronousWriteIOCTL(DWORD Code, PVOID InputBuffer, ULONG InputBufferLength)
 {
 	DWORD dummy = 0;
@@ -45,6 +50,7 @@ static DWORD _SynchronousWriteIOCTL(DWORD Code, PVOID InputBuffer, ULONG InputBu
 	DEBUG_EXIT_FUNCTION("%u", ret);
 	return ret;
 }
+
 
 static DWORD _SynchronousReadIOCTL(DWORD Code, PVOID OutputBuffer, ULONG OutputBufferLength)
 {
@@ -60,6 +66,7 @@ static DWORD _SynchronousReadIOCTL(DWORD Code, PVOID OutputBuffer, ULONG OutputB
 	return ret;
 }
 
+
 static DWORD _SynchronousOtherIOCTL(DWORD Code, PVOID InputBuffer, ULONG InputBufferLength, PVOID OutputBuffer, ULONG OutputBufferLength)
 {
 	DWORD dummy = 0;
@@ -73,6 +80,7 @@ static DWORD _SynchronousOtherIOCTL(DWORD Code, PVOID InputBuffer, ULONG InputBu
 	DEBUG_EXIT_FUNCTION("%u", ret);
 	return ret;
 }
+
 
 static PIRPMON_DRIVER_INFO _DriverInfoAlloc(PVOID DriverObject, PWCHAR Drivername, ULONG DriverNameLen, ULONG DeviceCount)
 {
@@ -95,6 +103,7 @@ static PIRPMON_DRIVER_INFO _DriverInfoAlloc(PVOID DriverObject, PWCHAR Drivernam
 	return ret;
 }
 
+
 static VOID _DriverInfoFree(PIRPMON_DRIVER_INFO Info)
 {
 	DEBUG_ENTER_FUNCTION("Info=0x%p", Info);
@@ -104,6 +113,7 @@ static VOID _DriverInfoFree(PIRPMON_DRIVER_INFO Info)
 	DEBUG_EXIT_FUNCTION_VOID();
 	return;
 }
+
 
 static PIRPMON_DEVICE_INFO _DeviceInfoAlloc(PVOID DeviceObject, PVOID AttachedDevice, PWCHAR DeviceName, ULONG DeviceNameLen)
 {
@@ -125,6 +135,7 @@ static PIRPMON_DEVICE_INFO _DeviceInfoAlloc(PVOID DeviceObject, PVOID AttachedDe
 	return ret;
 }
 
+
 static VOID _DeviceInfoFree(PIRPMON_DEVICE_INFO Info)
 {
 	DEBUG_ENTER_FUNCTION("Info=0x%p", Info);
@@ -134,6 +145,7 @@ static VOID _DeviceInfoFree(PIRPMON_DEVICE_INFO Info)
 	DEBUG_EXIT_FUNCTION_VOID();
 	return;
 }
+
 
 static PWCHAR _CopyString(PWCHAR Str)
 {
@@ -148,6 +160,7 @@ static PWCHAR _CopyString(PWCHAR Str)
 
 	return ret;
 }
+
 
 static DWORD _ObjectOpen(EHandletype ObjectType, PVOID ID, PHANDLE Handle)
 {
@@ -165,6 +178,7 @@ static DWORD _ObjectOpen(EHandletype ObjectType, PVOID ID, PHANDLE Handle)
 	DEBUG_EXIT_FUNCTION("%u", ret);
 	return ret;
 }
+
 
 static DWORD _ObjectClose(EHandletype ObjectType, HANDLE Handle)
 {
@@ -743,8 +757,261 @@ DWORD DriverComDeviceHandleClose(HANDLE Handle)
 
 
 /************************************************************************/
+/*                     CLASS WATCH                                      */
+/************************************************************************/
+
+DWORD DriverComClassWatchRegister(PWCHAR ClassGuid, BOOLEAN UpperFilter, BOOLEAN Beginning)
+{
+	DWORD ret = ERROR_GEN_FAILURE;
+	IOCTL_IRPMNDRV_CLASS_WATCH_REGISTER_INPUT input;
+	DEBUG_ENTER_FUNCTION("ClassGuid=\"%S\"; UpperFilter=%u; Beginning=%u", ClassGuid, UpperFilter, Beginning);
+
+	if (wcslen(ClassGuid) == sizeof(input.Data.ClassGuidString) / sizeof(WCHAR)) {
+		input.Flags = CLASS_WATCH_FLAG_BINARY;
+		if (UpperFilter)
+			input.Flags |= CLASS_WATCH_FLAG_UPPERFILTER;
+
+		if (Beginning)
+			input.Flags |= CLASS_WATCH_FLAG_BEGINNING;
+
+		memcpy(input.Data.ClassGuidString, ClassGuid, sizeof(input.Data.ClassGuidString));
+		ret = _SynchronousWriteIOCTL(IOCTL_IRPMNDRV_CLASS_WATCH_REGISTER, &input, sizeof(input));
+	} else ret = ERROR_INVALID_PARAMETER;
+
+	DEBUG_EXIT_FUNCTION("%u", ret);
+	return ret;
+}
+
+
+DWORD DriverComClassWatchUnregister(PWCHAR ClassGuid, BOOLEAN UpperFilter, BOOLEAN Beginning)
+{
+	DWORD ret = ERROR_GEN_FAILURE;
+	IOCTL_IRPMNDRV_CLASS_WATCH_UNREGISTER_INPUT input;
+	DEBUG_ENTER_FUNCTION("ClassGuid=\"%S\"; UpperFilter=%u; Beginning=%u", ClassGuid, UpperFilter, Beginning);
+
+	if (wcslen(ClassGuid) == sizeof(input.Data.ClassGuidString) / sizeof(WCHAR)) {
+		input.Flags = CLASS_WATCH_FLAG_BINARY;
+		if (UpperFilter)
+			input.Flags |= CLASS_WATCH_FLAG_UPPERFILTER;
+
+		if (Beginning)
+			input.Flags |= CLASS_WATCH_FLAG_BEGINNING;
+
+		memcpy(input.Data.ClassGuidString, ClassGuid, sizeof(input.Data.ClassGuidString));
+		ret = _SynchronousWriteIOCTL(IOCTL_IRPMNDRV_CLASS_WATCH_UNREGISTER, &input, sizeof(input));
+	} else ret = ERROR_INVALID_PARAMETER;
+
+	DEBUG_EXIT_FUNCTION("%u", ret);
+	return ret;
+}
+
+
+DWORD DriverComClassWatchEnum(PCLASS_WATCH_RECORD *Array, PULONG Count)
+{
+	PCLASS_WATCH_RECORD tmpArray = NULL;
+	ULONG outputSize = 128;
+	PIOCTL_IRPMNDRV_CLASS_WATCH_OUTPUT output = NULL;
+	DWORD ret = ERROR_GEN_FAILURE;
+	DEBUG_ENTER_FUNCTION("Array=0x%p; Count=0x%p", Array, Count);
+
+	do {
+		outputSize *= 2;
+		output = (PIOCTL_IRPMNDRV_CLASS_WATCH_OUTPUT)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, outputSize);
+		if (output != NULL) {
+			ret = _SynchronousReadIOCTL(IOCTL_IRPMNDRV_CLASS_WATCH_ENUM, output, outputSize);
+			if (ret != ERROR_SUCCESS)
+				HeapFree(GetProcessHeap(), 0, output);
+		} else ret = ERROR_NOT_ENOUGH_MEMORY;
+	} while (ret == ERROR_INSUFFICIENT_BUFFER);
+
+	if (ret == ERROR_SUCCESS) {
+		if (output->Count > 0) {
+			tmpArray = (PCLASS_WATCH_RECORD)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, output->Count*sizeof(CLASS_WATCH_RECORD));
+			if (tmpArray != NULL) {
+				PCLASS_WATCH_RECORD rec = tmpArray;
+				PCLASS_WATCH_ENTRY entry = output->Entries;
+
+				for (SIZE_T i = 0; i < output->Count; ++i) {
+					rec->ClassGuid = entry->ClassGuid;
+					rec->UpperFilter = (entry->Flags & CLASS_WATCH_FLAG_UPPERFILTER);
+					rec->Beginning = (entry->Flags & CLASS_WATCH_FLAG_BEGINNING);
+					++entry;
+					++rec;
+				}
+
+				if (ret == ERROR_SUCCESS) {
+					*Array = tmpArray;
+					*Count = output->Count;
+				}
+			} else ret = ERROR_NOT_ENOUGH_MEMORY;
+		} else {
+			*Array = NULL;
+			*Count = output->Count;
+		}
+
+		HeapFree(GetProcessHeap(), 0, output);
+	}
+
+	DEBUG_EXIT_FUNCTION("%u, *Array=0x%p, *Count=%u", ret, *Array, *Count);
+	return ret;
+}
+
+
+VOID DriverComClassWatchEnumFree(PCLASS_WATCH_RECORD Array, ULONG Count)
+{
+	DEBUG_ENTER_FUNCTION("Array=0x%p; Count=%u", Array, Count);
+
+	if (Count > 0)
+		HeapFree(GetProcessHeap(), 0, Array);
+
+	DEBUG_EXIT_FUNCTION_VOID();
+	return;
+}
+
+/************************************************************************/
+/*                   DRIVER NAME WATCH                                  */
+/************************************************************************/
+
+DWORD DriverComDriverNameWatchRegister(PWCHAR DriverName, PDRIVER_MONITOR_SETTINGS MonitorSettings)
+{
+	DWORD ret = ERROR_GEN_FAILURE;
+	SIZE_T len = 0;
+	SIZE_T inputLen = 0;
+	PIOCTL_IRPMNDRV_DRIVER_WATCH_REGISTER_INPUT input = NULL;
+	DEBUG_ENTER_FUNCTION("DriverName=\"%S\"; MonitorSettings=0x%p", DriverName, MonitorSettings);
+
+	len = wcslen(DriverName)*sizeof(WCHAR);
+	if (len < (1 << (sizeof(USHORT) * 8))) {
+		inputLen = sizeof(IOCTL_IRPMNDRV_DRIVER_WATCH_REGISTER_INPUT) + len;
+		input = (PIOCTL_IRPMNDRV_DRIVER_WATCH_REGISTER_INPUT)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, inputLen);
+		if (input != NULL) {
+			input->MonitorSettings = *MonitorSettings;
+			input->NameLength = (USHORT)len;
+			memcpy(input + 1, DriverName, len);
+			ret = _SynchronousWriteIOCTL(IOCTL_IRPMNDRV_DRIVER_WATCH_REGISTER, input, inputLen);
+			HeapFree(GetProcessHeap(), 0, input);
+		} else ret = ERROR_NOT_ENOUGH_MEMORY;
+	} else ret = ERROR_INVALID_PARAMETER;
+
+	DEBUG_EXIT_FUNCTION("%u", ret);
+	return ret;
+}
+
+
+DWORD DriverComDriverNameWatchUnregister(PWCHAR DriverName)
+{
+	DWORD ret = ERROR_GEN_FAILURE;
+	SIZE_T len = 0;
+	SIZE_T inputLen = 0;
+	PIOCTL_IRPMNDRV_DRIVER_WATCH_UNREGISTER_INPUT input = NULL;
+	DEBUG_ENTER_FUNCTION("DriverName=\"%S\"", DriverName);
+
+	len = wcslen(DriverName)*sizeof(WCHAR);
+	if (len < (1 << (sizeof(USHORT) * 8))) {
+		inputLen = sizeof(IOCTL_IRPMNDRV_DRIVER_WATCH_UNREGISTER_INPUT) + len;
+		input = (PIOCTL_IRPMNDRV_DRIVER_WATCH_UNREGISTER_INPUT)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, inputLen);
+		if (input != NULL) {
+			input->NameLength = (USHORT)len;
+			memcpy(input + 1, DriverName, len);
+			ret = _SynchronousWriteIOCTL(IOCTL_IRPMNDRV_DRIVER_WATCH_UNREGISTER, input, inputLen);
+			HeapFree(GetProcessHeap(), 0, input);
+		} else ret = ERROR_NOT_ENOUGH_MEMORY;
+	} else ret = ERROR_INVALID_PARAMETER;
+
+	DEBUG_EXIT_FUNCTION("%u", ret);
+	return ret;
+}
+
+
+DWORD DriverComDriverNameWatchEnum(PDRIVER_NAME_WATCH_RECORD *Array, PULONG Count)
+{
+	PDRIVER_NAME_WATCH_RECORD tmpArray = NULL;
+	ULONG outputSize = 128;
+	PIOCTL_IRPMNDRV_DRIVER_WATCH_ENUM_OUTPUT output = NULL;
+	DWORD ret = ERROR_GEN_FAILURE;
+	DEBUG_ENTER_FUNCTION("Array=0x%p; Count=0x%p", Array, Count);
+
+	do {
+		outputSize *= 2;
+		output = (PIOCTL_IRPMNDRV_DRIVER_WATCH_ENUM_OUTPUT)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, outputSize);
+		if (output != NULL) {
+			ret = _SynchronousReadIOCTL(IOCTL_IRPMNDRV_DRIVER_WATCH_ENUM, output, outputSize);
+			if (ret != ERROR_SUCCESS)
+				HeapFree(GetProcessHeap(), 0, output);
+		} else ret = ERROR_NOT_ENOUGH_MEMORY;
+	} while (ret == ERROR_INSUFFICIENT_BUFFER);
+
+	if (ret == ERROR_SUCCESS) {
+		if (output->Count > 0) {
+			tmpArray = (PDRIVER_NAME_WATCH_RECORD)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, output->Count*sizeof(CLASS_WATCH_RECORD));
+			if (tmpArray != NULL) {
+				SIZE_T entrySize = 0;
+				PDRIVER_NAME_WATCH_RECORD rec = tmpArray;
+				PDRIVER_NAME_WATCH_ENTRY entry = &output->Entry;
+
+				for (SIZE_T i = 0; i < output->Count; ++i) {
+					entrySize = sizeof(DRIVER_NAME_WATCH_ENTRY) + entry->NameLength;
+					rec->MonitorSettings = entry->MonitorSettings;
+					rec->DriverName = (PWCHAR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, entry->NameLength + sizeof(WCHAR));
+					if (rec->DriverName != NULL) {
+						memcpy(rec->DriverName, entry + 1, entry->NameLength);
+						rec->DriverName[entry->NameLength / sizeof(WCHAR)] = L'\0';
+					} else ret = ERROR_NOT_ENOUGH_MEMORY;
+
+					if (ret != ERROR_SUCCESS) {
+						for (SIZE_T j = 0; j < i; ++j) {
+							--rec;
+							HeapFree(GetProcessHeap(), 0, rec->DriverName);
+						}
+
+						break;
+					}
+
+					entry = (PDRIVER_NAME_WATCH_ENTRY)((PUCHAR)entry + entrySize);
+					++rec;
+				}
+
+				if (ret == ERROR_SUCCESS) {
+					*Array = tmpArray;
+					*Count = output->Count;
+				}
+			} else ret = ERROR_NOT_ENOUGH_MEMORY;
+		} else {
+			*Array = NULL;
+			*Count = output->Count;
+		}
+
+		HeapFree(GetProcessHeap(), 0, output);
+	}
+
+	DEBUG_EXIT_FUNCTION("%u, *Array=0x%p, *Count=%u", ret, *Array, *Count);
+	return ret;
+}
+
+
+VOID DriverComDriverNameWatchEnumFree(PDRIVER_NAME_WATCH_RECORD Array, ULONG Count)
+{
+	DEBUG_ENTER_FUNCTION("Array=0x%p; Count=%u", Array, Count);
+
+	if (Count > 0) {
+		PDRIVER_NAME_WATCH_RECORD rec = Array;
+		
+		for (SIZE_T i = 0; i < Count; ++i) {
+			HeapFree(GetProcessHeap(), 0, rec->DriverName);
+			++rec;
+		}
+		
+		HeapFree(GetProcessHeap(), 0, Array);
+	}
+
+	DEBUG_EXIT_FUNCTION_VOID();
+	return;
+}
+
+/************************************************************************/
 /*                   INITIALIZATION AND FINALIZATION                    */
 /************************************************************************/
+
 
 DWORD DriverComModuleInit(VOID)
 {

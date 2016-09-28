@@ -136,6 +136,66 @@ IRPMONDLL_API VOID WINAPI IRPMonDllDriverHooksFree(PHOOKED_DRIVER_UMINFO HookedD
 }
 
 
+/************************************************************************/
+/*                  CLASS WATCHES                                       */
+/************************************************************************/
+
+
+IRPMONDLL_API DWORD WINAPI IRPMonDllClassWatchRegister(PWCHAR ClassGuid, BOOLEAN UpperFilter, BOOLEAN Beginning)
+{
+	return DriverComClassWatchRegister(ClassGuid, UpperFilter, Beginning);
+}
+
+
+IRPMONDLL_API DWORD WINAPI IRPMonDllClassWatchUnregister(PWCHAR ClassGuid, BOOLEAN UpperFilter, BOOLEAN Beginning)
+{
+	return DriverComClassWatchUnregister(ClassGuid, UpperFilter, Beginning);
+}
+
+
+IRPMONDLL_API DWORD WINAPI IRPMonDllClassWatchEnum(PCLASS_WATCH_RECORD *Array, PULONG Count)
+{
+	return DriverComClassWatchEnum(Array, Count);
+}
+
+
+IRPMONDLL_API VOID WINAPI IRPMonDllClassWatchEnumFree(PCLASS_WATCH_RECORD Array, ULONG Count)
+{
+	DriverComClassWatchEnumFree(Array, Count);
+
+	return;
+}
+
+/************************************************************************/
+/*                  DRIVER NAME WATCHES                                 */
+/************************************************************************/
+
+
+IRPMONDLL_API DWORD WINAPI IRPMonDllDriverNameWatchRegister(PWCHAR DriverName, PDRIVER_MONITOR_SETTINGS MonitorSettings)
+{
+	return DriverComDriverNameWatchRegister(DriverName, MonitorSettings);
+}
+
+
+IRPMONDLL_API DWORD WINAPI IRPMonDllDriverNameWatchUnregister(PWCHAR DriverName)
+{
+	return DriverComDriverNameWatchUnregister(DriverName);
+}
+
+
+IRPMONDLL_API DWORD WINAPI IRPMonDllDriverNameWatchEnum(PDRIVER_NAME_WATCH_RECORD *Array, PULONG Count)
+{
+	return DriverComDriverNameWatchEnum(Array, Count);
+}
+
+
+IRPMONDLL_API VOID WINAPI IRPMonDllDriverNameWatchEnumFree(PDRIVER_NAME_WATCH_RECORD Array, ULONG Count)
+{
+	DriverComDriverNameWatchEnumFree(Array, Count);
+
+	return;
+}
+
 
 /************************************************************************/
 /*                          INITIALIZATION AND FINALIZATION             */

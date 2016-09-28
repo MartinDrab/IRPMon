@@ -236,6 +236,7 @@
     <ClCompile Include="hook-handlers.c" />
     <ClCompile Include="hook.c" />
     <ClCompile Include="modules.c" />
+    <ClCompile Include="pnp-driver-watch.c" />
     <ClCompile Include="req-queue.c" />
     <ClCompile Include="string-hash-table.c" />
     <ClCompile Include="um-services.c" />
@@ -253,6 +254,7 @@
     <ClInclude Include="hook-handlers.h" />
     <ClInclude Include="hook.h" />
     <ClInclude Include="modules.h" />
+    <ClInclude Include="pnp-driver-watch.h" />
     <ClInclude Include="preprocessor.h" />
     <ClInclude Include="req-queue.h" />
     <ClInclude Include="string-hash-table.h" />
