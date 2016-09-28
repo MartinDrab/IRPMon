@@ -161,17 +161,17 @@ VOID HashTableDestroy(IN PHASH_TABLE Table)
  */
 VOID HashTableInsert(IN PHASH_TABLE Table, IN PHASH_ITEM Object, IN PVOID Key)
 {
-   ULONG32 Index = 0;
-   DEBUG_ENTER_FUNCTION("Tabulka=0x%p; Object=0x%p; Key=0x%p", Table, Object, Key);
+	ULONG32 Index = 0;
+	DEBUG_ENTER_FUNCTION("Tabulka=0x%p; Object=0x%p; Key=0x%p", Table, Object, Key);
 
-   Index = Table->HashFunction(Key) % Table->Size;
-   HashTableLockExclusive(Table, Index);
-   Object->Next = Table->Buckets[Index];
-   Table->Buckets[Index] = Object;
-   HashTableUnlockExclusive(Table, Index);
+	Index = Table->HashFunction(Key) % Table->Size;
+	HashTableLockExclusive(Table, Index);
+	Object->Next = Table->Buckets[Index];
+	Table->Buckets[Index] = Object;
+	HashTableUnlockExclusive(Table, Index);
 
-   DEBUG_EXIT_FUNCTION_VOID();
-   return;
+	DEBUG_EXIT_FUNCTION_VOID();
+	return;
 }
 
 

@@ -439,6 +439,22 @@ Type
   PIRPMON_DRIVER_INFO = ^IRPMON_DRIVER_INFO;
   PPIRPMON_DRIVER_INFO = ^PIRPMON_DRIVER_INFO;
 
+  _CLASS_WATCH_RECORD = Record
+	  ClassGuid : Packed Array [0..15] Of Byte;
+	  ClassGuidString : PWideChar;
+	  UpperFilter : Byte;
+	  Beginning : Byte;
+    end;
+  CLASS_WATCH_RECORD = _CLASS_WATCH_RECORD;
+  PCLASS_WATCH_RECORD = ^CLASS_WATCH_RECORD;
+
+  _DRIVER_NAME_WATCH_RECORD = Record
+    MonitorSettings : DRIVER_MONITOR_SETTINGS;
+	  DriverName : PWideChar;
+    end;
+  DRIVER_NAME_WATCH_RECORD = _DRIVER_NAME_WATCH_RECORD;
+  PDRIVER_NAME_WATCH_RECORD = ^DRIVER_NAME_WATCH_RECORD;
+
 
 
 Function IRPMonDllDriverHooksEnumerate(Var AHookedDrivers:PHOOKED_DRIVER_UMINFO; Var ACount:Cardinal):Cardinal; StdCall;
@@ -467,6 +483,18 @@ Function IRPMonDllOpenHookedDriver(AObjectId:Pointer; Var AHandle:THandle):Cardi
 Function IRPMonDllCloseHookedDriverHandle(AHandle:THandle):Cardinal; StdCall;
 Function IRPMonDllOpenHookedDevice(AObjectId:Pointer; Var AHandle:THandle):Cardinal; StdCall;
 Function IRPMonDllCloseHookedDeviceHandle(AHandle:THandle):Cardinal; StdCall;
+
+
+Function IRPMonDllClassWatchRegister(AClassGuid:PWideChar; AUpperFilter:ByteBool; ABeginning:ByteBool):Cardinal; StdCall;
+Function IRPMonDllClassWatchUnregister(AClassGuid:PWideChar; AUpperFilter:ByteBool; ABeginning:ByteBool):Cardinal; StdCall;
+Function IRPMonDllClassWatchEnum(Var AArray:PCLASS_WATCH_RECORD; Var ACount:Cardinal):Cardinal; StdCall;
+Procedure IRPMonDllClassWatchEnumFree(AArray:PCLASS_WATCH_RECORD; ACount:Cardinal); StdCall;
+
+Function IRPMonDllDriverNameWatchRegister(ADriverName:PWideChar; Var AMonitorSettings:DRIVER_MONITOR_SETTINGS):Cardinal; StdCall;
+Function IRPMonDllDriverNameWatchUnregister(ADriverName:PWideChar):Cardinal; StdCall;
+Function IRPMonDllDriverNameWatchEnum(Var AArray:PDRIVER_NAME_WATCH_RECORD; Var ACount:Cardinal):Cardinal; StdCall;
+Procedure IRPMonDllDriverNameWatchEnumFree(AArray:PDRIVER_NAME_WATCH_RECORD; ACount:Cardinal); StdCall;
+
 
 Function IRPMonDllInitialize:Cardinal; StdCall;
 Procedure IRPMonDllFinalize; StdCall;
@@ -505,6 +533,18 @@ Function IRPMonDllCloseHookedDriverHandle(AHandle:THandle):Cardinal; StdCall; Ex
 Function IRPMonDllOpenHookedDevice(AObjectId:Pointer; Var AHandle:THandle):Cardinal; StdCall; External LibraryName;
 Function IRPMonDllCloseHookedDeviceHandle(AHandle:THandle):Cardinal; StdCall; External LibraryName;
 
+
+Function IRPMonDllClassWatchRegister(AClassGuid:PWideChar; AUpperFilter:ByteBool; ABeginning:ByteBool):Cardinal; StdCall; External LibraryName;
+Function IRPMonDllClassWatchUnregister(AClassGuid:PWideChar; AUpperFilter:ByteBool; ABeginning:ByteBool):Cardinal; StdCall; External LibraryName;
+Function IRPMonDllClassWatchEnum(Var AArray:PCLASS_WATCH_RECORD; Var ACount:Cardinal):Cardinal; StdCall; External LibraryName;
+Procedure IRPMonDllClassWatchEnumFree(AArray:PCLASS_WATCH_RECORD; ACount:Cardinal); StdCall; External LibraryName;
+
+Function IRPMonDllDriverNameWatchRegister(ADriverName:PWideChar; Var AMonitorSettings:DRIVER_MONITOR_SETTINGS):Cardinal; StdCall; External LibraryName;
+Function IRPMonDllDriverNameWatchUnregister(ADriverName:PWideChar):Cardinal; StdCall; External LibraryName;
+Function IRPMonDllDriverNameWatchEnum(Var AArray:PDRIVER_NAME_WATCH_RECORD; Var ACount:Cardinal):Cardinal; StdCall; External LibraryName;
+Procedure IRPMonDllDriverNameWatchEnumFree(AArray:PDRIVER_NAME_WATCH_RECORD; ACount:Cardinal); StdCall; External LibraryName;
+
+
 Function IRPMonDllInitialize:Cardinal; StdCall; External LibraryName;
 Procedure IRPMonDllFinalize; StdCall; External LibraryName;
 
@@ -536,6 +576,18 @@ Function IRPMonDllOpenHookedDriver(AObjectId:Pointer; Var AHandle:THandle):Cardi
 Function IRPMonDllCloseHookedDriverHandle(AHandle:THandle):Cardinal; StdCall; External LibraryName name '_IRPMonDllCloseHookedDriverHandle@4';
 Function IRPMonDllOpenHookedDevice(AObjectId:Pointer; Var AHandle:THandle):Cardinal; StdCall; External LibraryName name '_IRPMonDllOpenHookedDevice@8';
 Function IRPMonDllCloseHookedDeviceHandle(AHandle:THandle):Cardinal; StdCall; External LibraryName name '_IRPMonDllCloseHookedDeviceHandle@4';
+
+
+Function IRPMonDllClassWatchRegister(AClassGuid:PWideChar; AUpperFilter:ByteBool; ABeginning:ByteBool):Cardinal; StdCall; External LibraryName name '_IRPMonDllClassWatchRegister@12';
+Function IRPMonDllClassWatchUnregister(AClassGuid:PWideChar; AUpperFilter:ByteBool; ABeginning:ByteBool):Cardinal; StdCall; External LibraryName name '_IRPMonDllClassWatchUnregister@12';
+Function IRPMonDllClassWatchEnum(Var AArray:PCLASS_WATCH_RECORD; Var ACount:Cardinal):Cardinal; StdCall; External LibraryName name '_IRPMonDllClassWatchEnum@8';
+Procedure IRPMonDllClassWatchEnumFree(AArray:PCLASS_WATCH_RECORD; ACount:Cardinal); StdCall; External LibraryName name '_IRPMonDllClassWatchEnumFree@8';
+
+Function IRPMonDllDriverNameWatchRegister(ADriverName:PWideChar; Var AMonitorSettings:DRIVER_MONITOR_SETTINGS):Cardinal; StdCall; External LibraryName name '_IRPMonDllDriverNameWatchRegister@8';
+Function IRPMonDllDriverNameWatchUnregister(ADriverName:PWideChar):Cardinal; StdCall; External LibraryName name '_IRPMonDllDriverNameWatchUnregister@4';
+Function IRPMonDllDriverNameWatchEnum(Var AArray:PDRIVER_NAME_WATCH_RECORD; Var ACount:Cardinal):Cardinal; StdCall; External LibraryName name '_IRPMonDllDriverNameWatchEnum@8';
+Procedure IRPMonDllDriverNameWatchEnumFree(AArray:PDRIVER_NAME_WATCH_RECORD; ACount:Cardinal); StdCall; External LibraryName name '_IRPMonDllDriverNameWatchEnumFree@8';
+
 
 Function IRPMonDllInitialize:Cardinal; StdCall; External LibraryName name '_IRPMonDllInitialize@0';
 Procedure IRPMonDllFinalize; StdCall; External LibraryName name '_IRPMonDllFinalize@0';

@@ -160,6 +160,11 @@
 			<DCCReference Include="AboutForm.pas">
 				<Form>AboutBox</Form>
 			</DCCReference>
+			<DCCReference Include="ClassWatch.pas"/>
+			<DCCReference Include="ClassWatchAdd.pas">
+				<Form>ClassWatchAddFrm</Form>
+				<FormType>dfm</FormType>
+			</DCCReference>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>
 				<CfgParent>Base</CfgParent>

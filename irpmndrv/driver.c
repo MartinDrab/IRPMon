@@ -130,7 +130,7 @@ static NTSTATUS _HandleCDORequest(ULONG ControlCode, PVOID InputBuffer, ULONG In
 			status = UMClassWatchUnregister((PIOCTL_IRPMNDRV_CLASS_WATCH_UNREGISTER_INPUT)InputBuffer, InputBufferLength);
 			break;
 		case IOCTL_IRPMNDRV_CLASS_WATCH_ENUM:
-			status = PDWClassEnumerate((PIOCTL_IRPMNDRV_CLASS_WATCH_OUTPUT)InputBuffer, InputBufferLength, &IoStatus->Information, ExGetPreviousMode());
+			status = PDWClassEnumerate((PIOCTL_IRPMNDRV_CLASS_WATCH_OUTPUT)OutputBuffer, OutputBufferLength, &IoStatus->Information, ExGetPreviousMode());
 			break;
 
 		case IOCTL_IRPMNDRV_DRIVER_WATCH_REGISTER:
@@ -140,7 +140,7 @@ static NTSTATUS _HandleCDORequest(ULONG ControlCode, PVOID InputBuffer, ULONG In
 			status = UMDriverNamehUnregister((PIOCTL_IRPMNDRV_DRIVER_WATCH_UNREGISTER_INPUT)InputBuffer, InputBufferLength);
 			break;
 		case IOCTL_IRPMNDRV_DRIVER_WATCH_ENUM:
-			status = PWDDriverNameEnumerate((PIOCTL_IRPMNDRV_DRIVER_WATCH_ENUM_OUTPUT)InputBuffer, InputBufferLength, &IoStatus->Information, ExGetPreviousMode());
+			status = PWDDriverNameEnumerate((PIOCTL_IRPMNDRV_DRIVER_WATCH_ENUM_OUTPUT)OutputBuffer, OutputBufferLength, &IoStatus->Information, ExGetPreviousMode());
 			break;
 		default:
 			status = STATUS_INVALID_DEVICE_REQUEST;

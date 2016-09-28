@@ -42,7 +42,7 @@ static BOOLEAN _CompareFunction(PHASH_ITEM ObjectInTable, PVOID Key)
 static VOID _FreeFunction(PHASH_ITEM Object)
 {
    PSTRING_HASH_ITEM HashItem = CONTAINING_RECORD(Object, STRING_HASH_ITEM, Item);
-   DEBUG_ENTER_FUNCTION("Object=0x%p; Context=0x%p", Object, Context);
+   DEBUG_ENTER_FUNCTION("Object=0x%p", Object);
 
    HeapMemoryFree(HashItem);
 

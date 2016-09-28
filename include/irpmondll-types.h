@@ -41,6 +41,7 @@ typedef struct _IRPMON_DRIVER_INFO {
 
 typedef struct _CLASS_WATCH_RECORD {
 	GUID ClassGuid;
+	PWCHAR ClassGuidString;
 	BOOLEAN UpperFilter;
 	BOOLEAN Beginning;
 } CLASS_WATCH_RECORD, *PCLASS_WATCH_RECORD;

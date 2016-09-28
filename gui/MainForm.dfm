@@ -52,9 +52,26 @@ object MainFrm: TMainFrm
     Top = 176
     object ActionMenuItem: TMenuItem
       Caption = 'Action'
-      object TreeMenuItem: TMenuItem
-        Caption = 'Tree...'
-        OnClick = TreeMenuItemClick
+      object SelectDriversDevicesMenuItem: TMenuItem
+        Caption = 'Select drivers / devices...'
+        OnClick = SelectDriversDevicesMenuItemClick
+      end
+      object WatchClassMenuItem: TMenuItem
+        Caption = 'Watch class...'
+        OnClick = WatchClassMenuItemClick
+      end
+      object WatchedClassesMenuItem: TMenuItem
+        Caption = 'Watched classes'
+        Enabled = False
+        Visible = False
+      end
+      object WatchDriverNameMenuItem: TMenuItem
+        Caption = 'Watch driver...'
+      end
+      object WatchedDriversMenuItem: TMenuItem
+        Caption = 'Watched drivers'
+        Enabled = False
+        Visible = False
       end
       object N1: TMenuItem
         Caption = '-'
@@ -80,9 +97,6 @@ object MainFrm: TMainFrm
       object RefreshNameCacheMenuItem: TMenuItem
         Caption = 'Refresh name cache'
         OnClick = RefreshNameCacheMenuItemClick
-      end
-      object FilterHighlightMenuItem: TMenuItem
-        Caption = 'Filter / Highlight...'
       end
       object N6: TMenuItem
         Caption = '-'

@@ -1232,7 +1232,7 @@ NTSTATUS UMDriverNamehUnregister(PIOCTL_IRPMNDRV_DRIVER_WATCH_UNREGISTER_INPUT I
 	UNICODE_STRING uDriverName;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	IOCTL_IRPMNDRV_DRIVER_WATCH_UNREGISTER_INPUT input = { 0 };
-	DEBUG_ENTER_FUNCTION("InputBuffer=0x%p; InputBufferLength=%u", InputBuffer, InputBufferLength);
+	DEBUG_ENTER_FUNCTION("InputBuffer=0x%p; InputBUfferLength=%u", InputBuffer, InputBUfferLength);
 
 	if (InputBUfferLength >= sizeof(IOCTL_IRPMNDRV_DRIVER_WATCH_UNREGISTER_INPUT)) {
 		RtlSecureZeroMemory(&uDriverName, sizeof(uDriverName));

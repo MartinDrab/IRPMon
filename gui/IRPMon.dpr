@@ -21,7 +21,9 @@ uses
   HookProgressForm in 'HookProgressForm.pas' {HookProgressFrm},
   RequestThread in 'RequestThread.pas',
   RequestDetailsForm in 'RequestDetailsForm.pas' {RequestDetailsFrm},
-  AboutForm in 'AboutForm.pas' {AboutBox};
+  AboutForm in 'AboutForm.pas' {AboutBox},
+  ClassWatch in 'ClassWatch.pas',
+  ClassWatchAdd in 'ClassWatchAdd.pas' {ClassWatchAddFrm};
 
 {$R *.RES}
 
@@ -82,7 +84,7 @@ If err = ERROR_SUCCESS Then
           If err = ERROR_SUCCESS Then
             begin
             Application.CreateForm(TMainFrm, MainFrm);
-  Application.Run;
+            Application.Run;
             IRPMonDllFinalize;
             end
           Else WinErrorMessage('Unable to initialize irpmondll.dll', err);

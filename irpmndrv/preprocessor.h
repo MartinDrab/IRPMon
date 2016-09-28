@@ -13,56 +13,38 @@
 #define AT_FUNCTION __FILE__ ":" __FUNCTION__
 #define AT_LINE AT_FUNCTION ":" TOSTRING(__LINE__ " ")
 
-#ifdef _DEBUG
+#ifdef DBG
 
-#define DEBUG_TRACE_ENABLED 1
-#define DEBUG_DISPLAY_PID_TID_IRQL 1
 
 /*
  * Prints the source file and function name. Determined for non-parametric
  * functions.
  */
 #define DEBUG_ENTER_FUNCTION_NO_ARGS() \
-	if (DEBUG_TRACE_ENABLED) { \
-		if (DEBUG_DISPLAY_PID_TID_IRQL) \
-			DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_TRACE_LEVEL, "[%d;%d,%d]: ", PsGetCurrentProcessId(), PsGetCurrentThreadId(), KeGetCurrentIrql()); \
-		\
-		DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_TRACE_LEVEL, AT_FUNCTION "()\n"); \
-	} \
+	DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_TRACE_LEVEL, "[%d;%d,%d]: ", PsGetCurrentProcessId(), PsGetCurrentThreadId(), KeGetCurrentIrql()); \
+	DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_TRACE_LEVEL, AT_FUNCTION "()\n"); \
 
 /*
  * Prints the source file, function name and parameters.
  */
 #define DEBUG_ENTER_FUNCTION(paramsFormat,...) \
-	if (DEBUG_TRACE_ENABLED) { \
-		if (DEBUG_DISPLAY_PID_TID_IRQL) \
-			DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_TRACE_LEVEL, "[%d;%d,%d]: ", PsGetCurrentProcessId(), PsGetCurrentThreadId(), KeGetCurrentIrql()); \
-		\
-		DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_TRACE_LEVEL, AT_FUNCTION "(" paramsFormat ")\n", __VA_ARGS__); \
-	} \
+	DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_TRACE_LEVEL, "[%d;%d,%d]: ", PsGetCurrentProcessId(), PsGetCurrentThreadId(), KeGetCurrentIrql()); \
+	DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_TRACE_LEVEL, AT_FUNCTION "(" paramsFormat ")\n", __VA_ARGS__); \
 
 /*
  * Prints the source file, function name and the return value.
  */
 #define DEBUG_EXIT_FUNCTION(returnValueFormat,...) \
-	if (DEBUG_TRACE_ENABLED) { \
-		if (DEBUG_DISPLAY_PID_TID_IRQL) \
-			DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_TRACE_LEVEL, "[%d;%d,%d]: ", PsGetCurrentProcessId(), PsGetCurrentThreadId(), KeGetCurrentIrql()); \
-		\
-		DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_TRACE_LEVEL, AT_FUNCTION "(-):" returnValueFormat "\n", __VA_ARGS__); \
-	} \
+	DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_TRACE_LEVEL, "[%d;%d,%d]: ", PsGetCurrentProcessId(), PsGetCurrentThreadId(), KeGetCurrentIrql()); \
+	DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_TRACE_LEVEL, AT_FUNCTION "(-):" returnValueFormat "\n", __VA_ARGS__); \
 
 /*
  * Prints the source file and function name. Determined for ending a function
  * without a return value.
  */
 #define DEBUG_EXIT_FUNCTION_VOID() \
-	if (DEBUG_TRACE_ENABLED) { \
-		if (DEBUG_DISPLAY_PID_TID_IRQL) \
-			DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_TRACE_LEVEL, "[%d;%d,%d]: ", PsGetCurrentProcessId(), PsGetCurrentThreadId(), KeGetCurrentIrql()); \
-		\
-		DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_TRACE_LEVEL, AT_FUNCTION "(-):void\n"); \
-	} \
+	DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_TRACE_LEVEL, "[%d;%d,%d]: ", PsGetCurrentProcessId(), PsGetCurrentThreadId(), KeGetCurrentIrql()); \
+	DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_TRACE_LEVEL, AT_FUNCTION "(-):void\n"); \
 
 /*
  * Prints the source file, function name and the number of the line.

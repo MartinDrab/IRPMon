@@ -13,7 +13,7 @@ Type
   TMainFrm = Class (TForm)
     MainMenu1: TMainMenu;
     ActionMenuItem: TMenuItem;
-    TreeMenuItem: TMenuItem;
+    SelectDriversDevicesMenuItem: TMenuItem;
     ExitMenuItem: TMenuItem;
     MonitoringMenuItem: TMenuItem;
     ClearMenuItem: TMenuItem;
@@ -34,18 +34,22 @@ Type
     SaveMenuItem: TMenuItem;
     LogSaveDialog: TSaveDialog;
     N1: TMenuItem;
-    FilterHighlightMenuItem: TMenuItem;
+    WatchClassMenuItem: TMenuItem;
+    WatchedClassesMenuItem: TMenuItem;
+    WatchDriverNameMenuItem: TMenuItem;
+    WatchedDriversMenuItem: TMenuItem;
     Procedure ClearMenuItemClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure CaptureEventsMenuItemClick(Sender: TObject);
     procedure ExitMenuItemClick(Sender: TObject);
     procedure RefreshNameCacheMenuItemClick(Sender: TObject);
-    procedure TreeMenuItemClick(Sender: TObject);
+    procedure SelectDriversDevicesMenuItemClick(Sender: TObject);
     procedure IrpMonAppEventsMessage(var Msg: tagMSG; var Handled: Boolean);
     procedure IrpMonAppEventsException(Sender: TObject; E: Exception);
     procedure RequestDetailsMenuItemClick(Sender: TObject);
     procedure AboutMenuItemClick(Sender: TObject);
     procedure SaveMenuItemClick(Sender: TObject);
+    procedure WatchClassMenuItemClick(Sender: TObject);
   Private
     FModel : TRequestListModel;
     FHookedDrivers : TDictionary<Pointer, TDriverHookObject>;
@@ -54,6 +58,8 @@ Type
     FRequestTHread : TRequestThread;
     FRequestMsgCode : Cardinal;
     Procedure EnumerateHooks;
+    Procedure OnWatchedClassClick(Sender:TObject);
+    Procedure EnumerateClassWatches;
   end;
 
 Var
@@ -64,7 +70,8 @@ Implementation
 {$R *.DFM}
 
 Uses
-  Utils, TreeForm, RequestDetailsForm, AboutForm;
+  Utils, TreeForm, RequestDetailsForm, AboutForm,
+  ClassWatchAdd, ClassWatch;
 
 
 
@@ -164,6 +171,7 @@ FModel.
 FModel.ColumnUpdateEnd;
 FModel.CreateColumnsMenu(ColumnsMenuItem);
 FModel.SetDisplayer(RequestListView);
+EnumerateClassWatches;
 end;
 
 Procedure TMainFrm.IrpMonAppEventsException(Sender: TObject; E: Exception);
@@ -262,7 +270,7 @@ If LogSaveDialog.Execute Then
   end;
 end;
 
-Procedure TMainFrm.TreeMenuItemClick(Sender: TObject);
+Procedure TMainFrm.SelectDriversDevicesMenuItemClick(Sender: TObject);
 begin
 With TTreeFrm.Create(Self) Do
   begin
@@ -271,6 +279,92 @@ With TTreeFrm.Create(Self) Do
   end;
 
 EnumerateHooks;
+end;
+
+Procedure TMainFrm.WatchClassMenuItemClick(Sender: TObject);
+Var
+  M : TMenuItem;
+  err : Cardinal;
+begin
+err := ERROR_SUCCESS;
+With TClassWatchAddFrm.Create(Self) Do
+  begin
+  ShowModal;
+  If Not Cancelled Then
+    begin
+    err := SelectedClass.Register(UpperFilter, Beginning);
+    If err = ERROR_SUCCESS Then
+      begin
+      M := TMenuItem.Create(WatchedClassesMenuItem);
+      M.Caption := SelectedClass.Name;
+      M.Tag := NativeInt(SelectedClass);
+      M.OnClick := OnWatchedClassClick;
+      WatchedClassesMenuItem.Add(M);
+      WatchedClassesMenuItem.Visible := True;
+      WatchedClassesMenuItem.Enabled := True;
+      end
+    Else WinErrorMessage('Failed to watch the class', err);
+
+    If err <> ERROR_SUCCESS Then
+      SelectedClass.Free;
+    end;
+
+  Free;
+  end;
+end;
+
+
+Procedure TMainFrm.OnWatchedClassClick(Sender:TObject);
+Var
+  err : Cardinal;
+  wc : TWatchableClass;
+  M : TMenuItem;
+begin
+M := (Sender As TMenuItem);
+wc := TWatchableClass(M.Tag);
+err := wc.Unregister;
+If err = ERROR_SUCCESS Then
+  begin
+  M.Free;
+  If WatchedClassesMenuItem.Count = 0 Then
+    begin
+    WatchedClassesMenuItem.Visible := False;
+    WatchedClassesMenuItem.Enabled := False;
+    end;
+  end
+Else WinErrorMessage('Failed to unregister the watched class', err);
+end;
+
+
+Procedure TMainFrm.EnumerateClassWatches;
+Var
+  M : TMenuItem;
+  err : Cardinal;
+  wc : TWatchableClass;
+  wl : TList<TWatchableClass>;
+begin
+wl := TList<TWatchableClass>.Create;
+err := TWatchableClass.Enumerate(wl);
+If err = ERROR_SUCCESS Then
+  begin
+  For wc In wl DO
+    begin
+    If wc.Registered Then
+      begin
+      M := TMenuItem.Create(WatchedClassesMenuItem);
+      M.Caption := wc.Name;
+      M.Tag := NativeInt(wc);
+      M.OnClick := OnWatchedClassClick;
+      WatchedClassesMenuItem.Add(M);
+      WatchedClassesMenuItem.Visible := True;
+      WatchedClassesMenuItem.Enabled := True;
+      end
+    Else wc.Free;
+    end;
+  end
+Else WinErrorMessage('Failed to enumerate watched classes', err);
+
+wl.Free;
 end;
 
 

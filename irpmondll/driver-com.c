@@ -1,11 +1,21 @@
 
 #include <windows.h>
+#include <winternl.h>
 #include "debug.h"
 #include "ioctls.h"
 #include "kernel-shared.h"
 #include "general-types.h"
 #include "irpmondll-types.h"
 #include "driver-com.h"
+
+
+/************************************************************************/
+/*               TYPE DEFINITIONS                                       */
+/************************************************************************/
+
+typedef NTSTATUS (NTAPI RTLSTRINGFROMGUID)(GUID *Guid, PUNICODE_STRING GuidString);
+typedef VOID(WINAPI RTLFREEUNICODESTRING)(PUNICODE_STRING String);
+
 
 /************************************************************************/
 /*                           GLOBAL VARIABLES                           */
@@ -15,6 +25,9 @@
 static HANDLE _deviceHandle = INVALID_HANDLE_VALUE;
 static BOOLEAN _initialized = FALSE;
 static BOOLEAN _connected = FALSE;
+
+static RTLSTRINGFROMGUID *_RtlStringFromGuid = NULL;
+static RTLFREEUNICODESTRING *_RtlFreeUnicodeString = NULL;
 
 
 /************************************************************************/
@@ -767,7 +780,7 @@ DWORD DriverComClassWatchRegister(PWCHAR ClassGuid, BOOLEAN UpperFilter, BOOLEAN
 	DEBUG_ENTER_FUNCTION("ClassGuid=\"%S\"; UpperFilter=%u; Beginning=%u", ClassGuid, UpperFilter, Beginning);
 
 	if (wcslen(ClassGuid) == sizeof(input.Data.ClassGuidString) / sizeof(WCHAR)) {
-		input.Flags = CLASS_WATCH_FLAG_BINARY;
+		input.Flags = 0;
 		if (UpperFilter)
 			input.Flags |= CLASS_WATCH_FLAG_UPPERFILTER;
 
@@ -790,7 +803,7 @@ DWORD DriverComClassWatchUnregister(PWCHAR ClassGuid, BOOLEAN UpperFilter, BOOLE
 	DEBUG_ENTER_FUNCTION("ClassGuid=\"%S\"; UpperFilter=%u; Beginning=%u", ClassGuid, UpperFilter, Beginning);
 
 	if (wcslen(ClassGuid) == sizeof(input.Data.ClassGuidString) / sizeof(WCHAR)) {
-		input.Flags = CLASS_WATCH_FLAG_BINARY;
+		input.Flags = 0;
 		if (UpperFilter)
 			input.Flags |= CLASS_WATCH_FLAG_UPPERFILTER;
 
@@ -832,9 +845,32 @@ DWORD DriverComClassWatchEnum(PCLASS_WATCH_RECORD *Array, PULONG Count)
 				PCLASS_WATCH_ENTRY entry = output->Entries;
 
 				for (SIZE_T i = 0; i < output->Count; ++i) {
+					UNICODE_STRING uGuid;
+
 					rec->ClassGuid = entry->ClassGuid;
-					rec->UpperFilter = (entry->Flags & CLASS_WATCH_FLAG_UPPERFILTER);
-					rec->Beginning = (entry->Flags & CLASS_WATCH_FLAG_BEGINNING);
+					rec->UpperFilter = (entry->Flags & CLASS_WATCH_FLAG_UPPERFILTER) != 0;
+					rec->Beginning = (entry->Flags & CLASS_WATCH_FLAG_BEGINNING) != 0;
+					SecureZeroMemory(&uGuid, sizeof(uGuid));
+					if (NT_SUCCESS(_RtlStringFromGuid(&rec->ClassGuid, &uGuid))) {
+						rec->ClassGuidString = (PWCHAR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, uGuid.Length + sizeof(WCHAR));
+						if (rec->ClassGuidString != NULL) {
+							memcpy(rec->ClassGuidString, uGuid.Buffer, uGuid.Length);
+							rec->ClassGuidString[uGuid.Length / sizeof(WCHAR)] = L'\0';
+						} else ret = ERROR_NOT_ENOUGH_MEMORY;
+
+						_RtlFreeUnicodeString(&uGuid);
+					} else ret = ERROR_NOT_ENOUGH_MEMORY;
+
+					if (ret != ERROR_SUCCESS) {
+						for (SIZE_T j = 0; j < i; ++j) {
+							--rec;
+							HeapFree(GetProcessHeap(), 0, rec->ClassGuidString);
+						}
+
+
+						break;
+					}
+
 					++entry;
 					++rec;
 				}
@@ -846,7 +882,7 @@ DWORD DriverComClassWatchEnum(PCLASS_WATCH_RECORD *Array, PULONG Count)
 			} else ret = ERROR_NOT_ENOUGH_MEMORY;
 		} else {
 			*Array = NULL;
-			*Count = output->Count;
+			*Count = 0;
 		}
 
 		HeapFree(GetProcessHeap(), 0, output);
@@ -859,10 +895,17 @@ DWORD DriverComClassWatchEnum(PCLASS_WATCH_RECORD *Array, PULONG Count)
 
 VOID DriverComClassWatchEnumFree(PCLASS_WATCH_RECORD Array, ULONG Count)
 {
+	PCLASS_WATCH_RECORD tmp = Array;
 	DEBUG_ENTER_FUNCTION("Array=0x%p; Count=%u", Array, Count);
 
-	if (Count > 0)
+	if (Count > 0) {
+		for (SIZE_T i = 0; i < Count; ++i) {
+			HeapFree(GetProcessHeap(), 0, tmp->ClassGuidString);
+			++tmp;
+		}
+
 		HeapFree(GetProcessHeap(), 0, Array);
+	}
 
 	DEBUG_EXIT_FUNCTION_VOID();
 	return;
@@ -888,7 +931,7 @@ DWORD DriverComDriverNameWatchRegister(PWCHAR DriverName, PDRIVER_MONITOR_SETTIN
 			input->MonitorSettings = *MonitorSettings;
 			input->NameLength = (USHORT)len;
 			memcpy(input + 1, DriverName, len);
-			ret = _SynchronousWriteIOCTL(IOCTL_IRPMNDRV_DRIVER_WATCH_REGISTER, input, inputLen);
+			ret = _SynchronousWriteIOCTL(IOCTL_IRPMNDRV_DRIVER_WATCH_REGISTER, input, (ULONG)inputLen);
 			HeapFree(GetProcessHeap(), 0, input);
 		} else ret = ERROR_NOT_ENOUGH_MEMORY;
 	} else ret = ERROR_INVALID_PARAMETER;
@@ -913,7 +956,7 @@ DWORD DriverComDriverNameWatchUnregister(PWCHAR DriverName)
 		if (input != NULL) {
 			input->NameLength = (USHORT)len;
 			memcpy(input + 1, DriverName, len);
-			ret = _SynchronousWriteIOCTL(IOCTL_IRPMNDRV_DRIVER_WATCH_UNREGISTER, input, inputLen);
+			ret = _SynchronousWriteIOCTL(IOCTL_IRPMNDRV_DRIVER_WATCH_UNREGISTER, input, (ULONG)inputLen);
 			HeapFree(GetProcessHeap(), 0, input);
 		} else ret = ERROR_NOT_ENOUGH_MEMORY;
 	} else ret = ERROR_INVALID_PARAMETER;
@@ -1015,16 +1058,26 @@ VOID DriverComDriverNameWatchEnumFree(PDRIVER_NAME_WATCH_RECORD Array, ULONG Cou
 
 DWORD DriverComModuleInit(VOID)
 {
+	HMODULE HNtdll = NULL;
 	DWORD ret = ERROR_GEN_FAILURE;
 	DEBUG_ENTER_FUNCTION_NO_ARGS();
 
-	_deviceHandle = CreateFileW(IRPMNDRV_USER_DEVICE_NAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-	_initialized = (_deviceHandle != INVALID_HANDLE_VALUE);
-	if (_initialized)
-		ret = ERROR_SUCCESS;
+	HNtdll = GetModuleHandleW(L"ntdll.dll");
+	if (HNtdll != NULL) {
+		_RtlStringFromGuid = (RTLSTRINGFROMGUID *)GetProcAddress(HNtdll, "RtlStringFromGUID");
+		if (_RtlStringFromGuid != NULL) {
+			_RtlFreeUnicodeString = (RTLFREEUNICODESTRING *)GetProcAddress(HNtdll, "RtlFreeUnicodeString");
+			if (_RtlFreeUnicodeString != NULL) {
+				_deviceHandle = CreateFileW(IRPMNDRV_USER_DEVICE_NAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+				_initialized = (_deviceHandle != INVALID_HANDLE_VALUE);
+				if (_initialized)
+					ret = ERROR_SUCCESS;
 
-	if (!_initialized)
-		ret = GetLastError();
+				if (!_initialized)
+					ret = GetLastError();
+			} else ret = GetLastError();
+		} else ret = GetLastError();
+	} else ret = GetLastError();
 
 	DEBUG_EXIT_FUNCTION("%u", ret);
 	return ret;

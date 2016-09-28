@@ -135,7 +135,7 @@ static NTSTATUS _DeleteFilter(PWCHAR Filters, PSIZE_T ResultLength)
 
 	if (ours != NULL) {
 		*ResultLength = (tmp - Filters + 1)*sizeof(WCHAR) - _driverServiceName.Length - sizeof(WCHAR);
-		memmove(ours, ours + _driverServiceName.Length / sizeof(WCHAR) + 1, sizeof(WCHAR)*(tmp - ours - _driverServiceName.Length / 2 - 1));
+		memmove(ours, ours + _driverServiceName.Length / sizeof(WCHAR) + 1, sizeof(WCHAR)*(tmp - ours - _driverServiceName.Length / 2));
 		ours[_driverServiceName.Length / sizeof(WCHAR) + 1] = L'\0';
 	} else status = STATUS_INSUFFICIENT_RESOURCES;
 
@@ -159,14 +159,14 @@ static BOOLEAN _OnDriverNameWatchEnum(PWCHAR String, PVOID Data, PVOID Context)
 				__try {
 					ProbeForWrite(ctx->CurrentEntry, requiredLength, 1);
 					ctx->CurrentEntry->MonitorSettings = rec->MonitorSettings;
-					ctx->CurrentEntry->NameLength = len;
+					ctx->CurrentEntry->NameLength = (ULONG)len;
 					memcpy(ctx->CurrentEntry + 1, String, len);
 				} __except (EXCEPTION_EXECUTE_HANDLER) {
 					ctx->Status = GetExceptionCode();
 				}
 			} else {
 				ctx->CurrentEntry->MonitorSettings = rec->MonitorSettings;
-				ctx->CurrentEntry->NameLength = len;
+				ctx->CurrentEntry->NameLength = (ULONG)len;
 				memcpy(ctx->CurrentEntry + 1, String, len);
 			}
 
@@ -186,7 +186,7 @@ static BOOLEAN _OnDriverNameWatchEnum(PWCHAR String, PVOID Data, PVOID Context)
 static NTSTATUS _RegisterUnregisterFilter(BOOLEAN Beginning, BOOLEAN UpperFilter, BOOLEAN Register, PUNICODE_STRING ClassGuid)
 {
 	PWCHAR dataBuffer = NULL;
-	ULONG dataLength = 0;
+	SIZE_T dataLength = 0;
 	ULONG returnLength = 0;
 	PKEY_VALUE_PARTIAL_INFORMATION kvpi = NULL;
 	OBJECT_ATTRIBUTES oa;
@@ -232,7 +232,7 @@ static NTSTATUS _RegisterUnregisterFilter(BOOLEAN Beginning, BOOLEAN UpperFilter
 
 				if (NT_SUCCESS(status)) {
 					if (dataLength > 2 * sizeof(WCHAR))
-						status = ZwSetValueKey(classKey, &uValueName, 0, REG_MULTI_SZ, dataBuffer, dataLength);
+						status = ZwSetValueKey(classKey, &uValueName, 0, REG_MULTI_SZ, dataBuffer, (ULONG)dataLength);
 					else status = ZwDeleteValueKey(classKey, &uValueName);
 				}
 
@@ -242,9 +242,13 @@ static NTSTATUS _RegisterUnregisterFilter(BOOLEAN Beginning, BOOLEAN UpperFilter
 			}
 
 			ZwClose(classKey);
+		} else {
+			DEBUG_PRINT_LOCATION("ZwOpenKey(Class key): 0x%x", status);
 		}
 
 		ZwClose(classesKey);
+	} else {
+		DEBUG_PRINT_LOCATION("ZwOpenKey(Classes key): 0x%x", status);
 	}
 
 	DEBUG_EXIT_FUNCTION("0x%x", status);
@@ -330,6 +334,13 @@ NTSTATUS PDWClassRegister(PGUID ClassGuid, BOOLEAN UpperFilter, BOOLEAN Beginnin
 		rec = (PDEVICE_CLASS_WATCH_RECORD)HeapMemoryAllocPaged(sizeof(DEVICE_CLASS_WATCH_RECORD));
 		if (rec != NULL) {
 			rec->ClassGuid = *ClassGuid;
+			rec->Flags = 0;
+			if (UpperFilter)
+				rec->Flags |= CLASS_WATCH_FLAG_UPPERFILTER;
+
+			if (Beginning)
+				rec->Flags |= CLASS_WATCH_FLAG_BEGINNING;
+
 			RtlSecureZeroMemory(&uGuid, sizeof(uGuid));
 			status = RtlStringFromGUID(ClassGuid, &uGuid);
 			if (NT_SUCCESS(status)) {
@@ -435,10 +446,14 @@ NTSTATUS PDWClassEnumerate(PIOCTL_IRPMNDRV_CLASS_WATCH_OUTPUT Buffer, SIZE_T Len
 					if (AccessMode == UserMode) {
 						__try {
 							Buffer->Entries[index].ClassGuid = rec->ClassGuid;
+							Buffer->Entries[index].Flags = rec->Flags;
 						} __except (EXCEPTION_EXECUTE_HANDLER) {
 							status = GetExceptionCode();
 						}
-					} else Buffer->Entries[index].ClassGuid = rec->ClassGuid;
+					} else {
+						Buffer->Entries[index].ClassGuid = rec->ClassGuid;
+						Buffer->Entries[index].Flags = rec->Flags;
+					}
 
 					++index;
 				} while (NT_SUCCESS(status) && HashTableGetNext(&it));
