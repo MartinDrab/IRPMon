@@ -23,7 +23,9 @@ uses
   RequestDetailsForm in 'RequestDetailsForm.pas' {RequestDetailsFrm},
   AboutForm in 'AboutForm.pas' {AboutBox},
   ClassWatch in 'ClassWatch.pas',
-  ClassWatchAdd in 'ClassWatchAdd.pas' {ClassWatchAddFrm};
+  ClassWatchAdd in 'ClassWatchAdd.pas' {ClassWatchAddFrm},
+  DriverNameWatchAddForm in 'DriverNameWatchAddForm.pas' {DriverNameWatchAddFrm},
+  WatchedDriverNames in 'WatchedDriverNames.pas';
 
 {$R *.RES}
 
@@ -84,7 +86,7 @@ If err = ERROR_SUCCESS Then
           If err = ERROR_SUCCESS Then
             begin
             Application.CreateForm(TMainFrm, MainFrm);
-            Application.Run;
+  Application.Run;
             IRPMonDllFinalize;
             end
           Else WinErrorMessage('Unable to initialize irpmondll.dll', err);

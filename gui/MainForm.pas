@@ -50,6 +50,7 @@ Type
     procedure AboutMenuItemClick(Sender: TObject);
     procedure SaveMenuItemClick(Sender: TObject);
     procedure WatchClassMenuItemClick(Sender: TObject);
+    procedure WatchDriverNameMenuItemClick(Sender: TObject);
   Private
     FModel : TRequestListModel;
     FHookedDrivers : TDictionary<Pointer, TDriverHookObject>;
@@ -58,8 +59,10 @@ Type
     FRequestTHread : TRequestThread;
     FRequestMsgCode : Cardinal;
     Procedure EnumerateHooks;
-    Procedure OnWatchedClassClick(Sender:TObject);
     Procedure EnumerateClassWatches;
+    Procedure EnumerateDriverNameWatches;
+    Procedure OnWatchedClassClick(Sender:TObject);
+    Procedure OnWatchedDriverNameClick(Sender:TObject);
   end;
 
 Var
@@ -71,7 +74,8 @@ Implementation
 
 Uses
   Utils, TreeForm, RequestDetailsForm, AboutForm,
-  ClassWatchAdd, ClassWatch;
+  ClassWatchAdd, ClassWatch, DriverNameWatchAddForm,
+  WatchedDriverNames;
 
 
 
@@ -172,6 +176,7 @@ FModel.ColumnUpdateEnd;
 FModel.CreateColumnsMenu(ColumnsMenuItem);
 FModel.SetDisplayer(RequestListView);
 EnumerateClassWatches;
+EnumerateDriverNameWatches;
 end;
 
 Procedure TMainFrm.IrpMonAppEventsException(Sender: TObject; E: Exception);
@@ -314,6 +319,41 @@ With TClassWatchAddFrm.Create(Self) Do
 end;
 
 
+Procedure TMainFrm.WatchDriverNameMenuItemClick(Sender: TObject);
+Var
+  M : TMenuItem;
+  dn : TWatchableDriverName;
+  err : Cardinal;
+  ds : DRIVER_MONITOR_SETTINGS;
+begin
+With TDriverNameWatchAddFrm.Create(Self) DO
+  begin
+  ShowModal;
+  If Not Cancelled Then
+    begin
+    ds := DriverSettings;
+    dn := TWatchableDriverName.Create(DriverName, ds);
+    err := dn.Register;
+    If err = ERROR_SUCCESS Then
+      begin
+      M := TMenuItem.Create(WatchedClassesMenuItem);
+      M.Tag := NativeInt(dn);
+      M.Caption := dn.Name;
+      M.OnClick := OnWatchedDriverNameClick;
+      WatchedDriversMenuItem.Add(M);
+      WatchedDriversMenuItem.Visible := True;
+      WatchedDriversMenuItem.Enabled := True;
+      end
+    Else WinErrorMessage('Failed to watch for the driver name', err);
+
+    If err <> ERROR_SUCCESS Then
+      dn.Free;
+    end;
+
+  Free;
+  end;
+end;
+
 Procedure TMainFrm.OnWatchedClassClick(Sender:TObject);
 Var
   err : Cardinal;
@@ -325,6 +365,7 @@ wc := TWatchableClass(M.Tag);
 err := wc.Unregister;
 If err = ERROR_SUCCESS Then
   begin
+  wc.Free;
   M.Free;
   If WatchedClassesMenuItem.Count = 0 Then
     begin
@@ -334,7 +375,6 @@ If err = ERROR_SUCCESS Then
   end
 Else WinErrorMessage('Failed to unregister the watched class', err);
 end;
-
 
 Procedure TMainFrm.EnumerateClassWatches;
 Var
@@ -365,6 +405,55 @@ If err = ERROR_SUCCESS Then
 Else WinErrorMessage('Failed to enumerate watched classes', err);
 
 wl.Free;
+end;
+
+Procedure TMainFrm.OnWatchedDriverNameClick(Sender:TObject);
+Var
+  err : Cardinal;
+  M : TMenuItem;
+  dn : TWatchableDriverName;
+begin
+M := (Sender As TMenuItem);
+dn := TWatchableDriverName(M.Tag);
+err := dn.Unregister;
+If err = ERROR_SUCCESS Then
+  begin
+  dn.Free;
+  M.Free;
+  If WatchedDriversMenuItem.Count = 0 Then
+    begin
+    WatchedDriversMenuItem.Visible := False;
+    WatchedDriversMenuItem.Enabled := False;
+    end;
+  end
+Else WinErrorMessage('Failed to unregister the watched driver name', err);
+end;
+
+Procedure TMainFrm.EnumerateDriverNameWatches;
+Var
+  M : TMenuItem;
+  dn : TWatchableDriverName;
+  err : Cardinal;
+  dnl : TList<TWatchableDriverName>;
+begin
+dnl := TList<TWatchableDriverName>.Create;
+err := TWatchableDriverName.Enumerate(dnl);
+If err = ERROR_SUCCESS Then
+  begin
+  For dn In dnl Do
+    begin
+    M := TMenuItem.Create(WatchedClassesMenuItem);
+    M.Tag := NativeInt(dn);
+    M.Caption := dn.Name;
+    M.OnClick := OnWatchedDriverNameClick;
+    WatchedDriversMenuItem.Add(M);
+    WatchedDriversMenuItem.Visible := True;
+    WatchedDriversMenuItem.Enabled := True;
+    end;
+  end
+Else WinErrorMessage('Failed to enumerate watched driver names', err);
+
+dnl.Free;
 end;
 
 

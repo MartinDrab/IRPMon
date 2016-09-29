@@ -67,6 +67,7 @@ object MainFrm: TMainFrm
       end
       object WatchDriverNameMenuItem: TMenuItem
         Caption = 'Watch driver...'
+        OnClick = WatchDriverNameMenuItemClick
       end
       object WatchedDriversMenuItem: TMenuItem
         Caption = 'Watched drivers'

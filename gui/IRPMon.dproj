@@ -165,6 +165,11 @@
 				<Form>ClassWatchAddFrm</Form>
 				<FormType>dfm</FormType>
 			</DCCReference>
+			<DCCReference Include="DriverNameWatchAddForm.pas">
+				<Form>DriverNameWatchAddFrm</Form>
+				<FormType>dfm</FormType>
+			</DCCReference>
+			<DCCReference Include="WatchedDriverNames.pas"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>
 				<CfgParent>Base</CfgParent>
