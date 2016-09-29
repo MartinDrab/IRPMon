@@ -7,6 +7,7 @@
 #include "ioctls.h"
 #include "kernel-shared.h"
 #include "hook.h"
+#include "req-queue.h"
 #include "pnp-driver-watch.h"
 
 
@@ -38,39 +39,6 @@ static PDRIVER_OBJECT _driverObject = NULL;
 /************************************************************************/
 /*                    HELPER FUNCTIONS                                  */
 /************************************************************************/
-
-static ULONG32 _HashFunction(PVOID Key)
-{
-	ULONG32 h = 0;
-	PUCHAR tmp = (PUCHAR)Key;
-	
-	for (SIZE_T i = 0; i < sizeof(GUID); ++i) {
-		h += *tmp;
-		++tmp;
-	}
-
-	return h;
-}
-
-
-BOOLEAN _CompareFunction(PHASH_ITEM Item, PVOID Key)
-{
-	PDEVICE_CLASS_WATCH_RECORD rec = CONTAINING_RECORD(Item, DEVICE_CLASS_WATCH_RECORD, HashItem);
-
-	return RtlEqualMemory(&rec->ClassGuid, Key, sizeof(GUID));
-}
-
-
-static VOID _FreeFunction(PHASH_ITEM Item)
-{
-	PDEVICE_CLASS_WATCH_RECORD rec = CONTAINING_RECORD(Item, DEVICE_CLASS_WATCH_RECORD, HashItem);
-	DEBUG_ENTER_FUNCTION("Item=0x%p", Item);
-
-	HeapMemoryFree(rec);
-
-	DEBUG_EXIT_FUNCTION_VOID();
-	return;
-}
 
 
 static NTSTATUS _AppendFilter(BOOLEAN Beginning, PWCHAR Filters, PSIZE_T ResultLength)
@@ -278,8 +246,18 @@ static NTSTATUS _CheckDriver(PDRIVER_OBJECT DriverObject)
 				nameRecord = (PDRIVER_NAME_WATCH_RECORD)StringHashTableGetUnicodeString(_driverNameTable, &oni->Name);
 				if (nameRecord != NULL) {
 					status = HookDriverObject(DriverObject, &nameRecord->MonitorSettings, &hookRecord);
-					if (NT_SUCCESS(status))
+					if (NT_SUCCESS(status)) {
+						status = DriverHookRecordEnable(hookRecord, TRUE);
+						if (NT_SUCCESS(status)) {
+							PREQUEST_HEADER rq = NULL;
+
+							status = RequestXXXDetectedCreate(ertDriverDetected, DriverObject, NULL, &rq);
+							if (NT_SUCCESS(status))
+								RequestQueueInsert(rq);
+						}
+
 						DriverHookRecordDereference(hookRecord);
+					}
 				}
 
 				ExReleaseResourceLite(&_driverNamesLock);
@@ -315,6 +293,43 @@ static NTSTATUS _AddDevice(PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT PhysicalD
 	return status;
 }
 
+
+static ULONG32 _HashFunction(PVOID Key)
+{
+	ULONG32 h = 0;
+	PUCHAR tmp = (PUCHAR)Key;
+
+	for (SIZE_T i = 0; i < sizeof(GUID); ++i) {
+		h += *tmp;
+		++tmp;
+	}
+
+	return h;
+}
+
+
+BOOLEAN _CompareFunction(PHASH_ITEM Item, PVOID Key)
+{
+	PDEVICE_CLASS_WATCH_RECORD rec = CONTAINING_RECORD(Item, DEVICE_CLASS_WATCH_RECORD, HashItem);
+
+	return RtlEqualMemory(&rec->ClassGuid, Key, sizeof(GUID));
+}
+
+
+static VOID _FreeFunction(PHASH_ITEM Item)
+{
+	PDEVICE_CLASS_WATCH_RECORD rec = CONTAINING_RECORD(Item, DEVICE_CLASS_WATCH_RECORD, HashItem);
+	DEBUG_ENTER_FUNCTION("Item=0x%p", Item);
+
+	_RegisterUnregisterFilter((rec->Flags & CLASS_WATCH_FLAG_BEGINNING) != 0, (rec->Flags & CLASS_WATCH_FLAG_UPPERFILTER) != 0, FALSE, &rec->ClassGuidString);
+	RtlFreeUnicodeString(&rec->ClassGuidString);
+	HeapMemoryFree(rec);
+
+	DEBUG_EXIT_FUNCTION_VOID();
+	return;
+}
+
+
 /************************************************************************/
 /*                     PUBLIC FUNCTIONS                                 */
 /************************************************************************/
@@ -344,6 +359,7 @@ NTSTATUS PDWClassRegister(PGUID ClassGuid, BOOLEAN UpperFilter, BOOLEAN Beginnin
 			RtlSecureZeroMemory(&uGuid, sizeof(uGuid));
 			status = RtlStringFromGUID(ClassGuid, &uGuid);
 			if (NT_SUCCESS(status)) {
+				rec->ClassGuidString = uGuid;
 				if (InterlockedIncrement(&_numberofClasses) == 1)
 					_driverObject->DriverExtension->AddDevice = _AddDevice;
 
@@ -356,7 +372,8 @@ NTSTATUS PDWClassRegister(PGUID ClassGuid, BOOLEAN UpperFilter, BOOLEAN Beginnin
 						_driverObject->DriverExtension->AddDevice = NULL;
 				}
 
-				RtlFreeUnicodeString(&uGuid);
+				if (!NT_SUCCESS(status))
+					RtlFreeUnicodeString(&uGuid);
 			}
 
 			if (!NT_SUCCESS(status))
@@ -376,7 +393,6 @@ NTSTATUS PDWClassUnregister(PGUID ClassGuid, BOOLEAN UpperFilter, BOOLEAN Beginn
 {
 	PHASH_ITEM h = NULL;
 	PDEVICE_CLASS_WATCH_RECORD rec = NULL;
-	UNICODE_STRING uClassGuid;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("ClassGuid=0x%p; UpperFilter=%u; Beginning=%u", ClassGuid, UpperFilter, Beginning);
 
@@ -384,25 +400,19 @@ NTSTATUS PDWClassUnregister(PGUID ClassGuid, BOOLEAN UpperFilter, BOOLEAN Beginn
 	ExAcquireResourceExclusiveLite(&_classGuidsLock, TRUE);
 	h = HashTableGet(_classGuidTable, ClassGuid);
 	if (h != NULL) {
-		RtlSecureZeroMemory(&uClassGuid, sizeof(uClassGuid));
-		status = RtlStringFromGUID(ClassGuid, &uClassGuid);
+		rec = CONTAINING_RECORD(h, DEVICE_CLASS_WATCH_RECORD, HashItem);
+		if (InterlockedDecrement(&_numberofClasses) == 0)
+			_driverObject->DriverExtension->AddDevice = NULL;
+
+		status = _RegisterUnregisterFilter(Beginning, UpperFilter, FALSE, &rec->ClassGuidString);
 		if (NT_SUCCESS(status)) {
-			if (InterlockedDecrement(&_numberofClasses) == 0)
-				_driverObject->DriverExtension->AddDevice = NULL;
+			HashTableDelete(_classGuidTable, ClassGuid);
+			_FreeFunction(h);
+		}
 
-			status = _RegisterUnregisterFilter(Beginning, UpperFilter, FALSE, &uClassGuid);
-			if (NT_SUCCESS(status)) {
-				HashTableDelete(_classGuidTable, ClassGuid);
-				rec = CONTAINING_RECORD(h, DEVICE_CLASS_WATCH_RECORD, HashItem);
-				HeapMemoryFree(rec);
-			}
-
-			if (!NT_SUCCESS(status)) {
-				if (InterlockedIncrement(&_numberofClasses) == 1)
-					_driverObject->DriverExtension->AddDevice = _AddDevice;
-			}
-
-			RtlFreeUnicodeString(&uClassGuid);
+		if (!NT_SUCCESS(status)) {
+			if (InterlockedIncrement(&_numberofClasses) == 1)
+				_driverObject->DriverExtension->AddDevice = _AddDevice;
 		}
 	} else status = STATUS_NOT_FOUND;
 

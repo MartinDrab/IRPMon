@@ -62,7 +62,6 @@ Const
   );
 
 Type
-
   TDriverRequest = Class
   Private
     FDriverName : WideString;
@@ -175,7 +174,7 @@ Type
 Implementation
 
 Uses
-  SysUtils, NameTables, IRPRequest, Utils;
+  SysUtils, NameTables, IRPRequest, XXXDetectedRequests, Utils;
 
 (** TDriverRequest **)
 
@@ -430,6 +429,8 @@ Case ARequestType Of
   ertDriverUnload: Result := 'Unload';
   ertFastIo: Result := 'FastIo';
   ertStartIo: Result := 'StartIo';
+  ertDriverDetected : Result := 'DriverDetected';
+  ertDeviceDetected : Result := 'DeviceDetected';
   Else Result := Format('<unknown> (%u)', [Ord(ARequestType)]);
   end;
 end;
@@ -609,6 +610,14 @@ If Assigned(UpdateRequest) Then
     ertDriverUnload: dr := TDriverUnloadRequest.Create(UpdateRequest.DriverUnload);
     ertFastIo: dr := TFastIoRequest.Create(UpdateRequest.FastIo);
     ertStartIo: dr := TStartIoRequest.Create(UpdateRequest.StartIo);
+    ertDriverDetected : begin
+      dr := TDriverDetectedRequest.Create(UpdateRequest.DriverDetected);
+      FDriverMap.Add(dr.DriverObject, dr.DriverName);
+      end;
+    ertDeviceDetected : begin
+      dr := TDeviceDetectedRequest.Create(UpdateRequest.DeviceDetected);
+      FDeviceMap.Add(dr.DeviceObject, dr.DeviceName);
+      end;
     Else dr := TDriverRequest.Create(UpdateRequest.Header);
     end;
 

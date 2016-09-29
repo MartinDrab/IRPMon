@@ -59,6 +59,8 @@ typedef enum _ERequestType {
 	ertFastIo,
 	/** Driver's StartIo routine was invoked. */
 	ertStartIo,
+	ertDriverDetected,
+	ertDeviceDetected,
 } ERequesttype, *PERequestPype;
 
 /** Determines the type returned in the Result union of the @link(REQUEST_HEADER) structure. */
@@ -219,6 +221,20 @@ typedef struct _REQUEST_STARTIO {
 	LONG Status;
 } REQUEST_STARTIO, *PREQUEST_STARTIO;
 
+typedef struct _REQUEST_DRIVER_DETECTED {
+	/** Request header. */
+	REQUEST_HEADER Header;
+	/** Length of the detected driver object name, in bytes. */
+	ULONG DriverNameLength;
+} REQUEST_DRIVER_DETECTED, *PREQUEST_DRIVER_DETECTED;
+
+typedef struct _REQUEST_DEVICE_DETECTED {
+	/** Request header. */
+	REQUEST_HEADER Header;
+	/** Length of the detected device object name, in bytes. */
+	ULONG DeviceNameLength;
+} REQUEST_DEVICE_DETECTED, *PREQUEST_DEVICE_DETECTED;
+
 typedef struct _REQUEST_GENERAL {
 	union {
 		REQUEST_HEADER Other;
@@ -228,6 +244,8 @@ typedef struct _REQUEST_GENERAL {
 		REQUEST_ADDDEVICE AddDevice;
 		REQUEST_UNLOAD DriverUnload;
 		REQUEST_STARTIO StartIo;
+		REQUEST_DRIVER_DETECTED DriverDetected;
+		REQUEST_DEVICE_DETECTED DeviceDetected;
 	} RequestTypes;
 } REQUEST_GENERAL, *PREQUEST_GENERAL;
 

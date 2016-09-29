@@ -67,12 +67,21 @@ static BOOLEAN _CatchRequest(PDRIVER_HOOK_RECORD DriverHookRecord, PDEVICE_HOOK_
 
 	if (DriverHookRecord->MonitoringEnabled) {
 		if (DriverHookRecord->MonitorNewDevices && DeviceHookRecord == NULL) {
-			status = DriverHookRecordAddDevice(DriverHookRecord, DeviceObject, NULL, NULL, TRUE, &deviceRecord);
-			if (NT_SUCCESS(status))
-				DeviceHookRecordDereference(deviceRecord);
+			if (DeviceObject != NULL) {
+				status = DriverHookRecordAddDevice(DriverHookRecord, DeviceObject, NULL, NULL, TRUE, &deviceRecord);
+				if (NT_SUCCESS(status)) {
+					PREQUEST_HEADER rq = NULL;
 
-			ret = TRUE;
-		} ret = (DeviceHookRecord != NULL && DeviceHookRecord->MonitoringEnabled);
+					status = RequestXXXDetectedCreate(ertDeviceDetected, DeviceObject->DriverObject, DeviceObject, &rq);
+					if (NT_SUCCESS(status))
+						RequestQueueInsert(rq);
+
+					DeviceHookRecordDereference(deviceRecord);
+				}
+
+				ret = TRUE;
+			}
+		} else ret = (DeviceHookRecord != NULL && DeviceHookRecord->MonitoringEnabled);
 	}
 
 	return ret;

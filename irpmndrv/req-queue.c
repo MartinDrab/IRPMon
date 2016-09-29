@@ -2,10 +2,9 @@
 #include <ntifs.h>
 #include "preprocessor.h"
 #include "allocator.h"
+#include "utils.h"
 #include "req-queue.h"
 
-#undef DEBUG_TRACE_ENABLED
-#define DEBUG_TRACE_ENABLED 0
 
 /************************************************************************/
 /*                            GLOBAL VARIABLES                          */
@@ -23,9 +22,12 @@ static ERESOURCE _connectLock;
 /*                             HELPER FUNCTIONS                         */
 /************************************************************************/
 
+
 static ULONG _GetRequestSize(PREQUEST_HEADER Header)
 {
 	ULONG ret = 0;
+	PREQUEST_DRIVER_DETECTED drr = CONTAINING_RECORD(Header, REQUEST_DRIVER_DETECTED, Header);
+	PREQUEST_DEVICE_DETECTED der = CONTAINING_RECORD(Header, REQUEST_DEVICE_DETECTED, Header);
 
 	switch (Header->Type) {
 		case ertIRP:
@@ -44,7 +46,13 @@ static ULONG _GetRequestSize(PREQUEST_HEADER Header)
 			ret = sizeof(REQUEST_UNLOAD);
 			break;
 		case ertStartIo:
-			ret = sizeof(REQUEST_UNLOAD);
+			ret = sizeof(REQUEST_STARTIO);
+			break;
+		case ertDriverDetected:
+			ret = sizeof(REQUEST_DRIVER_DETECTED) + drr->DriverNameLength;
+			break;
+		case ertDeviceDetected:
+			ret = sizeof(REQUEST_DEVICE_DETECTED) + der->DeviceNameLength;
 			break;
 	}
 
@@ -55,6 +63,7 @@ static ULONG _GetRequestSize(PREQUEST_HEADER Header)
 
 	return ret;
 }
+
 
 static VOID _RequestQueueClear(VOID)
 {
@@ -73,9 +82,11 @@ static VOID _RequestQueueClear(VOID)
 	return;
 }
 
+
 /************************************************************************/
 /*                            PUBLIC ROUTINES                           */
 /************************************************************************/
+
 
 NTSTATUS RequestQueueConnect(HANDLE hSemaphore)
 {
@@ -110,6 +121,7 @@ NTSTATUS RequestQueueConnect(HANDLE hSemaphore)
 	return status;
 }
 
+
 VOID RequestQueueDisconnect(VOID)
 {
 	DEBUG_ENTER_FUNCTION_NO_ARGS();
@@ -134,6 +146,7 @@ VOID RequestQueueDisconnect(VOID)
 	return;
 }
 
+
 VOID RequestQueueInsert(PREQUEST_HEADER Header)
 {
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
@@ -157,6 +170,64 @@ VOID RequestQueueInsert(PREQUEST_HEADER Header)
 
 	DEBUG_EXIT_FUNCTION_VOID();
 	return;
+}
+
+
+NTSTATUS RequestXXXDetectedCreate(ERequesttype Type, PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT DeviceObject, PREQUEST_HEADER *Header)
+{
+	SIZE_T requestSize = 0;
+	PREQUEST_HEADER tmpHeader = NULL;
+	PREQUEST_DRIVER_DETECTED drr = NULL;
+	PREQUEST_DEVICE_DETECTED der = NULL;
+	UNICODE_STRING uObjectName;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION("Type=%u; DriverObject=0x%p; DeviceObject=0x%p; Header=0x%p", DriverObject, DeviceObject, Type, Header);
+
+	status = (Type == ertDeviceDetected) ?
+		_GetObjectName(DeviceObject, &uObjectName) :
+		_GetObjectName(DriverObject, &uObjectName);
+
+	if (NT_SUCCESS(status)) {
+		switch (Type) {
+			case ertDriverDetected:
+				requestSize = sizeof(REQUEST_DRIVER_DETECTED) + uObjectName.Length;
+				drr = (PREQUEST_DRIVER_DETECTED)HeapMemoryAllocNonPaged(requestSize);
+				if (drr != NULL) {
+					memcpy(drr + 1, uObjectName.Buffer, drr->DriverNameLength);
+					tmpHeader = &drr->Header;
+				} else status = STATUS_INSUFFICIENT_RESOURCES;
+				break;
+			case ertDeviceDetected:
+				requestSize = sizeof(REQUEST_DEVICE_DETECTED) + uObjectName.Length;
+				der = (PREQUEST_DEVICE_DETECTED)HeapMemoryAllocNonPaged(requestSize);
+				if (der != NULL) {
+					memcpy(der + 1, uObjectName.Buffer, der->DeviceNameLength);
+					tmpHeader = &der->Header;
+				} else status = STATUS_INSUFFICIENT_RESOURCES;
+				break;
+			default:
+				status = STATUS_INVALID_PARAMETER_1;
+				break;
+		}
+
+		if (NT_SUCCESS(status)) {
+			InitializeListHead(&tmpHeader->Entry);
+			tmpHeader->Device = DeviceObject;
+			tmpHeader->Driver = DriverObject;
+			tmpHeader->Irql = KeGetCurrentIrql();
+			tmpHeader->ProcessId = PsGetCurrentProcessId();
+			tmpHeader->ThreadId = PsGetCurrentThreadId();
+			tmpHeader->ResultType = rrtUndefined;
+			tmpHeader->Type = Type;
+			KeQuerySystemTime(&tmpHeader->Time);
+			*Header = tmpHeader;
+		}
+
+		HeapMemoryFree(uObjectName.Buffer);
+	}
+
+	DEBUG_EXIT_FUNCTION("0x%x, *Header=0x%p", status, *Header);
+	return status;
 }
 
 

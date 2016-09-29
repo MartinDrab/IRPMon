@@ -170,7 +170,11 @@ Type
 	  (** A fast I/O request was serviced by a driver. *)
 	  ertFastIo,
 	  (** Driver's StartIo routine was invoked. *)
-	  ertStartIo);
+	  ertStartIo,
+    (** Previously unknown or not-monitored driver has been detected. *)
+    ertDriverDetected,
+    (** A new device has been detected. **)
+    ertDeviceDetected);
   ERequesttype = _ERequestType;
   PERequesttype = ^ERequesttype;
 
@@ -327,6 +331,20 @@ Type
   REQUEST_STARTIO = _REQUEST_STARTIO;
   PREQUEST_STARTIO = ^REQUEST_STARTIO;
 
+  _REQUEST_DRIVER_DETECTED = Record
+    Header : REQUEST_HEADER;
+    DriverNameLength : Cardinal;
+    end;
+  REQUEST_DRIVER_DETECTED = _REQUEST_DRIVER_DETECTED;
+  PREQUEST_DRIVER_DETECTED = ^REQUEST_DRIVER_DETECTED;
+
+  _REQUEST_DEVICE_DETECTED = Record
+    Header : REQUEST_HEADER;
+    DeviceNameLength : Cardinal;
+    end;
+  REQUEST_DEVICE_DETECTED = _REQUEST_DEVICE_DETECTED;
+  PREQUEST_DEVICE_DETECTED = ^REQUEST_DEVICE_DETECTED;
+
   _REQUEST_GENERAL = Record
     Case ERequestType Of
       ertUndefined : ( Header : REQUEST_HEADER);
@@ -336,6 +354,8 @@ Type
 		  ertAddDevice : (AddDevice : REQUEST_ADDDEVICE);
 		  ertDriverUnload : (DriverUnload : REQUEST_UNLOAD);
 		  ertStartIo : (StartIo : REQUEST_STARTIO);
+      ertDriverDetected : (DriverDetected : REQUEST_DRIVER_DETECTED);
+      ertDeviceDetected : (DeviceDetected : REQUEST_DEVICE_DETECTED);
     end;
   REQUEST_GENERAL = _REQUEST_GENERAL;
   PREQUEST_GENERAL = ^REQUEST_GENERAL;

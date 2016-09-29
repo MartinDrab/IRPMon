@@ -6,7 +6,7 @@
 #include "kernel-shared.h"
 
 
-
+NTSTATUS RequestXXXDetectedCreate(ERequesttype Type, PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT DeviceObject, PREQUEST_HEADER *Header);
 NTSTATUS RequestQueueGet(PREQUEST_HEADER Buffer, PULONG Length);
 VOID RequestQueueInsert(PREQUEST_HEADER Header);
 

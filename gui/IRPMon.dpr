@@ -25,7 +25,8 @@ uses
   ClassWatch in 'ClassWatch.pas',
   ClassWatchAdd in 'ClassWatchAdd.pas' {ClassWatchAddFrm},
   DriverNameWatchAddForm in 'DriverNameWatchAddForm.pas' {DriverNameWatchAddFrm},
-  WatchedDriverNames in 'WatchedDriverNames.pas';
+  WatchedDriverNames in 'WatchedDriverNames.pas',
+  XXXDetectedRequests in 'XXXDetectedRequests.pas';
 
 {$R *.RES}
 
