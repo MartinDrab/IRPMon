@@ -78,6 +78,7 @@ object ClassWatchAddFrm: TClassWatchAddFrm
         OwnerData = True
         ReadOnly = True
         RowSelect = True
+        ShowWorkAreas = True
         TabOrder = 0
         ViewStyle = vsReport
         OnCustomDrawItem = ClassListViewCustomDrawItem

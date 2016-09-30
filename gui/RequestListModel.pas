@@ -612,10 +612,16 @@ If Assigned(UpdateRequest) Then
     ertStartIo: dr := TStartIoRequest.Create(UpdateRequest.StartIo);
     ertDriverDetected : begin
       dr := TDriverDetectedRequest.Create(UpdateRequest.DriverDetected);
+      If FDriverMap.ContainsKey(dr.DriverObject) Then
+        FDriverMap.Remove(dr.DriverObject);
+
       FDriverMap.Add(dr.DriverObject, dr.DriverName);
       end;
     ertDeviceDetected : begin
       dr := TDeviceDetectedRequest.Create(UpdateRequest.DeviceDetected);
+      If FDeviceMap.ContainsKey(dr.DeviceObject) Then
+        FDeviceMap.Remove(dr.DeviceObject);
+
       FDeviceMap.Add(dr.DeviceObject, dr.DeviceName);
       end;
     Else dr := TDriverRequest.Create(UpdateRequest.Header);

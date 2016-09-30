@@ -484,6 +484,20 @@ NTSTATUS PDWClassEnumerate(PIOCTL_IRPMNDRV_CLASS_WATCH_OUTPUT Buffer, SIZE_T Len
 }
 
 
+VOID PDWClassWatchesUnregister(VOID)
+{
+	DEBUG_ENTER_FUNCTION_NO_ARGS();
+
+	KeEnterCriticalRegion();
+	ExAcquireResourceExclusiveLite(&_classGuidsLock, TRUE);
+	HashTableClear(_classGuidTable, TRUE);
+	ExReleaseResourceLite(&_classGuidsLock);
+	KeLeaveCriticalRegion();
+
+	DEBUG_EXIT_FUNCTION_VOID();
+	return;
+}
+
 NTSTATUS PWDDriverNameRegister(PUNICODE_STRING Name, PDRIVER_MONITOR_SETTINGS Settings)
 {
 	PDRIVER_NAME_WATCH_RECORD rec = NULL;

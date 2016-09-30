@@ -1197,30 +1197,30 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
-	PIO_STACK_LOCATION IrpStack = IoGetCurrentIrpStackLocation(Irp);
+	PIO_STACK_LOCATION irpStack = IoGetCurrentIrpStackLocation(Irp);
 	DEBUG_ENTER_FUNCTION("DeviceObject=0x%p; Irp=0x%p", Deviceobject, Irp);
-	
+
 	driverRecord = DriverHookRecordGet(Deviceobject->DriverObject);
 	if (driverRecord != NULL) {
 		deviceRecord = DriverHookRecordGetDevice(driverRecord, Deviceobject);
 		if (_CatchRequest(driverRecord, deviceRecord, Deviceobject)) {
-			if (deviceRecord == NULL || deviceRecord->IRPMonitorSettings[IrpStack->MajorFunction]) {
+			if (deviceRecord == NULL || deviceRecord->IRPMonitorSettings[irpStack->MajorFunction]) {
 				if (driverRecord->MonitorIRP) {
 					request = (PREQUEST_IRP)HeapMemoryAllocNonPaged(sizeof(REQUEST_IRP));
 					if (request != NULL) {
 						RequestHeaderInit(&request->Header, Deviceobject->DriverObject, Deviceobject, ertIRP);
 						RequestHeaderSetResult(request->Header, NTSTATUS, STATUS_PENDING);
 						request->IRPAddress = Irp;
-						request->MajorFunction = IrpStack->MajorFunction;
-						request->MinorFunction = IrpStack->MinorFunction;
+						request->MajorFunction = irpStack->MajorFunction;
+						request->MinorFunction = irpStack->MinorFunction;
 						request->PreviousMode = ExGetPreviousMode();
 						request->RequestorMode = Irp->RequestorMode;
-						request->Arg1 = IrpStack->Parameters.Others.Argument1;
-						request->Arg2 = IrpStack->Parameters.Others.Argument2;
-						request->Arg3 = IrpStack->Parameters.Others.Argument3;
-						request->Arg4 = IrpStack->Parameters.Others.Argument4;
+						request->Arg1 = irpStack->Parameters.Others.Argument1;
+						request->Arg2 = irpStack->Parameters.Others.Argument2;
+						request->Arg3 = irpStack->Parameters.Others.Argument3;
+						request->Arg4 = irpStack->Parameters.Others.Argument4;
 						request->IrpFlags = Irp->Flags;
-						request->FileObject = IrpStack->FileObject;
+						request->FileObject = irpStack->FileObject;
 					}
 				}
 
@@ -1228,8 +1228,8 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 					_HookIRPCompletionRoutine(Irp, Deviceobject->DriverObject, Deviceobject);
 			}
 		}
-		
-		status = driverRecord->OldMajorFunction[IrpStack->MajorFunction](Deviceobject, Irp);
+
+		status = driverRecord->OldMajorFunction[irpStack->MajorFunction](Deviceobject, Irp);
 		if (request != NULL) {
 			RequestHeaderSetResult(request->Header, NTSTATUS, status);
 			RequestQueueInsert(&request->Header);
@@ -1251,6 +1251,7 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 
 NTSTATUS HookHandlerAddDeviceDispatch(PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT PhysicalDeviceObject)
 {
+	PDEVICE_OBJECT detectedDevice = NULL;
 	PREQUEST_ADDDEVICE request = NULL;
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
@@ -1268,6 +1269,19 @@ NTSTATUS HookHandlerAddDeviceDispatch(PDRIVER_OBJECT DriverObject, PDEVICE_OBJEC
 		if (request != NULL) {
 			RequestHeaderSetResult(request->Header, NTSTATUS, status);
 			RequestQueueInsert(&request->Header);
+		}
+
+		detectedDevice = PhysicalDeviceObject;
+		while (detectedDevice != NULL) {
+			PREQUEST_HEADER rq = NULL;
+
+			if (NT_SUCCESS(RequestXXXDetectedCreate(ertDriverDetected, detectedDevice->DriverObject, NULL, &rq)))
+				RequestQueueInsert(rq);
+
+			if (NT_SUCCESS(RequestXXXDetectedCreate(ertDeviceDetected, detectedDevice->DriverObject, detectedDevice, &rq)))
+				RequestQueueInsert(rq);
+
+			detectedDevice = detectedDevice->AttachedDevice;
 		}
 
 		DriverHookRecordDereference(driverRecord);

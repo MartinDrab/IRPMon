@@ -57,6 +57,9 @@ Function TDriverDetectedRequest.GetColumnValue(AColumnType:ERequestListModelColu
 begin
 Result := True;
 Case AColumnType Of
+  rlmctDeviceObject,
+  rlmctDeviceName,
+  rlmctResult : Result := False;
   rlmctDriverObject : AResult := Format('0x%p', [FDriverObject]);
   rlmctDriverName : AResult := FDriverName;
   Else Result := Inherited GetColumnValue(AColumnType, AResult);
@@ -83,6 +86,7 @@ Function TDeviceDetectedRequest.GetColumnValue(AColumnType:ERequestListModelColu
 begin
 Result := True;
 Case AColumnType Of
+  rlmctResult : Result := False;
   rlmctDriverObject : AResult := Format('0x%p', [FDriverObject]);
   rlmctDeviceObject : AResult := Format('0x%p', [FDeviceObject]);
   rlmctDeviceName : AResult := FDeviceName;

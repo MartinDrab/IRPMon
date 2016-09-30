@@ -209,6 +209,22 @@ VOID DriverUnload(PDRIVER_OBJECT DriverObject)
 	return;
 }
 
+
+NTSTATUS DriverShutdown(PDEVICE_OBJECT DeviceObject, PIRP Irp)
+{
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION("DeviceObject=0x%p; Irp=0x%p", DeviceObject, Irp);
+
+	PDWClassWatchesUnregister();
+	status = STATUS_SUCCESS;
+	Irp->IoStatus.Status = status;
+	Irp->IoStatus.Information = 0;
+	IoCompleteRequest(Irp, IO_NO_INCREMENT);
+
+	DEBUG_EXIT_FUNCTION("0x%x", status);
+	return status;
+}
+
 /************************************************************************/
 /*                COMMUNICATION DEVICE INIT AND FINIT                   */
 /************************************************************************/
@@ -217,6 +233,7 @@ NTSTATUS DriverInit(PDRIVER_OBJECT DriverObject, PVOID Context)
 {
 	UNICODE_STRING uLinkName;
 	UNICODE_STRING uDeviceName;
+	PDEVICE_OBJECT cdo = NULL;
 	PFAST_IO_DISPATCH fastIoDispatch = NULL;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; Context=0x%p", DriverObject, Context);
@@ -231,7 +248,7 @@ NTSTATUS DriverInit(PDRIVER_OBJECT DriverObject, PVOID Context)
 		status = ExInitializeResourceLite(&_createCloseLock);
 		if (NT_SUCCESS(status)) {
 			RtlInitUnicodeString(&uDeviceName, IRPMNDRV_DEVICE_NAME);
-			status = IoCreateDevice(DriverObject, 0, &uDeviceName, FILE_DEVICE_UNKNOWN, 0, FALSE, &DriverObject->DeviceObject);
+			status = IoCreateDevice(DriverObject, 0, &uDeviceName, FILE_DEVICE_UNKNOWN, 0, FALSE, &cdo);
 			if (NT_SUCCESS(status)) {
 				RtlInitUnicodeString(&uLinkName, IRPMNDRV_SYMBOLIC_LINK);
 				status = IoCreateSymbolicLink(&uLinkName, &uDeviceName);
@@ -240,7 +257,11 @@ NTSTATUS DriverInit(PDRIVER_OBJECT DriverObject, PVOID Context)
 					DriverObject->MajorFunction[IRP_MJ_CREATE] = DriverCreateCleanup;
 					DriverObject->MajorFunction[IRP_MJ_CLEANUP] = DriverCreateCleanup;
 					DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL] = DriverDeviceControl;
+					DriverObject->MajorFunction[IRP_MJ_SHUTDOWN] = DriverShutdown;
 					fastIoDispatch->FastIoDeviceControl = DriverFastIoDeviceControl;
+					status = IoRegisterShutdownNotification(cdo);
+					if (!NT_SUCCESS(status))
+						IoDeleteSymbolicLink(&uLinkName);
 				}
 
 				if (!NT_SUCCESS(status))
