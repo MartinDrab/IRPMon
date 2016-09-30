@@ -193,6 +193,7 @@ NTSTATUS RequestXXXDetectedCreate(ERequesttype Type, PDRIVER_OBJECT DriverObject
 				requestSize = sizeof(REQUEST_DRIVER_DETECTED) + uObjectName.Length;
 				drr = (PREQUEST_DRIVER_DETECTED)HeapMemoryAllocNonPaged(requestSize);
 				if (drr != NULL) {
+					drr->DriverNameLength = uObjectName.Length;
 					memcpy(drr + 1, uObjectName.Buffer, drr->DriverNameLength);
 					tmpHeader = &drr->Header;
 				} else status = STATUS_INSUFFICIENT_RESOURCES;
@@ -201,6 +202,7 @@ NTSTATUS RequestXXXDetectedCreate(ERequesttype Type, PDRIVER_OBJECT DriverObject
 				requestSize = sizeof(REQUEST_DEVICE_DETECTED) + uObjectName.Length;
 				der = (PREQUEST_DEVICE_DETECTED)HeapMemoryAllocNonPaged(requestSize);
 				if (der != NULL) {
+					der->DeviceNameLength = uObjectName.Length;
 					memcpy(der + 1, uObjectName.Buffer, der->DeviceNameLength);
 					tmpHeader = &der->Header;
 				} else status = STATUS_INSUFFICIENT_RESOURCES;

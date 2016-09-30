@@ -43,10 +43,10 @@ begin
 Close;
 end;
 
-
 Procedure TDriverNameWatchAddFrm.FormCreate(Sender: TObject);
 begin
 FCancelled := True;
+MonitorSettingsCheckListBox.Checked[0] := True;
 MonitorSettingsCheckListBox.Checked[1] := True;
 MonitorSettingsCheckListBox.Checked[2] := True;
 MonitorSettingsCheckListBox.Checked[3] := True;
@@ -58,6 +58,7 @@ Procedure TDriverNameWatchAddFrm.OkButtonClick(Sender: TObject);
 begin
 If DriverNameEdit.Text <> '' Then
   begin
+  FDriverName := DriverNameEdit.Text;
   FDriverSettings.MonitorNewDevices := MonitorSettingsCheckListBox.Checked[0];
   FDriverSettings.MonitorIRP := MonitorSettingsCheckListBox.Checked[1];
   FDriverSettings.MonitorIRPCompletion := MonitorSettingsCheckListBox.Checked[2];

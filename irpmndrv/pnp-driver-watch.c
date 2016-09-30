@@ -139,7 +139,7 @@ static BOOLEAN _OnDriverNameWatchEnum(PWCHAR String, PVOID Data, PVOID Context)
 			}
 
 			if (NT_SUCCESS(ctx->Status)) {
-				ctx->CurrentEntry = (PDRIVER_NAME_WATCH_ENTRY)((PUCHAR)(ctx->CurrentEntry + 1) + len);
+				ctx->CurrentEntry = (PDRIVER_NAME_WATCH_ENTRY)((PUCHAR)ctx->CurrentEntry + requiredLength);
 				ctx->BytesWritten += requiredLength;
 				ctx->RemainingLength -= requiredLength;
 			}
@@ -551,7 +551,7 @@ NTSTATUS PWDDriverNameEnumerate(PIOCTL_IRPMNDRV_DRIVER_WATCH_ENUM_OUTPUT Buffer,
 	if (NT_SUCCESS(status)) {
 		ctx.AccessMode = AccessMode;
 		ctx.BytesWritten = FIELD_OFFSET(IOCTL_IRPMNDRV_DRIVER_WATCH_ENUM_OUTPUT, Entry);
-		ctx.RemainingLength = Length = ctx.BytesWritten;
+		ctx.RemainingLength = Length - ctx.BytesWritten;
 		ctx.CurrentEntry = &Buffer->Entry;
 		ctx.Status = status;
 		StringHashTablePerformWithFeedback(_driverNameTable, _OnDriverNameWatchEnum, &ctx);
