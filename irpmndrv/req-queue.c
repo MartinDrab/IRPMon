@@ -173,6 +173,23 @@ VOID RequestQueueInsert(PREQUEST_HEADER Header)
 }
 
 
+VOID RequestHeaderInit(PREQUEST_HEADER Header, PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT DeviceObject, ERequesttype RequestType)
+{
+	InitializeListHead(&Header->Entry);
+	KeQuerySystemTime(&Header->Time);
+	Header->Device = DeviceObject;
+	Header->Driver = DriverObject;
+	Header->Type = RequestType;
+	Header->ResultType = rrtUndefined;
+	Header->Result.Other = NULL;
+	Header->ProcessId = PsGetCurrentProcessId();
+	Header->ThreadId = PsGetCurrentThreadId();
+	Header->Irql = KeGetCurrentIrql();
+
+	return;
+}
+
+
 NTSTATUS RequestXXXDetectedCreate(ERequesttype Type, PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT DeviceObject, PREQUEST_HEADER *Header)
 {
 	SIZE_T requestSize = 0;
@@ -213,15 +230,7 @@ NTSTATUS RequestXXXDetectedCreate(ERequesttype Type, PDRIVER_OBJECT DriverObject
 		}
 
 		if (NT_SUCCESS(status)) {
-			InitializeListHead(&tmpHeader->Entry);
-			tmpHeader->Device = DeviceObject;
-			tmpHeader->Driver = DriverObject;
-			tmpHeader->Irql = KeGetCurrentIrql();
-			tmpHeader->ProcessId = PsGetCurrentProcessId();
-			tmpHeader->ThreadId = PsGetCurrentThreadId();
-			tmpHeader->ResultType = rrtUndefined;
-			tmpHeader->Type = Type;
-			KeQuerySystemTime(&tmpHeader->Time);
+			RequestHeaderInit(tmpHeader, DriverObject, DeviceObject, Type);
 			*Header = tmpHeader;
 		}
 

@@ -18,21 +18,6 @@
 /*                        HELPER ROUTINES                               */
 /************************************************************************/
 
-static VOID _RequestHeaderInit(PREQUEST_HEADER Header, PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT DeviceObject, ERequesttype RequestType)
-{
-	InitializeListHead(&Header->Entry);
-	KeQuerySystemTime(&Header->Time);
-	Header->Device = DeviceObject;
-	Header->Driver = DriverObject;
-	Header->Type = RequestType;
-	Header->ResultType = rrtUndefined;
-	Header->Result.Other = NULL;
-	Header->ProcessId = PsGetCurrentProcessId();
-	Header->ThreadId = PsGetCurrentThreadId();
-	Header->Irql = KeGetCurrentIrql();
-
-	return;
-}
 
 static PREQUEST_FASTIO _CreateFastIoRequest(EFastIoOperationType FastIoType, PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT DeviceObject, PVOID FileObject, PVOID Arg1, PVOID Arg2, PVOID Arg3, PVOID Arg4, PVOID Arg5, PVOID Arg6, PVOID Arg7)
 {
@@ -40,7 +25,7 @@ static PREQUEST_FASTIO _CreateFastIoRequest(EFastIoOperationType FastIoType, PDR
 
 	ret = (PREQUEST_FASTIO)HeapMemoryAllocNonPaged(sizeof(REQUEST_FASTIO));
 	if (ret != NULL) {
-		_RequestHeaderInit(&ret->Header, DriverObject, DeviceObject, ertFastIo);
+		RequestHeaderInit(&ret->Header, DriverObject, DeviceObject, ertFastIo);
 		ret->FastIoType = FastIoType;
 		ret->FileObject = FileObject;
 		ret->PreviousMode = ExGetPreviousMode();
@@ -1086,7 +1071,7 @@ VOID HookHandlerStartIoDispatch(PDEVICE_OBJECT DeviceObject, PIRP Irp)
 		if (driverRecord->MonitorStartIo && _CatchRequest(driverRecord, deviceRecord, DeviceObject)) {
 			request = (PREQUEST_STARTIO)HeapMemoryAllocNonPaged(sizeof(REQUEST_STARTIO));
 			if (request != NULL) {
-				_RequestHeaderInit(&request->Header, DeviceObject->DriverObject, DeviceObject, ertStartIo);
+				RequestHeaderInit(&request->Header, DeviceObject->DriverObject, DeviceObject, ertStartIo);
 				request->IRPAddress = Irp;
 				request->MajorFunction = IrpStack->MajorFunction;
 				request->MinorFunction = IrpStack->MinorFunction;
@@ -1139,7 +1124,7 @@ static NTSTATUS _HookHandlerIRPCompletion(PDEVICE_OBJECT DeviceObject, PIRP Irp,
 
 	completionRequest = (PREQUEST_IRP_COMPLETION)HeapMemoryAllocNonPaged(sizeof(REQUEST_IRP_COMPLETION));
 	if (completionRequest != NULL) {
-		_RequestHeaderInit(&completionRequest->Header, cc->DriverObject, cc->DeviceObject, ertIRPCompletion);
+		RequestHeaderInit(&completionRequest->Header, cc->DriverObject, cc->DeviceObject, ertIRPCompletion);
 		completionRequest->IRPAddress = Irp;
 		completionRequest->CompletionInformation = Irp->IoStatus.Information;
 		completionRequest->CompletionStatus = Irp->IoStatus.Status;
@@ -1223,7 +1208,7 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 				if (driverRecord->MonitorIRP) {
 					request = (PREQUEST_IRP)HeapMemoryAllocNonPaged(sizeof(REQUEST_IRP));
 					if (request != NULL) {
-						_RequestHeaderInit(&request->Header, Deviceobject->DriverObject, Deviceobject, ertIRP);
+						RequestHeaderInit(&request->Header, Deviceobject->DriverObject, Deviceobject, ertIRP);
 						RequestHeaderSetResult(request->Header, NTSTATUS, STATUS_PENDING);
 						request->IRPAddress = Irp;
 						request->MajorFunction = IrpStack->MajorFunction;
@@ -1276,7 +1261,7 @@ NTSTATUS HookHandlerAddDeviceDispatch(PDRIVER_OBJECT DriverObject, PDEVICE_OBJEC
 		if (driverRecord->MonitoringEnabled && driverRecord->MonitorAddDevice) {
 			request = (PREQUEST_ADDDEVICE)HeapMemoryAllocNonPaged(sizeof(REQUEST_ADDDEVICE));
 			if (request != NULL)
-				_RequestHeaderInit(&request->Header, DriverObject, PhysicalDeviceObject, ertAddDevice);
+				RequestHeaderInit(&request->Header, DriverObject, PhysicalDeviceObject, ertAddDevice);
 		}
 
 		status = driverRecord->OldAddDevice(DriverObject, PhysicalDeviceObject);
@@ -1307,7 +1292,7 @@ VOID HookHandlerDriverUnloadDisptach(PDRIVER_OBJECT DriverObject)
 		if (driverRecord->MonitoringEnabled && driverRecord->MonitorDriverUnload) {
 			request = (PREQUEST_UNLOAD)HeapMemoryAllocNonPaged(sizeof(REQUEST_UNLOAD));
 			if (request != NULL)
-				_RequestHeaderInit(&request->Header, DriverObject, NULL, ertDriverUnload);
+				RequestHeaderInit(&request->Header, DriverObject, NULL, ertDriverUnload);
 		}
 
 		ObReferenceObject(DriverObject);
