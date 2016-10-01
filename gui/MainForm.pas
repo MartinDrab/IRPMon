@@ -150,28 +150,28 @@ FHookedDeviceDriverMap := TDictionary<Pointer, Pointer>.Create;
 FModel := TRequestListModel.Create;
 FModel.ColumnUpdateBegin;
 FModel.
-    ColumnAdd('Time', Ord(rlmctTime)).
-    ColumnAdd('TID', Ord(rlmctThreadId), False, 75).
-    ColumnAdd('PID', Ord(rlmctProcessId), False, 75).
-    ColumnAdd('IRQL', Ord(rlmctIRQL)).
-    ColumnAdd('Type', Ord(rlmctRequestType)).
-    ColumnAdd('Device', Ord(rlmctDeviceObject)).
-    ColumnAdd('Device name', Ord(rlmctDeviceName), True).
-    ColumnAdd('Driver', Ord(rlmctDriverObject)).
-    ColumnAdd('Driver name', Ord(rlmctDriverName), True).
-    ColumnAdd('Result', Ord(rlmctResult), False, 75).
-    ColumnAdd('IRP', Ord(rlmctIRPAddress), False, 75).
-    ColumnAdd('Status', Ord(rlmctIOSBStatus), False, 75).
-    ColumnAdd('Information', Ord(rlmctIOSBInformation), False, 75).
-    ColumnAdd('SubType', Ord(rlmctSubType), False, 100).
-    ColumnAdd('File object', Ord(rlmctFileObject), False, 75).
-    ColumnAdd('IRP Flags', Ord(rlmctIRPFlags), False, 75).
-    ColumnAdd('Arg1', Ord(rlmctArg1), False, 75).
-    ColumnAdd('Arg2', Ord(rlmctArg2), False, 75).
-    ColumnAdd('Arg3', Ord(rlmctArg3), False, 75).
-    ColumnAdd('Arg4', Ord(rlmctArg4), False, 75).
-    ColumnAdd('P.Mode', Ord(rlmctPreviousMode)).
-    ColumnAdd('R.Mode', Ord(rlmctRequestorMode));
+    ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctTime), Ord(rlmctTime)).
+    ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctThreadId), Ord(rlmctThreadId), False, 75).
+    ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctProcessId), Ord(rlmctProcessId), False, 75).
+    ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctIRQL), Ord(rlmctIRQL)).
+    ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctRequestType), Ord(rlmctRequestType)).
+    ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctDeviceObject), Ord(rlmctDeviceObject)).
+    ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctDeviceName), Ord(rlmctDeviceName), True).
+    ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctDriverObject), Ord(rlmctDriverObject)).
+    ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctDriverName), Ord(rlmctDriverName), True).
+    ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctResult), Ord(rlmctResult), False, 75).
+    ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctIRPAddress), Ord(rlmctIRPAddress), False, 75).
+    ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctIOSBStatus), Ord(rlmctIOSBStatus), False, 75).
+    ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctIOSBInformation), Ord(rlmctIOSBInformation), False, 75).
+    ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctSubType), Ord(rlmctSubType), False, 100).
+    ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctFileObject), Ord(rlmctFileObject), False, 75).
+    ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctIRPFlags), Ord(rlmctIRPFlags), False, 75).
+    ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctArg1), Ord(rlmctArg1), False, 75).
+    ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctArg2), Ord(rlmctArg2), False, 75).
+    ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctArg3), Ord(rlmctArg3), False, 75).
+    ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctArg4), Ord(rlmctArg4), False, 75).
+    ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctPreviousMode), Ord(rlmctPreviousMode)).
+    ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctRequestorMode), Ord(rlmctRequestorMode));
 FModel.ColumnUpdateEnd;
 FModel.CreateColumnsMenu(ColumnsMenuItem);
 FModel.SetDisplayer(RequestListView);

@@ -45,6 +45,10 @@ object MainFrm: TMainFrm
     object Hooks: TTabSheet
       Caption = 'Hooks'
       ImageIndex = 1
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
     end
   end
   object MainMenu1: TMainMenu

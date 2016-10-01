@@ -86,6 +86,7 @@ Type
     Procedure SaveToStream(AStream:TStream); Virtual;
     Procedure SaveToFile(AFileName:WideString); Virtual;
 
+    Class Function GetBaseColumnName(AColumnType:ERequestListModelColumnType):WideString;
     Class Function IOCTLToString(AControlCode:Cardinal):WideString;
     Class Function RequestTypeToString(ARequestType:ERequestType):WideString;
     Class Function RequestResultToString(AResult:NativeUInt; AResultType:ERequestResultType):WideString;
@@ -259,6 +260,11 @@ Case AColumnType Of
 end;
 
 Function TDriverRequest.GetColumnName(AColumnType:ERequestListModelColumnType):WideString;
+begin
+Result := GetBaseColumnName(AColumnType);
+end;
+
+Class Function TDriverRequest.GetBaseColumnName(AColumnType:ERequestListModelColumnType):WideString;
 begin
 Result := RequestListModelColumnNames[Ord(AColumnType)];
 end;

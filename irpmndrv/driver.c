@@ -215,6 +215,8 @@ NTSTATUS DriverShutdown(PDEVICE_OBJECT DeviceObject, PIRP Irp)
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("DeviceObject=0x%p; Irp=0x%p", DeviceObject, Irp);
 
+	UNREFERENCED_PARAMETER(DeviceObject);
+
 	PDWClassWatchesUnregister();
 	status = STATUS_SUCCESS;
 	Irp->IoStatus.Status = status;
@@ -263,7 +265,7 @@ NTSTATUS DriverInit(PDRIVER_OBJECT DriverObject, PVOID Context)
 					if (!NT_SUCCESS(status))
 						IoDeleteSymbolicLink(&uLinkName);
 				}
-
+				
 				if (!NT_SUCCESS(status))
 					IoDeleteDevice(DriverObject->DeviceObject);
 			}

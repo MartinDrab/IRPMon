@@ -9,6 +9,34 @@ Uses
   Windows;
 
 Type
+  BUS_QUERY_ID_TYPE = (
+    BusQueryDeviceID = 0,       // <Enumerator>\<Enumerator-specific device id>
+    BusQueryHardwareIDs = 1,    // Hardware ids
+    BusQueryCompatibleIDs = 2,  // compatible device ids
+    BusQueryInstanceID = 3,     // persistent id for this instance of the device
+    BusQueryDeviceSerialNumber = 4,   // serial number for this device
+    BusQueryContainerID = 5     // unique id of the device's physical container
+  );
+  PBUS_QUERY_ID_TYPE = ^BUS_QUERY_ID_TYPE;
+
+  DEVICE_TEXT_TYPE = (
+    DeviceTextDescription = 0,            // DeviceDesc property
+    DeviceTextLocationInformation = 1     // DeviceLocation property
+  );
+  PDEVICE_TEXT_TYPE = ^DEVICE_TEXT_TYPE;
+
+  DEVICE_RELATION_TYPE = (
+    BusRelations,
+    EjectionRelations,
+    PowerRelations,
+    RemovalRelations,
+    TargetDeviceRelation,
+    SingleBusRelations,
+    TransportRelations
+  );
+  PDEVICE_RELATION_TYPE = ^DEVICE_RELATION_TYPE;
+
+
   TIRPArguments = Record
     Case Integer Of
       0 : (Other : Record
@@ -55,7 +83,7 @@ Type
         DeviceObject : Pointer;
         end; );
       6 : (QueryDeviceRelations : Record
-        DeviceRelationType : Cardinal;
+        DeviceRelationType : DEVICE_RELATION_TYPE;
         end; );
       7 : (QueryInterface : Record
         end; );
@@ -76,10 +104,10 @@ Type
         Lock : ByteBool;
         end; );
       12 : (QueryId : Record
-        IdType : Cardinal;
+        IdType : BUS_QUERY_ID_TYPE;
         end; );
       13 : (QueryText : Record
-        TextType : Cardinal;
+        TextType : DEVICE_TEXT_TYPE;
 {$IFNDEF WIN32}
         Padding : Cardinal;
 {$ENDIF}

@@ -26,6 +26,9 @@ Type
     Class Function PowerStateTypeToString(AType:Cardinal):WideString;
     Class Function PowerStateToString(AType:Cardinal; AState:Cardinal):WideString;
     Class Function ShutdownTypeToString(AType:Cardinal):WideString;
+    Class Function BusQueryIdTypeToString(AType:BUS_QUERY_ID_TYPE):WideString;
+    Class Function DeviceTextTypeToString(AType:DEVICE_TEXT_TYPE):WideString;
+    Class Function DeviceRelationTypeToString(AType:DEVICE_RELATION_TYPE):WideString;
     Class Function Build(Var ARequest:REQUEST_IRP):TIRPRequest;
 
     Property FileObject : Pointer Read FFileObject;
@@ -79,6 +82,25 @@ Type
     Public
       Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
     end;
+
+  TQueryIdRequest = Class (TIRPRequest)
+    Public
+      Function GetColumnName(AColumnType:ERequestListModelColumnType):WideString; Override;
+      Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
+    end;
+
+  TQueryDeviceTextRequest = Class (TIRPRequest)
+    Public
+      Function GetColumnName(AColumnType:ERequestListModelColumnType):WideString; Override;
+      Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
+    end;
+
+  TQueryDeviceRelationsRequest = Class (TIRPRequest)
+    Public
+      Function GetColumnName(AColumnType:ERequestListModelColumnType):WideString; Override;
+      Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
+    end;
+
 
 Implementation
 
@@ -170,6 +192,42 @@ Case AType Of
   end;
 end;
 
+Class Function TIRPRequest.BusQueryIdTypeToString(AType:BUS_QUERY_ID_TYPE):WideString;
+begin
+Case AType Of
+  BusQueryDeviceID: Result := 'DeviceID';
+  BusQueryHardwareIDs: Result := 'HardwareIDs';
+  BusQueryCompatibleIDs: Result := 'CompatibleIDs';
+  BusQueryInstanceID: Result := 'InstanceID';
+  BusQueryDeviceSerialNumber: Result := 'SerialNumber';
+  BusQueryContainerID: Result := 'ContainerID';
+  Else Result := Format('<unknown (%u)>', [Ord(AType)]);
+  End;
+end;
+
+Class Function TIRPRequest.DeviceTextTypeToString(AType:DEVICE_TEXT_TYPE):WideString;
+begin
+Case AType Of
+  DeviceTextDescription: Result := 'Description';
+  DeviceTextLocationInformation: Result := 'Location';
+  Else Result := Format('<unknown (%u)>', [Ord(AType)]);
+  end;
+end;
+
+Class Function TIRPRequest.DeviceRelationTypeToString(AType:DEVICE_RELATION_TYPE):WideString;
+begin
+Case AType Of
+  BusRelations: Result := 'Bus';
+  EjectionRelations: Result := 'Ejection';
+  PowerRelations: Result := 'Power';
+  RemovalRelations: Result := 'Removal';
+  TargetDeviceRelation: Result := 'Target';
+  SingleBusRelations: Result := 'SingleBus';
+  TransportRelations: Result := 'Transport';
+  Else Result := Format('<unknown (%u)>', [Ord(AType)]);
+  end;
+end;
+
 Class Function TIRPRequest.Build(Var ARequest:REQUEST_IRP):TIRPRequest;
 begin
 Result := Nil;
@@ -188,7 +246,13 @@ Case ARequest.MajorFunction Of
       2, 3 : Result := TQuerySetPowerRequest.Create(ARequest);
       end;
     end;
-  27 : ; // PnP
+  27 : begin // PnP
+    Case ARequest.MinorFunction Of
+      $7 : Result := TQueryDeviceRelationsRequest.Create(ARequest);
+      $C : Result := TQueryDeviceTextRequest.Create(ARequest);
+      $13 : Result := TQueryIdRequest.Create(ARequest);
+      end;
+    end;
   end;
 
 If Not Assigned(Result) Then
@@ -325,6 +389,7 @@ Case AColumnType Of
   rlmctArg2 : Result := 'Power state type';
   rlmctArg3 : Result := 'Power state';
   rlmctArg4 : Result := 'Shutdown type';
+  Else Result := Inherited GetColumnName(AColumnType);
   end;
 end;
 
@@ -339,6 +404,74 @@ Case AColumnType Of
   rlmctArg3,
   rlmctArg4 : Result := False;
   Else Result := Inherited GetColumnValue(AColumnType, AResult);
+  end;
+end;
+
+(** TQueryIdRequest **)
+
+Function TQueryIdRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
+begin
+Result := True;
+Case AColumnType Of
+  rlmctArg1 : AResult := BusQueryIdTypeToString(FArgs.QueryId.IdType);
+  rlmctArg2,
+  rlmctArg3,
+  rlmctArg4 : Result := False;
+  Else Result := Inherited GetColumnValue(AColumnType, AResult);
+  end;
+end;
+
+Function TQueryIdRequest.GetColumnName(AColumnType:ERequestListModelColumnType):WideString;
+begin
+Case AColumnType Of
+  rlmctArg1 : Result := 'ID type';
+  Else Result := Inherited GetColumnName(AColumnType);
+  end;
+end;
+
+
+(** TQueryDeviceRelationsRequest **)
+
+Function TQueryDeviceRelationsRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
+begin
+Result := True;
+Case AColumnType Of
+  rlmctArg1 : AResult := DeviceRelationTypeToString(FArgs.QueryDeviceRelations.DeviceRelationType);
+  rlmctArg2,
+  rlmctArg3,
+  rlmctArg4 : Result := False;
+  Else Result := Inherited GetColumnValue(AColumnType, AResult);
+  end;
+end;
+
+Function TQueryDeviceRelationsRequest.GetColumnName(AColumnType:ERequestListModelColumnType):WideString;
+begin
+Case AColumnType Of
+  rlmctArg1 : Result := 'Relation type';
+  Else Result := Inherited GetColumnName(AColumnType);
+  end;
+end;
+
+(** TQueryDeviceTextRequest **)
+
+Function TQueryDeviceTextRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
+begin
+Result := True;
+Case AColumnType Of
+  rlmctArg1 : AResult := DeviceTextTypeToString(FArgs.QueryText.TextType);
+  rlmctArg2 : AResult := Format('%u', [FArgs.QueryText.LocaleId]);
+  rlmctArg3,
+  rlmctArg4 : Result := False;
+  Else Result := Inherited GetColumnValue(AColumnType, AResult);
+  end;
+end;
+
+Function TQueryDeviceTextRequest.GetColumnName(AColumnType:ERequestListModelColumnType):WideString;
+begin
+Case AColumnType Of
+  rlmctArg1 : Result := 'Text type';
+  rlmctArg2 : Result := 'Locale';
+  Else Result := Inherited GetColumnName(AColumnType);
   end;
 end;
 

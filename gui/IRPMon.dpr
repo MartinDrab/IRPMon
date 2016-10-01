@@ -26,7 +26,8 @@ uses
   ClassWatchAdd in 'ClassWatchAdd.pas' {ClassWatchAddFrm},
   DriverNameWatchAddForm in 'DriverNameWatchAddForm.pas' {DriverNameWatchAddFrm},
   WatchedDriverNames in 'WatchedDriverNames.pas',
-  XXXDetectedRequests in 'XXXDetectedRequests.pas';
+  XXXDetectedRequests in 'XXXDetectedRequests.pas',
+  LibJSON in 'LibJSON.pas';
 
 {$R *.RES}
 

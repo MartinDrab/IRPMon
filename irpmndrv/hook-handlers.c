@@ -1106,12 +1106,15 @@ VOID HookHandlerStartIoDispatch(PDEVICE_OBJECT DeviceObject, PIRP Irp)
 }
 
 typedef struct _IRP_COMPLETION_CONTEXT {
+	volatile LONG ReferenceCount;
 	PVOID OriginalContext;
 	PIO_COMPLETION_ROUTINE OriginalRoutine;
 	ULONG OriginalControl;
 	PDRIVER_OBJECT DriverObject;
 	PDEVICE_OBJECT DeviceObject;
+	volatile PREQUEST_IRP_COMPLETION CompRequest;
 } IRP_COMPLETION_CONTEXT, *PIRP_COMPLETION_CONTEXT;
+
 
 static NTSTATUS _HookHandlerIRPCompletion(PDEVICE_OBJECT DeviceObject, PIRP Irp, PVOID Context)
 {
@@ -1128,6 +1131,7 @@ static NTSTATUS _HookHandlerIRPCompletion(PDEVICE_OBJECT DeviceObject, PIRP Irp,
 		completionRequest->IRPAddress = Irp;
 		completionRequest->CompletionInformation = Irp->IoStatus.Information;
 		completionRequest->CompletionStatus = Irp->IoStatus.Status;
+		cc->CompRequest = completionRequest;
 	}
 
 	// Change the next (well, its the previous one in the completion path)
@@ -1152,10 +1156,13 @@ static NTSTATUS _HookHandlerIRPCompletion(PDEVICE_OBJECT DeviceObject, PIRP Irp,
 		status = STATUS_PENDING;
 	}
 
-	HeapMemoryFree(cc);
-	if (completionRequest != NULL) {
+	if (completionRequest != NULL)
 		RequestHeaderSetResult(completionRequest->Header, NTSTATUS, status);
-		RequestQueueInsert(&completionRequest->Header);
+
+	if (InterlockedDecrement(&cc->ReferenceCount) == 0) {
+		HeapMemoryFree(cc);
+		if (completionRequest != NULL)
+			RequestQueueInsert(&completionRequest->Header);
 	}
 
 	DEBUG_EXIT_FUNCTION("0x%x", status);
@@ -1163,36 +1170,38 @@ static NTSTATUS _HookHandlerIRPCompletion(PDEVICE_OBJECT DeviceObject, PIRP Irp,
 }
 
 
-static VOID _HookIRPCompletionRoutine(PIRP Irp, PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT DeviceObject)
+static PIRP_COMPLETION_CONTEXT _HookIRPCompletionRoutine(PIRP Irp, PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT DeviceObject)
 {
 	PIO_STACK_LOCATION irpStack = NULL;
-	PIRP_COMPLETION_CONTEXT cc = NULL;
+	PIRP_COMPLETION_CONTEXT ret = NULL;
 	DEBUG_ENTER_FUNCTION("Irp=0x%p; DriverObject=0x%p; DeviceObject=0x%p", Irp, DriverObject, DeviceObject);
 
-	cc = (PIRP_COMPLETION_CONTEXT)HeapMemoryAllocNonPaged(sizeof(IRP_COMPLETION_CONTEXT));
-	if (cc != NULL) {
-		RtlSecureZeroMemory(cc, sizeof(IRP_COMPLETION_CONTEXT));
-		cc->DriverObject = DriverObject;
-		cc->DeviceObject = DeviceObject;
+	ret = (PIRP_COMPLETION_CONTEXT)HeapMemoryAllocNonPaged(sizeof(IRP_COMPLETION_CONTEXT));
+	if (ret != NULL) {
+		RtlSecureZeroMemory(ret, sizeof(IRP_COMPLETION_CONTEXT));
+		ret->ReferenceCount = 1;
+		ret->DriverObject = DriverObject;
+		ret->DeviceObject = DeviceObject;
 		irpStack = IoGetCurrentIrpStackLocation(Irp);
 		if (irpStack->CompletionRoutine != NULL) {
-			cc->OriginalContext = irpStack->Context;
-			cc->OriginalRoutine = irpStack->CompletionRoutine;
-			cc->OriginalControl = irpStack->Control;
+			ret->OriginalContext = irpStack->Context;
+			ret->OriginalRoutine = irpStack->CompletionRoutine;
+			ret->OriginalControl = irpStack->Control;
 		}
 		
 		IoSkipCurrentIrpStackLocation(Irp);
-		IoSetCompletionRoutine(Irp, _HookHandlerIRPCompletion, cc, TRUE, TRUE, TRUE);
+		IoSetCompletionRoutine(Irp, _HookHandlerIRPCompletion, ret, TRUE, TRUE, TRUE);
 		IoSetNextIrpStackLocation(Irp);
 	}
 
-	DEBUG_EXIT_FUNCTION_VOID();
-	return;
+	DEBUG_EXIT_FUNCTION("0x%p", ret);
+	return ret;
 }
 
 
 NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 {
+	PIRP_COMPLETION_CONTEXT compContext = NULL;
 	PREQUEST_IRP request = NULL;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
@@ -1224,8 +1233,11 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 					}
 				}
 
-				if (driverRecord->MonitorIRPCompletion)
-					_HookIRPCompletionRoutine(Irp, Deviceobject->DriverObject, Deviceobject);
+				if (driverRecord->MonitorIRPCompletion) {
+					compContext = _HookIRPCompletionRoutine(Irp, Deviceobject->DriverObject, Deviceobject);
+					if (request != NULL)
+						InterlockedIncrement(&compContext->ReferenceCount);
+				}
 			}
 		}
 
@@ -1233,6 +1245,11 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 		if (request != NULL) {
 			RequestHeaderSetResult(request->Header, NTSTATUS, status);
 			RequestQueueInsert(&request->Header);
+		}
+
+		if (compContext != NULL && InterlockedDecrement(&compContext->ReferenceCount) == 0) {
+			RequestQueueInsert(&compContext->CompRequest->Header);
+			HeapMemoryFree(compContext);
 		}
 
 		if (deviceRecord != NULL)
