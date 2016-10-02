@@ -4,7 +4,7 @@ object ClassWatchAddFrm: TClassWatchAddFrm
   BorderIcons = [biSystemMenu]
   Caption = 'Add a Class Watch'
   ClientHeight = 340
-  ClientWidth = 381
+  ClientWidth = 491
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -20,14 +20,15 @@ object ClassWatchAddFrm: TClassWatchAddFrm
   object MainPanel: TPanel
     Left = 0
     Top = 0
-    Width = 381
+    Width = 491
     Height = 313
     Align = alTop
     TabOrder = 0
+    ExplicitWidth = 381
     object FilterPositionRadioGroup: TRadioGroup
       Left = 1
-      Top = 49
-      Width = 379
+      Top = 1
+      Width = 489
       Height = 56
       Align = alTop
       Caption = 'Filter position'
@@ -37,39 +38,33 @@ object ClassWatchAddFrm: TClassWatchAddFrm
         'first'
         'last')
       TabOrder = 0
-    end
-    object FilterTypeRadioGroup: TRadioGroup
-      Left = 1
-      Top = 1
-      Width = 379
-      Height = 48
-      Align = alTop
-      Caption = 'Filter type'
-      Columns = 2
-      ItemIndex = 1
-      Items.Strings = (
-        'lower'
-        'upper')
-      TabOrder = 1
+      ExplicitTop = -5
     end
     object GroupBox1: TGroupBox
       Left = 1
-      Top = 105
-      Width = 379
-      Height = 208
-      Align = alTop
+      Top = 57
+      Width = 489
+      Height = 255
+      Align = alClient
       Caption = 'Class'
-      TabOrder = 2
+      TabOrder = 1
+      ExplicitTop = 105
+      ExplicitWidth = 379
+      ExplicitHeight = 208
       object ClassListView: TListView
         Left = 2
         Top = 15
-        Width = 375
-        Height = 191
+        Width = 485
+        Height = 238
         Align = alClient
         Columns = <
           item
             Caption = 'Name'
             Width = 100
+          end
+          item
+            Caption = 'Filter type'
+            Width = 75
           end
           item
             AutoSize = True
@@ -83,6 +78,7 @@ object ClassWatchAddFrm: TClassWatchAddFrm
         ViewStyle = vsReport
         OnCustomDrawItem = ClassListViewCustomDrawItem
         OnData = ClassListViewData
+        ExplicitHeight = 194
       end
     end
   end

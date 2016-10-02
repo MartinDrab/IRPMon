@@ -29,7 +29,8 @@ typedef struct _DRIVER_NAME_WATCH_ENUM_CONTEXT {
 /************************************************************************/
 
 static PHASH_TABLE _driverNameTable = NULL;
-static PHASH_TABLE _classGuidTable = NULL;
+static PHASH_TABLE _lowerClassGuidTable = NULL;
+static PHASH_TABLE _upperClassGuidTable = NULL;
 static ERESOURCE _driverNamesLock;
 static ERESOURCE _classGuidsLock;
 static UNICODE_STRING _driverServiceName;
@@ -224,14 +225,15 @@ static NTSTATUS _RegisterUnregisterFilter(BOOLEAN Beginning, BOOLEAN UpperFilter
 }
 
 
-static NTSTATUS _CheckDriver(PDRIVER_OBJECT DriverObject)
+static NTSTATUS _CheckDriver(PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT DeviceObject)
 {
 	ULONG returnLength = 0;
 	PDRIVER_NAME_WATCH_RECORD nameRecord = NULL;
 	PDRIVER_HOOK_RECORD hookRecord = NULL;
+	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 	POBJECT_NAME_INFORMATION oni = NULL;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
-	DEBUG_ENTER_FUNCTION("DriverObject=0x%p", DriverObject);
+	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; DeviceObject=0x%p", DriverObject, DeviceObject);
 
 	status = ObQueryNameString(DriverObject, NULL, 0, &returnLength);
 	if (status == STATUS_INFO_LENGTH_MISMATCH) {
@@ -249,11 +251,12 @@ static NTSTATUS _CheckDriver(PDRIVER_OBJECT DriverObject)
 					if (NT_SUCCESS(status)) {
 						status = DriverHookRecordEnable(hookRecord, TRUE);
 						if (NT_SUCCESS(status)) {
-							PREQUEST_HEADER rq = NULL;
+						
+							status = DriverHookRecordAddDevice(hookRecord, DeviceObject, NULL, NULL, TRUE, &deviceRecord);
+							if (NT_SUCCESS(status)) {
 
-							status = RequestXXXDetectedCreate(ertDriverDetected, DriverObject, NULL, &rq);
-							if (NT_SUCCESS(status))
-								RequestQueueInsert(rq);
+								DeviceHookRecordDereference(deviceRecord);
+							}
 						}
 
 						DriverHookRecordDereference(hookRecord);
@@ -266,6 +269,18 @@ static NTSTATUS _CheckDriver(PDRIVER_OBJECT DriverObject)
 
 			HeapMemoryFree(oni);
 		} else status = STATUS_INSUFFICIENT_RESOURCES;
+	}
+
+	if (NT_SUCCESS(status)) {
+		PREQUEST_HEADER rq = NULL;
+
+		status = RequestXXXDetectedCreate(ertDriverDetected, DriverObject, NULL, &rq);
+		if (NT_SUCCESS(status))
+			RequestQueueInsert(rq);
+
+		status = RequestXXXDetectedCreate(ertDeviceDetected, DriverObject, DeviceObject, &rq);
+		if (NT_SUCCESS(status))
+			RequestQueueInsert(rq);
 	}
 
 	DEBUG_EXIT_FUNCTION("0x%x", status)
@@ -283,7 +298,7 @@ static NTSTATUS _AddDevice(PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT PhysicalD
 
 	deviceObject = PhysicalDeviceObject;
 	do {
-		status = _CheckDriver(deviceObject->DriverObject);
+		status = _CheckDriver(deviceObject->DriverObject, deviceObject);
 		deviceObject = deviceObject->AttachedDevice;
 	} while (deviceObject != NULL);
 
@@ -338,13 +353,15 @@ NTSTATUS PDWClassRegister(PGUID ClassGuid, BOOLEAN UpperFilter, BOOLEAN Beginnin
 {
 	PHASH_ITEM h = NULL;
 	UNICODE_STRING uGuid;
+	PHASH_TABLE targetTable = NULL;
 	PDEVICE_CLASS_WATCH_RECORD rec = NULL;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("ClassGuid=0x%p; UpperFilter=%u; Beginning=%u", ClassGuid, UpperFilter, Beginning);
 
+	targetTable = (UpperFilter) ? _upperClassGuidTable : _lowerClassGuidTable;
 	KeEnterCriticalRegion();
 	ExAcquireResourceExclusiveLite(&_classGuidsLock, TRUE);
-	h = HashTableGet(_classGuidTable, ClassGuid);
+	h = HashTableGet(targetTable, ClassGuid);
 	if (h == NULL) {
 		rec = (PDEVICE_CLASS_WATCH_RECORD)HeapMemoryAllocPaged(sizeof(DEVICE_CLASS_WATCH_RECORD));
 		if (rec != NULL) {
@@ -365,7 +382,7 @@ NTSTATUS PDWClassRegister(PGUID ClassGuid, BOOLEAN UpperFilter, BOOLEAN Beginnin
 
 				status = _RegisterUnregisterFilter(Beginning, UpperFilter, TRUE, &uGuid);
 				if (NT_SUCCESS(status))
-					HashTableInsert(_classGuidTable, &rec->HashItem, ClassGuid);
+					HashTableInsert(targetTable, &rec->HashItem, ClassGuid);
 
 				if (!NT_SUCCESS(status)) {
 					if (InterlockedDecrement(&_numberofClasses) == 0)
@@ -392,13 +409,15 @@ NTSTATUS PDWClassRegister(PGUID ClassGuid, BOOLEAN UpperFilter, BOOLEAN Beginnin
 NTSTATUS PDWClassUnregister(PGUID ClassGuid, BOOLEAN UpperFilter, BOOLEAN Beginning)
 {
 	PHASH_ITEM h = NULL;
+	PHASH_TABLE targetTable = NULL;
 	PDEVICE_CLASS_WATCH_RECORD rec = NULL;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("ClassGuid=0x%p; UpperFilter=%u; Beginning=%u", ClassGuid, UpperFilter, Beginning);
 
+	targetTable = (UpperFilter) ? _upperClassGuidTable : _lowerClassGuidTable;
 	KeEnterCriticalRegion();
 	ExAcquireResourceExclusiveLite(&_classGuidsLock, TRUE);
-	h = HashTableGet(_classGuidTable, ClassGuid);
+	h = HashTableGet(targetTable, ClassGuid);
 	if (h != NULL) {
 		rec = CONTAINING_RECORD(h, DEVICE_CLASS_WATCH_RECORD, HashItem);
 		if (InterlockedDecrement(&_numberofClasses) == 0)
@@ -406,7 +425,7 @@ NTSTATUS PDWClassUnregister(PGUID ClassGuid, BOOLEAN UpperFilter, BOOLEAN Beginn
 
 		status = _RegisterUnregisterFilter(Beginning, UpperFilter, FALSE, &rec->ClassGuidString);
 		if (NT_SUCCESS(status)) {
-			HashTableDelete(_classGuidTable, ClassGuid);
+			HashTableDelete(targetTable, ClassGuid);
 			_FreeFunction(h);
 		}
 
@@ -437,19 +456,19 @@ NTSTATUS PDWClassEnumerate(PIOCTL_IRPMNDRV_CLASS_WATCH_OUTPUT Buffer, SIZE_T Len
 	status = STATUS_SUCCESS;
 	KeEnterCriticalRegion();
 	ExAcquireResourceSharedLite(&_classGuidsLock, TRUE);
-	requiredLength = (_classGuidTable->NumberOfItems - 1)*sizeof(CLASS_WATCH_ENTRY) + sizeof(IOCTL_IRPMNDRV_CLASS_WATCH_ENUM_OUTPUT);
+	requiredLength = (_lowerClassGuidTable->NumberOfItems + _upperClassGuidTable->NumberOfItems - 1)*sizeof(CLASS_WATCH_ENTRY) + sizeof(IOCTL_IRPMNDRV_CLASS_WATCH_ENUM_OUTPUT);
 	if (requiredLength <= Length) {
 		if (AccessMode == UserMode) {
 			__try {
 				ProbeForWrite(Buffer, requiredLength, 1);
-				Buffer->Count = _classGuidTable->NumberOfItems;
+				Buffer->Count = _lowerClassGuidTable->NumberOfItems + _upperClassGuidTable->NumberOfItems;
 			} __except (EXCEPTION_EXECUTE_HANDLER) {
 				status = GetExceptionCode();
 			}
-		} else Buffer->Count = _classGuidTable->NumberOfItems;
+		} else Buffer->Count = _lowerClassGuidTable->NumberOfItems + _upperClassGuidTable->NumberOfItems;
 		
 		if (NT_SUCCESS(status)) {
-			if (HashTableGetFirst(_classGuidTable, &it)) {
+			if (HashTableGetFirst(_lowerClassGuidTable, &it)) {
 				do {
 					h = HashTableIteratorGetData(&it);
 					rec = CONTAINING_RECORD(h, DEVICE_CLASS_WATCH_RECORD, HashItem);
@@ -471,8 +490,32 @@ NTSTATUS PDWClassEnumerate(PIOCTL_IRPMNDRV_CLASS_WATCH_OUTPUT Buffer, SIZE_T Len
 				HashTableIteratorFinit(&it);
 			}
 
-			if (NT_SUCCESS(status))
-				*ReturnLength = requiredLength;
+			if (NT_SUCCESS(status)) {
+				if (HashTableGetFirst(_upperClassGuidTable, &it)) {
+					do {
+						h = HashTableIteratorGetData(&it);
+						rec = CONTAINING_RECORD(h, DEVICE_CLASS_WATCH_RECORD, HashItem);
+						if (AccessMode == UserMode) {
+							__try {
+								Buffer->Entries[index].ClassGuid = rec->ClassGuid;
+								Buffer->Entries[index].Flags = rec->Flags;
+							} __except (EXCEPTION_EXECUTE_HANDLER) {
+								status = GetExceptionCode();
+							}
+						} else {
+							Buffer->Entries[index].ClassGuid = rec->ClassGuid;
+							Buffer->Entries[index].Flags = rec->Flags;
+						}
+
+						++index;
+					} while (NT_SUCCESS(status) && HashTableGetNext(&it));
+
+					HashTableIteratorFinit(&it);
+				}
+
+				if (NT_SUCCESS(status))
+					*ReturnLength = requiredLength;
+			}
 		}
 	} else status = STATUS_BUFFER_TOO_SMALL;
 
@@ -490,7 +533,8 @@ VOID PDWClassWatchesUnregister(VOID)
 
 	KeEnterCriticalRegion();
 	ExAcquireResourceExclusiveLite(&_classGuidsLock, TRUE);
-	HashTableClear(_classGuidTable, TRUE);
+	HashTableClear(_upperClassGuidTable, TRUE);
+	HashTableClear(_lowerClassGuidTable, TRUE);
 	ExReleaseResourceLite(&_classGuidsLock);
 	KeLeaveCriticalRegion();
 
@@ -595,36 +639,42 @@ NTSTATUS PWDModuleInit(PDRIVER_OBJECT DriverObject, PVOID Context)
 	_driverObject = DriverObject;
 	status = ExInitializeResourceLite(&_classGuidsLock);
 	if (NT_SUCCESS(status)) {
-		status = HashTableCreate(httNoSynchronization, 37, _HashFunction, _CompareFunction, _FreeFunction, &_classGuidTable);
+		status = HashTableCreate(httNoSynchronization, 37, _HashFunction, _CompareFunction, _FreeFunction, &_lowerClassGuidTable);
 		if (NT_SUCCESS(status)) {
-			status = ExInitializeResourceLite(&_driverNamesLock);
+			status = HashTableCreate(httNoSynchronization, 37, _HashFunction, _CompareFunction, _FreeFunction, &_upperClassGuidTable);
 			if (NT_SUCCESS(status)) {
-				status = StringHashTableCreate(httNoSynchronization, 37, &_driverNameTable);
+				status = ExInitializeResourceLite(&_driverNamesLock);
 				if (NT_SUCCESS(status)) {
-					_driverServiceName = *(PUNICODE_STRING)Context;
-					_driverServiceName.Buffer += (_driverServiceName.Length / sizeof(WCHAR));
-					_driverServiceName.Length = 0;
-					do {
-						--_driverServiceName.Buffer;
-						_driverServiceName.Length += sizeof(WCHAR);
-					} while (*_driverServiceName.Buffer != L'\\');
-					
-					++_driverServiceName.Buffer;
-					_driverServiceName.Length -= sizeof(WCHAR);
-					tmp = (PWCH)HeapMemoryAllocPaged(_driverServiceName.Length);
-					if (tmp != NULL) {
-						memcpy(tmp, _driverServiceName.Buffer, _driverServiceName.Length);
-						_driverServiceName.Buffer = tmp;
-						_driverServiceName.MaximumLength = _driverServiceName.Length;
-					} else status = STATUS_INSUFFICIENT_RESOURCES;
-				}
+					status = StringHashTableCreate(httNoSynchronization, 37, &_driverNameTable);
+					if (NT_SUCCESS(status)) {
+						_driverServiceName = *(PUNICODE_STRING)Context;
+						_driverServiceName.Buffer += (_driverServiceName.Length / sizeof(WCHAR));
+						_driverServiceName.Length = 0;
+						do {
+							--_driverServiceName.Buffer;
+							_driverServiceName.Length += sizeof(WCHAR);
+						} while (*_driverServiceName.Buffer != L'\\');
 
+						++_driverServiceName.Buffer;
+						_driverServiceName.Length -= sizeof(WCHAR);
+						tmp = (PWCH)HeapMemoryAllocPaged(_driverServiceName.Length);
+						if (tmp != NULL) {
+							memcpy(tmp, _driverServiceName.Buffer, _driverServiceName.Length);
+							_driverServiceName.Buffer = tmp;
+							_driverServiceName.MaximumLength = _driverServiceName.Length;
+						} else status = STATUS_INSUFFICIENT_RESOURCES;
+					}
+
+					if (!NT_SUCCESS(status))
+						ExDeleteResourceLite(&_driverNamesLock);
+				}
+			
 				if (!NT_SUCCESS(status))
-					ExDeleteResourceLite(&_driverNamesLock);
+					HashTableDestroy(_upperClassGuidTable);
 			}
 
 			if (!NT_SUCCESS(status))
-				HashTableDestroy(_classGuidTable);
+				HashTableDestroy(_lowerClassGuidTable);
 		}
 
 		if (!NT_SUCCESS(status))
@@ -646,7 +696,8 @@ VOID PWDModuleFinit(PDRIVER_OBJECT DriverObject, PVOID Context)
 	HeapMemoryFree(_driverServiceName.Buffer);
 	StringHashTableDestroy(_driverNameTable);
 	ExDeleteResourceLite(&_driverNamesLock);
-	HashTableDestroy(_classGuidTable);
+	HashTableDestroy(_upperClassGuidTable);
+	HashTableDestroy(_lowerClassGuidTable);
 	ExDeleteResourceLite(&_classGuidsLock);
 	_driverObject = NULL;
 

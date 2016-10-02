@@ -3,7 +3,8 @@ Unit ClassWatch;
 Interface
 
 Uses
-  Windows, IRPMonDll, Generics.Collections;
+  Windows, IRPMonDll, Classes,
+  Generics.Collections, Generics.Defaults;
 
 Type
   TWatchableClass = Class
@@ -14,10 +15,10 @@ Type
       FUpperFilter : Boolean;
       FRegistered : Boolean;
     Public
-      Constructor Create(AGuid:WideString; AName:WideString); Reintroduce; Overload;
+      Constructor Create(AGuid:WideString; AName:WideString; AUpperFilter:Boolean); Reintroduce; Overload;
       Constructor Create(Var ARecord:CLASS_WATCH_RECORD); Reintroduce; Overload;
 
-      Function Register(AUpperFilter:Boolean; ABeginning:Boolean):Cardinal;
+      Function Register(ABeginning:Boolean):Cardinal;
       Function Unregister:Cardinal;
 
       Class Function Enumerate(AList:TList<TWatchableClass>):Cardinal;
@@ -29,22 +30,32 @@ Type
       Property GUid : WideString Read FGuid;
     end;
 
-
+  TWatchableClassComparer = Class (TComparer<TWatchableClass>)
+    Function Compare(const Left, Right: TWatchableClass): Integer; Override;
+  end;
 
 Implementation
 
 Uses
   SysUtils, Utils;
 
-Constructor TWatchableClass.Create(AGuid:WideString; AName:WideString);
+
+Function Compare(const Left, Right: TWatchableClass): Integer;
+begin
+end;
+
+(** TWatchableClass **)
+
+Constructor TWatchableClass.Create(AGuid:WideString; AName:WideString; AUpperFilter:Boolean);
 begin
 Inherited Create;
 FGUid := AGuid;
 FName := AName;
 FRegistered := False;
-FUpperFilter := False;
+FUpperFilter := AUpperFilter;
 FBeginning := False;
 end;
+
 
 Constructor TWatchableClass.Create(Var ARecord:CLASS_WATCH_RECORD);
 begin
@@ -56,12 +67,11 @@ FUpperFilter := ARecord.UpperFilter <> 0;
 end;
 
 
-Function TWatchableClass.Register(AUpperFilter:Boolean; ABeginning:Boolean):Cardinal;
+Function TWatchableClass.Register(ABeginning:Boolean):Cardinal;
 begin
-Result := IRPMonDllClassWatchRegister(PWideChar(FGuid), AUpperFilter, ABeginning);
+Result := IRPMonDllClassWatchRegister(PWideChar(FGuid), FUpperFilter, ABeginning);
 If Result = ERROR_SUCCESS Then
   begin
-  FUpperFilter := AUpperFilter;
   FBeginning := ABeginning;
   FRegistered := True;
   end;
@@ -78,7 +88,7 @@ end;
 
 Class Function TWatchableClass.Enumerate(AList:TList<TWatchableClass>):Cardinal;
 Var
-  strGuid : WideString;
+  strclassGuid : WideString;
   I : Integer;
   p : TPair<WideString, TWatchableClass>;
   wc : TWatchableClass;
@@ -95,6 +105,8 @@ Var
   tmp : PCLASS_WATCH_RECORD;
   cwArray : PCLASS_WATCH_RECORD;
   dict : TDictionary<WideString, TWatchableClass>;
+  key : WideString;
+  wcComparer : TWatchableClassComparer;
 begin
 dict := TDictionary<WideString, TWatchableClass>.Create;
 Result := IRPMonDllClassWatchEnum(cwArray, cwCount);
@@ -122,10 +134,21 @@ If Result = ERROR_SUCCESS THen
           Result := RegQueryValueExW(cKey, 'Class', Nil, Nil, @className, @classNameLen);
           If Result = ERROR_SUCCESS Then
             begin
+            strclassGuid := Copy(WideString(classGuid), 1, StrLen(classGuid));
             wc := TWatchableClass.Create(
-              Copy(WideString(classGuid), 1, StrLen(classGuid)),
-              Copy(WideString(className), 1, StrLen(className)));
-            dict.Add(WideUpperCase(wc.Guid), wc);
+              strclassGuid,
+              Copy(WideString(className), 1, StrLen(className)),
+              False);
+
+            key := WideUpperCase(strClassGuid) + 'L';
+            dict.Add(key, wc);
+            wc := TWatchableClass.Create(
+              strclassGuid,
+              Copy(WideString(className), 1, StrLen(className)),
+              True);
+
+            key := WideUpperCase(strClassGuid) + 'U';
+            dict.Add(key, wc);
             end;
           end;
 
@@ -148,12 +171,15 @@ If Result = ERROR_SUCCESS THen
   tmp := cwArray;
   For I := 0 To cwCount - 1 Do
     begin
-    strGuid := WideUpperCase(COpy(WideString(tmp.ClassGuidString), 1, StrLen(tmp.ClassGuidString)));
-    If dict.TryGetValue(strGuid, wc) Then
+    key := WideUpperCase(COpy(WideString(tmp.ClassGuidString), 1, StrLen(tmp.ClassGuidString)));
+    If tmp.UpperFilter <> 0 Then
+      key := Key + 'U'
+    Else key := key + 'L';
+
+    If dict.TryGetValue(key, wc) Then
       begin
       wc.FRegistered := True;
       wc.FBeginning := tmp.Beginning <> 0;
-      wc.FUpperFilter := tmp.UpperFilter <> 0;
       end;
 
     Inc(tmp);
@@ -166,9 +192,29 @@ If Result = ERROR_SUCCESS Then
   begin
   For p In dict Do
     AList.Add(p.Value);
+
+  wcComparer := TWatchableClassComparer.Create;
+  AList.Sort(wcComparer);
+  wcComparer.Free;
   end;
 
 dict.Free;
 end;
 
+
+Function TWatchableClassComparer.Compare(const Left, Right: TWatchableClass): Integer;
+begin
+Result := WideCompareText(Left.Name, Right.Name);
+If Result = 0 Then
+  begin
+  If Left.UpperFilter <> Right.UpperFilter Then
+    begin
+    If Not Left.UpperFIlter Then
+      Result := -1
+    Else Result := 1;
+    end;
+  end;
+end;
+
 End.
+

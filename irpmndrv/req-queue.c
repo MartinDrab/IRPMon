@@ -17,6 +17,7 @@ static LIST_ENTRY _requestListHead;
 static volatile LONG _connected = FALSE;
 static IO_REMOVE_LOCK _removeLock;
 static ERESOURCE _connectLock;
+static volatile LONG _lastRequestId = 0;
 
 /************************************************************************/
 /*                             HELPER FUNCTIONS                         */
@@ -177,6 +178,7 @@ VOID RequestHeaderInit(PREQUEST_HEADER Header, PDRIVER_OBJECT DriverObject, PDEV
 {
 	InitializeListHead(&Header->Entry);
 	KeQuerySystemTime(&Header->Time);
+	Header->Id = InterlockedIncrement(&_lastRequestId);
 	Header->Device = DeviceObject;
 	Header->Driver = DriverObject;
 	Header->Type = RequestType;

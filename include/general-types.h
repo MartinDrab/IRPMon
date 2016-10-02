@@ -81,6 +81,10 @@ typedef struct _REQUEST_HEADER {
 	LARGE_INTEGER Time;
 	/** Type of the request. */
 	ERequesttype Type;
+	/** Unique identifier of the request. ID of a new request is always
+	    greater than ID of already existing ones, so the ID also follows
+		the order in which the requests were created. */
+	ULONG Id;
 	/** Device object associated with the request. */
 	PVOID Device;
 	/** Driver object associated with the request. */

@@ -150,6 +150,7 @@ FHookedDeviceDriverMap := TDictionary<Pointer, Pointer>.Create;
 FModel := TRequestListModel.Create;
 FModel.ColumnUpdateBegin;
 FModel.
+    ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctId), Ord(rlmctId), False, 60).
     ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctTime), Ord(rlmctTime)).
     ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctThreadId), Ord(rlmctThreadId), False, 75).
     ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctProcessId), Ord(rlmctProcessId), False, 75).
@@ -290,6 +291,7 @@ Procedure TMainFrm.WatchClassMenuItemClick(Sender: TObject);
 Var
   M : TMenuItem;
   err : Cardinal;
+  mCaption : WideString;
 begin
 err := ERROR_SUCCESS;
 With TClassWatchAddFrm.Create(Self) Do
@@ -297,11 +299,20 @@ With TClassWatchAddFrm.Create(Self) Do
   ShowModal;
   If Not Cancelled Then
     begin
-    err := SelectedClass.Register(UpperFilter, Beginning);
+    err := SelectedClass.Register(Beginning);
     If err = ERROR_SUCCESS Then
       begin
       M := TMenuItem.Create(WatchedClassesMenuItem);
-      M.Caption := SelectedClass.Name;
+      mCaption := SelectedClass.Name + ' (';
+      If SelectedClass.UpperFIlter Then
+        mCaption := mCaption + 'upper, '
+      Else mCaption := mCaption + 'lower, ';
+
+      If SelectedClass.Beginning Then
+        mCaption := mCaption + 'first)'
+      Else mCaption := mCaption + 'last)';
+
+      M.Caption := mCaption;
       M.Tag := NativeInt(SelectedClass);
       M.OnClick := OnWatchedClassClick;
       WatchedClassesMenuItem.Add(M);
@@ -379,6 +390,7 @@ end;
 Procedure TMainFrm.EnumerateClassWatches;
 Var
   M : TMenuItem;
+  mCaption : WideString;
   err : Cardinal;
   wc : TWatchableClass;
   wl : TList<TWatchableClass>;
@@ -392,7 +404,16 @@ If err = ERROR_SUCCESS Then
     If wc.Registered Then
       begin
       M := TMenuItem.Create(WatchedClassesMenuItem);
-      M.Caption := wc.Name;
+      mCaption := wc.Name + ' (';
+      If wc.UpperFIlter Then
+        mCaption := mCaption + 'upper, '
+      Else mCaption := mCaption + 'lower, ';
+
+      If wc.Beginning Then
+        mCaption := mCaption + 'first)'
+      Else mCaption := mCaption + 'last)';
+
+      M.Caption := mCaption;
       M.Tag := NativeInt(wc);
       M.OnClick := OnWatchedClassClick;
       WatchedClassesMenuItem.Add(M);

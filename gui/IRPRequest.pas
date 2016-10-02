@@ -43,6 +43,11 @@ Type
     Property ThreadId : THandle Read FThreadId;
   end;
 
+  TZeroArgIRPRequest = Class (TIRPRequest)
+    Public
+      Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
+    end;
+
   TDeviceControlRequest = Class (TIRPRequest)
     Public
       Function GetColumnName(AColumnType:ERequestListModelColumnType):WideString; Override;
@@ -61,6 +66,13 @@ Type
       Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
     end;
 
+  TCloseCleanupRequest = Class (TIRPRequest)
+    Public
+      Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
+    end;
+
+  (** IRP_MJ_POWER **)
+
   TWaitWakeRequest = Class (TIRPRequest)
     Public
       Function GetColumnName(AColumnType:ERequestListModelColumnType):WideString; Override;
@@ -78,10 +90,7 @@ Type
       Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
     end;
 
-  TCloseCleanupRequest = Class (TIRPRequest)
-    Public
-      Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
-    end;
+  (** IRP_MJ_PNP **)
 
   TQueryIdRequest = Class (TIRPRequest)
     Public
@@ -100,6 +109,22 @@ Type
       Function GetColumnName(AColumnType:ERequestListModelColumnType):WideString; Override;
       Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
     end;
+
+  TQueryDeviceCapabilitiesRequest = Class (TIRPRequest)
+    Public
+      Function GetColumnName(AColumnType:ERequestListModelColumnType):WideString; Override;
+      Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
+    end;
+
+  TQueryInterfaceRequest = Class (TIRPRequest)
+    Public
+      Function GetColumnName(AColumnType:ERequestListModelColumnType):WideString; Override;
+      Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
+    end;
+
+  TQueryDeviceStateRequest = Class (TZeroArgIRPRequest);
+  TStartDeviceRequest = Class (TZeroArgIRPRequest);
+  TEnumeratedDeviceRequest = Class (TZeroArgIRPRequest);
 
 
 Implementation
@@ -257,6 +282,20 @@ Case ARequest.MajorFunction Of
 
 If Not Assigned(Result) Then
   Result := TIRPRequest.Create(ARequest);
+end;
+
+(** TZeroArgIRPRequest **)
+
+Function TZeroArgIRPRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
+begin
+Result := True;
+Case AColumnType Of
+  rlmctArg1,
+  rlmctArg2,
+  rlmctArg3,
+  rlmctArg4 : Result := False;
+  Else Inherited GetColumnValue(AColumnType, AResult);
+  end;
 end;
 
 (** TDeviceControlRequest **)
@@ -475,5 +514,53 @@ Case AColumnType Of
   end;
 end;
 
+(** TQueryDeviceCapabilitiesRequest **)
+
+Function TQueryDeviceCapabilitiesRequest.GetColumnName(AColumnType:ERequestListModelColumnType):WideString;
+begin
+Case AColumnType Of
+  rlmctArg1 : Result := 'Capabilities';
+  Else Result := Inherited GetColumnName(AColumnType);
+  end;
+end;
+
+Function TQueryDeviceCapabilitiesRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
+begin
+Result := True;
+Case AColumnType Of
+  rlmctArg1 : AResult := Format('0x%p', [FArgs.QueryCapabilities.Capabilities]);
+  rlmctArg2,
+  rlmctArg3,
+  rlmctArg4 : Result := False;
+  Else Result := Inherited GetColumnValue(AColumnType, AResult);
+  end;
+end;
+
+(** TQueryInterfaceRequest **)
+
+Function TQueryInterfaceRequest.GetColumnName(AColumnType:ERequestListModelColumnType):WideString;
+begin
+Case AColumnType Of
+  rlmctArg1 : Result := 'Interface type';
+  rlmctArg2 : Result := 'Size | Version';
+  rlmctArg3 : Result := 'Routines';
+  rlmctArg4 : Result := 'Specific';
+  Else Result := Inherited GetColumnName(AColumnType);
+  end;
+end;
+
+Function TQueryInterfaceRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
+begin
+Result := True;
+Case AColumnType Of
+  rlmctArg1 : AResult := Format('0x%p', [FArgs.QueryInterface.InterfaceType]);
+  rlmctArg2 : AResult := Format('%u | %u', [FArgs.QueryInterface.Size, FArgs.QueryInterface.Version]);
+  rlmctArg3 : AResult := Format('0x%p', [FArgs.QueryInterface.InterfaceRoutines]);
+  rlmctArg4 : AResult := Format('0x%p', [FArgs.QueryInterface.InterfaceSpecificData]);
+  Else Result := Inherited GetColumnValue(AColumnType, AResult);
+  end;
+end;
+
 
 End.
+

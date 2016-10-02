@@ -86,8 +86,14 @@ Type
         DeviceRelationType : DEVICE_RELATION_TYPE;
         end; );
       7 : (QueryInterface : Record
+        InterfaceType : Pointer;
+        Size : Word;
+        Version : Word;
+        InterfaceRoutines : Pointer;
+        InterfaceSpecificData : Pointer;
         end; );
       8 : (QueryCapabilities : Record
+        Capabilities : Pointer;
         end; );
       9 : (FilterResourceRequirements : Record
         end; );
@@ -226,6 +232,10 @@ Type
 	  Time : UInt64;
 	  (** Type of the request. *)
     RequestType : ERequesttype;
+	  (** Unique identifier of the request. ID of a new request is always
+	    greater than ID of already existing ones, so the ID also follows
+		  the order in which the requests were created. *)
+    Id : Cardinal;
 	  (** Device object associated with the request. *)
 	  Device : Pointer;
 	  (** Driver object associated with the request. *)

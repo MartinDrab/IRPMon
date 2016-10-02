@@ -14,7 +14,6 @@ Type
     CancelButton: TButton;
     OkButton: TButton;
     FilterPositionRadioGroup: TRadioGroup;
-    FilterTypeRadioGroup: TRadioGroup;
     GroupBox1: TGroupBox;
     ClassListView: TListView;
     procedure OkButtonClick(Sender: TObject);
@@ -26,13 +25,11 @@ Type
       Item: TListItem; State: TCustomDrawState; var DefaultDraw: Boolean);
   Private
     FBeginning : Boolean;
-    FUpperFilter : Boolean;
     FSelectedClass : TWatchableClass;
     FCancelled : Boolean;
     FWatchList : TList<TWatchableClass>;
   Public
     Property Beginning : Boolean Read FBeginning;
-    Property UpperFilter : Boolean Read FUpperFilter;
     Property SelectedClass : TWatchableClass Read FSelectedClass;
     Property Cancelled : Boolean Read FCancelled;
   end;
@@ -73,6 +70,10 @@ With Item Do
   begin
   wc := FWatchList[Index];
   Caption := wc.Name;
+  If wc.UpperFIlter Then
+    SubItems.Add('upper')
+  Else SubItems.Add('lower');
+
   SubItems.Add(wc.GUid);
   end;
 end;
@@ -109,10 +110,9 @@ L := ClassListView.Selected;
 If Assigned(L) Then
   begin
   FSelectedClass := FWatchList[L.Index];
-  If Not FSelectedClass.Registered Then
+  If (Not FSelectedClass.Registered) Then
     begin
     FCancelled := False;
-    FUpperFilter := (FilterTypeRadioGroup.ItemIndex = 1);
     FBeginning := (FilterPositionRadioGroup.ItemIndex = 0);
     FWatchList.Delete(L.Index);
     Close;

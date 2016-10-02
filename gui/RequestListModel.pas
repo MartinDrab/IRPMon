@@ -9,6 +9,7 @@ Uses
 
 Type
   ERequestListModelColumnType = (
+    rlmctId,
     rlmctTime,
     rlmctRequestType,
     rlmctDeviceObject,
@@ -37,6 +38,7 @@ Type
 
 Const
   RequestListModelColumnNames : Array [0..Ord(rlmctIOSBInformation)] Of String = (
+    'ID',
     'Time',
     'Type',
     'Device object',
@@ -64,6 +66,7 @@ Const
 Type
   TDriverRequest = Class
   Private
+    FId : Cardinal;
     FDriverName : WideString;
     FDeviceName : WideString;
     FDriverObject : Pointer;
@@ -96,6 +99,7 @@ Type
     Class Function MajorFunctionToString(AMajor:Byte):WideString;
     Class Function MinorFunctionToString(AMajor:Byte; AMinor:Byte):WideString;
 
+    Property Id : Cardinal Read FId;
     Property DriverName : WideString Read FDriverName Write SetDriverName;
     Property DeviceName : WideString Read FDeviceName Write SetDeviceName;
     Property DriverObject : Pointer Read FDriverObject;
@@ -112,6 +116,7 @@ Type
   TDriverUnloadRequest = Class (TDriverRequest)
   Public
     Constructor Create(Var ARequest:REQUEST_UNLOAD); Reintroduce;
+    Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
   end;
 
   TAddDeviceRequest = Class (TDriverRequest)
@@ -182,6 +187,7 @@ Uses
 Constructor TDriverRequest.Create(Var ARequest:REQUEST_HEADER);
 begin
 Inherited Create;
+FId := ARequest.Id;
 FDriverObject := ARequest.Driver;
 FDriverName := '';
 FDeviceObject := ARequest.Device;
@@ -242,6 +248,7 @@ begin
 Result := True;
 AResult := '';
 Case AColumnType Of
+  rlmctId : AResult := Format('%u', [FId]);
   rlmctTime : begin
     FileTimeToSystemTime(FILETIME(FTime), s);
     AResult := DateTimeToStr(SystemTimeToDateTime(s));
@@ -497,6 +504,17 @@ end;
 Constructor TDriverUnloadRequest.Create(Var ARequest:REQUEST_UNLOAD);
 begin
 Inherited Create(ARequest.Header);
+end;
+
+Function TDriverUnloadRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
+begin
+Result := True;
+Case AColumnType Of
+  rlmctDeviceObject,
+  rlmctDeviceName,
+  rlmctResult : Result := False;
+  Else Result := Inherited GetColumnValue(AColumnType, AResult);
+  end;
 end;
 
 (** TAddDeviceRequest **)
