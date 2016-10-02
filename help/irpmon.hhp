@@ -1,0 +1,14 @@
+[OPTIONS]
+Compatibility=1.1 or later
+Compiled file=irpmon.chm
+Contents file=irpmon.hhc
+Display compile progress=No
+Index file=irpmon.hhk
+Language=0x405 Èeština (Èeská republika)
+
+
+[FILES]
+intro.html
+
+[INFOTYPES]
+
