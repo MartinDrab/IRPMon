@@ -456,7 +456,7 @@ NTSTATUS PDWClassEnumerate(PIOCTL_IRPMNDRV_CLASS_WATCH_OUTPUT Buffer, SIZE_T Len
 	status = STATUS_SUCCESS;
 	KeEnterCriticalRegion();
 	ExAcquireResourceSharedLite(&_classGuidsLock, TRUE);
-	requiredLength = (_lowerClassGuidTable->NumberOfItems + _upperClassGuidTable->NumberOfItems - 1)*sizeof(CLASS_WATCH_ENTRY) + sizeof(IOCTL_IRPMNDRV_CLASS_WATCH_ENUM_OUTPUT);
+	requiredLength = (_lowerClassGuidTable->NumberOfItems + _upperClassGuidTable->NumberOfItems)*sizeof(CLASS_WATCH_ENTRY) + FIELD_OFFSET(IOCTL_IRPMNDRV_CLASS_WATCH_ENUM_OUTPUT, Entries);
 	if (requiredLength <= Length) {
 		if (AccessMode == UserMode) {
 			__try {

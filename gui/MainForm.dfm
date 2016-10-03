@@ -45,10 +45,6 @@ object MainFrm: TMainFrm
     object Hooks: TTabSheet
       Caption = 'Hooks'
       ImageIndex = 1
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
     end
   end
   object MainMenu1: TMainMenu
@@ -105,6 +101,10 @@ object MainFrm: TMainFrm
       end
       object N6: TMenuItem
         Caption = '-'
+      end
+      object SortbyIDMenuItem: TMenuItem
+        Caption = 'Sort by ID'
+        OnClick = SortbyIDMenuItemClick
       end
       object ClearMenuItem: TMenuItem
         Caption = 'Clear'

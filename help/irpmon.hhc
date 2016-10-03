@@ -12,5 +12,27 @@
 		<param name="Name" value="Introduction">
 		<param name="Local" value="intro.html">
 		</OBJECT>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Windows Basics">
+		<param name="Local" value="windows-basics.html">
+		</OBJECT>
+	<UL>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Drivers and Devices">
+			<param name="Local" value="windows-basics\drivers-and-devices.html">
+			</OBJECT>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Methods of Communication">
+			<param name="Local" value="windows-basics\methods-of-communication.html">
+			</OBJECT>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Device Stacks">
+			<param name="Local" value="windows-basics\device-stacks.html">
+			</OBJECT>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Driver Objects">
+			<param name="Local" value="windows-basics\driver-objects.html">
+			</OBJECT>
+	</UL>
 </UL>
 </BODY></HTML>

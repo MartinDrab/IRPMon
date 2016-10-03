@@ -3,7 +3,7 @@ Unit RequestListModel;
 Interface
 
 Uses
-  Windows, Classes, Generics.Collections,
+  Windows, Classes, Generics.Collections, Generics.Defaults,
   IRPMonDll, ListModel;
 
 
@@ -113,6 +113,11 @@ Type
     Property IRQL : Byte Read FIRQL;
   end;
 
+  TDriverRequestComparer = Class (TComparer<TDriverRequest>)
+  Public
+    Function Compare(Const Left, Right:TDriverRequest):Integer; Override;
+  end;
+
   TDriverUnloadRequest = Class (TDriverRequest)
   Public
     Constructor Create(Var ARequest:REQUEST_UNLOAD); Reintroduce;
@@ -169,6 +174,7 @@ Type
       Constructor Create; Reintroduce;
       Destructor Destroy; Override;
       Function RefreshMaps:Cardinal;
+      Procedure Sort;
 
       Procedure Clear; Override;
       Function RowCount : Cardinal; Override;
@@ -181,6 +187,13 @@ Implementation
 
 Uses
   SysUtils, NameTables, IRPRequest, XXXDetectedRequests, Utils;
+
+(** TDriverRequestComparer **)
+
+Function TDriverRequestComparer.Compare(Const Left, Right:TDriverRequest):Integer;
+begin
+Result := Integer(Left.Id - Right.Id);
+end;
 
 (** TDriverRequest **)
 
@@ -752,6 +765,17 @@ Try
 Finally
   F.Free;
   end;
+end;
+
+Procedure TRequestListModel.Sort;
+Var
+  c : TDriverRequestComparer;
+begin
+c := TDriverRequestComparer.Create;
+FRequests.Sort(c);
+c.Free;
+If Assigned(FDisplayer) Then
+  FDisplayer.Invalidate;
 end;
 
 

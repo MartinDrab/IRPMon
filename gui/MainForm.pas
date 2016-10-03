@@ -38,6 +38,7 @@ Type
     WatchedClassesMenuItem: TMenuItem;
     WatchDriverNameMenuItem: TMenuItem;
     WatchedDriversMenuItem: TMenuItem;
+    SortbyIDMenuItem: TMenuItem;
     Procedure ClearMenuItemClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure CaptureEventsMenuItemClick(Sender: TObject);
@@ -51,6 +52,7 @@ Type
     procedure SaveMenuItemClick(Sender: TObject);
     procedure WatchClassMenuItemClick(Sender: TObject);
     procedure WatchDriverNameMenuItemClick(Sender: TObject);
+    procedure SortbyIDMenuItemClick(Sender: TObject);
   Private
     FModel : TRequestListModel;
     FHookedDrivers : TDictionary<Pointer, TDriverHookObject>;
@@ -285,6 +287,11 @@ With TTreeFrm.Create(Self) Do
   end;
 
 EnumerateHooks;
+end;
+
+Procedure TMainFrm.SortbyIDMenuItemClick(Sender: TObject);
+begin
+FModel.Sort;
 end;
 
 Procedure TMainFrm.WatchClassMenuItemClick(Sender: TObject);
