@@ -125,6 +125,14 @@ Type
   TQueryDeviceStateRequest = Class (TZeroArgIRPRequest);
   TStartDeviceRequest = Class (TZeroArgIRPRequest);
   TEnumeratedDeviceRequest = Class (TZeroArgIRPRequest);
+  TRemoveDeviceRequest = Class (TZeroArgIRPRequest);
+  TQueryRemoveDeviceRequest = Class (TZeroArgIRPRequest);
+  TCancelRemoveDeviceRequest = Class (TZeroArgIRPRequest);
+  TSurpriseDeviceRequest = Class (TZeroArgIRPRequest);
+  TstopDeviceRequest = Class (TZeroArgIRPRequest);
+  TQueryStopDeviceRequest = Class (TZeroArgIRPRequest);
+  TCancelStopDeviceRequest = Class (TZeroArgIRPRequest);
+  TEjectDeviceRequest = Class (TZeroArgIRPRequest);
 
 
 Implementation
@@ -273,9 +281,22 @@ Case ARequest.MajorFunction Of
     end;
   27 : begin // PnP
     Case ARequest.MinorFunction Of
+      $0 : Result := TStartDeviceRequest.Create(ARequest);
+      $1 : Result := TQueryRemoveDeviceRequest.Create(ARequest);
+      $2 : Result := TRemoveDeviceRequest.Create(ARequest);
+      $3 : Result := TCancelRemoveDeviceRequest.Create(ARequest);
+      $4 : Result := TStopDeviceRequest.Create(ARequest);
+      $5 : Result := TQueryStopDeviceRequest.Create(ARequest);
+      $6 : Result := TCancelStopDeviceRequest.Create(ARequest);
       $7 : Result := TQueryDeviceRelationsRequest.Create(ARequest);
+      $8 : Result := TQueryInterfaceRequest.Create(ARequest);
+      $9 : Result := TQueryDeviceCapabilitiesRequest.Create(ARequest);
       $C : Result := TQueryDeviceTextRequest.Create(ARequest);
+      $11 : Result := TEjectDeviceRequest.Create(ARequest);
       $13 : Result := TQueryIdRequest.Create(ARequest);
+      $14 : Result := TQueryDeviceStateRequest.Create(ARequest);
+      $17 : Result := TSurpriseDeviceRequest.Create(ARequest);
+      $19 : Result := TEnumeratedDeviceRequest.Create(ARequest);
       end;
     end;
   end;

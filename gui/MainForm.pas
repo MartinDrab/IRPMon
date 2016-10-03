@@ -271,7 +271,7 @@ begin
 If LogSaveDialog.Execute Then
   begin
   fn := LogSaveDialog.FileName;
-  If LogSaveDialog.FilterIndex = 0 Then
+  If LogSaveDialog.FilterIndex = 1 Then
     fn := ChangeFIleExt(fn, '.log');
 
   FModel.SaveToFile(fn);
