@@ -4,5 +4,28 @@
 </head>
 <body>
 <h1>Driver Objects</h1>
+<p>
+Each loaded driver is represented by a kernel object of Driver type. The structure of the object body is defined as <code>DRIVER_OBJECT</code> and you can see it below. This chapter describes its members that are interesting in the IRPMon context.
+</p>
+<p>
+<code><pre>
+typedef struct _DRIVER_OBJECT {
+    CSHORT Type;
+    CSHORT Size;
+    PDEVICE_OBJECT DeviceObject;
+    ULONG Flags;
+    PVOID DriverStart;
+    ULONG DriverSize;
+    PVOID DriverSection;
+    PDRIVER_EXTENSION DriverExtension;
+    UNICODE_STRING DriverName;
+    PUNICODE_STRING HardwareDatabase;
+    <b>PFAST_IO_DISPATCH FastIoDispatch</b>;
+    <b>PDRIVER_INITIALIZE DriverInit;</b>
+    <b>PDRIVER_STARTIO DriverStartIo;</b>
+    <b>PDRIVER_UNLOAD DriverUnload;</b>
+    <b>PDRIVER_DISPATCH MajorFunction[0x1C];</b>
+} DRIVER_OBJECT;
+</pre></code>
 </body>
 </html>
