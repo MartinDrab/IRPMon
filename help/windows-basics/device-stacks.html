@@ -8,7 +8,7 @@
 So far, you got familiar with the concepts of driver and device entities in the WIndows kernel and how kernel components and user applications can communicate with each other. You know that when an application or a driver wish to communicate with another driver, it just opens one of its devices, suitable for the communication, and starts sending requests to it. But what to do when a driver  needs to monitor or filter requests targetted at a device associated with another driver? Such need may be absolutely legit, for example when a disk encryption driver needs to encrypt and decrypt data passing through a disk device. Windows kernel solves this problem by introducing <i>device stacks</i>. The newly attached device is placed on top of the stack, the other end of the stack is called a bottom.
 </p>
 <p>
-Figure 1 shows an example of a device stack. The lowest device (placed at the bottom) belongs to USBSTOR driver and represents an USB Mass Storage device connected to the computer (such as flash drive). A disk device is attached above it, translating disk commands to the USB Mass Storage language. Above them is a device of partmgr.sys.
+Figure 1 shows a sample device stack representing a disk device connected via USB. The lowest device (placed at the bottom) belongs to USBSTOR driver and represents an USB Mass Storage device connected to the computer (such as flash drive). A disk device is attached above it, translating disk commands to the USB Mass Storage language. Partition Manager attaches its device over the disk one and translates requests targetted at individual partitions to direct disk access. TrueCrzpt places its device object on the top of the stack and 
 </p>
 </body>
 </html>

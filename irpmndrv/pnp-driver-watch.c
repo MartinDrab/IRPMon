@@ -103,9 +103,9 @@ static NTSTATUS _DeleteFilter(PWCHAR Filters, PSIZE_T ResultLength)
 	}
 
 	if (ours != NULL) {
-		*ResultLength = (tmp - Filters + 1)*sizeof(WCHAR) - _driverServiceName.Length - sizeof(WCHAR);
-		memmove(ours, ours + _driverServiceName.Length / sizeof(WCHAR) + 1, sizeof(WCHAR)*(tmp - ours - _driverServiceName.Length / 2));
-		ours[_driverServiceName.Length / sizeof(WCHAR) + 1] = L'\0';
+		++tmp;
+		*ResultLength = (tmp - Filters)*sizeof(WCHAR) - _driverServiceName.Length - sizeof(WCHAR);
+		memmove(ours, ours + _driverServiceName.Length / sizeof(WCHAR) + 1, sizeof(WCHAR)*(tmp - ours - _driverServiceName.Length / sizeof(WCHAR)));
 	} else status = STATUS_INSUFFICIENT_RESOURCES;
 
 	DEBUG_EXIT_FUNCTION("0x%x, *ResultLength=%Iu", status, *ResultLength);
