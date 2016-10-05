@@ -133,7 +133,6 @@ static VOID _MakeDeviceHookRecordValid(PDEVICE_HOOK_RECORD DeviceRecord)
 	DEBUG_ENTER_FUNCTION("DeviceRecord=0x%p", DeviceRecord);
 
 	KeAcquireSpinLock(&_deviceValidationTableLock, &irql);
-	ASSERT(HashTableGet(_deviceValidationTable, DeviceRecord) == NULL);
 	HashTableInsert(_deviceValidationTable, &DeviceRecord->ValidationHashItem, DeviceRecord);
 	KeReleaseSpinLock(&_deviceValidationTableLock, irql);
 
@@ -147,7 +146,6 @@ static VOID _InvalidateDeviceHookRecord(PDEVICE_HOOK_RECORD DeviceRecord)
 	DEBUG_ENTER_FUNCTION("DeviceRecord=0x%p", DeviceRecord);
 
 	KeAcquireSpinLock(&_deviceValidationTableLock, &irql);
-	ASSERT(HashTableGet(_deviceValidationTable, DeviceRecord) != NULL);
 	HashTableDelete(_deviceValidationTable, DeviceRecord);
 	KeReleaseSpinLock(&_deviceValidationTableLock, irql);
 
@@ -409,6 +407,7 @@ static VOID _DeviceHookRecordFree(PDEVICE_HOOK_RECORD Record)
 {
 	DEBUG_ENTER_FUNCTION("Record=0x%p", Record);
 
+	_InvalidateDeviceHookRecord(Record);
 	DriverHookRecordDereference(Record->DriverRecord);
 	HeapMemoryFree(Record->DeviceName.Buffer);
 	HeapMemoryFree(Record);
