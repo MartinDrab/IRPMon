@@ -34,5 +34,23 @@
 			<param name="Local" value="windows-basics\driver-objects.html">
 			</OBJECT>
 	</UL>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Under the hood">
+		<param name="Local" value="internal.html">
+		</OBJECT>
+	<UL>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Request monitoring">
+			<param name="Local" value="under-the-hood\requests.html">
+			</OBJECT>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Class watch">
+			<param name="Local" value="under-the-hood\class-watch.html">
+			</OBJECT>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Special requests">
+			<param name="Local" value="under-the-hood\special-requests.html">
+			</OBJECT>
+	</UL>
 </UL>
 </BODY></HTML>
