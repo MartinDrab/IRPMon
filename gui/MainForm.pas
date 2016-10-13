@@ -23,7 +23,6 @@ Type
     ColumnsMenuItem: TMenuItem;
     PageControl1: TPageControl;
     RequestTabSheet: TTabSheet;
-    Hooks: TTabSheet;
     RequestListView: TListView;
     CaptureEventsMenuItem: TMenuItem;
     N6: TMenuItem;
@@ -274,6 +273,7 @@ If LogSaveDialog.Execute Then
   If LogSaveDialog.FilterIndex = 1 Then
     fn := ChangeFIleExt(fn, '.log');
 
+  FModel.Sort;
   FModel.SaveToFile(fn);
   end;
 end;

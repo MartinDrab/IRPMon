@@ -42,10 +42,6 @@ object MainFrm: TMainFrm
         OnDblClick = RequestDetailsMenuItemClick
       end
     end
-    object Hooks: TTabSheet
-      Caption = 'Hooks'
-      ImageIndex = 1
-    end
   end
   object MainMenu1: TMainMenu
     Left = 168

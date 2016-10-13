@@ -334,6 +334,8 @@ static NTSTATUS _DriverHookRecordCreate(PDRIVER_OBJECT DriverObject, PDRIVER_MON
 			tmpRecord->MonitorIRP = MonitorSettings->MonitorIRP;
 			tmpRecord->MonitorIRPCompletion = MonitorSettings->MonitorIRPCompletion;
 			tmpRecord->MonitorFastIo = MonitorSettings->MonitorFastIo;
+			memcpy(tmpRecord->IRPSettings, MonitorSettings->IRPSettings, sizeof(tmpRecord->IRPSettings));
+			memcpy(tmpRecord->FastIoSettings, MonitorSettings->FastIoSettings, sizeof(tmpRecord->FastIoSettings));
 			KeInitializeSpinLock(&tmpRecord->SelectedDevicesLock);
 			status = HashTableCreate(httNoSynchronization, 37, _HashFunction, _DeviceCompareFunction, _DeviceFreeFunction, &tmpRecord->SelectedDevices);
 			if (NT_SUCCESS(status))
@@ -380,15 +382,10 @@ static NTSTATUS _DeviceHookRecordCreate(PDRIVER_HOOK_RECORD DriverRecord, PDEVIC
 			tmpRecord->DeviceObject = DeviceObject;
 			tmpRecord->MonitoringEnabled = MonitoringEnabled;
 			tmpRecord->CreateReason = CreateReason;
-			for (size_t i = 0; i < IRP_MJ_MAXIMUM_FUNCTION + 1; ++i)
-				tmpRecord->IRPMonitorSettings[i] = TRUE;
-
-			for (size_t i = 0; i < FastIoMax; ++i)
-				tmpRecord->FastIoMonitorSettings[i] = TRUE;
-			
-			if (IRPSettings != NULL)
+			memcpy(tmpRecord->IRPMonitorSettings, DriverRecord->IRPSettings, sizeof(tmpRecord->IRPMonitorSettings));
+			memcpy(tmpRecord->FastIoMonitorSettings, DriverRecord->FastIoSettings, sizeof(tmpRecord->FastIoMonitorSettings));			if (IRPSettings != NULL)
 				memcpy(&tmpRecord->IRPMonitorSettings, IRPSettings, sizeof(tmpRecord->IRPMonitorSettings));
-	
+
 			if (FastIoSettings != NULL)
 				memcpy(&tmpRecord->FastIoMonitorSettings, FastIoSettings, sizeof(tmpRecord->FastIoMonitorSettings));
 	
@@ -632,6 +629,8 @@ NTSTATUS DriverHookRecordSetInfo(PDRIVER_HOOK_RECORD Record, PDRIVER_MONITOR_SET
 		Record->MonitorDriverUnload = DriverSettings->MonitorUnload;
 		Record->MonitorIRP = DriverSettings->MonitorIRP;
 		Record->MonitorFastIo = DriverSettings->MonitorFastIo;
+		memcpy(Record->IRPSettings, DriverSettings->IRPSettings, sizeof(Record->IRPSettings));
+		memcpy(Record->FastIoSettings, DriverSettings->FastIoSettings, sizeof(Record->FastIoSettings));
 	}
 
 	status = STATUS_SUCCESS;
@@ -651,6 +650,8 @@ VOID DriverHookRecordGetInfo(PDRIVER_HOOK_RECORD Record, PDRIVER_MONITOR_SETTING
 	DriverSettings->MonitorNewDevices = Record->MonitorNewDevices;
 	DriverSettings->MonitorStartIo = Record->MonitorStartIo;
 	DriverSettings->MonitorUnload = Record->MonitorDriverUnload;
+	memcpy(DriverSettings->IRPSettings, Record->IRPSettings, sizeof(DriverSettings->IRPSettings));
+	memcpy(DriverSettings->FastIoSettings, Record->FastIoSettings, sizeof(DriverSettings->FastIoSettings));
 	*Enabled = Record->MonitoringEnabled;
 
 	DEBUG_EXIT_FUNCTION("void, *Enabled=%u", *Enabled);
@@ -737,6 +738,7 @@ NTSTATUS DriverHookRecordAddDevice(PDRIVER_HOOK_RECORD DriverRecord, PDEVICE_OBJ
 	return status;
 }
 
+
 NTSTATUS DriverHookRecordDeleteDevice(PDEVICE_HOOK_RECORD DeviceRecord)
 {
 	KIRQL irql;
@@ -792,6 +794,7 @@ PDEVICE_HOOK_RECORD DriverHookRecordGetDevice(PDRIVER_HOOK_RECORD Record, PDEVIC
 	return ret;
 }
 
+
 NTSTATUS DeviceHookRecordSetInfo(PDEVICE_HOOK_RECORD Record, PUCHAR IRPSettings, PUCHAR FastIoSettings, BOOLEAN MonitoringEnabled)
 {
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
@@ -809,6 +812,7 @@ NTSTATUS DeviceHookRecordSetInfo(PDEVICE_HOOK_RECORD Record, PUCHAR IRPSettings,
 	DEBUG_EXIT_FUNCTION("0x%x", status);
 	return status;
 }
+
 
 VOID DeviceHookRecordGetInfo(PDEVICE_HOOK_RECORD Record, PUCHAR IRPSettings, PUCHAR FastIoSettings, PBOOLEAN MonitoringEnabled)
 {
@@ -890,6 +894,8 @@ NTSTATUS HookObjectsEnumerate(PVOID Buffer, ULONG BufferLength, PULONG ReturnLen
 				driverInfo->MonitorSettings.MonitorIRP = driverRecord->MonitorIRP;
 				driverInfo->MonitorSettings.MonitorIRPCompletion = driverRecord->MonitorIRPCompletion;
 				driverInfo->MonitorSettings.MonitorFastIo = driverRecord->MonitorFastIo;
+				memcpy(driverInfo->MonitorSettings.IRPSettings, driverRecord->IRPSettings, sizeof(driverInfo->MonitorSettings.IRPSettings));
+				memcpy(driverInfo->MonitorSettings.FastIoSettings, driverRecord->FastIoSettings, sizeof(driverInfo->MonitorSettings.FastIoSettings));
 				driverInfo->NumberOfHookedDevices = 0;
 				driverInfo->DriverNameLen = driverRecord->DriverName.Length + sizeof(WCHAR);
 				memcpy(&driverInfo->DriverName, driverRecord->DriverName.Buffer, driverRecord->DriverName.Length + sizeof(WCHAR));
@@ -934,6 +940,7 @@ NTSTATUS HookObjectsEnumerate(PVOID Buffer, ULONG BufferLength, PULONG ReturnLen
 	return status;
 }
 
+
 BOOLEAN DeviceHookRecordValid(PDEVICE_HOOK_RECORD DeviceRecord)
 {
 	KIRQL irql;
@@ -950,6 +957,7 @@ BOOLEAN DeviceHookRecordValid(PDEVICE_HOOK_RECORD DeviceRecord)
 	DEBUG_EXIT_FUNCTION("%u", ret);
 	return ret;
 }
+
 
 BOOLEAN DriverHookRecordValid(PDRIVER_HOOK_RECORD DriverRecord)
 {
@@ -968,9 +976,13 @@ BOOLEAN DriverHookRecordValid(PDRIVER_HOOK_RECORD DriverRecord)
 	return ret;
 }
 
+
+
 /************************************************************************/
 /*                       INITIALIZATION AND FINALIZATION                */
 /************************************************************************/
+
+
 
 NTSTATUS HookModuleInit(PDRIVER_OBJECT DriverObject, PVOID Context)
 {
@@ -999,6 +1011,8 @@ NTSTATUS HookModuleInit(PDRIVER_OBJECT DriverObject, PVOID Context)
 	DEBUG_EXIT_FUNCTION("0x%x", status);
 	return status;
 }
+
+
 
 VOID HookModuleFinit(PDRIVER_OBJECT DriverObject, PVOID Context)
 {

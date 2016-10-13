@@ -93,6 +93,8 @@ typedef struct _DRIVER_HOOK_RECORD {
 	BOOLEAN MonitorFastIo;
 	BOOLEAN MonitorIRP;
 	BOOLEAN MonitorIRPCompletion;
+	UCHAR IRPSettings[IRP_MJ_MAXIMUM_FUNCTION + 1];
+	UCHAR FastIoSettings[FastIoMax];
 	/** Indicates whether the driver actively monitors incoming requests. */
 	BOOLEAN MonitoringEnabled;
 	/** Synchronizes access to the device table. */

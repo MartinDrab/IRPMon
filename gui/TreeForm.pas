@@ -176,6 +176,7 @@ end;
 
 Procedure TTreeFrm.CheckListBoxClickCheck(Sender: TObject);
 Var
+  dr : TDriverHookObject;
   de : TDeviceHookObject;
   tn : TTreeNode;
   I : Integer;
@@ -197,6 +198,20 @@ If Assigned(tn) Then
       begin
       For I := 0 To chl.Count - 1 Do
         de.FastIoSettings[I] := Ord(chl.Checked[I]);
+      end;
+    end
+  Else begin
+    dr := tn.Data;
+    chl := (Sender As TCheckListBox);
+    If chl = IRPCheckListBox Then
+      begin
+      For I := 0 To chl.Count - 1 Do
+        dr.Settings.IRPSettings.Settings[I] := Ord(chl.Checked[I]);
+      end
+    Else If chl = FastIoCheckListBox Then
+      begin
+      For I := 0 To chl.Count - 1 Do
+        dr.Settings.FastIoSettings.Settings[I] := Ord(chl.Checked[I]);
       end;
     end;
   end;
@@ -310,24 +325,24 @@ end;
 Procedure TTreeFrm.DeviceTreeViewChange(Sender: TObject; Node: TTreeNode);
 Var
   I : Integer;
+  drh : TDriverHookObject;
   deh : TDeviceHookObject;
 begin
 If Node.Selected Then
   begin
-  IRPCheckListBox.Enabled := Assigned(Node.Parent);
-  FastIoCheckListBox.Enabled := Assigned(Node.Parent);
   If Not Assigned(Node.Parent) THen
     begin
+    drh := Node.Data;
     For I := 0 To $1B Do
       begin
-      IRPCheckListBox.Checked[I] := False;
-      IRPCheckListBOx.State[I] := cbGrayed;
+      IRPCheckListBOx.State[I] := cbUnchecked;
+      IRPCheckListBox.Checked[I] := drh.Settings.IRPSettings.Settings[I] <> 0;
       end;
 
     For I := 0 To Ord(FastIoMax) - 1 Do
       begin
-      FastIoCheckListBox.Checked[I] := False;
-      FastIoCheckListBOx.State[I] := cbGrayed;
+      FastIoCheckListBOx.State[I] := cbUnchecked;
+      FastIoCheckListBox.Checked[I] := drh.Settings.FastIoSettings.Settings[I] <> 0;
       end;
     end
   Else begin
@@ -431,23 +446,19 @@ Var
   de : TDeviceHookObject;
   pdr : TPair<Pointer, TDriverHookObject>;
   pde : TPair<Pointer, TDeviceHookObject>;
-  hookList : TList<THookObject>;
-  unhookList : TList<THookObject>;
-  changeList : TList<THookObject>;
+  opList : TTaskOperationList;
 begin
 FCancelled := False;
-hookList := TList<THookObject>.Create;
-unhookList := TList<THookObject>.Create;
-changeList := TList<THookObject>.Create;
+opList := TTaskOperationList.Create;
 For cde In FCurrentlyHookedDevices DO
   begin
   If FDeviceMap.TryGetValue(cde.Address, de) THen
     begin
     If Not de.Hooked THen
-      unhookList.Add(de)
+      opList.Add(hooUnhook, de)
     Else If (Not CompareMem(@cde.IRPSettings, @de.IRPSettings, SizeOf(cde.IRPSettings))) Or
             (Not CompareMem(@cde.FastIoSettings, @de.FastIoSettings, SizeOf(cde.FastIoSettings))) Then
-      changeList.Add(de);
+      opList.Add(hooChange, de);
     end;
   end;
 
@@ -456,7 +467,11 @@ For cdr In FCurrentlyHookedDrivers Do
   If FDriverMap.TryGetValue(cdr.Address, dr) Then
     begin
     If Not dr.Hooked Then
-      unhookList.Add(dr)
+      begin
+      opList
+        .Add(hooStop, dr)
+        .Add(hooUnhook, dr);
+      end
     Else If
       (dr.Settings.MonitorNewDevices <> cdr.Settings.MonitorNewDevices) Or
       (dr.Settings.MonitorAddDevice <> cdr.Settings.MonitorAddDevice) Or
@@ -465,7 +480,10 @@ For cdr In FCurrentlyHookedDrivers Do
       (dr.Settings.MonitorFastIo <> cdr.Settings.MonitorFastIo) Or
       (dr.Settings.MonitorIRP <> cdr.Settings.MonitorIRP) Or
       (dr.Settings.MonitorIRPCompletion <> cdr.Settings.MonitorIRPCompletion) Then
-      changeList.Add(dr);
+      opList
+        .Add(hooStop, dr)
+        .Add(hooChange, dr)
+        .Add(hooStart, dr);
     end;
   end;
 
@@ -473,28 +491,30 @@ For pdr In FDriverMap Do
   begin
   dr := pdr.Value;
   If (dr.Hooked) And (Not Assigned(dr.ObjectId)) Then
-    hookList.Add(dr);
+    begin
+    opList
+      .Add(hooHook, dr)
+      .Add(hooStart, dr);
+    end;
   end;
 
 For pde In FDeviceMap Do
   begin
   de := pde.Value;
   If (de.Hooked) And (Not Assigned(de.ObjectId)) Then
-    hookList.Add(de);
+    opList.Add(hooHook, de);
   end;
 
-If (hookList.Count > 0) Or (unhookList.Count > 0) Or (changeList.Count > 0) Then
+If (opList.Count > 0) Then
   begin
-  With THookProgressFrm.Create(Self, hookList, unhookList, changeList) Do
+  With THookProgressFrm.Create(Self, opList) Do
     begin
     ShowModal;
     Free;
     end;
   end;
 
-changeList.Free;
-unhookList.Free;
-hookList.Free;
+opList.Free;
 Close;
 end;
 

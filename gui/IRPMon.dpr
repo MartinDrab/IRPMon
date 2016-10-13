@@ -45,6 +45,7 @@ Var
   err : Cardinal;
   serviceStatus : SERVICE_STATUS;
 Begin
+InformationMessage(Format('%u', [SizeOf(DRIVER_MONITOR_SETTINGS)]));
 Application.Initialize;
 Application.MainFormOnTaskbar := True;
 err := TablesInit('ntstatus.txt', 'ioctl.txt');

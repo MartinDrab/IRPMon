@@ -428,6 +428,18 @@ Type
   HOOKED_DEVICE_UMINFO = _HOOKED_DEVICE_UMINFO;
   PHOOKED_DEVICE_UMINFO = ^HOOKED_DEVICE_UMINFO;
 
+  _IRP_SETTINGS = Record
+    Settings : Array [0..$1B] Of Byte;
+    end;
+  IRP_SETTINGS = _IRP_SETTINGS;
+  PIRP_SETTINGS = ^IRP_SETTINGS;
+
+  _FASTIO_SETTINGS = Record
+    Settings : Array [0..Ord(FastIoMax) - 1] Of Byte;
+    end;
+  FASTIO_SETTINGS = _FASTIO_SETTINGS;
+  PFASTIO_SETTINGS = ^FASTIO_SETTINGS;
+
   _DRIVER_MONITOR_SETTINGS = Record
     MonitorNewDevices : ByteBool;
     MonitorAddDevice : ByteBool;
@@ -436,6 +448,8 @@ Type
     MonitorFastIo : ByteBool;
     MonitorIRP : ByteBool;
     MonitorIRPCompletion : ByteBool;
+    IRPSettings : IRP_SETTINGS;
+    FastIoSettings : FASTIO_SETTINGS;
     end;
   DRIVER_MONITOR_SETTINGS = _DRIVER_MONITOR_SETTINGS;
   PDRIVER_MONITOR_SETTINGS = ^DRIVER_MONITOR_SETTINGS;

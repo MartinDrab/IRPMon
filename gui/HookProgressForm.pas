@@ -13,17 +13,15 @@ Type
   THookProgressThread = Class (TThread)
     Private
       FForm : THookProgressFrm;
-      FHookList : TList<THookObject>;
-      FChangeList : TList<THookObject>;
-      FUnhookList : TList<THookObject>;
-      FCurrentObject : THookObject;
+      FOpList : TTaskOperationList;
+      FCurrentObject : TTaskObject;
       FCurrentOp : WideString;
       FStatus : Cardinal;
       Procedure UpdateGUI;
     Protected
       Procedure Execute; Override;
     Public
-      Constructor Create(ACreateSuspended:Boolean; AForm:THookProgressFrm; AHookList:TList<THookObject>; AUnhookList:TList<THookObject>; AChangeList:TList<THookObject>); Reintroduce;
+      Constructor Create(ACreateSuspended:Boolean; AForm:THookProgressFrm; AOpList:TTaskOperationList); Reintroduce;
     end;
 
   THookProgressFrm = Class (TForm)
@@ -37,12 +35,9 @@ Type
       Item: TListItem; State: TCustomDrawState; Stage: TCustomDrawStage;
       var DefaultDraw: Boolean);
   Private
-    FHookList : TList<THookObject>;
-    FChangeList : TList<THookObject>;
-    FUnhookList : TList<THookObject>;
     FThread : THookProgressThread;
   Public
-    Constructor Create(AOwner:TComponent; AHookList:TList<THookObject>; AUnhookList:TList<THookObject>; AChangeList:TList<THookObject>); Reintroduce;
+    Constructor Create(AOwner:TComponent; AOpList:TTaskOperationList); Reintroduce;
   end;
 
 
@@ -51,16 +46,18 @@ Implementation
 
 Procedure THookProgressThread.UpdateGUI;
 Var
+  ho : THookObject;
   lw : TListView;
 begin
 lw := FForm.ProgressListView;
 With lw.Items.Add Do
   begin
+  ho := FCurrentObject As THookObject;
   Data := Pointer(FStatus);
   Caption := FCurrentOp;
-  SubItems.Add(FCurrentObject.ObjectTpye);
-  SubItems.Add(FCurrentObject.Name);
-  SubItems.Add(Format('0x%p', [FCurrentObject.Address]));
+  SubItems.Add(ho.ObjectTpye);
+  SubItems.Add(ho.Name);
+  SubItems.Add(Format('0x%p', [ho.Address]));
   SubItems.Add(Format('%u', [FStatus]));
   end;
 end;
@@ -68,89 +65,35 @@ end;
 
 Procedure THookProgressThread.Execute;
 Var
-  ho : THookObject;
+  I : Integer;
+  p : TPair<EHookObjectOperation, TTaskObject>;
 begin
 FreeOnTerminate := False;
-For ho In FChangeList Do
+I := 0;
+While I < FOpList.Count Do
   begin
-  FCurrentObject := ho;
-  If (hooStop In ho.SupportedOperations) Then
-    begin
-    FCurrentOp := 'Stop';
-    FStatus := ho.Stop;
-    Synchronize(UpdateGUI);
-    end;
-
-  If (hooChange In ho.SupportedOperations) Then
-    begin
-    FCurrentOp := 'Change';
-    FStatus := ho.Change;
-    Synchronize(UpdateGUI);
-    end;
-
-  If (hooStart In ho.SupportedOperations) Then
-    begin
-    FCurrentOp := 'Start';
-    FStatus := ho.Start;
-    Synchronize(UpdateGUI);
-    end;
-  end;
-
-For ho In FUnhookList Do
-  begin
-  FCurrentObject := ho;
-  If (hooStop In ho.SupportedOperations) Then
-    begin
-    FCurrentOp := 'Stop';
-    FStatus := ho.Stop;
-    Synchronize(UpdateGUI);
-    end;
-
-  If (hooUnhook In ho.SupportedOperations) Then
-    begin
-    FCurrentOp := 'Unhook';
-    FStatus := ho.Unhook;
-    Synchronize(UpdateGUI);
-    end;
-  end;
-
-For ho In FHookList Do
-  begin
-  FCurrentObject := ho;
-  If (hooHook In ho.SupportedOperations) Then
-    begin
-    FCurrentOp := 'Hook';
-    FStatus := ho.Hook;
-    Synchronize(UpdateGUI);
-    end;
-
-  If (hooStart In ho.SupportedOperations) Then
-    begin
-    FCurrentOp := 'Start';
-    FStatus := ho.Start;
-    Synchronize(UpdateGUI);
-    end;
+  p := FOpList.Items[I];
+  FCurrentObject := p.Value;
+  FCurrentOp := TTaskObject.OperationString(p.Key);
+  FStatus := FCurrentObject.Operation(p.Key);
+  Synchronize(UpdateGUI);
+  Inc(I);
   end;
 end;
 
-Constructor THookProgressThread.Create(ACreateSuspended:Boolean; AForm:THookProgressFrm; AHookList:TList<THookObject>; AUnhookList:TList<THookObject>; AChangeList:TList<THookObject>);
+Constructor THookProgressThread.Create(ACreateSuspended:Boolean; AForm:THookProgressFrm; AOpList:TTaskOperationList);
 begin
 FForm := AForm;
-FHookList := AHookList;
-FUnhookList := AUnhookList;
-FChangeList := AChangeList;
+FOpList := AOpList;
 Inherited Create(ACreateSuspended);
 end;
 
 
 {$R *.DFM}
 
-Constructor THookPRogressFrm.Create(AOwner:TComponent; AHookList:TList<THookObject>; AUnhookList:TList<THookObject>; AChangeList:TList<THookObject>);
+Constructor THookProgressFrm.Create(AOwner:TComponent; AOpList:TTaskOperationList);
 begin
-FHookList := AHookList;
-FUnhookList := AUnhookList;
-FChangeList := AChangeList;
-FThread := THookProgressThread.Create(True, Self, FHookList, FUnhookList, FChangeList);
+FThread := THookProgressThread.Create(True, Self, AOpList);
 Inherited Create(AOwner);
 end;
 
@@ -183,3 +126,4 @@ Close;
 end;
 
 end.
+

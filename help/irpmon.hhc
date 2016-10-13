@@ -40,6 +40,10 @@
 		</OBJECT>
 	<UL>
 		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Hook records">
+			<param name="Local" value="under-the-hood\records.html">
+			</OBJECT>
+		<LI> <OBJECT type="text/sitemap">
 			<param name="Name" value="Request monitoring">
 			<param name="Local" value="under-the-hood\requests.html">
 			</OBJECT>
@@ -52,5 +56,9 @@
 			<param name="Local" value="under-the-hood\special-requests.html">
 			</OBJECT>
 	</UL>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Graphical user interface">
+		<param name="Local" value="gui.html">
+		</OBJECT>
 </UL>
 </BODY></HTML>
