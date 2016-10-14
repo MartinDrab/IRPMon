@@ -1,5 +1,9 @@
 Unit LibJSON;
 
+{$IFDEF FPC}
+  {$MODE Delphi}
+{$ENDIF}
+
 Interface
 
 Const

@@ -1,5 +1,9 @@
 Unit XXXDetectedRequests;
 
+{$IFDEF FPC}
+  {$MODE Delphi}
+{$ENDIF}
+
 Interface
 
 Uses

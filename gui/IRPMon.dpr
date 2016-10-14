@@ -1,12 +1,21 @@
 program IRPMon;
 
+{$IFDEF FPC}
+  {$MODE Delphi}
+{$ENDIF}
+
 {$R 'uac.res' 'uac.rc'}
 
 uses
-  Windows,
+{$IFnDEF FPC}
   WinSvc,
+{$ELSE}
+  jwaWinSvc,
+  Interfaces,
+{$ENDIF}
+  Windows,
   SysUtils,
-  Vcl.Forms,
+  Forms,
   MainForm in 'MainForm.pas' {MainFrm},
   IRPMonDll in 'IRPMonDll.pas',
   IRPMonRequest in 'IRPMonRequest.pas',
@@ -29,7 +38,7 @@ uses
   XXXDetectedRequests in 'XXXDetectedRequests.pas',
   LibJSON in 'LibJSON.pas';
 
-{$R *.RES}
+{$R *.res}
 
 Const
   serviceAccess = MAXIMUM_ALLOWED;
@@ -45,7 +54,6 @@ Var
   err : Cardinal;
   serviceStatus : SERVICE_STATUS;
 Begin
-InformationMessage(Format('%u', [SizeOf(DRIVER_MONITOR_SETTINGS)]));
 Application.Initialize;
 Application.MainFormOnTaskbar := True;
 err := TablesInit('ntstatus.txt', 'ioctl.txt');
@@ -54,7 +62,7 @@ If err = ERROR_SUCCESS Then
   hScm := OpenSCManagerW(Nil, Nil, scmAccess);
   If hScm <> 0 Then
     begin
-    hService := CreateServiceW(hScm, serviceName, serviceDescription, serviceAccess, SERVICE_KERNEL_DRIVER, SERVICE_DEMAND_START, SERVICE_ERROR_NORMAL, PWideChar(ExtractFilePath(Application.ExeName) + driverFileName), Nil, Nil, Nil, Nil, Nil);
+    hService := CreateServiceW(hScm, serviceName, serviceDescription, serviceAccess, SERVICE_KERNEL_DRIVER, SERVICE_DEMAND_START, SERVICE_ERROR_NORMAL, PWideChar(WideString(ExtractFilePath(Application.ExeName) + driverFileName)), Nil, Nil, Nil, Nil, Nil);
     If hService = 0 Then
       err := GetLastError;
 
@@ -75,7 +83,7 @@ If err = ERROR_SUCCESS Then
         startArgs := Nil;
         If hService <> 0 Then
           begin
-          If Not StartService(hService, 0, startArgs) Then
+          If Not StartServiceW(hService, 0, @startArgs) Then
             begin
             err := GetLastError;
             If err = ERROR_SERVICE_ALREADY_RUNNING THen

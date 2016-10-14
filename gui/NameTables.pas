@@ -1,5 +1,9 @@
 Unit NameTables;
 
+{$IFDEF FPC}
+  {$MODE Delphi}
+{$ENDIF}
+
 Interface
 
 Function TablesInit(ANTSTATUSFile:WideString; AIOCTLFIle:WideString):Cardinal;

@@ -1,5 +1,9 @@
 Unit WatchedDriverNames;
 
+{$IFDEF FPC}
+  {$MODE Delphi}
+{$ENDIF}
+
 Interface
 
 Uses

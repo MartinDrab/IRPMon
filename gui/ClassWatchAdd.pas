@@ -1,12 +1,16 @@
 Unit ClassWatchAdd;
 
+{$IFDEF FPC}
+  {$MODE Delphi}
+{$ENDIF}
+
 Interface
 
 Uses
-  Winapi.Windows, Winapi.Messages, System.SysUtils,
-  System.Variants, System.Classes, Vcl.Graphics,
-  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls,
-  Vcl.StdCtrls, Vcl.ComCtrls, ClassWatch, Generics.Collections;
+  Windows, Messages, SysUtils,
+  Variants, Classes, Graphics,
+  Controls, Forms, Dialogs, ExtCtrls,
+  StdCtrls, ComCtrls, ClassWatch, Generics.Collections;
 
 Type
   TClassWatchAddFrm = Class (TForm)
@@ -37,7 +41,7 @@ Type
 
 Implementation
 
-{$R *.DFM}
+{$R *.dfm}
 
 Uses
   Utils;

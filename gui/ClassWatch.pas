@@ -1,5 +1,9 @@
 Unit ClassWatch;
 
+{$IFDEF FPC}
+  {$MODE Delphi}
+{$ENDIF}
+
 Interface
 
 Uses
@@ -31,7 +35,7 @@ Type
     end;
 
   TWatchableClassComparer = Class (TComparer<TWatchableClass>)
-    Function Compare(const Left, Right: TWatchableClass): Integer; Override;
+    Function Compare(constref Left, Right: TWatchableClass): Integer; Override;
   end;
 
 Implementation
@@ -122,7 +126,7 @@ If Result = ERROR_SUCCESS THen
     Result := RegEnumKeyExW(classesKey, classIndex, classGuid, classGuidLen, Nil, Nil, Nil, Nil);
     If Result = ERROR_SUCCESS THen
       begin
-      Result := RegOpenKeyEx(classesKey, classGuid, 0, KEY_READ, cKey);
+      Result := RegOpenKeyExW(classesKey, classGuid, 0, KEY_READ, cKey);
       If Result = ERROR_SUCCESS THen
         begin
         dwValueLen := SizeOf(dwValue);
@@ -202,7 +206,7 @@ dict.Free;
 end;
 
 
-Function TWatchableClassComparer.Compare(const Left, Right: TWatchableClass): Integer;
+Function TWatchableClassComparer.Compare(constref Left, Right: TWatchableClass): Integer;
 begin
 Result := WideCompareText(Left.Name, Right.Name);
 If Result = 0 Then

@@ -1,5 +1,9 @@
 Unit ListModel;
 
+{$IFDEF FPC}
+  {$MODE Delphi}
+{$ENDIF}
+
 Interface
 
 Uses
@@ -21,7 +25,7 @@ Type
     Property Width : Cardinal Read FWidth;
     Property AutoSize : Boolean Read FAutoSize;
     Property Tag : NativeUInt Read FTag;
-    Property Visible : Boolean Read FVisible;
+    Property Visible : Boolean Read FVisible Write FVisible;
   end;
 
   TListModel<T> = Class
@@ -194,7 +198,7 @@ end;
 
 Procedure TListModel<T>.ColumnSetVisible(AIndex:Integer; AVisible:Boolean);
 begin
-FColumns[AIndex].FVisible := AVisible;
+FColumns.Items[AIndex].Visible := AVisible;
 end;
 
 Procedure TListModel<T>.RefreshColumns;

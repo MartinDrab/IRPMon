@@ -1,5 +1,9 @@
 Unit IRPRequest;
 
+{$IFDEF FPC}
+  {$MODE Delphi}
+{$ENDIF}
+
 Interface
 
 Uses

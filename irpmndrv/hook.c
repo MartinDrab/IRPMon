@@ -914,8 +914,8 @@ NTSTATUS HookObjectsEnumerate(PVOID Buffer, ULONG BufferLength, PULONG ReturnLen
 							deviceInfo->EntrySize = sizeof(HOOKED_DEVICE_INFO) + deviceRecord->DeviceName.Length + sizeof(WCHAR);
 							deviceInfo->ObjectId = deviceRecord;
 							deviceInfo->DeviceObject = deviceRecord->DeviceObject;
-							memcpy(&deviceInfo->FastIoSettings, &deviceRecord->FastIoMonitorSettings, sizeof(deviceInfo->FastIoSettings));
-							memcpy(&deviceInfo->IRPSettings, &deviceRecord->IRPMonitorSettings, sizeof(deviceInfo->IRPSettings));
+							memcpy(deviceInfo->FastIoSettings, deviceRecord->FastIoMonitorSettings, sizeof(deviceInfo->FastIoSettings));
+							memcpy(deviceInfo->IRPSettings, deviceRecord->IRPMonitorSettings, sizeof(deviceInfo->IRPSettings));
 							deviceInfo->MonitoringEnabled = deviceRecord->MonitoringEnabled;
 							deviceInfo->DeviceNameLen = deviceRecord->DeviceName.Length + sizeof(WCHAR);
 							memcpy(&deviceInfo->DeviceName, deviceRecord->DeviceName.Buffer, deviceRecord->DeviceName.Length + sizeof(WCHAR));

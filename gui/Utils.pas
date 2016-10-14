@@ -1,5 +1,9 @@
 Unit Utils;
 
+{$IFDEF FPC}
+  {$MODE Delphi}
+{$ENDIF}
+
 Interface
 
 Procedure ErrorMessage(AMsg:WideString);

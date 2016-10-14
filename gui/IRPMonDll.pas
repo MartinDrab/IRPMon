@@ -1,5 +1,9 @@
 Unit IRPMonDll;
 
+{$IFDEF FPC}
+  {$MODE Delphi}
+{$ENDIF}
+
 {$Z4}
 {$MINENUMSIZE 4}
 

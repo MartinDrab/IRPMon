@@ -1,12 +1,16 @@
 Unit DriverNameWatchAddForm;
 
+{$IFDEF FPC}
+  {$MODE Delphi}
+{$ENDIF}
+
 Interface
 
 Uses
-  Winapi.Windows, Winapi.Messages, System.SysUtils,
-  System.Variants, System.Classes, Vcl.Graphics,
-  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls,
-  Vcl.StdCtrls, IRPMonDll, Vcl.CheckLst;
+  Windows, Messages, SysUtils,
+  Variants, Classes, Graphics,
+  Controls, Forms, Dialogs, ExtCtrls,
+  StdCtrls, IRPMonDll, CheckLst;
 
 Type
   TDriverNameWatchAddFrm = Class(TForm)
@@ -33,7 +37,7 @@ Type
 
 Implementation
 
-{$R *.DFM}
+{$R *.dfm}
 
 Uses
   Utils;

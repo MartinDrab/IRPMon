@@ -1,9 +1,13 @@
 Unit HookObjects;
 
+{$IFDEF FPC}
+  {$MODE Delphi}
+{$ENDIF}
+
 Interface
 
 Uses
-  Windows, WinSvc, IRPMonDll, Vcl.ComCtrls, Generics.Collections;
+  Windows, JwaWinSvc, IRPMonDll, ComCtrls, Generics.Collections;
 
 Type
   EHookObjectOperation = (
@@ -389,7 +393,7 @@ hService := OpenServiceW(FhSCM, PWideChar(FServiceName), SERVICE_START);
 If hService <> 0 Then
   begin
   dummy := Nil;
-  If Not StartService(hService, 0, dummy) Then
+  If Not StartServiceW(hService, 0, dummy) Then
     Result := GetLastError;
 
   CloseServiceHandle(hService);

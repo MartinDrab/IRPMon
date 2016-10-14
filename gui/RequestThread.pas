@@ -1,5 +1,9 @@
 Unit RequestThread;
 
+{$IFDEF FPC}
+  {$MODE Delphi}
+{$ENDIF}
+
 Interface
 
 Uses
@@ -13,6 +17,8 @@ Type
     FEvent : THandle;
     FSemaphore : THandle;
     FMsgCode : Cardinal;
+    FCurrentRequest : PREQUEST_GENERAL;
+    Procedure PortablePostMessage;
   Protected
     Procedure Execute; Override;
   Public
@@ -25,7 +31,12 @@ Type
 Implementation
 
 Uses
-  Forms;
+  Forms, MainForm;
+
+Procedure TRequestThread.PortablePostMessage;
+begin
+MainFrm.OnRequest(FCurrentRequest);
+end;
 
 Procedure TRequestThread.Execute;
 Var
@@ -46,7 +57,14 @@ While Not Terminated  Do
         begin
         err := IRPMonDllGetRequest(@rq.Header, SizeOf(REQUEST_GENERAL));
         If err = ERROR_SUCCESS Then
-          PostMessage(Application.Handle, FMsgCode, 0, lParam(rq));
+{$IFDEF FPC}
+          begin
+          FCurrentRequest := rq;
+          Synchronize(PortablePostMessage);
+          end;
+{$ELSE}
+          PostMessage(GetParent(MainFrm.Handle), FMsgCode, 0, lParam(rq));
+{$ENDIF}
 
         If err <> ERROR_SUCCESS Then
           FreeMem(rq);
@@ -96,10 +114,10 @@ If FConnected Then
   IRPMonDllDisconnect;
 
 If FEvent <> 0 Then
-  CloseHandle(FEvent);
+  FileClose(FEvent);{ *Převedeno z CloseHandle* }
 
 If FSemaphore <> 0 Then
-  CloseHandle(FSemaphore);
+  FileClose(FSemaphore);{ *Převedeno z CloseHandle* }
 
 Inherited Destroy;
 end;

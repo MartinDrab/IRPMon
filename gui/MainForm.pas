@@ -1,13 +1,17 @@
 Unit MainForm;
 
+{$IFDEF FPC}
+  {$MODE Delphi}
+{$ENDIF}
+
 Interface
 
 Uses
-  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
-  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ComCtrls, Vcl.Menus,
+  Windows, Messages, SysUtils, Variants, Classes, Graphics,
+  Controls, Forms, Dialogs, ComCtrls, Menus,
   Generics.Collections,
-  IRPMonDll, RequestListModel, Vcl.ExtCtrls,
-  HookObjects, RequestThread, Vcl.AppEvnts;
+  IRPMonDll, RequestListModel, ExtCtrls,
+  HookObjects, RequestThread;
 
 Type
   TMainFrm = Class (TForm)
@@ -27,7 +31,6 @@ Type
     CaptureEventsMenuItem: TMenuItem;
     N6: TMenuItem;
     RefreshNameCacheMenuItem: TMenuItem;
-    IrpMonAppEvents: TApplicationEvents;
     RequestMenuItem: TMenuItem;
     RequestDetailsMenuItem: TMenuItem;
     SaveMenuItem: TMenuItem;
@@ -44,8 +47,6 @@ Type
     procedure ExitMenuItemClick(Sender: TObject);
     procedure RefreshNameCacheMenuItemClick(Sender: TObject);
     procedure SelectDriversDevicesMenuItemClick(Sender: TObject);
-    procedure IrpMonAppEventsMessage(var Msg: tagMSG; var Handled: Boolean);
-    procedure IrpMonAppEventsException(Sender: TObject; E: Exception);
     procedure RequestDetailsMenuItemClick(Sender: TObject);
     procedure AboutMenuItemClick(Sender: TObject);
     procedure SaveMenuItemClick(Sender: TObject);
@@ -53,6 +54,11 @@ Type
     procedure WatchDriverNameMenuItemClick(Sender: TObject);
     procedure SortbyIDMenuItemClick(Sender: TObject);
   Private
+{$IFDEF FPC}
+    FAppEvents: TApplicationProperties;
+{$ELSE}
+    FAppEvents: TApplicationEvents;
+{$ENDIF}
     FModel : TRequestListModel;
     FHookedDrivers : TDictionary<Pointer, TDriverHookObject>;
     FHookedDevices : TDictionary<Pointer, TDeviceHookObject>;
@@ -64,6 +70,10 @@ Type
     Procedure EnumerateDriverNameWatches;
     Procedure OnWatchedClassClick(Sender:TObject);
     Procedure OnWatchedDriverNameClick(Sender:TObject);
+    procedure IrpMonAppEventsMessage(var Msg: tagMSG; var Handled: Boolean);
+    Procedure IrpMonAppEventsException(Sender: TObject; E: Exception);
+  Public
+    Procedure OnRequest(ARequest:PREQUEST_GENERAL);
   end;
 
 Var
@@ -71,7 +81,7 @@ Var
 
 Implementation
 
-{$R *.DFM}
+{$R *.dfm}
 
 Uses
   Utils, TreeForm, RequestDetailsForm, AboutForm,
@@ -133,11 +143,16 @@ end;
 
 Procedure TMainFrm.ExitMenuItemClick(Sender: TObject);
 begin
+FAppEvents.Free;
 Close;
 end;
 
 Procedure TMainFrm.FormCreate(Sender: TObject);
 begin
+RequestListView.DoubleBuffered := True;
+FAppEvents := TApplicationProperties.Create(Self);
+{$IFNDEF FPC}
+FAppEvents.OnMessage := IrpMonAppEventsMessage;
 FRequestMsgCode := RegisterWindowMessage('IRPMON');
 If FRequestMsgCode = 0 Then
   begin
@@ -145,6 +160,8 @@ If FRequestMsgCode = 0 Then
   Exit;
   end;
 
+{$ENDIF}
+FAppEvents.OnException := IrpMonAppEventsException;
 FHookedDrivers := TDictionary<Pointer, TDriverHookObject>.Create;
 FHookedDevices := TDictionary<Pointer, TDeviceHookObject>.Create;
 FHookedDeviceDriverMap := TDictionary<Pointer, Pointer>.Create;
@@ -186,6 +203,13 @@ begin
 ErrorMessage(E.Message);
 end;
 
+Procedure TMainFrm.OnRequest(ARequest:PREQUEST_GENERAL);
+begin
+FModel.UpdateRequest := ARequest;
+FModel.Update;
+FreeMem(ARequest);
+end;
+
 Procedure TMainFrm.IrpMonAppEventsMessage(var Msg: tagMSG;
   Var Handled: Boolean);
 Var
@@ -193,10 +217,7 @@ Var
 begin
 If Msg.message = FRequestMsgCode Then
   begin
-  rq := PREQUEST_GENERAL(Msg.lParam);
-  FModel.UpdateRequest := rq;
-  FModel.Update;
-  FreeMem(rq);
+  OnRequest(PREQUEST_GENERAL(Msg.lParam));
   Handled := True;
   end;
 end;

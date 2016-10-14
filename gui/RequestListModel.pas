@@ -1,5 +1,9 @@
 Unit RequestListModel;
 
+{$IFDEF FPC}
+  {$MODE Delphi}
+{$ENDIF}
+
 Interface
 
 Uses
@@ -115,7 +119,7 @@ Type
 
   TDriverRequestComparer = Class (TComparer<TDriverRequest>)
   Public
-    Function Compare(Const Left, Right:TDriverRequest):Integer; Override;
+    Function Compare(Constref Left, Right:TDriverRequest):Integer; Override;
   end;
 
   TDriverUnloadRequest = Class (TDriverRequest)
@@ -190,7 +194,7 @@ Uses
 
 (** TDriverRequestComparer **)
 
-Function TDriverRequestComparer.Compare(Const Left, Right:TDriverRequest):Integer;
+Function TDriverRequestComparer.Compare(Constref Left, Right:TDriverRequest):Integer;
 begin
 Result := Integer(Left.Id - Right.Id);
 end;

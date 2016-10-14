@@ -1,11 +1,15 @@
 Unit TreeForm;
 
+{$IFDEF FPC}
+  {$MODE Delphi}
+{$ENDIF}
+
 Interface
 
 Uses
-  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
-  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ComCtrls, Vcl.StdCtrls,
-  Vcl.CheckLst, Generics.Collections, IRPMonDll, Vcl.Menus, Vcl.ExtCtrls,
+  Windows, Messages, SysUtils, Variants, Classes, Graphics,
+  Controls, Forms, Dialogs, ComCtrls, StdCtrls,
+  CheckLst, Generics.Collections, IRPMonDll, Menus, ExtCtrls,
   HookObjects;
 
 Type
@@ -56,7 +60,7 @@ Type
 
 Implementation
 
-{$R *.DFM}
+{$R *.dfm}
 
 Uses
   Utils, RequestListModel, HookProgressForm;
@@ -314,7 +318,7 @@ Else begin
       hooked := deh.Hooked;
       If hooked Then
         begin
-        DeviceTreeView.Canvas.Font.Color := clBlack;
+        DeviceTreeView.Canvas.Font.Color := clGray;
         DeviceTreeView.Canvas.Font.Style := [fsBold];
         end;
       end;
