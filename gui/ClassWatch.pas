@@ -35,7 +35,11 @@ Type
     end;
 
   TWatchableClassComparer = Class (TComparer<TWatchableClass>)
+{$IFDEF FPC}
     Function Compare(constref Left, Right: TWatchableClass): Integer; Override;
+{$ELSE}
+    Function Compare(const Left, Right: TWatchableClass): Integer; Override;
+{$ENDIF}
   end;
 
 Implementation
@@ -205,8 +209,11 @@ If Result = ERROR_SUCCESS Then
 dict.Free;
 end;
 
-
+{$IFDEF FPC}
 Function TWatchableClassComparer.Compare(constref Left, Right: TWatchableClass): Integer;
+{$ELSE}
+Function TWatchableClassComparer.Compare(const Left, Right: TWatchableClass): Integer;
+{$ENDIF}
 begin
 Result := WideCompareText(Left.Name, Right.Name);
 If Result = 0 Then

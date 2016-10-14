@@ -7,7 +7,12 @@ Unit HookObjects;
 Interface
 
 Uses
-  Windows, JwaWinSvc, IRPMonDll, ComCtrls, Generics.Collections;
+{$IFDEF FPC}
+  JwaWinSvc,
+{$ELSE}
+  WinSvc,
+{$ENDIF}
+  Windows, IRPMonDll, ComCtrls, Generics.Collections;
 
 Type
   EHookObjectOperation = (

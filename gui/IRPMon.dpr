@@ -83,7 +83,11 @@ If err = ERROR_SUCCESS Then
         startArgs := Nil;
         If hService <> 0 Then
           begin
+{$IFDEF FPC}
           If Not StartServiceW(hService, 0, @startArgs) Then
+{$ELSE}
+          If Not StartServiceW(hService, 0, startArgs) Then
+{$ENDIF}
             begin
             err := GetLastError;
             If err = ERROR_SERVICE_ALREADY_RUNNING THen

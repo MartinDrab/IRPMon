@@ -11,7 +11,11 @@ Uses
   Controls, Forms, Dialogs, ComCtrls, Menus,
   Generics.Collections,
   IRPMonDll, RequestListModel, ExtCtrls,
-  HookObjects, RequestThread;
+  HookObjects, RequestThread
+{$IFNDEF FPC}
+  , AppEvnts
+{$ENDIF}
+  ;
 
 Type
   TMainFrm = Class (TForm)
@@ -150,8 +154,8 @@ end;
 Procedure TMainFrm.FormCreate(Sender: TObject);
 begin
 RequestListView.DoubleBuffered := True;
-FAppEvents := TApplicationProperties.Create(Self);
 {$IFNDEF FPC}
+FAppEvents := TApplicationEvents.Create(Self);
 FAppEvents.OnMessage := IrpMonAppEventsMessage;
 FRequestMsgCode := RegisterWindowMessage('IRPMON');
 If FRequestMsgCode = 0 Then
@@ -159,7 +163,8 @@ If FRequestMsgCode = 0 Then
   WinErrorMessage('Failed to register internal message', GetLastError);
   Exit;
   end;
-
+{$ELSE}
+FAppEvents := TApplicationProperties.Create(Self);
 {$ENDIF}
 FAppEvents.OnException := IrpMonAppEventsException;
 FHookedDrivers := TDictionary<Pointer, TDriverHookObject>.Create;

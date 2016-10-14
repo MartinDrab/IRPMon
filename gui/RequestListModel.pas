@@ -119,7 +119,11 @@ Type
 
   TDriverRequestComparer = Class (TComparer<TDriverRequest>)
   Public
+{$IFDEF FPC}
     Function Compare(Constref Left, Right:TDriverRequest):Integer; Override;
+{$ELSE}
+    Function Compare(Const Left, Right:TDriverRequest):Integer; Override;
+{$ENDIF}
   end;
 
   TDriverUnloadRequest = Class (TDriverRequest)
@@ -194,7 +198,11 @@ Uses
 
 (** TDriverRequestComparer **)
 
+{$IFDEF FPC}
 Function TDriverRequestComparer.Compare(Constref Left, Right:TDriverRequest):Integer;
+{$ELSE}
+Function TDriverRequestComparer.Compare(Const Left, Right:TDriverRequest):Integer;
+{$ENDIF}
 begin
 Result := Integer(Left.Id - Right.Id);
 end;

@@ -1,36 +1,35 @@
 object MainFrm: TMainFrm
   Left = 0
-  Height = 304
   Top = 0
-  Width = 483
   Caption = 'IRPMon'
   ClientHeight = 284
   ClientWidth = 483
   Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -11
   Font.Name = 'Tahoma'
+  Font.Style = []
   Menu = MainMenu1
+  OldCreateOrder = True
   OnCreate = FormCreate
-  LCLVersion = '1.6.0.4'
+  PixelsPerInch = 96
+  TextHeight = 13
   object PageControl1: TPageControl
     Left = 0
-    Height = 284
     Top = 0
     Width = 483
+    Height = 284
     ActivePage = RequestTabSheet
     Align = alClient
-    TabIndex = 0
     TabOrder = 0
     object RequestTabSheet: TTabSheet
       Caption = 'Requests'
-      ClientHeight = 258
-      ClientWidth = 475
       object RequestListView: TListView
         Left = 0
-        Height = 258
         Top = 0
         Width = 475
+        Height = 256
         Align = alClient
         Columns = <>
         OwnerData = True
@@ -43,8 +42,8 @@ object MainFrm: TMainFrm
     end
   end
   object MainMenu1: TMainMenu
-    left = 168
-    top = 176
+    Left = 168
+    Top = 176
     object ActionMenuItem: TMenuItem
       Caption = 'Action'
       object SelectDriversDevicesMenuItem: TMenuItem
@@ -126,7 +125,7 @@ object MainFrm: TMainFrm
   end
   object LogSaveDialog: TSaveDialog
     Filter = 'Log files [*.log]|*.log|All files [*.*]|*.*'
-    left = 160
-    top = 88
+    Left = 160
+    Top = 88
   end
 end
