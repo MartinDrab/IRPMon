@@ -9,7 +9,7 @@ Interface
 Uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics,
   Controls, Forms, Dialogs, ExtCtrls,
-  ComCtrls;
+  ComCtrls, Vcl.Imaging.jpeg;
 
 Type
   TAboutBox = class(TForm)

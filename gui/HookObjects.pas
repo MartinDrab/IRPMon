@@ -170,10 +170,16 @@ end;
 
 Constructor THookObject.Create(AType:WideString; AAddress:Pointer; AName:PWideChar; ASupportedOperations:THookObjectOperations = []);
 Var
-  len : Cardinal;
+  n : WideString;
 begin
-Inherited Create(AType, AName, ASupportedOperations);
-len := strlen(AName);
+n := '';
+If Assigned(AName) THen
+  begin
+  SetLength(n, StrLen(AName));
+  CopyMemory(PWideChar(n), AName, StrLen(AName)*SizeOf(WideChar));
+  end;
+
+Inherited Create(AType, n, ASupportedOperations);
 FAddress := AAddress;
 FObjectId := Nil;
 FHooked := False;
@@ -398,7 +404,11 @@ hService := OpenServiceW(FhSCM, PWideChar(FServiceName), SERVICE_START);
 If hService <> 0 Then
   begin
   dummy := Nil;
+{$IFDEF FPC}
+  If Not StartServiceW(hService, 0, @dummy) Then
+{$ELSE}
   If Not StartServiceW(hService, 0, dummy) Then
+{$ENDIF}
     Result := GetLastError;
 
   CloseServiceHandle(hService);

@@ -584,12 +584,11 @@ DWORD DriverComHookedObjectsEnumerate(PHOOKED_DRIVER_UMINFO *Info, PULONG Count)
 		if (hookedObjects->NumberOfHookedDrivers > 0) {
 			tmpInfo = (PHOOKED_DRIVER_UMINFO)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(HOOKED_DRIVER_UMINFO)*hookedObjects->NumberOfHookedDrivers);
 			if (tmpInfo != NULL) {
-				ULONG i = 0;
 				PHOOKED_DRIVER_INFO driverEntry = (PHOOKED_DRIVER_INFO)(hookedObjects + 1);
 				PHOOKED_DRIVER_UMINFO umDriverEntry = tmpInfo;
 
 				ret = ERROR_SUCCESS;
-				for (i = 0; i < hookedObjects->NumberOfHookedDrivers; ++i) {
+				for (SIZE_T i = 0; i < hookedObjects->NumberOfHookedDrivers; ++i) {
 					umDriverEntry->ObjectId = driverEntry->ObjectId;
 					umDriverEntry->DriverObject = driverEntry->DriverObject;
 					umDriverEntry->MonitoringEnabled = driverEntry->MonitoringEnabled;
@@ -597,34 +596,31 @@ DWORD DriverComHookedObjectsEnumerate(PHOOKED_DRIVER_UMINFO *Info, PULONG Count)
 					umDriverEntry->DriverNameLen = driverEntry->DriverNameLen - sizeof(WCHAR);
 					umDriverEntry->DriverName = (PWCHAR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, driverEntry->DriverNameLen);
 					if (umDriverEntry->DriverName != NULL) {
-						memcpy(umDriverEntry->DriverName, &driverEntry->DriverName, driverEntry->DriverNameLen);
+						memcpy(umDriverEntry->DriverName, driverEntry->DriverName, driverEntry->DriverNameLen);
 						umDriverEntry->NumberOfHookedDevices = driverEntry->NumberOfHookedDevices;
 						umDriverEntry->HookedDevices = (umDriverEntry->NumberOfHookedDevices > 0) ?
 							(PHOOKED_DEVICE_UMINFO)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, umDriverEntry->NumberOfHookedDevices*sizeof(HOOKED_DEVICE_UMINFO)) :
 							NULL;
 
 						if (umDriverEntry->NumberOfHookedDevices == 0 || umDriverEntry->HookedDevices != NULL) {
-							ULONG j = 0;
 							PHOOKED_DEVICE_INFO deviceEntry = (PHOOKED_DEVICE_INFO)((PUCHAR)driverEntry + driverEntry->EntrySize);
 							PHOOKED_DEVICE_UMINFO umDeviceEntry = umDriverEntry->HookedDevices;
 
-							for (j = 0; j < umDriverEntry->NumberOfHookedDevices; ++j) {
+							for (SIZE_T j = 0; j < umDriverEntry->NumberOfHookedDevices; ++j) {
 								umDeviceEntry->ObjectId = deviceEntry->ObjectId;
 								umDeviceEntry->DeviceObject = deviceEntry->DeviceObject;
-								memcpy(&umDeviceEntry->FastIoSettings, &deviceEntry->FastIoSettings, sizeof(umDeviceEntry->FastIoSettings));
-								memcpy(&umDeviceEntry->IRPSettings, &deviceEntry->IRPSettings, sizeof(umDeviceEntry->IRPSettings));
+								memcpy(umDeviceEntry->FastIoSettings, deviceEntry->FastIoSettings, sizeof(umDeviceEntry->FastIoSettings));
+								memcpy(umDeviceEntry->IRPSettings, deviceEntry->IRPSettings, sizeof(umDeviceEntry->IRPSettings));
 								umDeviceEntry->MonitoringEnabled = deviceEntry->MonitoringEnabled;
 								umDeviceEntry->DeviceNameLen = deviceEntry->DeviceNameLen - sizeof(WCHAR);
 								umDeviceEntry->DeviceName = (PWCHAR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, deviceEntry->DeviceNameLen);
 								if (umDeviceEntry->DeviceName != NULL)
-									memcpy(umDeviceEntry->DeviceName, &deviceEntry->DeviceName, deviceEntry->DeviceNameLen);
+									memcpy(umDeviceEntry->DeviceName, deviceEntry->DeviceName, deviceEntry->DeviceNameLen);
 								else ret = GetLastError();
 
 								if (ret != ERROR_SUCCESS) {
-									ULONG k = 0;
-
 									--umDeviceEntry;
-									for (k = 0; k < j; ++k) {
+									for (SIZE_T k = 0; k < j; ++k) {
 										HeapFree(GetProcessHeap(), 0, umDeviceEntry->DeviceName);
 										--umDeviceEntry;
 									}
@@ -648,10 +644,8 @@ DWORD DriverComHookedObjectsEnumerate(PHOOKED_DRIVER_UMINFO *Info, PULONG Count)
 					} else ret = GetLastError();
 
 					if (ret != ERROR_SUCCESS) {
-						ULONG j = 0;
-						
 						--umDriverEntry;
-						for (j = 0; j < i; ++j) {
+						for (SIZE_T j = 0; j < i; ++j) {
 							if (umDriverEntry->NumberOfHookedDevices > 0) {
 								ULONG k = 0;
 								PHOOKED_DEVICE_UMINFO umDeviceEntry = umDriverEntry->HookedDevices;
@@ -700,25 +694,27 @@ VOID DriverComHookedObjectsFree(PHOOKED_DRIVER_UMINFO Info, ULONG Count)
 	PHOOKED_DRIVER_UMINFO driverInfo = Info;
 	DEBUG_ENTER_FUNCTION("Info=0x%p; Count=%u", Info, Count);
 
-	for (i = 0; i < Count; ++i) {
-		if (driverInfo->NumberOfHookedDevices > 0) {
-			ULONG j = 0;
-			PHOOKED_DEVICE_UMINFO deviceInfo = driverInfo->HookedDevices;
+	if (Count > 0) {
+		for (i = 0; i < Count; ++i) {
+			if (driverInfo->NumberOfHookedDevices > 0) {
+				ULONG j = 0;
+				PHOOKED_DEVICE_UMINFO deviceInfo = driverInfo->HookedDevices;
 
-			for (i = 0; i < driverInfo->NumberOfHookedDevices; ++i) {
-				HeapFree(GetProcessHeap(), 0, deviceInfo->DeviceName);
-				++deviceInfo;
+				for (i = 0; i < driverInfo->NumberOfHookedDevices; ++i) {
+					HeapFree(GetProcessHeap(), 0, deviceInfo->DeviceName);
+					++deviceInfo;
+				}
+
+				HeapFree(GetProcessHeap(), 0, driverInfo->HookedDevices);
 			}
 
-			HeapFree(GetProcessHeap(), 0, driverInfo->HookedDevices);
+			HeapFree(GetProcessHeap(), 0, driverInfo->DriverName);
+
+			++driverInfo;
 		}
 
-		HeapFree(GetProcessHeap(), 0, driverInfo->DriverName);
-
-		++driverInfo;
+		HeapFree(GetProcessHeap(), 0, Info);
 	}
-
-	HeapFree(GetProcessHeap(), 0, Info);
 
 	DEBUG_EXIT_FUNCTION_VOID();
 	return;

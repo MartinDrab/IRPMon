@@ -855,7 +855,7 @@ NTSTATUS HookObjectsEnumerate(PVOID Buffer, ULONG BufferLength, PULONG ReturnLen
 					hDevices = HashTableIteratorGetData(&itDevices);
 					deviceRecord = CONTAINING_RECORD(hDevices, DEVICE_HOOK_RECORD, HashItem);
 					if (deviceRecord->CreateReason == edrcrUserRequest)
-						requiredLength += sizeof(DEVICE_HOOK_RECORD) + deviceRecord->DeviceName.Length + sizeof(WCHAR);
+						requiredLength += sizeof(HOOKED_DEVICE_INFO) + deviceRecord->DeviceName.Length + sizeof(WCHAR);
 				} while (HashTableGetNext(&itDevices));
 
 				HashTableIteratorFinit(&itDevices);
@@ -898,7 +898,7 @@ NTSTATUS HookObjectsEnumerate(PVOID Buffer, ULONG BufferLength, PULONG ReturnLen
 				memcpy(driverInfo->MonitorSettings.FastIoSettings, driverRecord->FastIoSettings, sizeof(driverInfo->MonitorSettings.FastIoSettings));
 				driverInfo->NumberOfHookedDevices = 0;
 				driverInfo->DriverNameLen = driverRecord->DriverName.Length + sizeof(WCHAR);
-				memcpy(&driverInfo->DriverName, driverRecord->DriverName.Buffer, driverRecord->DriverName.Length + sizeof(WCHAR));
+				memcpy(driverInfo->DriverName, driverRecord->DriverName.Buffer, driverRecord->DriverName.Length + sizeof(WCHAR));
 				KeAcquireSpinLock(&driverRecord->SelectedDevicesLock, &irql2);
 				if (HashTableGetFirst(driverRecord->SelectedDevices, &itDevices)) {
 					PHOOKED_DEVICE_INFO deviceInfo = (PHOOKED_DEVICE_INFO)((PUCHAR)driverInfo + driverInfo->EntrySize);

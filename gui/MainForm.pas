@@ -77,7 +77,7 @@ Type
     procedure IrpMonAppEventsMessage(var Msg: tagMSG; var Handled: Boolean);
     Procedure IrpMonAppEventsException(Sender: TObject; E: Exception);
   Public
-    Procedure OnRequest(ARequest:PREQUEST_GENERAL);
+    Procedure OnRequest(AList:TList<PREQUEST_GENERAL>);
   end;
 
 Var
@@ -208,11 +208,16 @@ begin
 ErrorMessage(E.Message);
 end;
 
-Procedure TMainFrm.OnRequest(ARequest:PREQUEST_GENERAL);
+Procedure TMainFrm.OnRequest(AList:TList<PREQUEST_GENERAL>);
+Var
+  rq : PREQUEST_GENERAL;
 begin
-FModel.UpdateRequest := ARequest;
+FModel.UpdateRequest := AList;
 FModel.Update;
-FreeMem(ARequest);
+For rq In AList Do
+  FreeMem(rq);
+
+AList.Free;
 end;
 
 Procedure TMainFrm.IrpMonAppEventsMessage(var Msg: tagMSG;
@@ -222,7 +227,7 @@ Var
 begin
 If Msg.message = FRequestMsgCode Then
   begin
-  OnRequest(PREQUEST_GENERAL(Msg.lParam));
+  OnRequest(TList<PREQUEST_GENERAL>(Msg.lParam));
   Handled := True;
   end;
 end;

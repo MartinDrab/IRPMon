@@ -178,7 +178,7 @@ Type
       Procedure FreeItem(AItem:TDriverRequest); Override;
       Function _Item(AIndex:Integer):TDriverRequest; Override;
     Public
-      UpdateRequest : PREQUEST_GENERAL;
+      UpdateRequest : TList<PREQUEST_GENERAL>;
       Constructor Create; Reintroduce;
       Destructor Destroy; Override;
       Function RefreshMaps:Cardinal;
@@ -645,6 +645,7 @@ end;
 
 Function TRequestListModel.Update:Cardinal;
 Var
+  ur : PREQUEST_GENERAL;
   dr : TDriverRequest;
   deviceName : WideString;
   driverName : WideString;
@@ -652,37 +653,41 @@ begin
 Result := ERROR_SUCCESS;
 If Assigned(UpdateRequest) Then
   begin
-  Case UpdateRequest.Header.RequestType Of
-    ertIRP: dr := TIRPRequest.Build(UpdateRequest.Irp);
-    ertIRPCompletion: dr := TIRPCompleteRequest.Create(UpdateRequest.IrpComplete);
-    ertAddDevice: dr := TAddDeviceRequest.Create(UpdateRequest.AddDevice);
-    ertDriverUnload: dr := TDriverUnloadRequest.Create(UpdateRequest.DriverUnload);
-    ertFastIo: dr := TFastIoRequest.Create(UpdateRequest.FastIo);
-    ertStartIo: dr := TStartIoRequest.Create(UpdateRequest.StartIo);
-    ertDriverDetected : begin
-      dr := TDriverDetectedRequest.Create(UpdateRequest.DriverDetected);
-      If FDriverMap.ContainsKey(dr.DriverObject) Then
-        FDriverMap.Remove(dr.DriverObject);
+  For ur In UpdateRequest Do
+    begin
+    Case ur.Header.RequestType Of
+      ertIRP: dr := TIRPRequest.Build(ur.Irp);
+      ertIRPCompletion: dr := TIRPCompleteRequest.Create(ur.IrpComplete);
+      ertAddDevice: dr := TAddDeviceRequest.Create(ur.AddDevice);
+      ertDriverUnload: dr := TDriverUnloadRequest.Create(ur.DriverUnload);
+      ertFastIo: dr := TFastIoRequest.Create(ur.FastIo);
+      ertStartIo: dr := TStartIoRequest.Create(ur.StartIo);
+      ertDriverDetected : begin
+        dr := TDriverDetectedRequest.Create(ur.DriverDetected);
+        If FDriverMap.ContainsKey(dr.DriverObject) Then
+          FDriverMap.Remove(dr.DriverObject);
 
-      FDriverMap.Add(dr.DriverObject, dr.DriverName);
-      end;
-    ertDeviceDetected : begin
-      dr := TDeviceDetectedRequest.Create(UpdateRequest.DeviceDetected);
-      If FDeviceMap.ContainsKey(dr.DeviceObject) Then
-        FDeviceMap.Remove(dr.DeviceObject);
+        FDriverMap.Add(dr.DriverObject, dr.DriverName);
+        end;
+      ertDeviceDetected : begin
+        dr := TDeviceDetectedRequest.Create(ur.DeviceDetected);
+        If FDeviceMap.ContainsKey(dr.DeviceObject) Then
+          FDeviceMap.Remove(dr.DeviceObject);
 
-      FDeviceMap.Add(dr.DeviceObject, dr.DeviceName);
+        FDeviceMap.Add(dr.DeviceObject, dr.DeviceName);
+        end;
+      Else dr := TDriverRequest.Create(ur.Header);
       end;
-    Else dr := TDriverRequest.Create(UpdateRequest.Header);
+
+    If FDriverMap.TryGetValue(dr.DriverObject, driverName) Then
+      dr.DriverName := driverName;
+
+    If FDeviceMap.TryGetValue(dr.DeviceObject, deviceName) Then
+      dr.DeviceName := deviceName;
+
+    FRequests.Add(dr);
     end;
 
-  If FDriverMap.TryGetValue(dr.DriverObject, driverName) Then
-    dr.DriverName := driverName;
-
-  If FDeviceMap.TryGetValue(dr.DeviceObject, deviceName) Then
-    dr.DeviceName := deviceName;
-
-  FRequests.Add(dr);
   UpdateRequest := Nil;
   end;
 

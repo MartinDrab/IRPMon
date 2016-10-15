@@ -1,6 +1,7 @@
 bin/
 help/gui
 dumps/
+gui/*.bak
 gui/__history
 *.lib
 tmp/

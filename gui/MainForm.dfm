@@ -1,8 +1,8 @@
 object MainFrm: TMainFrm
-  Left = 0
-  Top = 0
+  Left = 207
+  Top = 129
   Caption = 'IRPMon'
-  ClientHeight = 284
+  ClientHeight = 244
   ClientWidth = 483
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -19,7 +19,7 @@ object MainFrm: TMainFrm
     Left = 0
     Top = 0
     Width = 483
-    Height = 284
+    Height = 244
     ActivePage = RequestTabSheet
     Align = alClient
     TabOrder = 0
@@ -29,7 +29,7 @@ object MainFrm: TMainFrm
         Left = 0
         Top = 0
         Width = 475
-        Height = 256
+        Height = 216
         Align = alClient
         Columns = <>
         OwnerData = True

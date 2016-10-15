@@ -1,4 +1,4 @@
-Unit RequestThread;
+﻿Unit RequestThread;
 
 {$IFDEF FPC}
   {$MODE Delphi}
@@ -7,7 +7,7 @@ Unit RequestThread;
 Interface
 
 Uses
-  Windows, Classes, SysUtils,
+  Windows, Classes, SysUtils, Generics.Collections,
   IRPMonDll;
 
 Type
@@ -17,8 +17,9 @@ Type
     FEvent : THandle;
     FSemaphore : THandle;
     FMsgCode : Cardinal;
-    FCurrentRequest : PREQUEST_GENERAL;
+    FCurrentList : TList<PREQUEST_GENERAL>;
     Procedure PortablePostMessage;
+    Procedure PostRequestList;
   Protected
     Procedure Execute; Override;
   Public
@@ -35,7 +36,16 @@ Uses
 
 Procedure TRequestThread.PortablePostMessage;
 begin
-MainFrm.OnRequest(FCurrentRequest);
+MainFrm.OnRequest(FCurrentList);
+end;
+
+Procedure TRequestThread.PostRequestList;
+begin
+{$IFDEF FPC}
+Synchronize(PortablePostMessage);
+{$ELSE}
+PostMessage(Application.Handle, FMsgCode, 0, lParam(FCurrentList));
+{$ENDIF}
 end;
 
 Procedure TRequestThread.Execute;
@@ -43,13 +53,15 @@ Var
   rq : PREQUEST_GENERAL;
   err : Cardinal;
   otw : Packed Array [0..1] Of THandle;
+  l : TList<PREQUEST_GENERAL>;
 begin
 FreeOnTerminate := False;
+l := TList<PREQUEST_GENERAL>.Create;
 otw[0] := FSemaphore;
 otw[1] := FEvent;
 While Not Terminated  Do
   begin
-  err := WaitForMultipleObjects(2, @otw, False, INFINITE);
+  err := WaitForMultipleObjects(2, @otw, False, 100);
   Case err Of
     WAIT_OBJECT_0 : begin
       rq := AllocMem(SizeOf(REQUEST_GENERAL));
@@ -57,22 +69,33 @@ While Not Terminated  Do
         begin
         err := IRPMonDllGetRequest(@rq.Header, SizeOf(REQUEST_GENERAL));
         If err = ERROR_SUCCESS Then
-{$IFDEF FPC}
           begin
-          FCurrentRequest := rq;
-          Synchronize(PortablePostMessage);
+          l.Add(rq);
+          If l.Count > 20 Then
+            begin
+            FCurrentList := l;
+            PostRequestList;
+            l := TList<PREQUEST_GENERAL>.Create;
+            end;
           end;
-{$ELSE}
-          PostMessage(GetParent(MainFrm.Handle), FMsgCode, 0, lParam(rq));
-{$ENDIF}
 
         If err <> ERROR_SUCCESS Then
           FreeMem(rq);
         end;
       end;
+    WAIT_TIMEOUT: begin
+      If l.Count > 0 Then
+        begin
+        FCurrentList := l;
+        PostRequestList;
+        l := TList<PREQUEST_GENERAL>.Create;
+        end;
+      end;
     WAIT_OBJECT_0 + 1 : Terminate;
     end;
   end;
+
+l.Free;
 end;
 
 
