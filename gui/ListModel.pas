@@ -7,6 +7,9 @@ Unit ListModel;
 Interface
 
 Uses
+{$IFDEF FPC}
+  Windows,
+{$ENDIF}
   Menus, ComCtrls, Generics.Collections;
 
 Type
@@ -279,8 +282,15 @@ begin
 Result := 0;
 If Assigned(FDisplayer) Then
   begin
+{$IFDEF FPC}
+  LockWindowUpdate(FDisplayer.Handle);
+{$ENDIF}
   FDisplayer.Items.Count := RowCount;
+{$IFDEF FPC}
+  LockWindowUpdate(0);
+{$ELSE}
   FDisplayer.Invalidate;
+{$ENDIF}
   end;
 end;
 

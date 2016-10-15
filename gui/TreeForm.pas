@@ -288,7 +288,11 @@ Var
   drh : TDriverHookObject;
 begin
 DefaultDraw := True;
+{$IFDEF FPC}
+DeviceTreeView.Canvas.Brush.Color := ClBlack;
+{$ELSE}
 DeviceTreeView.Canvas.Font.Color := clBlack;
+{$ENDIF}
 DeviceTreeView.Canvas.Font.Style := [];
 If Not Assigned(Node.Parent) Then
   begin
@@ -297,7 +301,11 @@ If Not Assigned(Node.Parent) Then
     begin
     If drh.Hooked Then
       begin
+{$IFDEF FPC}
+      DeviceTreeView.Canvas.Brush.Color := ClRed;
+{$ELSE}
       DeviceTreeView.Canvas.Font.Color := clRed;
+{$ENDIF}
       DeviceTreeView.Canvas.Font.Style := [fsBold];
       end;
     end;
@@ -309,7 +317,11 @@ Else begin
     hooked := deh.Hooked;
     If hooked Then
       begin
+{$IFDEF FPC}
+      DeviceTreeView.Canvas.Brush.Color := ClRed;
+{$ELSE}
       DeviceTreeView.Canvas.Font.Color := clRed;
+{$ENDIF}
       DeviceTreeView.Canvas.Font.Style := [fsBold];
       end;
 
@@ -318,7 +330,11 @@ Else begin
       hooked := deh.Hooked;
       If hooked Then
         begin
+{$IFDEF FPC}
+        DeviceTreeView.Canvas.Brush.Color := ClRed;
+{$ELSE}
         DeviceTreeView.Canvas.Font.Color := clGray;
+{$ENDIF}
         DeviceTreeView.Canvas.Font.Style := [fsBold];
         end;
       end;

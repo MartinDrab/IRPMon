@@ -20,13 +20,10 @@
         <ComponentName Value="MainFrm"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
-        <IsVisibleTab Value="True"/>
-        <EditorIndex Value="1"/>
+        <EditorIndex Value="-1"/>
         <TopLine Value="151"/>
         <CursorPos X="41" Y="158"/>
         <UsageCount Value="25"/>
-        <Loaded Value="True"/>
-        <LoadedDesigner Value="True"/>
         <DefaultSyntaxHighlighter Value="Delphi"/>
       </Unit1>
       <Unit2>
@@ -56,8 +53,9 @@
       <Unit5>
         <Filename Value="ListModel.pas"/>
         <IsPartOfProject Value="True"/>
-        <TopLine Value="275"/>
-        <CursorPos Y="283"/>
+        <IsVisibleTab Value="True"/>
+        <TopLine Value="278"/>
+        <CursorPos X="3" Y="292"/>
         <UsageCount Value="25"/>
         <Loaded Value="True"/>
         <DefaultSyntaxHighlighter Value="Delphi"/>
@@ -96,10 +94,11 @@
         <Filename Value="TreeForm.pas"/>
         <IsPartOfProject Value="True"/>
         <HasResources Value="True"/>
-        <EditorIndex Value="-1"/>
-        <TopLine Value="229"/>
-        <CursorPos X="6" Y="236"/>
+        <EditorIndex Value="1"/>
+        <TopLine Value="326"/>
+        <CursorPos X="7" Y="335"/>
         <UsageCount Value="25"/>
+        <Loaded Value="True"/>
         <DefaultSyntaxHighlighter Value="Delphi"/>
       </Unit10>
       <Unit11>
@@ -145,8 +144,8 @@
         <IsPartOfProject Value="True"/>
         <HasResources Value="True"/>
         <EditorIndex Value="-1"/>
-        <TopLine Value="7"/>
-        <CursorPos X="37" Y="11"/>
+        <TopLine Value="4"/>
+        <CursorPos X="11" Y="12"/>
         <UsageCount Value="25"/>
         <DefaultSyntaxHighlighter Value="Delphi"/>
       </Unit15>
@@ -235,11 +234,6 @@
         <DefaultSyntaxHighlighter Value="Delphi"/>
       </Unit25>
     </Units>
-    <JumpHistory Count="1">
-      <Position1>
-        <Filename Value="MainForm.pas"/>
-        <Caret Line="152" Column="32" TopLine="145"/>
-      </Position1>
-    </JumpHistory>
+    <JumpHistory HistoryIndex="-1"/>
   </ProjectSession>
 </CONFIG>
