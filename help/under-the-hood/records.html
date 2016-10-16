@@ -44,6 +44,17 @@ The Unhook operation destroys the drive hook record. It can be performed only wh
 </p>
 <h2>Device Hook Record</h2>
 <p>
+Device hook records are quite simpler than the driver hook ones. They contain only information about the target device object and arrays of boolean values indicating which types of IRP and Fast IO requests the user wishes to monitor. Each device hook record is represented by single <code>DEVICE_HOOK_RECORD</code> structure. State diagram for device hook records can be seen in Figure 2.
+</p>
+<p>
+A device hook record is created when the user expresses her wish to monitor requests targetted at certain device object. The record is fully initialized into the Created state and monitoring may start at once. There is nothing similar to the Active state of the driver record, the monitoring on device hook record occurs in the Created state. Each device hook record contains a boolean variable indicating whether monitoring is enabled, however, value of the variable does not restrict operations with the record in any way. Monitored types of IRP and fast IO operations can be adjusted even when monitoring is enabled, since the IRPMon driver always redirects all IRP callbacks and all available fsat IO callbacks of the target driver (the driver with which the device is associated).
+</p>
+<p>
+Device hook record may also enter the Shadow state. Circumstances of this event are explained in the <b>New Devices</b> part.
+</p>
+<p style='text-align: center'>
+<img src='deh-state-diagram.jpg' alt='device hook record state diagram' /><br/>
+<b>Figure 2:</b> Device hook record state diagram
 </p>
 <h2>New Devices</h2>
 <p>
