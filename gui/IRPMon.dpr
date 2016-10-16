@@ -41,19 +41,36 @@ uses
 {$R *.res}
 
 Const
-  serviceAccess = MAXIMUM_ALLOWED;
   scmAccess = MAXIMUM_ALLOWED;
   serviceName = 'irpmndrv';
   serviceDescription = 'IRPMon Driver Service';
   driverFileName = 'irpmndrv.sys';
 
+
 Var
-  startArgs : PWideChar;
+  driverStarted : Boolean;
+
+Function OnServiceTaskComplete(AList:TTaskOperationList; AObject:TTaskObject; AOperation:EHookObjectOperation; AStatus:Cardinal; AContext:Pointer):Cardinal;
+begin
+Case AOperation Of
+  hooHook: ;
+  hooUnhook: ;
+  hooStart: driverStarted := (AStatus = ERROR_SUCCESS);
+  hooStop: ;
+  Else Result := ERROR_NOT_SUPPORTED;
+  end;
+
+Result := AStatus;
+end;
+
+
+Var
+  taskList : TTaskOperationList;
+  serviceTask : TDriverTaskObject;
   hScm : THandle;
-  hService : THandle;
   err : Cardinal;
-  serviceStatus : SERVICE_STATUS;
 Begin
+driverStarted := False;
 Application.Initialize;
 Application.MainFormOnTaskbar := True;
 err := TablesInit('ntstatus.txt', 'ioctl.txt');
@@ -62,65 +79,39 @@ If err = ERROR_SUCCESS Then
   hScm := OpenSCManagerW(Nil, Nil, scmAccess);
   If hScm <> 0 Then
     begin
-    hService := CreateServiceW(hScm, serviceName, serviceDescription, serviceAccess, SERVICE_KERNEL_DRIVER, SERVICE_DEMAND_START, SERVICE_ERROR_NORMAL, PWideChar(WideString(ExtractFilePath(Application.ExeName) + driverFileName)), Nil, Nil, Nil, Nil, Nil);
-    If hService = 0 Then
-      err := GetLastError;
-
-    If (hService <> 0) Or (err = ERROR_SERVICE_EXISTS) Or
-       (err = ERROR_SERVICE_MARKED_FOR_DELETE) Then
+    taskList := TTaskOperationList.Create;
+    serviceTask := TDriverTaskObject.Create(hScm, serviceName, serviceDescription, serviceDescription, ExtractFilePath(Application.ExeName) + 'irpmndrv.sys');
+    serviceTask.SetCompletionCallback(OnServiceTaskComplete, Nil);
+    taskList.Add(hooHook, serviceTask);
+    taskList.Add(hooStart, serviceTask);
+    With THookProgressFrm.Create(Application, taskList) Do
       begin
-      If err = ERROR_SERVICE_EXISTS Then
-        begin
-        err := ERROR_SUCCESS;
-        hService := OpenServiceW(hScm, serviceName, serviceAccess);
-        If hService = 0 Then
-          err := GetLastError;
-        end;
+      ShowModal;
+      Free;
+      end;
 
-      If (err = ERROR_SUCCESS) Or (err = ERROR_SERVICE_MARKED_FOR_DELETE) Then
-        begin
-        err := ERROR_SUCCESS;
-        startArgs := Nil;
-        If hService <> 0 Then
-          begin
-{$IFDEF FPC}
-          If Not StartServiceW(hService, 0, @startArgs) Then
-{$ELSE}
-          If Not StartServiceW(hService, 0, startArgs) Then
-{$ENDIF}
-            begin
-            err := GetLastError;
-            If err = ERROR_SERVICE_ALREADY_RUNNING THen
-              err := ERROR_SUCCESS;
-            end;
-          end;
-
-        If err = ERROR_SUCCESS Then
-          begin
-          err := IRPMonDllInitialize;
-          If err = ERROR_SUCCESS Then
-            begin
-            Application.CreateForm(TMainFrm, MainFrm);
-  Application.Run;
-            IRPMonDllFinalize;
-            end
-          Else WinErrorMessage('Unable to initialize irpmondll.dll', err);
-
-          If (err <> ERROR_SUCCESS) And (hService <> 0) Then
-            ControlService(hService, SERVICE_CONTROL_STOP, serviceStatus);
-          end
-        Else WinErrorMessage('Failed to start the IRPMon driver', err);
-
-        If hService <> 0 Then
-          ;begin
-          DeleteService(hService);
-          CloseServiceHandle(hService);
-          end;
-        end
-      Else WinErrorMessage('Failed to open IRPMon driver service', err);
+    err := IRPMonDllInitialize;
+    If err = ERROR_SUCCESS Then
+      begin
+      Application.CreateForm(TMainFrm, MainFrm);
+      Application.Run;
+      IRPMonDllFinalize;
       end
-    Else WinErrorMessage('Failed to create a service entry for the IRPMon driver', err);
+    Else begin
+      WinErrorMessage('Unable to initialize irpmondll.dll', err);
+      If driverStarted Then
+        taskList.Add(hooStop, serviceTask);
+      end;
 
+    taskList.Add(hooUnhook, serviceTask);
+    With THookProgressFrm.Create(Application, taskList) Do
+      begin
+      ShowModal;
+      Free;
+      end;
+
+    serviceTask.Free;
+    taskList.Free;
     CloseServiceHandle(hScm);
     end
   Else WinErrorMessage('Unable to access SCM database', GetLastError);

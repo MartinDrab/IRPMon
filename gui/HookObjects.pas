@@ -22,9 +22,6 @@ Type
     hooChange,
     hooStart,
     hooStop,
-    hooOpenSCM,
-    hooCreateDriver,
-    hooDeleteDriver,
     hooWatchClass,
     hooUnwatchClass,
     hooWatchDriver,
@@ -33,14 +30,23 @@ Type
   );
   THookObjectOperations = Set Of EHookObjectOperation;
 
+  TTaskOperationList = Class;
+  TTaskObject = Class;
+  TTaskObjectCompletionCallback = Function (AList:TTaskOperationList; AObject:TTaskObject; AOperation:EHookObjectOperation; AStatus:Cardinal; AContext:Pointer):Cardinal;
+
   TTaskObject = Class
   Private
     FName : WideString;
     FObjectType : WideString;
     FSupportedOperations : THookObjectOperations;
+    FCompletionCallback : TTaskObjectCompletionCallback;
+    FCompletionContext : Pointer;
+    FTaskList : TTaskOperationList;
   Public
     Constructor Create(AType:WideString; AName:WideString; ASupportedOperations:THookObjectOperations = []); Reintroduce;
     Function Operation(AOperationType:EHookObjectOperation):Cardinal; Virtual; Abstract;
+    Function FinishCompletion(AOperationType:EHookObjectOperation; AStatus:Cardinal):Cardinal;
+    Procedure SetCompletionCallback(ACallback:TTaskObjectCompletionCallback; AContext:Pointer);
     Class Function OperationString(AOpType:EHookObjectOperation):WideString;
     Property SupportedOperations : THookObjectOperations Read FSupportedOperations;
     Property ObjectTpye : WideString Read FObjectType;
@@ -126,6 +132,7 @@ Type
       Destructor Destroy; Override;
 
       Function Add(AOp:EHookObjectOperation; AObject:TTaskObject):TTaskOperationList;
+      Procedure Clear;
 
       Property Items [AIndex:Integer] : TPair<EHookObjectOperation, TTaskObject> Read GetItem;
       Property Count : Cardinal Read FCount;
@@ -144,6 +151,22 @@ Inherited Create;
 FName := AName;
 FSupportedOperations := ASupportedOperations;
 FObjectType := AType;
+FCompletionCallback := Nil;
+FCompletionContext := Nil;
+FTaskList := Nil;
+end;
+
+Procedure TTaskObject.SetCompletionCallback(ACallback:TTaskObjectCompletionCallback; AContext:Pointer);
+begin
+FCompletionCallback := ACallback;
+FCompletionContext := AContext;
+end;
+
+Function TTaskObject.FinishCompletion(AOperationType:EHookObjectOperation; AStatus:Cardinal):Cardinal;
+begin
+Result := AStatus;
+If Assigned(FCompletionCallback) THen
+  Result := FCompletionCallback(FTaskList, Self, AOperationType, AStatus, FCompletionContext);
 end;
 
 Class Function TTaskObject.OperationString(AOpType:EHookObjectOperation):WideString;
@@ -155,8 +178,6 @@ Case AOpType Of
   hooChange: Result := 'Change';
   hooStart: Result := 'Start';
   hooStop: Result := 'Stop';
-  hooCreateDriver: Result := 'Install';
-  hooDeleteDriver: Result := 'Delete';
   hooWatchClass: Result := 'WatchClass';
   hooUnwatchClass: Result := 'UnwatchClass';
   hooWatchDriver: Result := 'WatchDriver';
@@ -212,6 +233,8 @@ Case AOperationType Of
   hooStop: Result := Stop;
   Else Result := ERROR_NOT_SUPPORTED;
   end;
+
+Result := FinishCompletion(AOperationType, Result);
 end;
 
 
@@ -292,6 +315,8 @@ Case AOperationType Of
   hooChange: Result := Change;
   Else Result := ERROR_NOT_SUPPORTED;
   end;
+
+Result := FinishCompletion(AOperationType, Result);
 end;
 
 
@@ -338,7 +363,7 @@ end;
 
 Constructor TDriverTaskObject.Create(ASCHandle:SC_HANDLE; AServiceName:WideString; AServiceDisplayName:WideString = ''; AServiceDescription:WideString = ''; AFileName:WideString = '');
 begin
-Inherited Create('Service', AServiceName, [hooCreateDriver, hooDeleteDriver, hooStart, hooStop]);
+Inherited Create('Service', AServiceName, [hooHook, hooUnhook, hooStart, hooStop]);
 FServiceName := AServiceName;
 FServiceDisplayName := AServiceDisplayName;
 FServiceDescription := AServiceDescription;
@@ -349,12 +374,14 @@ end;
 Function TDriverTaskObject.Operation(AOperationType:EHookObjectOperation):Cardinal;
 begin
 Case AOperationType Of
-  hooCreateDriver: Result := Install;
+  hooHook: Result := Install;
   hooStart : Result := Load;
   hooStop : Result := Unload;
-  hooDeleteDriver : Result := Uninstall;
+  hooUnhook : Result := Uninstall;
   Else Result := ERROR_NOT_SUPPORTED;
   end;
+
+Result := FinishCompletion(AOperationType, Result);
 end;
 
 Function TDriverTaskObject.Install:Cardinal;
@@ -449,11 +476,19 @@ FOpList.Free;
 Inherited Destroy;
 end;
 
+Procedure TTaskOperationList.Clear;
+begin
+FCount := 0;
+FOpList.Clear;
+FObjectList.Clear;
+end;
+
 Function TTaskOperationList.Add(AOp:EHookObjectOperation; AObject:TTaskObject):TTaskOperationList;
 begin
 If Not (AOp In AObject.SupportedOperations) Then
   Raise Exception.Create('Attempt to add an unsupported operation');
 
+AObject.FTaskList := Self;
 FOpList.Add(AOp);
 FObjectList.Add(AObject);
 Inc(FCount);

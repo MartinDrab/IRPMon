@@ -50,18 +50,19 @@ Implementation
 
 Procedure THookProgressThread.UpdateGUI;
 Var
-  ho : THookObject;
   lw : TListView;
 begin
 lw := FForm.ProgressListView;
 With lw.Items.Add Do
   begin
-  ho := FCurrentObject As THookObject;
   Data := Pointer(FStatus);
   Caption := FCurrentOp;
-  SubItems.Add(ho.ObjectTpye);
-  SubItems.Add(ho.Name);
-  SubItems.Add(Format('0x%p', [ho.Address]));
+  SubItems.Add(FCurrentObject.ObjectTpye);
+  SubItems.Add(FCurrentObject.Name);
+  If FCurrentObject Is THookObject Then
+     SubItems.Add(Format('0x%p', [(FCurrentObject As THookObject).Address]))
+  Else SubItems.Add('');
+
   SubItems.Add(Format('%u', [FStatus]));
   end;
 end;
@@ -83,6 +84,8 @@ While I < FOpList.Count Do
   Synchronize(UpdateGUI);
   Inc(I);
   end;
+
+FOpList.Clear;
 end;
 
 Constructor THookProgressThread.Create(ACreateSuspended:Boolean; AForm:THookProgressFrm; AOpList:TTaskOperationList);
