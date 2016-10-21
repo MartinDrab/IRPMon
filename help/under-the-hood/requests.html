@@ -90,5 +90,15 @@ To become dynamically unloadable, a driver needs to set the <code>DriverUnload</
 <p>
 In case the IRPMon driver is configured to report driver unloads, its driver unload callback creates a driver unload record, fills it with information about the driver being unloaded, and inserts it to the request queue.
 </p>
+<h2>Special Request Types</h2>
+<p>
+The IRPMon driver also monitors activities that, although are not directly related to app-to-device or driver-to-device communication, the user would like to know about. There are four types of request record defined for such cases, describing the monitored events:
+</p>
+<ul>
+<li><b>Driver detected.</b> The IRPMon driver noticed that a new driver had been located into the kernel. Requests of this type are generated during processing of the AddDevice callback and inform the user about all drivers that attached their devices into the new device stack. It may happen that the IRPMon driver informs about presence of one driver more than once.</li>
+<li><b>Device detected.</b> Presence of a new device object has been detected. This record is generated in three cases: when processing IRP, fast I/O and AddDevice callbacks.</li>
+<li><b>Process created.</b> A new process has been created. This event is detected via a callback registered through PsSetCreateProcessNotifyROutineEx.</li>
+<li><b>Process terminated.</b> An existing process just exited. This event is detected by the same means as process creation.</li>
+</ul>
 </body>
 </html>
