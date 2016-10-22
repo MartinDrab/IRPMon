@@ -7,9 +7,15 @@
 
 
 
+typedef enum _EProcessDBRecordOrigin {
+	pdbroProcessNotify,
+	pdbroProcessEnumeration,
+} EProcessDBRecordOrigin, *PEProcessDBRecordOrigin;
+
 typedef struct _PROCESSDB_RECORD {
-	LIST_ENTRY Entry;
+	HASH_ITEM Item;
 	volatile LONG ReferenceCount;
+	EProcessDBRecordOrigin Origin;
 	UNICODE_STRING ImageName;
 	UNICODE_STRING CommandLine;
 	HANDLE ProcessId;
@@ -18,6 +24,13 @@ typedef struct _PROCESSDB_RECORD {
 } PROCESSDB_RECORD, *PPROCESSDB_RECORD;
 
 
+
+VOID PDBRecordReference(PPROCESSDB_RECORD Record);
+VOID PDBRecordDereference(PPROCESSDB_RECORD Record);
+
+
+NTSTATUS ProcessDBModuleInit(PDRIVER_OBJECT DriverObject, PVOID Context);
+VOID ProcessDBModuleFinit(PDRIVER_OBJECT DriverObject, PVOID Context);
 
 
 
