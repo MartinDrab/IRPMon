@@ -61,6 +61,8 @@ typedef enum _ERequestType {
 	ertStartIo,
 	ertDriverDetected,
 	ertDeviceDetected,
+	ertProcessCreated,
+	ertProcessExitted,
 } ERequesttype, *PERequestPype;
 
 /** Determines the type returned in the Result union of the @link(REQUEST_HEADER) structure. */
@@ -239,6 +241,22 @@ typedef struct _REQUEST_DEVICE_DETECTED {
 	ULONG DeviceNameLength;
 } REQUEST_DEVICE_DETECTED, *PREQUEST_DEVICE_DETECTED;
 
+typedef struct _REQUEST_PROCESS_CREATED {
+	REQUEST_HEADER Header;
+	HANDLE ProcessId;
+	HANDLE ParentId;
+	HANDLE CreatorId;
+	ULONG ImageNameOffset;
+	ULONG ImageNameLength;
+	ULONG CommandLineOffset;
+	ULONG CommandLineLength;
+} REQUEST_PROCESS_CREATED, *PREQUEST_PROCESS_CREATED;
+
+typedef struct _REQUEST_PROCESS_EXITTED {
+	REQUEST_HEADER Header;
+	HANDLE ProcessId;
+} REQUEST_PROCESS_EXITTED, *PREQUEST_PROCESS_EXITTED;
+
 typedef struct _REQUEST_GENERAL {
 	union {
 		REQUEST_HEADER Other;
@@ -250,6 +268,8 @@ typedef struct _REQUEST_GENERAL {
 		REQUEST_STARTIO StartIo;
 		REQUEST_DRIVER_DETECTED DriverDetected;
 		REQUEST_DEVICE_DETECTED DeviceDetected;
+		REQUEST_PROCESS_CREATED ProcessCreated;
+		REQUEST_PROCESS_EXITTED ProcessExitted;
 	} RequestTypes;
 } REQUEST_GENERAL, *PREQUEST_GENERAL;
 

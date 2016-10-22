@@ -3,6 +3,7 @@
 #include "allocator.h"
 #include "preprocessor.h"
 #include "hash_table.h"
+#include "req-queue.h"
 #include "process-db.h"
 
 
@@ -198,8 +199,12 @@ static NTSTATUS _PDBRecordCreateByNotify(HANDLE ProcessId, PPS_CREATE_NOTIFY_INF
 		tmpRecord->CommandLine.MaximumLength = tmpRecord->CommandLine.Length;
 		tmpRecord->CommandLine.Buffer = tmpRecord->ImageName.Buffer + tmpRecord->ImageName.Length / sizeof(WCHAR);
 		memcpy(tmpRecord->CommandLine.Buffer, uCommandLine.Buffer, tmpRecord->CommandLine.Length);
-		*Record = tmpRecord;
-		status = STATUS_SUCCESS;
+		status = RequestProcessExittedCreate(ProcessId, &tmpRecord->ExitRequest);
+		if (NT_SUCCESS(status))
+			*Record = tmpRecord;
+
+		if (!NT_SUCCESS(status))
+			HeapMemoryFree(tmpRecord);
 	} else status = STATUS_INSUFFICIENT_RESOURCES;
 
 	DEBUG_EXIT_FUNCTION("0x%x, *Record=0x%p", status, *Record);
@@ -231,8 +236,12 @@ static NTSTATUS _PDBRecordCreateByEnum(PSYSTEM_PROCESS_INFORMATION Info, PPROCES
 			tmpRecord->ImageName.Buffer = (PWCH)(tmpRecord + 1);
 			memcpy(tmpRecord->ImageName.Buffer, uImageName.Buffer, tmpRecord->ImageName.Length);
 			RtlSecureZeroMemory(&tmpRecord->CommandLine, sizeof(UNICODE_STRING));
-			*Record = tmpRecord;
-			status = STATUS_SUCCESS;
+			status = RequestProcessExittedCreate(tmpRecord->ProcessId, &tmpRecord->ExitRequest);
+			if (NT_SUCCESS(status))
+				*Record = tmpRecord;
+
+			if (!NT_SUCCESS(status))
+				HeapMemoryFree(tmpRecord);
 		} else status = STATUS_INSUFFICIENT_RESOURCES;
 	
 		if (uImageName.Length > 0)
@@ -244,10 +253,12 @@ static NTSTATUS _PDBRecordCreateByEnum(PSYSTEM_PROCESS_INFORMATION Info, PPROCES
 }
 
 
-
 static VOID _PDBRecordFree(PPROCESSDB_RECORD Record)
 {
 	DEBUG_EXIT_FUNCTION("Record=0x%p", Record);
+
+	if (Record->ExitRequest)
+		HeapMemoryFree(Record->ExitRequest);
 
 	HeapMemoryFree(Record);
 
@@ -259,6 +270,7 @@ static VOID _PDBRecordFree(PPROCESSDB_RECORD Record)
 VOID _ProcessNotifyEx(HANDLE ParentId, HANDLE ProcessId, PPS_CREATE_NOTIFY_INFO CreateInfo)
 {
 	PHASH_ITEM h = NULL;
+	PREQUEST_PROCESS_CREATED rc = NULL;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	PPROCESSDB_RECORD rec = NULL;
 	DEBUG_ENTER_FUNCTION("ParentId=0x%p; ProcessId=0x%p; CreateInfo=0x%p", ParentId, ProcessId, CreateInfo);
@@ -268,12 +280,17 @@ VOID _ProcessNotifyEx(HANDLE ParentId, HANDLE ProcessId, PPS_CREATE_NOTIFY_INFO 
 	if (CreateInfo != NULL) {
 		status = _PDBRecordCreateByNotify(ProcessId, CreateInfo, &rec);
 		if (NT_SUCCESS(status)) {
-			PDBRecordReference(rec);
-			KeEnterCriticalRegion();
-			ExAcquireResourceExclusiveLite(&_pdbLock, TRUE);
-			HashTableInsert(_pdbTable, &rec->Item, ProcessId);
-			ExReleaseResourceLite(&_pdbLock);
-			KeLeaveCriticalRegion();
+			status = RequestProcessCreatedCreated(rec->ProcessId, rec->ParentId, rec->CreatorId, &rec->ImageName, &rec->CommandLine, &rc);
+			if (NT_SUCCESS(status)) {
+				PDBRecordReference(rec);
+				KeEnterCriticalRegion();
+				ExAcquireResourceExclusiveLite(&_pdbLock, TRUE);
+				HashTableInsert(_pdbTable, &rec->Item, ProcessId);
+				ExReleaseResourceLite(&_pdbLock);
+				KeLeaveCriticalRegion();
+				RequestQueueInsert(&rc->Header);
+			}
+
 			PDBRecordDereference(rec);
 		}
 
@@ -286,6 +303,9 @@ VOID _ProcessNotifyEx(HANDLE ParentId, HANDLE ProcessId, PPS_CREATE_NOTIFY_INFO 
 		KeLeaveCriticalRegion();
 		if (h != NULL) {
 			rec = CONTAINING_RECORD(h, PROCESSDB_RECORD, Item);
+			RequestHeaderInit(&rec->ExitRequest->Header, NULL, NULL, ertProcessExitted);
+			RequestQueueInsert(&rec->ExitRequest->Header);
+			rec->ExitRequest = NULL;
 			PDBRecordDereference(rec);
 		}
 	}
@@ -314,6 +334,74 @@ VOID PDBRecordDereference(PPROCESSDB_RECORD Record)
 		_PDBRecordFree(Record);
 
 	return;
+}
+
+
+NTSTATUS PDBEnumerateToQueue(VOID)
+{
+	SIZE_T index = 0;
+	SIZE_T count = 0;
+	HASH_TABLE_ITERATOR it;
+	PPROCESSDB_RECORD record = NULL;
+	PPROCESSDB_RECORD *records = NULL;
+	PREQUEST_PROCESS_CREATED *requests = NULL;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION_NO_ARGS();
+
+	status = STATUS_SUCCESS;
+	KeEnterCriticalRegion();
+	ExAcquireResourceSharedLite(&_pdbLock, TRUE);
+	count = HashTableGetItemCount(_pdbTable);
+	records = (PPROCESSDB_RECORD *)HeapMemoryAllocPaged(count*sizeof(PPROCESSDB_RECORD));
+	if (records != NULL) {
+		requests = (PREQUEST_PROCESS_CREATED *)HeapMemoryAllocNonPaged(count*sizeof(PREQUEST_PROCESS_CREATED));
+		if (requests != NULL) {
+			if (HashTableGetFirst(_pdbTable, &it)) {
+				do {
+					record = CONTAINING_RECORD(HashTableIteratorGetData(&it), PROCESSDB_RECORD, Item);
+					PDBRecordReference(record);
+					records[index] = record;
+					++index;
+				} while (HashTableGetNext(&it));
+
+				HashTableIteratorFinit(&it);
+			}
+		} else status = STATUS_INSUFFICIENT_RESOURCES;
+		
+		if (!NT_SUCCESS(status))
+			HeapMemoryFree(records);
+	} else status = STATUS_INSUFFICIENT_RESOURCES;
+
+	ExReleaseResourceLite(&_pdbLock);
+	KeLeaveCriticalRegion();
+	if (NT_SUCCESS(status)) {
+		count = index;
+		for (SIZE_T i = 0; i < count; ++i) {
+			record = records[i];
+			status = RequestProcessCreatedCreated(record->ProcessId, record->ParentId, record->CreatorId, &record->ImageName, &record->CommandLine, requests + i);
+			if (!NT_SUCCESS(status)) {
+				for (SIZE_T j = 0; j < i; ++j)
+					HeapMemoryFree(requests[j]);
+
+				break;
+			}
+		}
+
+		if (NT_SUCCESS(status)) {
+			for (SIZE_T i = 0; i < count; ++i)
+				RequestQueueInsert(&(requests[i])->Header);
+		}
+
+		for (SIZE_T i = 0; i < count; ++i)
+			PDBRecordDereference(records[i]);
+
+		HeapMemoryFree(requests);
+		HeapMemoryFree(records);
+	}
+
+
+	DEBUG_EXIT_FUNCTION("0x%x", status);
+	return status;
 }
 
 

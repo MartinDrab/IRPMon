@@ -4,6 +4,7 @@
 
 #include <ntifs.h>
 #include "hash_table.h"
+#include "req-queue.h"
 
 
 
@@ -21,13 +22,14 @@ typedef struct _PROCESSDB_RECORD {
 	HANDLE ProcessId;
 	HANDLE ParentId;
 	HANDLE CreatorId;
+	PREQUEST_PROCESS_EXITTED ExitRequest;
 } PROCESSDB_RECORD, *PPROCESSDB_RECORD;
 
 
 
 VOID PDBRecordReference(PPROCESSDB_RECORD Record);
 VOID PDBRecordDereference(PPROCESSDB_RECORD Record);
-
+NTSTATUS PDBEnumerateToQueue(VOID);
 
 NTSTATUS ProcessDBModuleInit(PDRIVER_OBJECT DriverObject, PVOID Context);
 VOID ProcessDBModuleFinit(PDRIVER_OBJECT DriverObject, PVOID Context);

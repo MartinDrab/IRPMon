@@ -8,6 +8,8 @@
 
 VOID RequestHeaderInit(PREQUEST_HEADER Header, PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT DeviceObject, ERequesttype RequestType);
 NTSTATUS RequestXXXDetectedCreate(ERequesttype Type, PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT DeviceObject, PREQUEST_HEADER *Header);
+NTSTATUS RequestProcessCreatedCreated(HANDLE ProcessId, HANDLE ParentId, HANDLE CreatorId, PCUNICODE_STRING ImageName, PCUNICODE_STRING CommandLine, PREQUEST_PROCESS_CREATED *Request);
+NTSTATUS RequestProcessExittedCreate(HANDLE ProcessId, PREQUEST_PROCESS_EXITTED *Request);
 NTSTATUS RequestQueueGet(PREQUEST_HEADER Buffer, PULONG Length);
 VOID RequestQueueInsert(PREQUEST_HEADER Header);
 

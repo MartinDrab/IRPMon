@@ -11,6 +11,7 @@
 #include "um-services.h"
 #include "pnp-driver-watch.h"
 #include "process-db.h"
+#include "req-queue.h"
 #include "driver.h"
 
 
