@@ -399,7 +399,6 @@ NTSTATUS PDBEnumerateToQueue(VOID)
 		HeapMemoryFree(records);
 	}
 
-
 	DEBUG_EXIT_FUNCTION("0x%x", status);
 	return status;
 }

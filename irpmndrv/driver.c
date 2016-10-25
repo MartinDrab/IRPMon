@@ -312,7 +312,7 @@ static DRIVER_MODULE_ENTRY_PARAMETERS _moduleEntries[] = {
 	{RequestQueueModuleInit, RequestQueueModuleFinit, NULL},
 	{UMServicesModuleInit, UMServicesModuleFinit, NULL},
 	{PWDModuleInit, PWDModuleFinit, NULL},
-	{ProcessDBModuleInit, ProcessDBModuleFinit, NULL},
+//	{ProcessDBModuleInit, ProcessDBModuleFinit, NULL},
 	{DriverInit, DriverFinit, NULL},
 };
 
