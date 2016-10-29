@@ -73,6 +73,10 @@ static BOOLEAN _CatchRequest(PDRIVER_HOOK_RECORD DriverHookRecord, PDEVICE_HOOK_
 }
 
 
+#define GetDeviceObject(aFileObject)			\
+	(((aFileObject)->Vpb != NULL) ? (aFileObject)->Vpb->DeviceObject : (aFileObject)->DeviceObject)		\
+
+
 /************************************************************************/
 /*                        FAST IO ROUTINES                              */
 /************************************************************************/
@@ -84,8 +88,10 @@ BOOLEAN HookHandlerFastIoCheckIfPossible(PFILE_OBJECT FileObject, PLARGE_INTEGER
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	if (DeviceObject == NULL)
-		DeviceObject = IoGetRelatedDeviceObject(FileObject);
+	if (DeviceObject == NULL) {
+		DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, __FUNCTION__ ": FileObject=0x%p, DeviceObject=0x%p\n", FileObject, DeviceObject);
+		DeviceObject = GetDeviceObject(FileObject);
+	}
 
 	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
 	if (driverRecord != NULL) {
@@ -151,8 +157,10 @@ BOOLEAN HookHandlerFastIoDeviceControl(PFILE_OBJECT FileObject, BOOLEAN Wait, PV
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	if (DeviceObject == NULL)
-		DeviceObject = IoGetRelatedDeviceObject(FileObject);
+	if (DeviceObject == NULL) {
+		DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, __FUNCTION__ ": FileObject=0x%p, DeviceObject=0x%p\n", FileObject, DeviceObject);
+		DeviceObject = GetDeviceObject(FileObject);
+	}
 
 	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
 	if (driverRecord != NULL) {
@@ -190,8 +198,10 @@ BOOLEAN HookHandlerFastIoLock(PFILE_OBJECT FileObject, PLARGE_INTEGER FileOffset
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	if (DeviceObject == NULL)
-		DeviceObject = IoGetRelatedDeviceObject(FileObject);
+	if (DeviceObject == NULL) {
+		DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, __FUNCTION__ ": FileObject=0x%p, DeviceObject=0x%p\n", FileObject, DeviceObject);
+		DeviceObject = GetDeviceObject(FileObject);
+	}
 
 	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
 	if (driverRecord != NULL) {
@@ -229,8 +239,10 @@ BOOLEAN HookHandlerFastIoQueryBasicInfo(PFILE_OBJECT FileObject, BOOLEAN Wait, P
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	if (DeviceObject == NULL)
-		DeviceObject = IoGetRelatedDeviceObject(FileObject);
+	if (DeviceObject == NULL) {
+		DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, __FUNCTION__ ": FileObject=0x%p, DeviceObject=0x%p\n", FileObject, DeviceObject);
+		DeviceObject = GetDeviceObject(FileObject);
+	}
 
 	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
 	if (driverRecord != NULL) {
@@ -279,8 +291,10 @@ BOOLEAN HookHandlerFastIoQueryNetworkOpenInfo(PFILE_OBJECT FileObject, BOOLEAN W
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	if (DeviceObject == NULL)
-		DeviceObject = IoGetRelatedDeviceObject(FileObject);
+	if (DeviceObject == NULL) {
+		DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, __FUNCTION__ ": FileObject=0x%p, DeviceObject=0x%p\n", FileObject, DeviceObject);
+		DeviceObject = GetDeviceObject(FileObject);
+	}
 
 	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
 	if (driverRecord != NULL) {
@@ -373,8 +387,10 @@ BOOLEAN HookHandlerFastIoQueryStandardInfo(PFILE_OBJECT FileObject, BOOLEAN Wait
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	if (DeviceObject == NULL)
-		DeviceObject = IoGetRelatedDeviceObject(FileObject);
+	if (DeviceObject == NULL) {
+		DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, __FUNCTION__ ": FileObject=0x%p, DeviceObject=0x%p\n", FileObject, DeviceObject);
+		DeviceObject = GetDeviceObject(FileObject);
+	}
 
 	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
 	if (driverRecord != NULL) {
@@ -423,8 +439,10 @@ BOOLEAN HookHandlerFastIoRead(PFILE_OBJECT FileObject, PLARGE_INTEGER FileOffset
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	if (DeviceObject == NULL)
-		DeviceObject = IoGetRelatedDeviceObject(FileObject);
+	if (DeviceObject == NULL) {
+		DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, __FUNCTION__ ": FileObject=0x%p, DeviceObject=0x%p\n", FileObject, DeviceObject);
+		DeviceObject = GetDeviceObject(FileObject);
+	}
 
 	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
 	if (driverRecord != NULL) {
@@ -462,8 +480,10 @@ BOOLEAN HookHandlerFastIoUnlockAll(PFILE_OBJECT FileObject, PEPROCESS ProcessId,
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	if (DeviceObject == NULL)
-		DeviceObject = IoGetRelatedDeviceObject(FileObject);
+	if (DeviceObject == NULL) {
+		DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, __FUNCTION__ ": FileObject=0x%p, DeviceObject=0x%p\n", FileObject, DeviceObject);
+		DeviceObject = GetDeviceObject(FileObject);
+	}
 
 	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
 	if (driverRecord != NULL) {
@@ -500,8 +520,10 @@ BOOLEAN HookHandlerFastIoUnlockByKey(PFILE_OBJECT FileObject, PVOID ProcessId, U
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	if (DeviceObject == NULL)
-		DeviceObject = IoGetRelatedDeviceObject(FileObject);
+	if (DeviceObject == NULL) {
+		DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, __FUNCTION__ ": FileObject=0x%p, DeviceObject=0x%p\n", FileObject, DeviceObject);
+		DeviceObject = GetDeviceObject(FileObject);
+	}
 
 	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
 	if (driverRecord != NULL) {
@@ -539,8 +561,10 @@ BOOLEAN HookHandlerFastIoUnlockSingle(PFILE_OBJECT FileObject, PLARGE_INTEGER Fi
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	if (DeviceObject == NULL)
-		DeviceObject = IoGetRelatedDeviceObject(FileObject);
+	if (DeviceObject == NULL) {
+		DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, __FUNCTION__ ": FileObject=0x%p, DeviceObject=0x%p\n", FileObject, DeviceObject);
+		DeviceObject = GetDeviceObject(FileObject);
+	}
 
 	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
 	if (driverRecord != NULL) {
@@ -578,8 +602,10 @@ BOOLEAN HookHandlerFastIoWrite(PFILE_OBJECT FileObject, PLARGE_INTEGER FileOffse
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	if (DeviceObject == NULL)
-		DeviceObject = IoGetRelatedDeviceObject(FileObject);
+	if (DeviceObject == NULL) {
+		DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, __FUNCTION__ ": FileObject=0x%p, DeviceObject=0x%p\n", FileObject, DeviceObject);
+		DeviceObject = GetDeviceObject(FileObject);
+	}
 
 	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
 	if (driverRecord != NULL) {
@@ -604,7 +630,7 @@ BOOLEAN HookHandlerFastIoWrite(PFILE_OBJECT FileObject, PLARGE_INTEGER FileOffse
 		DriverHookRecordDereference(driverRecord);
 	} else {
 		DEBUG_ERROR("Hook is installed for non-hooked driver object 0x%p", DeviceObject->DriverObject);
-		__debugbreak();
+		ret = DeviceObject->DriverObject->FastIoDispatch->FastIoWrite(FileObject, FileOffset, Length, Wait, LockKey, Buffer, IoStatusBlock, DeviceObject);
 	}
 
 	return ret;
@@ -617,8 +643,10 @@ BOOLEAN HookHandlerFastIoMdlRead(PFILE_OBJECT FileObject, PLARGE_INTEGER FileOff
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	if (DeviceObject == NULL)
-		DeviceObject = IoGetRelatedDeviceObject(FileObject);
+	if (DeviceObject == NULL) {
+		DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, __FUNCTION__ ": FileObject=0x%p, DeviceObject=0x%p\n", FileObject, DeviceObject);
+		DeviceObject = GetDeviceObject(FileObject);
+	}
 
 	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
 	if (driverRecord != NULL) {
@@ -643,7 +671,7 @@ BOOLEAN HookHandlerFastIoMdlRead(PFILE_OBJECT FileObject, PLARGE_INTEGER FileOff
 		DriverHookRecordDereference(driverRecord);
 	} else {
 		DEBUG_ERROR("Hook is installed for non-hooked driver object 0x%p", DeviceObject->DriverObject);
-		__debugbreak();
+		ret = DeviceObject->DriverObject->FastIoDispatch->MdlRead(FileObject, FileOffset, Length, LockKey, MdlChain, IoStatusBlock, DeviceObject);
 	}
 
 	return ret;
@@ -656,8 +684,10 @@ BOOLEAN HookHandlerFastIoMdlWrite(PFILE_OBJECT FileObject, PLARGE_INTEGER FileOf
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	if (DeviceObject == NULL)
-		DeviceObject = IoGetRelatedDeviceObject(FileObject);
+	if (DeviceObject == NULL) {
+		DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, __FUNCTION__ ": FileObject=0x%p, DeviceObject=0x%p\n", FileObject, DeviceObject);
+		DeviceObject = GetDeviceObject(FileObject);
+	}
 
 	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
 	if (driverRecord != NULL) {
@@ -682,7 +712,7 @@ BOOLEAN HookHandlerFastIoMdlWrite(PFILE_OBJECT FileObject, PLARGE_INTEGER FileOf
 		DriverHookRecordDereference(driverRecord);
 	} else {
 		DEBUG_ERROR("Hook is installed for non-hooked driver object 0x%p", DeviceObject->DriverObject);
-		__debugbreak();
+		ret = DeviceObject->DriverObject->FastIoDispatch->PrepareMdlWrite(FileObject, FileOffset, Length, LockKey, MdlChain, IoStatusBlock, DeviceObject);
 	}
 
 	return ret;
@@ -695,8 +725,10 @@ BOOLEAN HookHandlerFastIoMdlReadComplete(PFILE_OBJECT FileObject, PMDL MdlChain,
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	if (DeviceObject == NULL)
-		DeviceObject = IoGetRelatedDeviceObject(FileObject);
+	if (DeviceObject == NULL) {
+		DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, __FUNCTION__ ": FileObject=0x%p, DeviceObject=0x%p\n", FileObject, DeviceObject);
+		DeviceObject = GetDeviceObject(FileObject);
+	}
 
 	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
 	if (driverRecord != NULL) {
@@ -716,7 +748,7 @@ BOOLEAN HookHandlerFastIoMdlReadComplete(PFILE_OBJECT FileObject, PMDL MdlChain,
 		DriverHookRecordDereference(driverRecord);
 	} else {
 		DEBUG_ERROR("Hook is installed for non-hooked driver object 0x%p", DeviceObject->DriverObject);
-		__debugbreak();
+		ret = DeviceObject->DriverObject->FastIoDispatch->MdlReadComplete(FileObject, MdlChain, DeviceObject);
 	}
 
 	return ret;
@@ -729,8 +761,10 @@ BOOLEAN HookHandlerFastIoMdlWriteComplete(PFILE_OBJECT FileObject, PLARGE_INTEGE
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	if (DeviceObject == NULL)
-		DeviceObject = IoGetRelatedDeviceObject(FileObject);
+	if (DeviceObject == NULL) {
+		DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, __FUNCTION__ ": FileObject=0x%p, DeviceObject=0x%p\n", FileObject, DeviceObject);
+		DeviceObject = GetDeviceObject(FileObject);
+	}
 
 	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
 	if (driverRecord != NULL) {
@@ -750,7 +784,7 @@ BOOLEAN HookHandlerFastIoMdlWriteComplete(PFILE_OBJECT FileObject, PLARGE_INTEGE
 		DriverHookRecordDereference(driverRecord);
 	} else {
 		DEBUG_ERROR("Hook is installed for non-hooked driver object 0x%p", DeviceObject->DriverObject);
-		__debugbreak();
+		ret = DeviceObject->DriverObject->FastIoDispatch->MdlWriteComplete(FileObject, FileOffset, MdlChain, DeviceObject);
 	}
 
 	return ret;
@@ -763,8 +797,10 @@ BOOLEAN HookHandlerFastIoReadCompressed(PFILE_OBJECT FileObject, PLARGE_INTEGER 
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	if (DeviceObject == NULL)
-		DeviceObject = IoGetRelatedDeviceObject(FileObject);
+	if (DeviceObject == NULL) {
+		DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, __FUNCTION__ ": FileObject=0x%p, DeviceObject=0x%p\n", FileObject, DeviceObject);
+		DeviceObject = GetDeviceObject(FileObject);
+	}
 
 	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
 	if (driverRecord != NULL) {
@@ -794,7 +830,7 @@ BOOLEAN HookHandlerFastIoReadCompressed(PFILE_OBJECT FileObject, PLARGE_INTEGER 
 		DriverHookRecordDereference(driverRecord);
 	} else {
 		DEBUG_ERROR("Hook is installed for non-hooked driver object 0x%p", DeviceObject->DriverObject);
-		__debugbreak();
+		ret = DeviceObject->DriverObject->FastIoDispatch->FastIoReadCompressed(FileObject, FileOffset, Length, LockKey, Buffer, MdlChain, IoStatusBlock, CompressedInfo, CompressedInfoLength, DeviceObject);
 	}
 
 	return ret;
@@ -807,8 +843,10 @@ BOOLEAN HookHandlerFastIoWriteCompressed(PFILE_OBJECT FileObject, PLARGE_INTEGER
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	if (DeviceObject == NULL)
-		DeviceObject = IoGetRelatedDeviceObject(FileObject);
+	if (DeviceObject == NULL) {
+		DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, __FUNCTION__ ": FileObject=0x%p, DeviceObject=0x%p\n", FileObject, DeviceObject);
+		DeviceObject = GetDeviceObject(FileObject);
+	}
 
 	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
 	if (driverRecord != NULL) {
@@ -838,7 +876,7 @@ BOOLEAN HookHandlerFastIoWriteCompressed(PFILE_OBJECT FileObject, PLARGE_INTEGER
 		DriverHookRecordDereference(driverRecord);
 	} else {
 		DEBUG_ERROR("Hook is installed for non-hooked driver object 0x%p", DeviceObject->DriverObject);
-		__debugbreak();
+		ret = DeviceObject->DriverObject->FastIoDispatch->FastIoWriteCompressed(FileObject, FileOffset, Length, LockKey, Buffer, MdlChain, IoStatusBlock, CompressedInfo, CompressedInfoLength, DeviceObject);
 	}
 
 	return ret;
@@ -852,8 +890,10 @@ NTSTATUS HookHandlerFastIoAcquireForModWrite(PFILE_OBJECT FileObject, PLARGE_INT
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 	LARGE_INTEGER offset;
 
-	if (DeviceObject == NULL)
-		DeviceObject = IoGetRelatedDeviceObject(FileObject);
+	if (DeviceObject == NULL) {
+		DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, __FUNCTION__ ": FileObject=0x%p, DeviceObject=0x%p\n", FileObject, DeviceObject);
+		DeviceObject = GetDeviceObject(FileObject);
+	}
 
 	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
 	if (driverRecord != NULL) {
@@ -881,7 +921,7 @@ NTSTATUS HookHandlerFastIoAcquireForModWrite(PFILE_OBJECT FileObject, PLARGE_INT
 		DriverHookRecordDereference(driverRecord);
 	} else {
 		DEBUG_ERROR("Hook is installed for non-hooked driver object 0x%p", DeviceObject->DriverObject);
-		__debugbreak();
+		status = DeviceObject->DriverObject->FastIoDispatch->AcquireForModWrite(FileObject, EndingOffset, ResourceToRelease, DeviceObject);
 	}
 
 	return status;
@@ -894,8 +934,10 @@ NTSTATUS HookHandlerFastIoReleaseForModWrite(PFILE_OBJECT FileObject, PERESOURCE
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	if (DeviceObject == NULL)
-		DeviceObject = IoGetRelatedDeviceObject(FileObject);
+	if (DeviceObject == NULL) {
+		DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, __FUNCTION__ ": FileObject=0x%p, DeviceObject=0x%p\n", FileObject, DeviceObject);
+		DeviceObject = GetDeviceObject(FileObject);
+	}
 
 	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
 	if (driverRecord != NULL) {
@@ -915,7 +957,7 @@ NTSTATUS HookHandlerFastIoReleaseForModWrite(PFILE_OBJECT FileObject, PERESOURCE
 		DriverHookRecordDereference(driverRecord);
 	} else {
 		DEBUG_ERROR("Hook is installed for non-hooked driver object 0x%p", DeviceObject->DriverObject);
-		__debugbreak();
+		status = DeviceObject->DriverObject->FastIoDispatch->ReleaseForModWrite(FileObject, ResourceToRelease, DeviceObject);
 	}
 
 	return status;
@@ -928,8 +970,10 @@ NTSTATUS HookHandlerFastIoAcquireForCcFlush(PFILE_OBJECT FileObject, PDEVICE_OBJ
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	if (DeviceObject == NULL)
-		DeviceObject = IoGetRelatedDeviceObject(FileObject);
+	if (DeviceObject == NULL) {
+		DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, __FUNCTION__ ": FileObject=0x%p, DeviceObject=0x%p\n", FileObject, DeviceObject);
+		DeviceObject = GetDeviceObject(FileObject);
+	}
 
 	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
 	if (driverRecord != NULL) {
@@ -949,7 +993,7 @@ NTSTATUS HookHandlerFastIoAcquireForCcFlush(PFILE_OBJECT FileObject, PDEVICE_OBJ
 		DriverHookRecordDereference(driverRecord);
 	} else {
 		DEBUG_ERROR("Hook is installed for non-hooked driver object 0x%p", DeviceObject->DriverObject);
-		__debugbreak();
+		status = DeviceObject->DriverObject->FastIoDispatch->AcquireForCcFlush(FileObject, DeviceObject);
 	}
 
 	return status;
@@ -962,8 +1006,10 @@ NTSTATUS HookHandlerFastIoReleaseForCcFlush(PFILE_OBJECT FileObject, PDEVICE_OBJ
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	if (DeviceObject == NULL)
-		DeviceObject = IoGetRelatedDeviceObject(FileObject);
+	if (DeviceObject == NULL) {
+		DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, __FUNCTION__ ": FileObject=0x%p, DeviceObject=0x%p\n", FileObject, DeviceObject);
+		DeviceObject = GetDeviceObject(FileObject);
+	}
 
 	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
 	if (driverRecord != NULL) {
@@ -983,7 +1029,7 @@ NTSTATUS HookHandlerFastIoReleaseForCcFlush(PFILE_OBJECT FileObject, PDEVICE_OBJ
 		DriverHookRecordDereference(driverRecord);
 	} else {
 		DEBUG_ERROR("Hook is installed for non-hooked driver object 0x%p", DeviceObject->DriverObject);
-		__debugbreak();
+		status = DeviceObject->DriverObject->FastIoDispatch->ReleaseForCcFlush(FileObject, DeviceObject);
 	}
 
 	return status;
@@ -997,10 +1043,7 @@ VOID HookHandlerFastIoAcquireFile(PFILE_OBJECT FileObject)
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	if (FileObject->Vpb != NULL)
-		deviceObject = FileObject->Vpb->DeviceObject;
-	else deviceObject = FileObject->DeviceObject;
-
+	deviceObject = GetDeviceObject(FileObject);
 	driverObject = deviceObject->DriverObject;
 	driverRecord = DriverHookRecordGet(driverObject);
 	if (driverRecord != NULL) {
@@ -1018,7 +1061,7 @@ VOID HookHandlerFastIoAcquireFile(PFILE_OBJECT FileObject)
 		DriverHookRecordDereference(driverRecord);
 	} else {
 		DEBUG_ERROR("Hook is installed for non-hooked driver object 0x%p", FileObject->DeviceObject->DriverObject);
-		__debugbreak();
+		deviceObject->DriverObject->FastIoDispatch->AcquireFileForNtCreateSection(FileObject);
 	}
 
 	return;
@@ -1032,10 +1075,7 @@ VOID HookHandlerFastIoReleaseFile(PFILE_OBJECT FileObject)
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 	
-	if (FileObject->Vpb != NULL) {
-		deviceObject = FileObject->Vpb->DeviceObject;
-	} else deviceObject = FileObject->DeviceObject;
-
+	deviceObject = GetDeviceObject(FileObject);
 	driverObject = deviceObject->DriverObject;
 	driverRecord = DriverHookRecordGet(driverObject);
 	if (driverRecord != NULL) {
@@ -1053,7 +1093,7 @@ VOID HookHandlerFastIoReleaseFile(PFILE_OBJECT FileObject)
 		DriverHookRecordDereference(driverRecord);
 	} else {
 		DEBUG_ERROR("Hook is installed for non-hooked driver object 0x%p", FileObject->DeviceObject->DriverObject);
-		__debugbreak();
+		deviceObject->DriverObject->FastIoDispatch->ReleaseFileForNtCreateSection(FileObject);
 	}
 
 	return;
@@ -1066,8 +1106,10 @@ BOOLEAN HookHandlerFastIoMdlReadCompleteCompressed(PFILE_OBJECT FileObject, PMDL
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	if (DeviceObject == NULL)
-		DeviceObject = IoGetRelatedDeviceObject(FileObject);
+	if (DeviceObject == NULL) {
+		DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, __FUNCTION__ ": FileObject=0x%p, DeviceObject=0x%p\n", FileObject, DeviceObject);
+		DeviceObject = GetDeviceObject(FileObject);
+	}
 
 	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
 	if (driverRecord != NULL) {
@@ -1087,7 +1129,7 @@ BOOLEAN HookHandlerFastIoMdlReadCompleteCompressed(PFILE_OBJECT FileObject, PMDL
 		DriverHookRecordDereference(driverRecord);
 	} else {
 		DEBUG_ERROR("Hook is installed for non-hooked driver object 0x%p", DeviceObject->DriverObject);
-		__debugbreak();
+		ret = DeviceObject->DriverObject->FastIoDispatch->MdlReadCompleteCompressed(FileObject, MdlChain, DeviceObject);
 	}
 
 	return ret;
@@ -1100,8 +1142,10 @@ BOOLEAN HookHandlerFastIoMdlWriteCompleteCompressed(PFILE_OBJECT FileObject, PLA
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	if (DeviceObject == NULL)
-		DeviceObject = IoGetRelatedDeviceObject(FileObject);
+	if (DeviceObject == NULL) {
+		DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, __FUNCTION__ ": FileObject=0x%p, DeviceObject=0x%p\n", FileObject, DeviceObject);
+		DeviceObject = GetDeviceObject(FileObject);
+	}
 
 	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
 	if (driverRecord != NULL) {
@@ -1121,7 +1165,7 @@ BOOLEAN HookHandlerFastIoMdlWriteCompleteCompressed(PFILE_OBJECT FileObject, PLA
 		DriverHookRecordDereference(driverRecord);
 	} else {
 		DEBUG_ERROR("Hook is installed for non-hooked driver object 0x%p", DeviceObject->DriverObject);
-		__debugbreak();
+		ret = DeviceObject->DriverObject->FastIoDispatch->MdlWriteCompleteCompressed(FileObject, FileOffset, MdlChain, DeviceObject);
 	}
 
 	return ret;
