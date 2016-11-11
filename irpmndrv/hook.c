@@ -232,7 +232,7 @@ static VOID _HookDriverObject(PDRIVER_OBJECT DriverObject, PDRIVER_HOOK_RECORD H
 			_HookFastIoRoutine((PVOID *)&fastIo->MdlReadCompleteCompressed, (PVOID *)&hookFastIo->MdlReadCompleteCompressed, HookHandlerFastIoMdlReadCompleteCompressed);
 			_HookFastIoRoutine((PVOID *)&fastIo->MdlWriteComplete, (PVOID *)&hookFastIo->MdlWriteComplete, HookHandlerFastIoMdlWriteComplete);
 			_HookFastIoRoutine((PVOID *)&fastIo->MdlWriteCompleteCompressed, (PVOID *)&hookFastIo->MdlWriteCompleteCompressed, HookHandlerFastIoMdlWriteCompleteCompressed);
-			_HookFastIoRoutine((PVOID *)&fastIo->PrepareMdlWrite, (PVOID *)&hookFastIo->PrepareMdlWrite, HookHandlerFastIoAcquireForModWrite);
+			_HookFastIoRoutine((PVOID *)&fastIo->PrepareMdlWrite, (PVOID *)&hookFastIo->PrepareMdlWrite, HookHandlerFastIoMdlWrite);
 			_HookFastIoRoutine((PVOID *)&fastIo->ReleaseFileForNtCreateSection, (PVOID *)&hookFastIo->ReleaseFileForNtCreateSection, HookHandlerFastIoReleaseFile);
 			_HookFastIoRoutine((PVOID *)&fastIo->ReleaseForCcFlush, (PVOID *)&hookFastIo->ReleaseForCcFlush, HookHandlerFastIoReleaseForCcFlush);
 			_HookFastIoRoutine((PVOID *)&fastIo->ReleaseForModWrite, (PVOID *)&hookFastIo->ReleaseForModWrite, HookHandlerFastIoReleaseForModWrite);
