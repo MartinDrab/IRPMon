@@ -53,8 +53,18 @@
 			</OBJECT>
 	</UL>
 	<LI> <OBJECT type="text/sitemap">
-		<param name="Name" value="Graphical user interface">
+		<param name="Name" value="Graphical User Interface">
 		<param name="Local" value="gui.html">
 		</OBJECT>
+	<UL>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Monitoring drivers and devices">
+			<param name="Local" value="gui\select.html">
+			</OBJECT>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Watching PnP drivers">
+			<param name="Local" value="gui\watch.html">
+			</OBJECT>
+	</UL>
 </UL>
 </BODY></HTML>
