@@ -150,6 +150,10 @@ typedef struct _REQUEST_IRP {
 	PVOID Arg3;
 	/** The fourth argument of the request. */
 	PVOID Arg4;
+	/** Value of the Irp->IoStatus.Status at time of IRP detection. */
+	NTSTATUS IOSBStatus;
+	/** Value of the Irp->IoStatus.Information at time of IRP detection. */
+	ULONG_PTR IOSBInformation;
 } REQUEST_IRP, *PREQUEST_IRP;
 
 typedef struct _REQUEST_IRP_COMPLETION {

@@ -1260,6 +1260,8 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 						request->Arg4 = irpStack->Parameters.Others.Argument4;
 						request->IrpFlags = Irp->Flags;
 						request->FileObject = irpStack->FileObject;
+						request->IOSBStatus = Irp->IoStatus.Status;
+						request->IOSBInformation = Irp->IoStatus.Information;
 					}
 				}
 

@@ -23,6 +23,8 @@ Type
     FIRPFlags : Cardinal;
     FProcessId : THandle;
     FThreadId : THandle;
+    FIOSBStatus : Cardinal;
+    FIOSBInformation : NativeUInt;
   Public
     Constructor Create(Var ARequest:REQUEST_IRP); Reintroduce;
 
@@ -45,6 +47,8 @@ Type
     Property IRPFlags : Cardinal Read FIRPFlags;
     Property ProcessId : THandle Read FProcessId;
     Property ThreadId : THandle Read FThreadId;
+    Property IOSBStatus : Cardinal Read FIOSBStatus;
+    Property IOSBInformation : NativeUInt Read FIOSBInformation;
   end;
 
   TZeroArgIRPRequest = Class (TIRPRequest)
@@ -142,7 +146,8 @@ Type
 Implementation
 
 Uses
-  SysUtils;
+  SysUtils,
+  NameTables;
 
 (** TIRPRequest **)
 
@@ -174,6 +179,8 @@ Case AColumnType Of
   rlmctArg4: AResult := Format('0x%p', [FArgs.Other.Arg4]);
   rlmctPreviousMode: AResult := AccessModeToString(FPreviousMode);
   rlmctRequestorMode: AResult := AccessModeToString(FRequestorMode);
+  rlmctIOSBStatus : AResult := Format('0x%x (%s)', [FIOSBStatus, NTSTATUSToString(FIOSBStatus)]);
+  rlmctIOSBInformation : AResult := Format('%u (0x%p)', [FIOSBInformation, Pointer(FIOSBInformation)]);
   Else Result := Inherited GetColumnValue(AColumnType, AResult);
   end;
 end;

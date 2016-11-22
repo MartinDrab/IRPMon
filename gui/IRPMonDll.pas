@@ -284,6 +284,10 @@ Type
 	  (** Irp->FileObject *)
 	  FileObject : Pointer;
     Args : TIRPArguments;
+    (** Value of Irp->IoStatus.Status at time of IRP detection. **)
+    IOSBStatus : Cardinal;
+    (** Value of Irp->IoStatus.Information at time of IRP detection. **)
+    IOSBInformation : NativeUInt;
     end;
   REQUEST_IRP = _REQUEST_IRP;
   PREQUEST_IRP = ^REQUEST_IRP;
