@@ -36,6 +36,12 @@
     <ClCompile Include="modules.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="pnp-driver-watch.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="process-db.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="req-queue.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -49,12 +55,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="utils-dym-array.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="pnp-driver-watch.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="process-db.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -80,7 +80,13 @@
     <ClInclude Include="modules.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="pnp-driver-watch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="preprocessor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="process-db.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="req-queue.h">
@@ -108,12 +114,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\include\kernel-shared.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="pnp-driver-watch.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="process-db.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
