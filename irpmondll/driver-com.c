@@ -188,7 +188,7 @@ static DWORD _ObjectOpen(EHandletype ObjectType, PVOID ID, PHANDLE Handle)
 	if (ret == ERROR_SUCCESS)
 		*Handle = output.Handle;
 
-	DEBUG_EXIT_FUNCTION("%u", ret);
+	DEBUG_EXIT_FUNCTION("%u, *Handle=0x%p", ret, *Handle);
 	return ret;
 }
 
@@ -239,9 +239,7 @@ DWORD DriverComSnapshotRetrieve(PIRPMON_DRIVER_INFO **DriverInfo, PULONG InfoCou
 		tmpBuffer += sizeof(ULONG);
 		tmpInfoArray = (PIRPMON_DRIVER_INFO *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(PIRPMON_DRIVER_INFO)*tmpInfoArrayCount);
 		if (tmpInfoArray != NULL) {
-			ULONG i = 0;
-
-			for (i = 0; i < tmpInfoArrayCount; ++i) {
+			for (ULONG i = 0; i < tmpInfoArrayCount; ++i) {
 				PVOID driverObject = NULL;
 				ULONG deviceCount = 0;
 				ULONG driverNameLen = 0;
@@ -254,11 +252,10 @@ DWORD DriverComSnapshotRetrieve(PIRPMON_DRIVER_INFO **DriverInfo, PULONG InfoCou
 				tmpBuffer += sizeof(driverNameLen);
 				tmpInfoArray[i] = _DriverInfoAlloc(driverObject, (PWCHAR)tmpBuffer, driverNameLen, deviceCount);
 				if (tmpInfoArray[i] != NULL) {
-					ULONG j = 0;
 					PIRPMON_DRIVER_INFO driverInfo = tmpInfoArray[i];
 					
 					tmpBuffer += driverNameLen;
-					for (j = 0; j < deviceCount; ++j) {
+					for (ULONG j = 0; j < deviceCount; ++j) {
 						PVOID deviceObject = NULL;
 						PVOID attachedDevice = NULL;
 						ULONG deviceNameLen = 0;
@@ -271,10 +268,8 @@ DWORD DriverComSnapshotRetrieve(PIRPMON_DRIVER_INFO **DriverInfo, PULONG InfoCou
 						tmpBuffer += sizeof(deviceNameLen);
 						driverInfo->Devices[j] = _DeviceInfoAlloc(deviceObject, attachedDevice, (PWCHAR)tmpBuffer, deviceNameLen);
 						if (driverInfo->Devices[j] == NULL) {
-							ULONG k = 0;
-
 							ret = ERROR_NOT_ENOUGH_MEMORY;
-							for (k = 0; k < j; ++k)
+							for (ULONG k = 0; k < j; ++k)
 								_DeviceInfoFree(driverInfo->Devices[k]);
 
 							break;
@@ -285,13 +280,10 @@ DWORD DriverComSnapshotRetrieve(PIRPMON_DRIVER_INFO **DriverInfo, PULONG InfoCou
 				} else ret = ERROR_NOT_ENOUGH_MEMORY;
 			
 				if (ret != ERROR_SUCCESS) {
-					ULONG k = 0;
-
-					for (k = 0; k < i; ++k) {
-						ULONG l = 0;
+					for (ULONG k = 0; k < i; ++k) {
 						PIRPMON_DRIVER_INFO driverInfo = tmpInfoArray[k];
 					
-						for (l = 0; l < driverInfo->DeviceCount; ++l)
+						for (ULONG l = 0; l < driverInfo->DeviceCount; ++l)
 							_DeviceInfoFree(driverInfo->Devices[l]);
 
 						_DriverInfoFree(driverInfo);
@@ -319,14 +311,12 @@ DWORD DriverComSnapshotRetrieve(PIRPMON_DRIVER_INFO **DriverInfo, PULONG InfoCou
 
 VOID DriverComSnapshotFree(PIRPMON_DRIVER_INFO *DriverInfo, ULONG Count)
 {
-	ULONG i = 0;
 	DEBUG_ENTER_FUNCTION("DriverInfo=0x%p; Count=%u", DriverInfo, Count);
 
-	for (i = 0; i < Count; ++i) {
-		ULONG j = 0;
+	for (ULONG i = 0; i < Count; ++i) {
 		PIRPMON_DRIVER_INFO drvInfo = DriverInfo[i];
 	
-		for (j = 0; j < drvInfo->DeviceCount; ++j)
+		for (ULONG j = 0; j < drvInfo->DeviceCount; ++j)
 			_DeviceInfoFree(drvInfo->Devices[j]);
 
 		_DriverInfoFree(drvInfo);
@@ -690,17 +680,15 @@ DWORD DriverComHookedObjectsEnumerate(PHOOKED_DRIVER_UMINFO *Info, PULONG Count)
 
 VOID DriverComHookedObjectsFree(PHOOKED_DRIVER_UMINFO Info, ULONG Count)
 {
-	ULONG i = 0;
 	PHOOKED_DRIVER_UMINFO driverInfo = Info;
 	DEBUG_ENTER_FUNCTION("Info=0x%p; Count=%u", Info, Count);
 
 	if (Count > 0) {
-		for (i = 0; i < Count; ++i) {
+		for (ULONG i = 0; i < Count; ++i) {
 			if (driverInfo->NumberOfHookedDevices > 0) {
-				ULONG j = 0;
 				PHOOKED_DEVICE_UMINFO deviceInfo = driverInfo->HookedDevices;
 
-				for (i = 0; i < driverInfo->NumberOfHookedDevices; ++i) {
+				for (ULONG j = 0; j < driverInfo->NumberOfHookedDevices; ++j) {
 					HeapFree(GetProcessHeap(), 0, deviceInfo->DeviceName);
 					++deviceInfo;
 				}
@@ -709,7 +697,6 @@ VOID DriverComHookedObjectsFree(PHOOKED_DRIVER_UMINFO Info, ULONG Count)
 			}
 
 			HeapFree(GetProcessHeap(), 0, driverInfo->DriverName);
-
 			++driverInfo;
 		}
 
