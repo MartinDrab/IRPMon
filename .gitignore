@@ -1,7 +1,11 @@
 bin/
+.vs/
 dumps/
 gui/*.bak
 gui/__history
 *.lib
 tmp/
 *.sdf
+/gui/IRPMon.dproj.local
+/gui/IRPMon.identcache
+/irpmndrv/irpmndrv.vcxproj.user
