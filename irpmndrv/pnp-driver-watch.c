@@ -423,7 +423,7 @@ NTSTATUS PDWClassRegister(PGUID ClassGuid, BOOLEAN UpperFilter, BOOLEAN Beginnin
 	ExReleaseResourceLite(&_classGuidsLock);
 	KeLeaveCriticalRegion();
 
-	DEBUG_ENTER_FUNCTION("0x%x", status);
+	DEBUG_EXIT_FUNCTION("0x%x", status);
 	return status;
 }
 
