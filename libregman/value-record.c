@@ -365,7 +365,7 @@ NTSTATUS ValueRecordOnQueryValue(_In_ PREGMAN_VALUE_RECORD Value, _Inout_ PREG_Q
 
 					kvfi = (PKEY_VALUE_FULL_INFORMATION)Info->KeyValueInformation;
 					if (Info->KeyValueInformationClass == KeyValueFullInformationAlign64)
-						kvfi = (PKEY_VALUE_FULL_INFORMATION)ALIGN_UP_BY((ULONG)kvfi, 8);
+						kvfi = (PKEY_VALUE_FULL_INFORMATION)ALIGN_UP_BY((ULONG_PTR)kvfi, 8);
 
 					__try {
 						ULONG dataOffset = FIELD_OFFSET(KEY_VALUE_FULL_INFORMATION, Name) + Value->Item.Key.String.Length;

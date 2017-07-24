@@ -99,7 +99,7 @@ static NTSTATUS _RegistryCallback(_In_ PVOID Context, _In_opt_ PVOID Argument1, 
 {
 	PREGMAN_KEY_RECORD keyRecord = NULL;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
-	REG_NOTIFY_CLASS opType = (REG_NOTIFY_CLASS)Argument1;
+	REG_NOTIFY_CLASS opType = (REG_NOTIFY_CLASS)PtrToUint(Argument1);
 
 	UNREFERENCED_PARAMETER(Context);
 

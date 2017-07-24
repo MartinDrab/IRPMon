@@ -75,7 +75,7 @@ static NTSTATUS _GetCurrentControlSetNumber(void)
 		ZwClose(hSelectKey);
 	}
 
-	DEBUG_EXIT_FUNCTION("0x%x", status);
+	DEBUG_EXIT_FUNCTION("0x%x, _currentControlSet=%u", status, _currentControlSet);
 	return status;
 }
 
@@ -102,8 +102,7 @@ static BOOLEAN _OnDriverNameWatchEnum(PWCHAR String, PVOID Data, PVOID Context)
 				__except (EXCEPTION_EXECUTE_HANDLER) {
 					ctx->Status = GetExceptionCode();
 				}
-			}
-			else {
+			} else {
 				ctx->CurrentEntry->MonitorSettings = rec->MonitorSettings;
 				ctx->CurrentEntry->NameLength = (ULONG)len;
 				memcpy(ctx->CurrentEntry + 1, String, len);
@@ -144,7 +143,7 @@ static NTSTATUS _CaptureServiceName(PUNICODE_STRING RegistryPath)
 		_driverServiceName.Buffer[_driverServiceName.Length / sizeof(wchar_t)] = L'\0';
 	} else status = STATUS_INSUFFICIENT_RESOURCES;
 
-	DEBUG_EXIT_FUNCTION("0x%x", status);
+	DEBUG_EXIT_FUNCTION("0x%x, _driverServiceName=\"%wZ\"", status, &_driverServiceName);
 	return status;
 }
 
@@ -647,7 +646,6 @@ NTSTATUS PWDDriverNameEnumerate(PIOCTL_IRPMNDRV_DRIVER_WATCH_ENUM_OUTPUT Buffer,
 
 NTSTATUS PWDModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context)
 {
-	PWCH tmp = NULL;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"; Context=0x%p", DriverObject, RegistryPath, Context);
 
@@ -665,26 +663,6 @@ NTSTATUS PWDModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath
 						status = ExInitializeResourceLite(&_driverNamesLock);
 						if (NT_SUCCESS(status)) {
 							status = StringHashTableCreate(httNoSynchronization, 37, &_driverNameTable);
-							if (NT_SUCCESS(status)) {
-								_driverServiceName = *(PUNICODE_STRING)Context;
-								_driverServiceName.Buffer += (_driverServiceName.Length / sizeof(WCHAR));
-								_driverServiceName.Length = 0;
-								do {
-									--_driverServiceName.Buffer;
-									_driverServiceName.Length += sizeof(WCHAR);
-								} while (*_driverServiceName.Buffer != L'\\');
-
-								++_driverServiceName.Buffer;
-								_driverServiceName.Length -= sizeof(WCHAR);
-								tmp = (PWCH)HeapMemoryAllocPaged(_driverServiceName.Length);
-								if (tmp != NULL) {
-									memcpy(tmp, _driverServiceName.Buffer, _driverServiceName.Length);
-									_driverServiceName.Buffer = tmp;
-									_driverServiceName.MaximumLength = _driverServiceName.Length;
-								}
-								else status = STATUS_INSUFFICIENT_RESOURCES;
-							}
-
 							if (!NT_SUCCESS(status))
 								ExDeleteResourceLite(&_driverNamesLock);
 						}
