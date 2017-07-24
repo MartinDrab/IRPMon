@@ -447,6 +447,7 @@ NTSTATUS PDWClassUnregister(PGUID ClassGuid, BOOLEAN UpperFilter, BOOLEAN Beginn
 
 		HashTableDelete(targetTable, ClassGuid);
 		_FreeFunction(h);
+		status = STATUS_SUCCESS;
 	} else status = STATUS_NOT_FOUND;
 
 	ExReleaseResourceLite(&_classGuidsLock);
