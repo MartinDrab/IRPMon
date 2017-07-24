@@ -697,7 +697,6 @@ VOID PWDModuleFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, P
 	UNREFERENCED_PARAMETER(RegistryPath);
 	UNREFERENCED_PARAMETER(Context);
 
-	HeapMemoryFree(_driverServiceName.Buffer);
 	StringHashTableDestroy(_driverNameTable);
 	ExDeleteResourceLite(&_driverNamesLock);
 	HashTableDestroy(_upperClassGuidTable);
