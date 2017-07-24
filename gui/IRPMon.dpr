@@ -106,7 +106,7 @@ If IsWow64Process(GetCurrentProcess, wow64) Then
           WinErrorMessage('Unable to initialize irpmondll.dll', err);
           If driverStarted Then
             taskList.Add(hooStop, serviceTask);
-        end;
+          end;
 
         taskList.Add(hooUnhook, serviceTask);
         With THookProgressFrm.Create(Application, taskList) Do

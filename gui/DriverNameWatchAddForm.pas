@@ -53,7 +53,6 @@ FCancelled := True;
 MonitorSettingsCheckListBox.Checked[0] := True;
 MonitorSettingsCheckListBox.Checked[1] := True;
 MonitorSettingsCheckListBox.Checked[2] := True;
-MonitorSettingsCheckListBox.Checked[3] := True;
 MonitorSettingsCheckListBox.Checked[5] := True;
 MonitorSettingsCheckListBox.Checked[6] := True;
 end;
