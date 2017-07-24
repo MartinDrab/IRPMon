@@ -379,7 +379,7 @@ NTSTATUS PDWClassRegister(PGUID ClassGuid, BOOLEAN UpperFilter, BOOLEAN Beginnin
 			RtlSecureZeroMemory(&uGuid, sizeof(uGuid));
 			status = RtlStringFromGUID(ClassGuid, &uGuid);
 			if (NT_SUCCESS(status)) {
-				UNICODE_STRING uClassKey;
+				DECLARE_UNICODE_STRING_SIZE(uClassKey, 256);
 
 				rec->ClassGuidString = uGuid;
 				if (InterlockedIncrement(&_numberofClasses) == 1)
