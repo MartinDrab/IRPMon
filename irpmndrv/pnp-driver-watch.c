@@ -385,7 +385,7 @@ NTSTATUS PDWClassRegister(PGUID ClassGuid, BOOLEAN UpperFilter, BOOLEAN Beginnin
 				if (InterlockedIncrement(&_numberofClasses) == 1)
 					_driverObject->DriverExtension->AddDevice = _AddDevice;
 
-				status = RtlUnicodeStringPrintf(&uClassKey, L"\\Registry\\Machine\\SYSTEM\\ControlSet%.3u\\Control\\Class\\%wZ", _currentControlSet, ClassGuid);
+				status = RtlUnicodeStringPrintf(&uClassKey, L"\\Registry\\Machine\\SYSTEM\\ControlSet%.3u\\Control\\Class\\%wZ", _currentControlSet, &uGuid);
 				if (NT_SUCCESS(status))
 					status = RegManKeyRegister(&uClassKey, &rec->KeyRecord);
 
