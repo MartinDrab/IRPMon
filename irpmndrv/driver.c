@@ -13,7 +13,6 @@
 #include "process-db.h"
 #include "req-queue.h"
 #include "regman.h"
-#include "libfilters.h"
 #include "driver.h"
 
 
@@ -314,9 +313,8 @@ static DRIVER_MODULE_ENTRY_PARAMETERS _moduleEntries[] = {
 	{HookModuleInit, HookModuleFinit, NULL},
 	{RequestQueueModuleInit, RequestQueueModuleFinit, NULL},
 	{UMServicesModuleInit, UMServicesModuleFinit, NULL},
+	{RegManInit, RegManFinit, NULL },
 	{PWDModuleInit, PWDModuleFinit, NULL},
-	{ RegManInit, RegManFinit, NULL },
-	{LibFiltersModuleInit, LibFiltersModuleFinit, NULL},
 //	{ProcessDBModuleInit, ProcessDBModuleFinit, NULL},
 	{DriverInit, DriverFinit, NULL},
 };

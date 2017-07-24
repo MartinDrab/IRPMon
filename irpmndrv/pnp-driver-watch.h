@@ -12,6 +12,9 @@ typedef struct _DEVICE_CLASS_WATCH_RECORD {
 	GUID ClassGuid;
 	UNICODE_STRING ClassGuidString;
 	ULONG Flags;
+	HANDLE KeyRecord;
+	HANDLE ValueRecord;
+	HANDLE CallbackHandle;
 } DEVICE_CLASS_WATCH_RECORD, *PDEVICE_CLASS_WATCH_RECORD;
 
 typedef struct _DRIVER_NAME_WATCH_RECORD {

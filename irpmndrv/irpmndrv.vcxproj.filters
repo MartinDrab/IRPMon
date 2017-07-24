@@ -128,8 +128,5 @@
     <ClInclude Include="..\include\regman.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\libfilters.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
 </Project>

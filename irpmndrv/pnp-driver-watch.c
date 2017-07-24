@@ -1,5 +1,6 @@
 
 #include <ntifs.h>
+#include <ntstrsafe.h>
 #include "preprocessor.h"
 #include "allocator.h"
 #include "hash_table.h"
@@ -8,6 +9,8 @@
 #include "kernel-shared.h"
 #include "hook.h"
 #include "req-queue.h"
+#include "multistring.h"
+#include "regman.h"
 #include "pnp-driver-watch.h"
 
 
@@ -33,84 +36,49 @@ static PHASH_TABLE _lowerClassGuidTable = NULL;
 static PHASH_TABLE _upperClassGuidTable = NULL;
 static ERESOURCE _driverNamesLock;
 static ERESOURCE _classGuidsLock;
-static UNICODE_STRING _driverServiceName;
 static volatile LONG _numberofClasses = 0;
 static PDRIVER_OBJECT _driverObject = NULL;
+
+static UNICODE_STRING _driverServiceName;
+static ULONG _currentControlSet = 1;
 
 /************************************************************************/
 /*                    HELPER FUNCTIONS                                  */
 /************************************************************************/
 
 
-static NTSTATUS _AppendFilter(BOOLEAN Beginning, PWCHAR Filters, PSIZE_T ResultLength)
+static NTSTATUS _GetCurrentControlSetNumber(void)
 {
-	SIZE_T len = 0;
-	UNICODE_STRING uFilter;
-	PWCHAR tmp = Filters;
-	SIZE_T dataLength = sizeof(WCHAR);
+	HANDLE hSelectKey = NULL;
+	UNICODE_STRING uSelectKey;
+	OBJECT_ATTRIBUTES oa;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
-	DEBUG_ENTER_FUNCTION("Beginning=%u; Filters=\"%S\"; ResultLength=0x%p", Beginning, Filters, ResultLength);
+	DEBUG_ENTER_FUNCTION_NO_ARGS();
 
-	status = STATUS_SUCCESS;
-	while (*tmp != L'\0') {
-		len = wcslen(tmp);
-		dataLength += ((len + 1)*sizeof(WCHAR));
-		RtlInitUnicodeString(&uFilter, tmp);
-		if (RtlEqualUnicodeString(&uFilter, &_driverServiceName, TRUE)) {
-			status = STATUS_OBJECT_NAME_COLLISION;
-			break;
-		}
-
-		tmp += (len + 1);
-	}
-
+	RtlInitUnicodeString(&uSelectKey, L"\\Registry\\Machine\\SYSTEM\\Select");
+	InitializeObjectAttributes(&oa, &uSelectKey, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, NULL);
+	status = ZwOpenKey(&hSelectKey, KEY_QUERY_VALUE, &oa);
 	if (NT_SUCCESS(status)) {
-		if (Beginning) {
-			memmove(Filters + _driverServiceName.Length / sizeof(WCHAR) + 1, Filters, dataLength);
-			memcpy(Filters, _driverServiceName.Buffer, _driverServiceName.Length);
-			Filters[_driverServiceName.Length / sizeof(WCHAR)] = L'\0';
-		} else {
-			memcpy(Filters + dataLength / sizeof(WCHAR) - 1, _driverServiceName.Buffer, _driverServiceName.Length);
-			Filters[dataLength / sizeof(WCHAR) - 1 + _driverServiceName.Length / sizeof(WCHAR)] = L'\0';
-			Filters[dataLength / sizeof(WCHAR) + _driverServiceName.Length / sizeof(WCHAR)] = L'\0';
+		ULONG retLength = 0;
+		UNICODE_STRING uValueName;
+		UCHAR kvpiStorage[sizeof(KEY_VALUE_PARTIAL_INFORMATION) + sizeof(ULONG)];
+		PKEY_VALUE_PARTIAL_INFORMATION kvpi = (PKEY_VALUE_PARTIAL_INFORMATION)kvpiStorage;
+
+		RtlInitUnicodeString(&uValueName, L"Current");
+		status = ZwQueryValueKey(hSelectKey, &uValueName, KeyValuePartialInformation, kvpi, sizeof(kvpiStorage), &retLength);
+		if (NT_SUCCESS(status)) {
+			if (kvpi->DataLength == sizeof(ULONG))
+				_currentControlSet = *(PULONG)kvpi->Data;
+			else status = STATUS_INVALID_PARAMETER;
 		}
 
-		*ResultLength = dataLength + _driverServiceName.Length + sizeof(WCHAR);
+		ZwClose(hSelectKey);
 	}
 
-	DEBUG_EXIT_FUNCTION("0x%x, *ResultLength=%Iu", status, *ResultLength);
+	DEBUG_EXIT_FUNCTION("0x%x", status);
 	return status;
 }
 
-
-static NTSTATUS _DeleteFilter(PWCHAR Filters, PSIZE_T ResultLength)
-{
-	UNICODE_STRING uFilter;
-	SIZE_T len = 0;
-	PWCHAR ours = NULL;
-	PWCHAR tmp = Filters;
-	NTSTATUS status = STATUS_UNSUCCESSFUL;
-	DEBUG_ENTER_FUNCTION("Filters=\"%S\"; ResultLength=0x%p", Filters, ResultLength);
-
-	status = STATUS_SUCCESS;
-	while (*tmp != L'\0') {
-		len = wcslen(tmp);
-		RtlInitUnicodeString(&uFilter, tmp);
-		if (RtlEqualUnicodeString(&uFilter, &_driverServiceName, TRUE))
-			ours = tmp;
-
-		tmp += (len + 1);
-	}
-
-	if (ours != NULL) {
-		++tmp;
-		*ResultLength = (tmp - Filters)*sizeof(WCHAR) - _driverServiceName.Length - sizeof(WCHAR);
-		memmove(ours, ours + _driverServiceName.Length / sizeof(WCHAR) + 1, sizeof(WCHAR)*(tmp - ours - _driverServiceName.Length / sizeof(WCHAR) - 1));
-	} else status = STATUS_INSUFFICIENT_RESOURCES;
-
-	DEBUG_EXIT_FUNCTION("0x%x, *ResultLength=%Iu", status, *ResultLength);
-	return status;
-}
 
 static BOOLEAN _OnDriverNameWatchEnum(PWCHAR String, PVOID Data, PVOID Context)
 {
@@ -121,7 +89,7 @@ static BOOLEAN _OnDriverNameWatchEnum(PWCHAR String, PVOID Data, PVOID Context)
 	DEBUG_ENTER_FUNCTION("String=\"%S\"; Data=0x%p; Context=0x%p", String, Data, Context);
 
 	if (NT_SUCCESS(ctx->Status)) {
-		len = wcslen(String)*sizeof(WCHAR);
+		len = wcslen(String) * sizeof(WCHAR);
 		requiredLength = sizeof(DRIVER_NAME_WATCH_ENTRY) + len;
 		if (ctx->RemainingLength >= requiredLength) {
 			if (ctx->AccessMode == UserMode) {
@@ -130,10 +98,12 @@ static BOOLEAN _OnDriverNameWatchEnum(PWCHAR String, PVOID Data, PVOID Context)
 					ctx->CurrentEntry->MonitorSettings = rec->MonitorSettings;
 					ctx->CurrentEntry->NameLength = (ULONG)len;
 					memcpy(ctx->CurrentEntry + 1, String, len);
-				} __except (EXCEPTION_EXECUTE_HANDLER) {
+				}
+				__except (EXCEPTION_EXECUTE_HANDLER) {
 					ctx->Status = GetExceptionCode();
 				}
-			} else {
+			}
+			else {
 				ctx->CurrentEntry->MonitorSettings = rec->MonitorSettings;
 				ctx->CurrentEntry->NameLength = (ULONG)len;
 				memcpy(ctx->CurrentEntry + 1, String, len);
@@ -144,7 +114,8 @@ static BOOLEAN _OnDriverNameWatchEnum(PWCHAR String, PVOID Data, PVOID Context)
 				ctx->BytesWritten += requiredLength;
 				ctx->RemainingLength -= requiredLength;
 			}
-		} else ctx->Status = STATUS_BUFFER_TOO_SMALL;
+		}
+		else ctx->Status = STATUS_BUFFER_TOO_SMALL;
 	}
 
 	DEBUG_EXIT_FUNCTION("0x%x", ctx->Status);
@@ -152,76 +123,41 @@ static BOOLEAN _OnDriverNameWatchEnum(PWCHAR String, PVOID Data, PVOID Context)
 }
 
 
-static NTSTATUS _RegisterUnregisterFilter(BOOLEAN Beginning, BOOLEAN UpperFilter, BOOLEAN Register, PUNICODE_STRING ClassGuid)
+static NTSTATUS _CaptureServiceName(PUNICODE_STRING RegistryPath)
 {
-	PWCHAR dataBuffer = NULL;
-	SIZE_T dataLength = 0;
-	ULONG returnLength = 0;
-	PKEY_VALUE_PARTIAL_INFORMATION kvpi = NULL;
-	OBJECT_ATTRIBUTES oa;
-	UNICODE_STRING uValueName;
-	UNICODE_STRING uKeyName;
-	HANDLE classesKey = NULL;
-	HANDLE classKey = NULL;
-	NTSTATUS status = STATUS_INSUFFICIENT_RESOURCES;
-	DEBUG_ENTER_FUNCTION("Beginning=%u; UpperFilter=%u; Register=%u; ClassGuid=\"%wZ\"", Beginning, UpperFilter, Register, ClassGuid);
+	const wchar_t *wServiceName = NULL;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION("RegistryPath=\"%wZ\"", RegistryPath);
 
-	RtlInitUnicodeString(&uKeyName, L"\\Registry\\Machine\\SYSTEM\\CurrentControlSet\\Control\\Class");
-	InitializeObjectAttributes(&oa, &uKeyName, OBJ_KERNEL_HANDLE | OBJ_CASE_INSENSITIVE, NULL, NULL);
-	status = ZwOpenKey(&classesKey, KEY_READ, &oa);
-	if (NT_SUCCESS(status)) {
-		InitializeObjectAttributes(&oa, ClassGuid, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, classesKey, NULL);
-		status = ZwOpenKey(&classKey, KEY_QUERY_VALUE | KEY_SET_VALUE, &oa);
-		if (NT_SUCCESS(status)) {
-			RtlInitUnicodeString(&uValueName, (UpperFilter) ? L"UpperFilters" : L"LowerFilters");
-			status = ZwQueryValueKey(classKey, &uValueName, KeyValuePartialInformation, NULL, 0, &returnLength);
-			if (status == STATUS_OBJECT_NAME_NOT_FOUND) {
-				dataLength = _driverServiceName.Length + 2 * sizeof(WCHAR);
-				dataBuffer = (PWCHAR)HeapMemoryAllocPaged(dataLength);
-				if (dataBuffer != NULL) {
-					RtlSecureZeroMemory(dataBuffer, dataLength);
-					status = STATUS_SUCCESS;
-				} else status = STATUS_INSUFFICIENT_RESOURCES;
-			} else if (status == STATUS_BUFFER_TOO_SMALL) {
-				dataLength = returnLength + _driverServiceName.Length + 2*sizeof(WCHAR);
-				kvpi = (PKEY_VALUE_PARTIAL_INFORMATION)HeapMemoryAllocPaged(sizeof(KEY_VALUE_PARTIAL_INFORMATION) + dataLength);
-				if (kvpi != NULL) {
-					dataBuffer = (PWCHAR)kvpi->Data;
-					RtlSecureZeroMemory(dataBuffer, dataLength);
-					status = ZwQueryValueKey(classKey, &uValueName, KeyValuePartialInformation, kvpi, returnLength, &returnLength);					
-					if (!NT_SUCCESS(status))
-						HeapMemoryFree(kvpi);
-				} else status = STATUS_INSUFFICIENT_RESOURCES;
-			}
-			
-			if (NT_SUCCESS(status)) {
-				if (Register)
-					status = _AppendFilter(Beginning, dataBuffer, &dataLength);
-				else status = _DeleteFilter(dataBuffer, &dataLength);
-
-				if (NT_SUCCESS(status)) {
-					if (dataLength > 2 * sizeof(WCHAR))
-						status = ZwSetValueKey(classKey, &uValueName, 0, REG_MULTI_SZ, dataBuffer, (ULONG)dataLength);
-					else status = ZwDeleteValueKey(classKey, &uValueName);
-				}
-
-				if (kvpi != NULL)
-					HeapMemoryFree(kvpi);
-				else HeapMemoryFree(dataBuffer);
-			}
-
-			ZwClose(classKey);
-		} else {
-			DEBUG_PRINT_LOCATION("ZwOpenKey(Class key): 0x%x", status);
-		}
-
-		ZwClose(classesKey);
-	} else {
-		DEBUG_PRINT_LOCATION("ZwOpenKey(Classes key): 0x%x", status);
+	status = STATUS_SUCCESS;
+	memset(&_driverServiceName, 0, sizeof(_driverServiceName));
+	wServiceName = RegistryPath->Buffer + RegistryPath->Length / sizeof(wchar_t) - 1;
+	while (*wServiceName != L'\\') {
+		--wServiceName;
+		_driverServiceName.Length += sizeof(wchar_t);
 	}
+
+	_driverServiceName.MaximumLength = _driverServiceName.Length + sizeof(wchar_t);
+	_driverServiceName.Buffer = HeapMemoryAllocPaged(_driverServiceName.MaximumLength);
+	if (_driverServiceName.Buffer != NULL) {
+		memcpy(_driverServiceName.Buffer, wServiceName + 1, _driverServiceName.Length);
+		_driverServiceName.Buffer[_driverServiceName.Length / sizeof(wchar_t)] = L'\0';
+	} else status = STATUS_INSUFFICIENT_RESOURCES;
 
 	DEBUG_EXIT_FUNCTION("0x%x", status);
 	return status;
+}
+
+
+static void _FreeServiceName(void)
+{
+	DEBUG_ENTER_FUNCTION_NO_ARGS();
+
+	HeapMemoryFree(_driverServiceName.Buffer);
+	memset(&_driverServiceName, 0, sizeof(_driverServiceName));
+
+	DEBUG_EXIT_FUNCTION_VOID();
+	return;
 }
 
 
@@ -336,12 +272,79 @@ static VOID _FreeFunction(PHASH_ITEM Item)
 	PDEVICE_CLASS_WATCH_RECORD rec = CONTAINING_RECORD(Item, DEVICE_CLASS_WATCH_RECORD, HashItem);
 	DEBUG_ENTER_FUNCTION("Item=0x%p", Item);
 
-	_RegisterUnregisterFilter((rec->Flags & CLASS_WATCH_FLAG_BEGINNING) != 0, (rec->Flags & CLASS_WATCH_FLAG_UPPERFILTER) != 0, FALSE, &rec->ClassGuidString);
+	RegManValueCallbackUnregiser(rec->CallbackHandle);
+	RegManKeyValueDelete(rec->ValueRecord);
+	RegManKeyUnregister(rec->KeyRecord);
 	RtlFreeUnicodeString(&rec->ClassGuidString);
 	HeapMemoryFree(rec);
 
 	DEBUG_EXIT_FUNCTION_VOID();
 	return;
+}
+
+
+static NTSTATUS _QueryCallback(_In_ PREGMAN_VALUE_INFO ValueInfo, _In_opt_ PVOID Context)
+{
+	size_t newSize = 0;
+	BOOLEAN inserted = FALSE;
+	ULONG tmpDataSize = 0;
+	wchar_t *tmpData = NULL;
+	PDEVICE_CLASS_WATCH_RECORD fdr = (PDEVICE_CLASS_WATCH_RECORD)Context;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION("ValueInfo=0x%p; Context=0x%p", ValueInfo, Context);
+
+	tmpDataSize = ValueInfo->CurrentDataSize + 3 * sizeof(wchar_t) + _driverServiceName.Length;
+	tmpData = (wchar_t *)ExAllocatePoolWithTag(PagedPool, tmpDataSize, 0);
+	if (tmpData != NULL) {
+		RtlSecureZeroMemory(tmpData, tmpDataSize);
+		memcpy(tmpData, ValueInfo->CurrentData, ValueInfo->CurrentDataSize);
+		inserted = _MultiStringInsert(tmpData, &_driverServiceName, (fdr->Flags & CLASS_WATCH_FLAG_BEGINNING) != 0, &newSize);
+		if (inserted) {
+			if (ValueInfo->CurrentData != NULL)
+				ExFreePoolWithTag(ValueInfo->CurrentData, 0);
+
+			ValueInfo->CurrentData = tmpData;
+			ValueInfo->CurrentDataSize = (ULONG)newSize;
+			ValueInfo->CurrentType = REG_MULTI_SZ;
+		}
+
+		status = STATUS_SUCCESS;
+	} else status = STATUS_INSUFFICIENT_RESOURCES;
+
+	DEBUG_EXIT_FUNCTION("0x%x", status);
+	return status;
+}
+
+
+static NTSTATUS _SetCallback(_In_ PREGMAN_VALUE_INFO ValueInfo, _In_opt_ PVOID Context)
+{
+	size_t newSize = 0;
+	BOOLEAN removed = FALSE;
+	ULONG tmpDataSize = 0;
+	wchar_t *tmpData = NULL;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION("ValueInfo=0x%p; Context=0x%p", ValueInfo, Context);
+
+	tmpDataSize = ValueInfo->CurrentDataSize + 2 * sizeof(wchar_t);
+	tmpData = (wchar_t *)ExAllocatePoolWithTag(PagedPool, tmpDataSize, 0);
+	if (tmpData != NULL) {
+		RtlSecureZeroMemory(tmpData, tmpDataSize);
+		memcpy(tmpData, ValueInfo->CurrentData, ValueInfo->CurrentDataSize);
+		removed = _MultiStringRemove(tmpData, &_driverServiceName, &newSize);
+		if (removed) {
+			if (ValueInfo->CurrentData != NULL)
+				ExFreePoolWithTag(ValueInfo->CurrentData, 0);
+
+			ValueInfo->CurrentData = tmpData;
+			ValueInfo->CurrentDataSize = (ULONG)newSize;
+			ValueInfo->CurrentType = REG_MULTI_SZ;
+		}
+
+		status = STATUS_SUCCESS;
+	} else status = STATUS_INSUFFICIENT_RESOURCES;
+
+	DEBUG_EXIT_FUNCTION("0x%x", status);
+	return status;
 }
 
 
@@ -365,6 +368,7 @@ NTSTATUS PDWClassRegister(PGUID ClassGuid, BOOLEAN UpperFilter, BOOLEAN Beginnin
 	if (h == NULL) {
 		rec = (PDEVICE_CLASS_WATCH_RECORD)HeapMemoryAllocPaged(sizeof(DEVICE_CLASS_WATCH_RECORD));
 		if (rec != NULL) {
+			memset(rec, 0, sizeof(DEVICE_CLASS_WATCH_RECORD));
 			rec->ClassGuid = *ClassGuid;
 			rec->Flags = 0;
 			if (UpperFilter)
@@ -376,21 +380,40 @@ NTSTATUS PDWClassRegister(PGUID ClassGuid, BOOLEAN UpperFilter, BOOLEAN Beginnin
 			RtlSecureZeroMemory(&uGuid, sizeof(uGuid));
 			status = RtlStringFromGUID(ClassGuid, &uGuid);
 			if (NT_SUCCESS(status)) {
+				UNICODE_STRING uClassKey;
+
 				rec->ClassGuidString = uGuid;
 				if (InterlockedIncrement(&_numberofClasses) == 1)
 					_driverObject->DriverExtension->AddDevice = _AddDevice;
 
-				status = _RegisterUnregisterFilter(Beginning, UpperFilter, TRUE, &uGuid);
+				status = RtlUnicodeStringPrintf(&uClassKey, L"\\Registry\\Machine\\SYSTEM\\ControlSet%.3u\\Control\\Class\\%wZ", _currentControlSet, ClassGuid);
 				if (NT_SUCCESS(status))
-					HashTableInsert(targetTable, &rec->HashItem, ClassGuid);
+					status = RegManKeyRegister(&uClassKey, &rec->KeyRecord);
+
+				if (NT_SUCCESS(status)) {
+					UNICODE_STRING uValueName;
+
+					RtlInitUnicodeString(&uValueName, (!UpperFilter) ? L"LowerFilters" : L"UpperFilters");
+					status = RegManKeyValueAdd(rec->KeyRecord, &uValueName, NULL, 0, REG_NONE, &rec->ValueRecord);
+					if (NT_SUCCESS(status)) {
+						status = RegManValueCallbacksRegister(rec->ValueRecord, _QueryCallback, _SetCallback, rec, &rec->CallbackHandle);
+						if (NT_SUCCESS(status))
+							HashTableInsert(targetTable, &rec->HashItem, ClassGuid);
+					
+						if (!NT_SUCCESS(status))
+							RegManKeyValueDelete(rec->ValueRecord);
+					}
+
+					if (!NT_SUCCESS(status))
+						RegManKeyUnregister(rec->KeyRecord);
+				}
 
 				if (!NT_SUCCESS(status)) {
 					if (InterlockedDecrement(&_numberofClasses) == 0)
 						_driverObject->DriverExtension->AddDevice = NULL;
-				}
 
-				if (!NT_SUCCESS(status))
 					RtlFreeUnicodeString(&uGuid);
+				}
 			}
 
 			if (!NT_SUCCESS(status))
@@ -423,16 +446,8 @@ NTSTATUS PDWClassUnregister(PGUID ClassGuid, BOOLEAN UpperFilter, BOOLEAN Beginn
 		if (InterlockedDecrement(&_numberofClasses) == 0)
 			_driverObject->DriverExtension->AddDevice = NULL;
 
-		status = _RegisterUnregisterFilter(Beginning, UpperFilter, FALSE, &rec->ClassGuidString);
-		if (NT_SUCCESS(status)) {
-			HashTableDelete(targetTable, ClassGuid);
-			_FreeFunction(h);
-		}
-
-		if (!NT_SUCCESS(status)) {
-			if (InterlockedIncrement(&_numberofClasses) == 1)
-				_driverObject->DriverExtension->AddDevice = _AddDevice;
-		}
+		HashTableDelete(targetTable, ClassGuid);
+		_FreeFunction(h);
 	} else status = STATUS_NOT_FOUND;
 
 	ExReleaseResourceLite(&_classGuidsLock);
@@ -636,49 +651,59 @@ NTSTATUS PWDModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"; Context=0x%p", DriverObject, RegistryPath, Context);
 
-	_driverObject = DriverObject;
-	status = ExInitializeResourceLite(&_classGuidsLock);
+	status = _GetCurrentControlSetNumber();
 	if (NT_SUCCESS(status)) {
-		status = HashTableCreate(httNoSynchronization, 37, _HashFunction, _CompareFunction, _FreeFunction, &_lowerClassGuidTable);
+		status = _CaptureServiceName(RegistryPath);
 		if (NT_SUCCESS(status)) {
-			status = HashTableCreate(httNoSynchronization, 37, _HashFunction, _CompareFunction, _FreeFunction, &_upperClassGuidTable);
+			_driverObject = DriverObject;
+			status = ExInitializeResourceLite(&_classGuidsLock);
 			if (NT_SUCCESS(status)) {
-				status = ExInitializeResourceLite(&_driverNamesLock);
+				status = HashTableCreate(httNoSynchronization, 37, _HashFunction, _CompareFunction, _FreeFunction, &_lowerClassGuidTable);
 				if (NT_SUCCESS(status)) {
-					status = StringHashTableCreate(httNoSynchronization, 37, &_driverNameTable);
+					status = HashTableCreate(httNoSynchronization, 37, _HashFunction, _CompareFunction, _FreeFunction, &_upperClassGuidTable);
 					if (NT_SUCCESS(status)) {
-						_driverServiceName = *(PUNICODE_STRING)Context;
-						_driverServiceName.Buffer += (_driverServiceName.Length / sizeof(WCHAR));
-						_driverServiceName.Length = 0;
-						do {
-							--_driverServiceName.Buffer;
-							_driverServiceName.Length += sizeof(WCHAR);
-						} while (*_driverServiceName.Buffer != L'\\');
+						status = ExInitializeResourceLite(&_driverNamesLock);
+						if (NT_SUCCESS(status)) {
+							status = StringHashTableCreate(httNoSynchronization, 37, &_driverNameTable);
+							if (NT_SUCCESS(status)) {
+								_driverServiceName = *(PUNICODE_STRING)Context;
+								_driverServiceName.Buffer += (_driverServiceName.Length / sizeof(WCHAR));
+								_driverServiceName.Length = 0;
+								do {
+									--_driverServiceName.Buffer;
+									_driverServiceName.Length += sizeof(WCHAR);
+								} while (*_driverServiceName.Buffer != L'\\');
 
-						++_driverServiceName.Buffer;
-						_driverServiceName.Length -= sizeof(WCHAR);
-						tmp = (PWCH)HeapMemoryAllocPaged(_driverServiceName.Length);
-						if (tmp != NULL) {
-							memcpy(tmp, _driverServiceName.Buffer, _driverServiceName.Length);
-							_driverServiceName.Buffer = tmp;
-							_driverServiceName.MaximumLength = _driverServiceName.Length;
-						} else status = STATUS_INSUFFICIENT_RESOURCES;
+								++_driverServiceName.Buffer;
+								_driverServiceName.Length -= sizeof(WCHAR);
+								tmp = (PWCH)HeapMemoryAllocPaged(_driverServiceName.Length);
+								if (tmp != NULL) {
+									memcpy(tmp, _driverServiceName.Buffer, _driverServiceName.Length);
+									_driverServiceName.Buffer = tmp;
+									_driverServiceName.MaximumLength = _driverServiceName.Length;
+								}
+								else status = STATUS_INSUFFICIENT_RESOURCES;
+							}
+
+							if (!NT_SUCCESS(status))
+								ExDeleteResourceLite(&_driverNamesLock);
+						}
+
+						if (!NT_SUCCESS(status))
+							HashTableDestroy(_upperClassGuidTable);
 					}
 
 					if (!NT_SUCCESS(status))
-						ExDeleteResourceLite(&_driverNamesLock);
+						HashTableDestroy(_lowerClassGuidTable);
 				}
-			
+
 				if (!NT_SUCCESS(status))
-					HashTableDestroy(_upperClassGuidTable);
+					ExDeleteResourceLite(&_classGuidsLock);
 			}
 
 			if (!NT_SUCCESS(status))
-				HashTableDestroy(_lowerClassGuidTable);
+				_FreeServiceName();
 		}
-
-		if (!NT_SUCCESS(status))
-			ExDeleteResourceLite(&_classGuidsLock);
 	}
 
 	DEBUG_EXIT_FUNCTION("0x%x", status);
@@ -701,6 +726,7 @@ VOID PWDModuleFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, P
 	HashTableDestroy(_lowerClassGuidTable);
 	ExDeleteResourceLite(&_classGuidsLock);
 	_driverObject = NULL;
+	_FreeServiceName();
 
 	DEBUG_EXIT_FUNCTION_VOID();
 	return;
