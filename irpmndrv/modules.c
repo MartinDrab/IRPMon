@@ -189,39 +189,38 @@ NTSTATUS ModuleFrameworkAddModules(DRIVER_MODULE_ENTRY_PARAMETERS moduleParams[]
  *
  *  The routine must be called at IRQL = PASSIVE_LEVEL.
  */
-NTSTATUS ModuleFrameworkInitializeModules(VOID)
+NTSTATUS ModuleFrameworkInitializeModules(PUNICODE_STRING RegistryPath)
 {
    PDRIVER_MODULE_ENTRY moduleEntry = NULL;
    NTSTATUS status = STATUS_UNSUCCESSFUL;
-   DEBUG_ENTER_FUNCTION_NO_ARGS();
+   DEBUG_ENTER_FUNCTION("RegistryPath=\"%wZ\"", RegistryPath);
    DEBUG_IRQL_EQUAL(PASSIVE_LEVEL);
 
-   status = STATUS_SUCCESS;
-   moduleEntry = CONTAINING_RECORD(_driverModuleList.Flink, DRIVER_MODULE_ENTRY, Entry);
-   while (&moduleEntry->Entry != &_driverModuleList) {
-      status = moduleEntry->Parameters.InitRoutine(_driverObject, moduleEntry->Parameters.Context);
-      if (!NT_SUCCESS(status)) {
-         break;
-      }
+	status = STATUS_SUCCESS;
+	moduleEntry = CONTAINING_RECORD(_driverModuleList.Flink, DRIVER_MODULE_ENTRY, Entry);
+	while (&moduleEntry->Entry != &_driverModuleList) {
+		status = moduleEntry->Parameters.InitRoutine(_driverObject, RegistryPath, moduleEntry->Parameters.Context);
+		if (!NT_SUCCESS(status))
+			break;
 
-      moduleEntry = CONTAINING_RECORD(moduleEntry->Entry.Flink, DRIVER_MODULE_ENTRY, Entry);
-   }
+		moduleEntry = CONTAINING_RECORD(moduleEntry->Entry.Flink, DRIVER_MODULE_ENTRY, Entry);
+	}
 
-   if (!NT_SUCCESS(status)) {
-      moduleEntry = CONTAINING_RECORD(moduleEntry->Entry.Blink, DRIVER_MODULE_ENTRY, Entry);
-      while (&moduleEntry->Entry != &_driverModuleList) {
-         // Finalize only the modules that require that
-         if (moduleEntry->Parameters.FinitRoutine != NULL) {
-            moduleEntry->Parameters.FinitRoutine(_driverObject, moduleEntry->Parameters.Context);
-         }
+	if (!NT_SUCCESS(status)) {
+		moduleEntry = CONTAINING_RECORD(moduleEntry->Entry.Blink, DRIVER_MODULE_ENTRY, Entry);
+		while (&moduleEntry->Entry != &_driverModuleList) {
+			// Finalize only the modules that require that
+			if (moduleEntry->Parameters.FinitRoutine != NULL)
+				moduleEntry->Parameters.FinitRoutine(_driverObject, RegistryPath, moduleEntry->Parameters.Context);
 
-         moduleEntry = CONTAINING_RECORD(moduleEntry->Entry.Blink, DRIVER_MODULE_ENTRY, Entry);
-      }
-   }
+			moduleEntry = CONTAINING_RECORD(moduleEntry->Entry.Blink, DRIVER_MODULE_ENTRY, Entry);
+		}
+	}
 
-   DEBUG_EXIT_FUNCTION("0x%x", status);
-   return status;
+	DEBUG_EXIT_FUNCTION("0x%x", status);
+	return status;
 }
+
 
 /** Perform automatic finalization of all registered modules.
  *
@@ -234,22 +233,21 @@ NTSTATUS ModuleFrameworkInitializeModules(VOID)
  */
 VOID ModuleFrameworkFinalizeModules(VOID)
 {
-   PDRIVER_MODULE_ENTRY moduleEntry = NULL;
-   DEBUG_ENTER_FUNCTION_NO_ARGS();
-   DEBUG_IRQL_EQUAL(PASSIVE_LEVEL);
+	PDRIVER_MODULE_ENTRY moduleEntry = NULL;
+	DEBUG_ENTER_FUNCTION_NO_ARGS();
+	DEBUG_IRQL_EQUAL(PASSIVE_LEVEL);
 
-   moduleEntry = CONTAINING_RECORD(_driverModuleList.Blink, DRIVER_MODULE_ENTRY, Entry);
-   while (&moduleEntry->Entry != &_driverModuleList) {
-      // finalize only the modules that require that
-      if (moduleEntry->Parameters.FinitRoutine != NULL) {
-         moduleEntry->Parameters.FinitRoutine(_driverObject, moduleEntry->Parameters.Context);
-      }
+	moduleEntry = CONTAINING_RECORD(_driverModuleList.Blink, DRIVER_MODULE_ENTRY, Entry);
+	while (&moduleEntry->Entry != &_driverModuleList) {
+		// finalize only the modules that require that
+		if (moduleEntry->Parameters.FinitRoutine != NULL)
+			 moduleEntry->Parameters.FinitRoutine(_driverObject, NULL, moduleEntry->Parameters.Context);
 
-      moduleEntry = CONTAINING_RECORD(moduleEntry->Entry.Blink, DRIVER_MODULE_ENTRY, Entry);
-   }
+		moduleEntry = CONTAINING_RECORD(moduleEntry->Entry.Blink, DRIVER_MODULE_ENTRY, Entry);
+	}
 
-   DEBUG_EXIT_FUNCTION_VOID();
-   return;
+	DEBUG_EXIT_FUNCTION_VOID();
+	return;
 }
 
 /************************************************************************/

@@ -9,8 +9,8 @@
 #define IRPMNDRV_SYMBOLIC_LINK         L"\\DosDevices\\IRPMnDrv"
 
 
-NTSTATUS DriverInit(PDRIVER_OBJECT DriverObject, PVOID Context);
-VOID DriverFinit(PDRIVER_OBJECT DriverObject, PVOID Context);
+NTSTATUS DriverInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context);
+VOID DriverFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context);
 
 
 #endif 

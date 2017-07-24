@@ -27,7 +27,7 @@
  *  @remark
  *  The routine is called at IRQL = PASSIVE_LEVEL.
  */
-typedef NTSTATUS (DRIVER_MODULE_INIT_ROUTINE)(PDRIVER_OBJECT driverObject, PVOID context);
+typedef NTSTATUS (DRIVER_MODULE_INIT_ROUTINE)(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context);
 
 
 /** Finalization routine prototype.
@@ -41,7 +41,7 @@ typedef NTSTATUS (DRIVER_MODULE_INIT_ROUTINE)(PDRIVER_OBJECT driverObject, PVOID
  *  @remark
  *  The routine is called at IRQL = PASSIVE_LEVEL.
  */
-typedef VOID (DRIVER_MODULE_FINIT_ROUTINE)(PDRIVER_OBJECT driverObject, PVOID context);
+typedef VOID (DRIVER_MODULE_FINIT_ROUTINE)(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context);
 
 /** Used to register a module into the automated initialization and finalization
    process. */
@@ -64,7 +64,7 @@ typedef struct {
 } DRIVER_MODULE_ENTRY, *PDRIVER_MODULE_ENTRY;
 
 
-NTSTATUS ModuleFrameworkInitializeModules(VOID);
+NTSTATUS ModuleFrameworkInitializeModules(PUNICODE_STRING RegistryPath);
 VOID ModuleFrameworkFinalizeModules(VOID);
 NTSTATUS ModuleFrameworkAddModule(PDRIVER_MODULE_ENTRY_PARAMETERS moduleParams);
 NTSTATUS ModuleFrameworkAddModules(PDRIVER_MODULE_ENTRY_PARAMETERS moduleParams, ULONG count);

@@ -125,8 +125,8 @@ VOID DeviceHookRecordGetInfo(PDEVICE_HOOK_RECORD Record, PUCHAR IRPSettings, PUC
 
 NTSTATUS HookObjectsEnumerate(PVOID Buffer, ULONG BufferLength, PULONG ReturnLength);
 
-NTSTATUS HookModuleInit(PDRIVER_OBJECT DriverObject, PVOID Context);
-VOID HookModuleFinit(PDRIVER_OBJECT DriverObject, PVOID Context);
+NTSTATUS HookModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context);
+VOID HookModuleFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context);
 
 
 #endif 

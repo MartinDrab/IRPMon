@@ -16,8 +16,8 @@ VOID RequestQueueInsert(PREQUEST_HEADER Header);
 NTSTATUS RequestQueueConnect(HANDLE hSemaphore);
 VOID RequestQueueDisconnect(VOID);
 
-NTSTATUS RequestQueueModuleInit(PDRIVER_OBJECT DriverObject, PVOID Context);
-VOID RequestQueueModuleFinit(PDRIVER_OBJECT DriverObject, PVOID Context);
+NTSTATUS RequestQueueModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context);
+VOID RequestQueueModuleFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context);
 
 
 

@@ -984,12 +984,13 @@ BOOLEAN DriverHookRecordValid(PDRIVER_HOOK_RECORD DriverRecord)
 
 
 
-NTSTATUS HookModuleInit(PDRIVER_OBJECT DriverObject, PVOID Context)
+NTSTATUS HookModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context)
 {
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
-	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; Context=0x%p", DriverObject, Context);
+	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"; Context=0x%p", DriverObject, RegistryPath, Context);
 
 	UNREFERENCED_PARAMETER(DriverObject);
+	UNREFERENCED_PARAMETER(RegistryPath);
 	UNREFERENCED_PARAMETER(Context);
 
 	KeInitializeSpinLock(&_driverValidationTableLock);
@@ -1014,12 +1015,13 @@ NTSTATUS HookModuleInit(PDRIVER_OBJECT DriverObject, PVOID Context)
 
 
 
-VOID HookModuleFinit(PDRIVER_OBJECT DriverObject, PVOID Context)
+VOID HookModuleFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context)
 {
 	LARGE_INTEGER time;
-	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; Context=0x%p", DriverObject, Context);
+	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"; Context=0x%p", DriverObject, RegistryPath, Context);
 
 	UNREFERENCED_PARAMETER(DriverObject);
+	UNREFERENCED_PARAMETER(RegistryPath);
 	UNREFERENCED_PARAMETER(Context);
 
 	HashTableDestroy(_deviceValidationTable);

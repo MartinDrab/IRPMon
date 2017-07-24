@@ -334,12 +334,13 @@ NTSTATUS RequestQueueGet(PREQUEST_HEADER Buffer, PULONG Length)
 /*                     INITIALIZATION AND FINALIZATION                  */
 /************************************************************************/
 
-NTSTATUS RequestQueueModuleInit(PDRIVER_OBJECT DriverObject, PVOID Context)
+NTSTATUS RequestQueueModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context)
 {
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
-	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; Context=0x%p", DriverObject, Context);
+	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"; Context=0x%p", DriverObject, RegistryPath, Context);
 
 	UNREFERENCED_PARAMETER(DriverObject);
+	UNREFERENCED_PARAMETER(RegistryPath);
 	UNREFERENCED_PARAMETER(Context);
 	
 	InitializeListHead(&_requestListHead);
@@ -351,11 +352,12 @@ NTSTATUS RequestQueueModuleInit(PDRIVER_OBJECT DriverObject, PVOID Context)
 	return status;
 }
 
-VOID RequestQueueModuleFinit(PDRIVER_OBJECT DriverObject, PVOID Context)
+VOID RequestQueueModuleFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context)
 {
-	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; Context=0x%p", DriverObject, Context);
+	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"; Context=0x%p", DriverObject, RegistryPath, Context);
 
 	UNREFERENCED_PARAMETER(DriverObject);
+	UNREFERENCED_PARAMETER(RegistryPath);
 	UNREFERENCED_PARAMETER(Context);
 
 	_RequestQueueClear();

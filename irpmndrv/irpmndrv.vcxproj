@@ -101,49 +101,70 @@
     <DriverSign>
       <FileDigestAlgorithm>SHA256</FileDigestAlgorithm>
     </DriverSign>
+    <Link>
+      <AdditionalDependencies>libfilters.lib;libregman.lib;%(AdditionalDependencies);$(KernelBufferOverflowLib);$(DDK_LIB_PATH)ntoskrnl.lib;$(DDK_LIB_PATH)hal.lib;$(DDK_LIB_PATH)wmilib.lib</AdditionalDependencies>
+    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <DriverSign>
       <FileDigestAlgorithm>SHA256</FileDigestAlgorithm>
     </DriverSign>
+    <Link>
+      <AdditionalDependencies>libfilters.lib;libregman.lib;%(AdditionalDependencies);$(KernelBufferOverflowLib);$(DDK_LIB_PATH)ntoskrnl.lib;$(DDK_LIB_PATH)hal.lib;$(DDK_LIB_PATH)wmilib.lib</AdditionalDependencies>
+    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <DriverSign>
       <FileDigestAlgorithm>SHA256</FileDigestAlgorithm>
     </DriverSign>
+    <Link>
+      <AdditionalDependencies>libfilters.lib;libregman.lib;%(AdditionalDependencies);$(KernelBufferOverflowLib);$(DDK_LIB_PATH)ntoskrnl.lib;$(DDK_LIB_PATH)hal.lib;$(DDK_LIB_PATH)wmilib.lib</AdditionalDependencies>
+    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <DriverSign>
       <FileDigestAlgorithm>SHA256</FileDigestAlgorithm>
     </DriverSign>
+    <Link>
+      <AdditionalDependencies>libfilters.lib;libregman.lib;%(AdditionalDependencies);$(KernelBufferOverflowLib);$(DDK_LIB_PATH)ntoskrnl.lib;$(DDK_LIB_PATH)hal.lib;$(DDK_LIB_PATH)wmilib.lib</AdditionalDependencies>
+    </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <FilesToPackage Include="$(TargetPath)" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="allocator.c" />
+    <ClCompile Include="..\km-shared\allocator.c" />
+    <ClCompile Include="..\km-shared\handle-table.c" />
+    <ClCompile Include="..\km-shared\hash_table.c" />
+    <ClCompile Include="..\km-shared\multistring.c" />
+    <ClCompile Include="..\km-shared\string-hash-table.c" />
+    <ClCompile Include="..\km-shared\utils-dym-array.c" />
+    <ClCompile Include="..\km-shared\utils.c" />
     <ClCompile Include="driver.c" />
-    <ClCompile Include="handle-table.c" />
-    <ClCompile Include="hash_table.c" />
     <ClCompile Include="hook-handlers.c" />
     <ClCompile Include="hook.c" />
     <ClCompile Include="modules.c" />
     <ClCompile Include="pnp-driver-watch.c" />
     <ClCompile Include="process-db.c" />
     <ClCompile Include="req-queue.c" />
-    <ClCompile Include="string-hash-table.c" />
     <ClCompile Include="um-services.c" />
-    <ClCompile Include="utils-dym-array.c" />
-    <ClCompile Include="utils.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\general-types.h" />
     <ClInclude Include="..\include\ioctls.h" />
     <ClInclude Include="..\include\kernel-shared.h" />
-    <ClInclude Include="allocator.h" />
+    <ClInclude Include="..\include\libfilters.h" />
+    <ClInclude Include="..\include\regman.h" />
+    <ClInclude Include="..\km-shared\allocator.h" />
+    <ClInclude Include="..\km-shared\handle-table.h" />
+    <ClInclude Include="..\km-shared\hash_table.h" />
+    <ClInclude Include="..\km-shared\multistring.h" />
+    <ClInclude Include="..\km-shared\preprocessor.h" />
+    <ClInclude Include="..\km-shared\string-hash-table.h" />
+    <ClInclude Include="..\km-shared\utils-dym-array-types.h" />
+    <ClInclude Include="..\km-shared\utils-dym-array.h" />
+    <ClInclude Include="..\km-shared\utils.h" />
     <ClInclude Include="driver.h" />
-    <ClInclude Include="handle-table.h" />
-    <ClInclude Include="hash_table.h" />
     <ClInclude Include="hook-handlers.h" />
     <ClInclude Include="hook.h" />
     <ClInclude Include="modules.h" />
@@ -151,11 +172,7 @@
     <ClInclude Include="preprocessor.h" />
     <ClInclude Include="process-db.h" />
     <ClInclude Include="req-queue.h" />
-    <ClInclude Include="string-hash-table.h" />
     <ClInclude Include="um-services.h" />
-    <ClInclude Include="utils-dym-array-types.h" />
-    <ClInclude Include="utils-dym-array.h" />
-    <ClInclude Include="utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

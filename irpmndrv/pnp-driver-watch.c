@@ -630,11 +630,11 @@ NTSTATUS PWDDriverNameEnumerate(PIOCTL_IRPMNDRV_DRIVER_WATCH_ENUM_OUTPUT Buffer,
 /*                INITIALIZATION AND FINALIZATION                       */
 /************************************************************************/
 
-NTSTATUS PWDModuleInit(PDRIVER_OBJECT DriverObject, PVOID Context)
+NTSTATUS PWDModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context)
 {
 	PWCH tmp = NULL;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
-	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; Context=0x%p", DriverObject, Context);
+	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"; Context=0x%p", DriverObject, RegistryPath, Context);
 
 	_driverObject = DriverObject;
 	status = ExInitializeResourceLite(&_classGuidsLock);
@@ -686,11 +686,12 @@ NTSTATUS PWDModuleInit(PDRIVER_OBJECT DriverObject, PVOID Context)
 }
 
 
-VOID PWDModuleFinit(PDRIVER_OBJECT DriverObject, PVOID Context)
+VOID PWDModuleFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context)
 {
-	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; Context=0x%p", DriverObject, Context);
+	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"; Context=0x%p", DriverObject, RegistryPath, Context);
 
 	UNREFERENCED_PARAMETER(DriverObject);
+	UNREFERENCED_PARAMETER(RegistryPath);
 	UNREFERENCED_PARAMETER(Context);
 
 	HeapMemoryFree(_driverServiceName.Buffer);

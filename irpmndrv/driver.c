@@ -12,6 +12,8 @@
 #include "pnp-driver-watch.h"
 #include "process-db.h"
 #include "req-queue.h"
+#include "regman.h"
+#include "libfilters.h"
 #include "driver.h"
 
 
@@ -233,14 +235,14 @@ NTSTATUS DriverShutdown(PDEVICE_OBJECT DeviceObject, PIRP Irp)
 /*                COMMUNICATION DEVICE INIT AND FINIT                   */
 /************************************************************************/
 
-NTSTATUS DriverInit(PDRIVER_OBJECT DriverObject, PVOID Context)
+NTSTATUS DriverInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context)
 {
 	UNICODE_STRING uLinkName;
 	UNICODE_STRING uDeviceName;
 	PDEVICE_OBJECT cdo = NULL;
 	PFAST_IO_DISPATCH fastIoDispatch = NULL;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
-	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; Context=0x%p", DriverObject, Context);
+	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"; Context=0x%p", DriverObject, RegistryPath, Context);
 
 	UNREFERENCED_PARAMETER(Context);
 
@@ -286,10 +288,11 @@ NTSTATUS DriverInit(PDRIVER_OBJECT DriverObject, PVOID Context)
 	return status;
 }
 
-VOID DriverFinit(PDRIVER_OBJECT DriverObject, PVOID Context)
+
+VOID DriverFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context)
 {
 	UNICODE_STRING uLinkName;
-	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; Context=0x%p", DriverObject, Context);
+	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"; Context=0x%p", DriverObject, RegistryPath, Context);
 
 	UNREFERENCED_PARAMETER(Context);
 	RtlInitUnicodeString(&uLinkName, IRPMNDRV_SYMBOLIC_LINK);
@@ -312,6 +315,8 @@ static DRIVER_MODULE_ENTRY_PARAMETERS _moduleEntries[] = {
 	{RequestQueueModuleInit, RequestQueueModuleFinit, NULL},
 	{UMServicesModuleInit, UMServicesModuleFinit, NULL},
 	{PWDModuleInit, PWDModuleFinit, NULL},
+	{ RegManInit, RegManFinit, NULL },
+	{LibFiltersModuleInit, LibFiltersModuleFinit, NULL},
 //	{ProcessDBModuleInit, ProcessDBModuleFinit, NULL},
 	{DriverInit, DriverFinit, NULL},
 };
@@ -319,14 +324,14 @@ static DRIVER_MODULE_ENTRY_PARAMETERS _moduleEntries[] = {
 NTSTATUS DriverEntry(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath)
 {
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
-	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=0x%p", DriverObject, RegistryPath);
+	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"", DriverObject, RegistryPath);
 
 	_moduleEntries[3].Context = RegistryPath;
 	status= ModuleFrameworkInit(DriverObject);
 	if (NT_SUCCESS(status)) {
 		status = ModuleFrameworkAddModules(_moduleEntries, sizeof(_moduleEntries) / sizeof(DRIVER_MODULE_ENTRY_PARAMETERS));
 		if (NT_SUCCESS(status))
-			status = ModuleFrameworkInitializeModules();
+			status = ModuleFrameworkInitializeModules(RegistryPath);
 
 		if (!NT_SUCCESS(status))
 			ModuleFrameworkFinit();

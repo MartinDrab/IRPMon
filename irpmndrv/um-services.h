@@ -46,8 +46,8 @@ NTSTATUS UMClassWatchUnregister(PIOCTL_IRPMNDRV_CLASS_WATCH_UNREGISTER_INPUT Inp
 NTSTATUS UMDriverNameWatchRegister(PIOCTL_IRPMNDRV_DRIVER_WATCH_REGISTER_INPUT InputBuffer, ULONG InputBufferLength);
 NTSTATUS UMDriverNamehUnregister(PIOCTL_IRPMNDRV_DRIVER_WATCH_UNREGISTER_INPUT InputBuffer, ULONG InputBUfferLength);
 
-NTSTATUS UMServicesModuleInit(PDRIVER_OBJECT DriverObject, PVOID Context);
-VOID UMServicesModuleFinit(PDRIVER_OBJECT DriverObject, PVOID Context);
+NTSTATUS UMServicesModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context);
+VOID UMServicesModuleFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context);
 
 
 
