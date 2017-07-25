@@ -1412,4 +1412,3 @@ void HookHandlerModuleFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING Registr
 	DEBUG_EXIT_FUNCTION_VOID();
 	return;
 }
-

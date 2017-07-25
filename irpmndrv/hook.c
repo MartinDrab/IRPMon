@@ -22,6 +22,7 @@ static PHASH_TABLE _driverValidationTable = NULL;
 static KSPIN_LOCK _driverValidationTableLock;
 static PHASH_TABLE _deviceValidationTable = NULL;
 static KSPIN_LOCK _deviceValidationTableLock;
+static IO_REMOVE_LOCK _rundownLock;
 
 /************************************************************************/
 /*                       FORWARD DECLARATIONS                           */
@@ -321,28 +322,34 @@ static NTSTATUS _DriverHookRecordCreate(PDRIVER_OBJECT DriverObject, PDRIVER_MON
 
 	tmpRecord = (PDRIVER_HOOK_RECORD)HeapMemoryAllocNonPaged(sizeof(DRIVER_HOOK_RECORD));
 	if (tmpRecord != NULL) {
-		memset(tmpRecord, 0, sizeof(DRIVER_HOOK_RECORD));
-		tmpRecord->ReferenceCount = 1;
-		status = _GetObjectName(DriverObject, &tmpRecord->DriverName);
+		status = IoAcquireRemoveLock(&_rundownLock, tmpRecord);
 		if (NT_SUCCESS(status)) {
-			tmpRecord->DriverObject = DriverObject;
-			tmpRecord->MonitoringEnabled = MonitoringEnabled;
-			tmpRecord->MonitorNewDevices = MonitorSettings->MonitorNewDevices;
-			tmpRecord->MonitorStartIo = MonitorSettings->MonitorStartIo;
-			tmpRecord->MonitorAddDevice = MonitorSettings->MonitorAddDevice;
-			tmpRecord->MonitorDriverUnload = MonitorSettings->MonitorUnload;
-			tmpRecord->MonitorIRP = MonitorSettings->MonitorIRP;
-			tmpRecord->MonitorIRPCompletion = MonitorSettings->MonitorIRPCompletion;
-			tmpRecord->MonitorFastIo = MonitorSettings->MonitorFastIo;
-			memcpy(tmpRecord->IRPSettings, MonitorSettings->IRPSettings, sizeof(tmpRecord->IRPSettings));
-			memcpy(tmpRecord->FastIoSettings, MonitorSettings->FastIoSettings, sizeof(tmpRecord->FastIoSettings));
-			KeInitializeSpinLock(&tmpRecord->SelectedDevicesLock);
-			status = HashTableCreate(httNoSynchronization, 37, _HashFunction, _DeviceCompareFunction, _DeviceFreeFunction, &tmpRecord->SelectedDevices);
-			if (NT_SUCCESS(status))
-				*Record = tmpRecord;
+			memset(tmpRecord, 0, sizeof(DRIVER_HOOK_RECORD));
+			tmpRecord->ReferenceCount = 1;
+			status = _GetObjectName(DriverObject, &tmpRecord->DriverName);
+			if (NT_SUCCESS(status)) {
+				tmpRecord->DriverObject = DriverObject;
+				tmpRecord->MonitoringEnabled = MonitoringEnabled;
+				tmpRecord->MonitorNewDevices = MonitorSettings->MonitorNewDevices;
+				tmpRecord->MonitorStartIo = MonitorSettings->MonitorStartIo;
+				tmpRecord->MonitorAddDevice = MonitorSettings->MonitorAddDevice;
+				tmpRecord->MonitorDriverUnload = MonitorSettings->MonitorUnload;
+				tmpRecord->MonitorIRP = MonitorSettings->MonitorIRP;
+				tmpRecord->MonitorIRPCompletion = MonitorSettings->MonitorIRPCompletion;
+				tmpRecord->MonitorFastIo = MonitorSettings->MonitorFastIo;
+				memcpy(tmpRecord->IRPSettings, MonitorSettings->IRPSettings, sizeof(tmpRecord->IRPSettings));
+				memcpy(tmpRecord->FastIoSettings, MonitorSettings->FastIoSettings, sizeof(tmpRecord->FastIoSettings));
+				KeInitializeSpinLock(&tmpRecord->SelectedDevicesLock);
+				status = HashTableCreate(httNoSynchronization, 37, _HashFunction, _DeviceCompareFunction, _DeviceFreeFunction, &tmpRecord->SelectedDevices);
+				if (NT_SUCCESS(status))
+					*Record = tmpRecord;
+
+				if (!NT_SUCCESS(status))
+					HeapMemoryFree(tmpRecord->DriverName.Buffer);
+			}
 		
 			if (!NT_SUCCESS(status))
-				HeapMemoryFree(tmpRecord->DriverName.Buffer);
+				IoReleaseRemoveLock(&_rundownLock, tmpRecord);
 		}
 
 		if (!NT_SUCCESS(status))
@@ -359,6 +366,7 @@ static VOID _DriverHookRecordFree(PDRIVER_HOOK_RECORD Record)
 
 	HashTableDestroy(Record->SelectedDevices);
 	HeapMemoryFree(Record->DriverName.Buffer);
+	IoReleaseRemoveLock(&_rundownLock, Record);
 	HeapMemoryFree(Record);
 
 	DEBUG_EXIT_FUNCTION_VOID();
@@ -373,23 +381,29 @@ static NTSTATUS _DeviceHookRecordCreate(PDRIVER_HOOK_RECORD DriverRecord, PDEVIC
 
 	tmpRecord = (PDEVICE_HOOK_RECORD)HeapMemoryAllocNonPaged(sizeof(DEVICE_HOOK_RECORD));
 	if (tmpRecord != NULL) {
-		memset(tmpRecord, 0, sizeof(DEVICE_HOOK_RECORD));
-		tmpRecord->ReferenceCount = 1;
-		status = _GetObjectName(DeviceObject, &tmpRecord->DeviceName);
+		status = IoAcquireRemoveLock(&_rundownLock, tmpRecord);
 		if (NT_SUCCESS(status)) {
-			DriverHookRecordReference(DriverRecord);
-			tmpRecord->DriverRecord = DriverRecord;
-			tmpRecord->DeviceObject = DeviceObject;
-			tmpRecord->MonitoringEnabled = MonitoringEnabled;
-			tmpRecord->CreateReason = CreateReason;
-			memcpy(tmpRecord->IRPMonitorSettings, DriverRecord->IRPSettings, sizeof(tmpRecord->IRPMonitorSettings));
-			memcpy(tmpRecord->FastIoMonitorSettings, DriverRecord->FastIoSettings, sizeof(tmpRecord->FastIoMonitorSettings));			if (IRPSettings != NULL)
-				memcpy(&tmpRecord->IRPMonitorSettings, IRPSettings, sizeof(tmpRecord->IRPMonitorSettings));
+			memset(tmpRecord, 0, sizeof(DEVICE_HOOK_RECORD));
+			tmpRecord->ReferenceCount = 1;
+			status = _GetObjectName(DeviceObject, &tmpRecord->DeviceName);
+			if (NT_SUCCESS(status)) {
+				DriverHookRecordReference(DriverRecord);
+				tmpRecord->DriverRecord = DriverRecord;
+				tmpRecord->DeviceObject = DeviceObject;
+				tmpRecord->MonitoringEnabled = MonitoringEnabled;
+				tmpRecord->CreateReason = CreateReason;
+				memcpy(tmpRecord->IRPMonitorSettings, DriverRecord->IRPSettings, sizeof(tmpRecord->IRPMonitorSettings));
+				memcpy(tmpRecord->FastIoMonitorSettings, DriverRecord->FastIoSettings, sizeof(tmpRecord->FastIoMonitorSettings));			if (IRPSettings != NULL)
+					memcpy(&tmpRecord->IRPMonitorSettings, IRPSettings, sizeof(tmpRecord->IRPMonitorSettings));
 
-			if (FastIoSettings != NULL)
-				memcpy(&tmpRecord->FastIoMonitorSettings, FastIoSettings, sizeof(tmpRecord->FastIoMonitorSettings));
-	
-			*Record = tmpRecord;
+				if (FastIoSettings != NULL)
+					memcpy(&tmpRecord->FastIoMonitorSettings, FastIoSettings, sizeof(tmpRecord->FastIoMonitorSettings));
+
+				*Record = tmpRecord;
+			}
+		
+			if (!NT_SUCCESS(status))
+				IoReleaseRemoveLock(&_rundownLock, tmpRecord);
 		}
 
 		if (!NT_SUCCESS(status))
@@ -407,6 +421,7 @@ static VOID _DeviceHookRecordFree(PDEVICE_HOOK_RECORD Record)
 	_InvalidateDeviceHookRecord(Record);
 	DriverHookRecordDereference(Record->DriverRecord);
 	HeapMemoryFree(Record->DeviceName.Buffer);
+	IoReleaseRemoveLock(&_rundownLock, Record);
 	HeapMemoryFree(Record);
 
 	DEBUG_EXIT_FUNCTION_VOID();
@@ -993,20 +1008,27 @@ NTSTATUS HookModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPat
 	UNREFERENCED_PARAMETER(RegistryPath);
 	UNREFERENCED_PARAMETER(Context);
 
-	KeInitializeSpinLock(&_driverValidationTableLock);
-	status = HashTableCreate(httNoSynchronization, 37, _HashFunction, _DriverValidationCompareFunction, NULL, &_driverValidationTable);
+	IoInitializeRemoveLock(&_rundownLock, (ULONG)' LRH', 0x7FFFFFFF, 0x7FFFFFFF);
+	status = IoAcquireRemoveLock(&_rundownLock, DriverObject);
 	if (NT_SUCCESS(status)) {
-		KeInitializeSpinLock(&_deviceValidationTableLock);
-		status = HashTableCreate(httNoSynchronization, 37, _HashFunction, _DeviceValidationCompareFunction, NULL, &_deviceValidationTable);
+		KeInitializeSpinLock(&_driverValidationTableLock);
+		status = HashTableCreate(httNoSynchronization, 37, _HashFunction, _DriverValidationCompareFunction, NULL, &_driverValidationTable);
 		if (NT_SUCCESS(status)) {
-			KeInitializeSpinLock(&_driverTableLock);
-			status = HashTableCreate(httNoSynchronization, 37, _HashFunction, _DriverCompareFunction, _DriverFreeFunction, &_driverTable);
+			KeInitializeSpinLock(&_deviceValidationTableLock);
+			status = HashTableCreate(httNoSynchronization, 37, _HashFunction, _DeviceValidationCompareFunction, NULL, &_deviceValidationTable);
+			if (NT_SUCCESS(status)) {
+				KeInitializeSpinLock(&_driverTableLock);
+				status = HashTableCreate(httNoSynchronization, 37, _HashFunction, _DriverCompareFunction, _DriverFreeFunction, &_driverTable);
+				if (!NT_SUCCESS(status))
+					HashTableDestroy(_deviceValidationTable);
+			}
+
 			if (!NT_SUCCESS(status))
-				HashTableDestroy(_deviceValidationTable);
+				HashTableDestroy(_driverValidationTable);
 		}
 
 		if (!NT_SUCCESS(status))
-			HashTableDestroy(_driverValidationTable);
+			IoReleaseRemoveLockAndWait(&_rundownLock, DriverObject);
 	}
 
 	DEBUG_EXIT_FUNCTION("0x%x", status);
@@ -1023,10 +1045,11 @@ VOID HookModuleFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, 
 	UNREFERENCED_PARAMETER(DriverObject);
 	UNREFERENCED_PARAMETER(RegistryPath);
 	UNREFERENCED_PARAMETER(Context);
-
+	
 	HashTableDestroy(_deviceValidationTable);
 	HashTableDestroy(_driverValidationTable);
 	HashTableDestroy(_driverTable);
+	IoReleaseRemoveLockAndWait(&_rundownLock, DriverObject);
 	time.QuadPart = -50000000;
 	(VOID) KeDelayExecutionThread(KernelMode, FALSE, &time);
 
