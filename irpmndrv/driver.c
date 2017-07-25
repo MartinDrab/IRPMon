@@ -4,6 +4,7 @@
 #include "allocator.h"
 #include "utils.h"
 #include "hook.h"
+#include "hook-handlers.h"
 #include "kernel-shared.h"
 #include "ioctls.h"
 #include "modules.h"
@@ -311,6 +312,7 @@ VOID DriverFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOI
 
 static DRIVER_MODULE_ENTRY_PARAMETERS _moduleEntries[] = {
 	{HookModuleInit, HookModuleFinit, NULL},
+	{HookHandlerModuleInit, HookHandlerModuleFinit, NULL},
 	{RequestQueueModuleInit, RequestQueueModuleFinit, NULL},
 	{UMServicesModuleInit, UMServicesModuleFinit, NULL},
 	{RegManInit, RegManFinit, NULL },

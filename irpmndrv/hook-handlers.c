@@ -15,6 +15,13 @@
 #define DEBUG_TRACE_ENABLED 0
 
 /************************************************************************/
+/*                       GLOBAL VARIABLES                               */
+/************************************************************************/
+
+static IO_REMOVE_LOCK _rundownLock;
+
+
+/************************************************************************/
 /*                        HELPER ROUTINES                               */
 /************************************************************************/
 
@@ -1195,6 +1202,8 @@ static NTSTATUS _HookHandlerIRPCompletion(PDEVICE_OBJECT DeviceObject, PIRP Irp,
 			RequestQueueInsert(&completionRequest->Header);
 	}
 
+	IoReleaseRemoveLock(&_rundownLock, Irp);
+
 	DEBUG_EXIT_FUNCTION("0x%x", status);
 	return status;
 }
@@ -1206,22 +1215,27 @@ static PIRP_COMPLETION_CONTEXT _HookIRPCompletionRoutine(PIRP Irp, PDRIVER_OBJEC
 	PIRP_COMPLETION_CONTEXT ret = NULL;
 	DEBUG_ENTER_FUNCTION("Irp=0x%p; DriverObject=0x%p; DeviceObject=0x%p", Irp, DriverObject, DeviceObject);
 
-	ret = (PIRP_COMPLETION_CONTEXT)HeapMemoryAllocNonPaged(sizeof(IRP_COMPLETION_CONTEXT));
-	if (ret != NULL) {
-		RtlSecureZeroMemory(ret, sizeof(IRP_COMPLETION_CONTEXT));
-		ret->ReferenceCount = 1;
-		ret->DriverObject = DriverObject;
-		ret->DeviceObject = DeviceObject;
-		irpStack = IoGetCurrentIrpStackLocation(Irp);
-		if (irpStack->CompletionRoutine != NULL) {
-			ret->OriginalContext = irpStack->Context;
-			ret->OriginalRoutine = irpStack->CompletionRoutine;
-			ret->OriginalControl = irpStack->Control;
+	if (NT_SUCCESS(IoAcquireRemoveLock(&_rundownLock, Irp))) {
+		ret = (PIRP_COMPLETION_CONTEXT)HeapMemoryAllocNonPaged(sizeof(IRP_COMPLETION_CONTEXT));
+		if (ret != NULL) {
+			RtlSecureZeroMemory(ret, sizeof(IRP_COMPLETION_CONTEXT));
+			ret->ReferenceCount = 1;
+			ret->DriverObject = DriverObject;
+			ret->DeviceObject = DeviceObject;
+			irpStack = IoGetCurrentIrpStackLocation(Irp);
+			if (irpStack->CompletionRoutine != NULL) {
+				ret->OriginalContext = irpStack->Context;
+				ret->OriginalRoutine = irpStack->CompletionRoutine;
+				ret->OriginalControl = irpStack->Control;
+			}
+
+			IoSkipCurrentIrpStackLocation(Irp);
+			IoSetCompletionRoutine(Irp, _HookHandlerIRPCompletion, ret, TRUE, TRUE, TRUE);
+			IoSetNextIrpStackLocation(Irp);
 		}
-		
-		IoSkipCurrentIrpStackLocation(Irp);
-		IoSetCompletionRoutine(Irp, _HookHandlerIRPCompletion, ret, TRUE, TRUE, TRUE);
-		IoSetNextIrpStackLocation(Irp);
+
+		if (ret == NULL)
+			IoReleaseRemoveLock(&_rundownLock, Irp);
 	}
 
 	DEBUG_EXIT_FUNCTION("0x%p", ret);
@@ -1290,7 +1304,6 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 		DriverHookRecordDereference(driverRecord);
 	} else {
 		DEBUG_ERROR("Hook is installed for non-hooked driver object 0x%p", Deviceobject->DriverObject);
-		__debugbreak();
 	}
 
 	DEBUG_EXIT_FUNCTION("0x%x", status);
@@ -1336,7 +1349,6 @@ NTSTATUS HookHandlerAddDeviceDispatch(PDRIVER_OBJECT DriverObject, PDEVICE_OBJEC
 		DriverHookRecordDereference(driverRecord);
 	} else {
 		DEBUG_ERROR("Hook is installed for non-hooked driver object 0x%p", DriverObject);
-		__debugbreak();
 	}
 
 	DEBUG_EXIT_FUNCTION("0x%x", status);
@@ -1367,9 +1379,37 @@ VOID HookHandlerDriverUnloadDisptach(PDRIVER_OBJECT DriverObject)
 			RequestQueueInsert(&request->Header);
 	} else {
 		DEBUG_ERROR("Hook is installed for non-hooked driver object 0x%p", DriverObject);
-		__debugbreak();
 	}
 
 	DEBUG_EXIT_FUNCTION_VOID();
 	return;
 }
+
+
+/************************************************************************/
+/*              INITIALIZATION AND FINALIZATION                         */
+/************************************************************************/
+
+NTSTATUS HookHandlerModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID COntext)
+{
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"; Context=0x%p", DriverObject, RegistryPath, Context);
+
+	IoInitializeRemoveLock(&_rundownLock, 'LRHH', 0x7FFFFFFF, 0x7FFFFFFF);
+	status = IoAcquireRemoveLock(&_rundownLock, DriverObject);
+
+	DEBUG_EXIT_FUNCTION("0x%x", status);
+	return status;
+}
+
+
+void HookHandlerModuleFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context)
+{
+	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"; Context=0x%p", DriverObject, RegistryPath, Context);
+
+	IoReleaseRemoveLockAndWait(&_rundownLock, DriverObject);
+
+	DEBUG_EXIT_FUNCTION_VOID();
+	return;
+}
+
