@@ -28,12 +28,5 @@ So, when the AddDevice routine of the IRPMon driver is invoked, the driver poten
 <p>
 For each device setup class, the IRPMon driver can be registered once as its lower, once as its upper filter. Hence it is possible to register it as both types of filter for one class.
 </p>
-<h2>Danges of the Current Implementation</h2>
-<p>
-Currently, the IRPMon drivers registers itself as a filter for device classes by writting its service name to LowerFilters or UpperFIlters values in the class keys. Such an approach may be dangerous for the system (it even may lead to an unbootable machine) in case the changes are not reverted before system shutdown. Thus, the IRPMon driver registers for shutdown notifications and reverts the changes just before the registry are written back their storage on disk. However, if a system crash ocurrs, the driver has no chance of reverting the changes and the user must revert the changes made by the IRPMon driver manually. 
-</p>
-<p>
-In the future, the IRPMon driver will act as a registry filter driver, so there will be no need to write the filter registerations to the registry.
-</p>
 </body>
 </html>
