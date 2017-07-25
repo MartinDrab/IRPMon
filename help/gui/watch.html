@@ -11,6 +11,12 @@ IRPMon allows the user to monitor PnP drivers that are not present in the kernel
 <p>
 To watch for new devices of a certain device setup class, the user needs to select  the <b>Watch class...</b> item from the <b>File</b> menu. Then a form is displayed, allowing to specify the target class and a position for the IRPMon driver within its filters (Figure 1). The driver may be installed only once for each filter type (upper or lower) for a given class. The filter position determines which devices and drivers IRPMon would be able to detect and possibly monitor their activity. Effects of individual filter positions and types are sumarized in Table 1. 
 </p>
+<p style='text-align: center'>
+<img src='class-watch.jpg' alt='The Add a Class Watch window' /><br/>
+<b>Figure 1:</b> The <i>Add a Class Watch</i> window
+</p>
+<p style='text-align: center'>
+<b>Table 1:</b> Effects of certain filter positions and types
 <table border=1 style='width: 100%;'>
 <tr><th>Filter type</th><th>Position</th><th>Bus driver (PDO)</th><th>Lower filters</th><th>Function driver (FDO)</th><th>Upper filters</th>
 </tr>
@@ -23,6 +29,7 @@ To watch for new devices of a certain device setup class, the user needs to sele
 <tr><td>Upper</td><td>Last</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td>
 </tr>
 </table>
+</p>
 <p>
 As the table suggest, the higher the filter position is, the more PnP drivers involved in servicing the new devices are detected. The IRPMon driver actually does not write itself into the LowerFilters or UpperFilters registry values. Rather, it installs a registry filter that emulates contents of these values, so the system thinks, the driver is present there. This scheme introduces two advantages:
 </p>
@@ -39,6 +46,10 @@ The list of class watches appears in the <b>File</b> under the <b>Watched classe
 <h2>Watching Drivers</h2>
 <p>
 Class watches themselves do not automatically start monitoring of detected drivers and devices. They just causes the appropriate DriverDetected and DeviceDetected messages being sent from the IRPMon driver, but nothing more. It automatically start monitoring a driver (and its devices) that is loaded when a new device of a watched class appears, a <i>driver name watch</i> needs to be specified. If the IRPMon driver detects presence of a new driver (as a result of a class watch) with name matching a driver name watch, this driver is automatically hooked and its monitoring begins.
+</p>
+<p style='text-align: center'>
+<img src='driver-watch.jpg' alt='The Watch for a Driver window' /><br/>
+<b>Figure 2:</b> The <i>Watch for a Driver</i> window
 </p>
 <p>
 To add a driver name watch, the user needs to select the <b>Watch Driver</b> item from the <b>File</b> menu. A new dialog is displayed (Figure 2) that allows the user to specify the driver name in question (such as <i>\Driver\USBSTOR</i>) and monitoring settings for drivers matching the watch. Similarly to class watches, installed driver name matches appears under the <b>Watched drivers</b> submenu of the <b>File</b> menu and can be removed there. Removing a driver name watch, however, does not stop monitoring of drivers that it discovered. The user has to stop their monitoring the same way as in cae of drivers she manually selected for monitoring.
