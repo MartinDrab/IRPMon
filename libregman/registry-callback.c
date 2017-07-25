@@ -14,6 +14,7 @@
 
 static LARGE_INTEGER _registryCookie;
 static STRING_REF_TABLE _keyTable;
+static RTL_OSVERSIONINFOW _versionInfo;
 
 /************************************************************************/
 /*                        HELPER FUNCTIONS                              */
@@ -201,11 +202,17 @@ NTSTATUS RegCallbackModuleInit(_In_ PDRIVER_OBJECT DriverObject, _In_ PUNICODE_S
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"; Context=0x%p", DriverObject, RegistryPath, Context);
 
-	status = StringRefTableInit(FIELD_OFFSET(REGMAN_KEY_RECORD, Item), 37, KeyRecordReference, KeyRecordDereference, &_keyTable);
+	_versionInfo.dwOSVersionInfoSize = sizeof(_versionInfo);
+	status = RtlGetVersion(&_versionInfo);
 	if (NT_SUCCESS(status)) {
-		status = CmRegisterCallback(_RegistryCallback, &_keyTable, &_registryCookie);
-		if (!NT_SUCCESS(status))
-			StringRefTableDestroy(&_keyTable);
+		status = StringRefTableInit(FIELD_OFFSET(REGMAN_KEY_RECORD, Item), 37, KeyRecordReference, KeyRecordDereference, &_keyTable);
+		if (NT_SUCCESS(status)) {
+			if (_versionInfo.dwMajorVersion >= 6)
+				status = CmRegisterCallback(_RegistryCallback, &_keyTable, &_registryCookie);
+			
+			if (!NT_SUCCESS(status))
+				StringRefTableDestroy(&_keyTable);
+		}
 	}
 
 	DEBUG_EXIT_FUNCTION("0x%x", status);
@@ -217,7 +224,9 @@ VOID RegCallbackModuleFinit(_In_ PDRIVER_OBJECT DriverObject, _In_opt_ PUNICODE_
 {
 	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"; Context=0x%p", DriverObject, RegistryPath, Context);
 
-	CmUnRegisterCallback(_registryCookie);
+	if (_versionInfo.dwMajorVersion >= 6)
+		CmUnRegisterCallback(_registryCookie);
+	
 	StringRefTableDestroy(&_keyTable);
 
 	DEBUG_EXIT_FUNCTION_VOID();
