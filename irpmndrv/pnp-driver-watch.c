@@ -299,7 +299,6 @@ static NTSTATUS _InstallUninstallFilterXP(_In_ PUNICODE_STRING ClassGuid, _In_ B
 	DECLARE_UNICODE_STRING_SIZE(uClassKey, 256);
 	DEBUG_ENTER_FUNCTION("ClassGuid=\"%wZ\"; UpperFilter=%u; Beginning=%u; Install=%u", ClassGuid, UpperFilter, Beginning, Install);
 
-
 	status = RtlUnicodeStringPrintf(&uClassKey, L"\\Registry\\Machine\\SYSTEM\\ControlSet%.3u\\Control\\Class\\%wZ", _currentControlSet, ClassGuid);
 	if (NT_SUCCESS(status)) {
 		if (UpperFilter)
@@ -315,7 +314,12 @@ static NTSTATUS _InstallUninstallFilterXP(_In_ PUNICODE_STRING ClassGuid, _In_ B
 				kvfi = (PKEY_VALUE_FULL_INFORMATION)HeapMemoryAllocPaged(kvfiLen);
 				if (kvfi != NULL) {
 					RtlSecureZeroMemory(kvfi, kvfiLen);
-					status = ZwQueryValueKey(keyHandle, &uValueName, KeyValueFullInformation, kvfi, kvfiLen, &kvfiLen);
+					if (status == STATUS_OBJECT_NAME_NOT_FOUND)
+						status = STATUS_SUCCESS;
+					
+					if (status == STATUS_BUFFER_TOO_SMALL)
+						status = ZwQueryValueKey(keyHandle, &uValueName, KeyValueFullInformation, kvfi, kvfiLen, &kvfiLen);
+					
 					if (NT_SUCCESS(status)) {
 						size_t newSize = 0;
 						wchar_t *data = (wchar_t *)((PUCHAR)kvfi + kvfi->DataOffset);
@@ -461,9 +465,6 @@ NTSTATUS PDWClassRegister(PGUID ClassGuid, BOOLEAN UpperFilter, BOOLEAN Beginnin
 							status = RegManKeyValueAdd(rec->KeyRecord, &uValueName, NULL, 0, REG_NONE, &rec->ValueRecord);
 							if (NT_SUCCESS(status)) {
 								status = RegManValueCallbacksRegister(rec->ValueRecord, _QueryCallback, _SetCallback, rec, &rec->CallbackHandle);
-								if (NT_SUCCESS(status))
-									HashTableInsert(targetTable, &rec->HashItem, ClassGuid);
-
 								if (!NT_SUCCESS(status))
 									RegManKeyValueDelete(rec->ValueRecord);
 							}
@@ -472,6 +473,9 @@ NTSTATUS PDWClassRegister(PGUID ClassGuid, BOOLEAN UpperFilter, BOOLEAN Beginnin
 								RegManKeyUnregister(rec->KeyRecord);
 						}
 					} else status = _InstallUninstallFilterXP(&rec->ClassGuidString, UpperFilter, Beginning, TRUE);
+				
+					if (NT_SUCCESS(status))
+						HashTableInsert(targetTable, &rec->HashItem, ClassGuid);
 				}
 
 				if (!NT_SUCCESS(status)) {
