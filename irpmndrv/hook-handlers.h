@@ -39,7 +39,7 @@ NTSTATUS HookHandlerAddDeviceDispatch(PDRIVER_OBJECT DriverObject, PDEVICE_OBJEC
 VOID HookHandlerDriverUnloadDisptach(PDRIVER_OBJECT DriverObject);
 VOID HookHandlerStartIoDispatch(PDEVICE_OBJECT DeviceObject, PIRP Irp);
 
-NTSTATUS HookHandlerModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID COntext);
+NTSTATUS HookHandlerModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context);
 void HookHandlerModuleFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID COntext);
 
 

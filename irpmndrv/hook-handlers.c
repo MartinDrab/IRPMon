@@ -1390,7 +1390,7 @@ VOID HookHandlerDriverUnloadDisptach(PDRIVER_OBJECT DriverObject)
 /*              INITIALIZATION AND FINALIZATION                         */
 /************************************************************************/
 
-NTSTATUS HookHandlerModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID COntext)
+NTSTATUS HookHandlerModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context)
 {
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"; Context=0x%p", DriverObject, RegistryPath, Context);

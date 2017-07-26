@@ -5,6 +5,12 @@
 #include "value-record.h"
 
 
+/************************************************************************/
+/*                  GLOBAL VARIABLES                                    */
+/************************************************************************/
+
+static POBJECT_TYPE _directCmObjectType = NULL;
+static POBJECT_TYPE *_cmKeyObjectType = &_directCmObjectType;
 
 /************************************************************************/
 /*                    HEPER FUNCTIONS                                   */
@@ -489,7 +495,7 @@ NTSTATUS ValueRecordOnSetValue(_In_ PREGMAN_VALUE_RECORD Value, _In_ PREG_SET_VA
 		if (NT_SUCCESS(status)) {
 			HANDLE keyHandle = NULL;
 
-			status = ObOpenObjectByPointer(Info->Object, 0, NULL, KEY_SET_VALUE, *CmKeyObjectType, KernelMode, &keyHandle);
+			status = ObOpenObjectByPointer(Info->Object, 0, NULL, KEY_SET_VALUE, *_cmKeyObjectType, KernelMode, &keyHandle);
 			if (NT_SUCCESS(status)) {
 				status = ZwSetValueKey(keyHandle, &Value->Item.Key.String, Info->TitleIndex, valueType, valueData, valueSize);
 				if (NT_SUCCESS(status)) {
@@ -526,7 +532,7 @@ NTSTATUS ValueRecordOnDeleteValue(_In_ PREGMAN_VALUE_RECORD Value, _In_ PREG_DEL
 	DEBUG_ENTER_FUNCTION("Value=0x%p; Info=0x%p", Value, Info);
 
 	InitializeObjectAttributes(&oa, NULL, OBJ_KERNEL_HANDLE, NULL, NULL);
-	status = ObOpenObjectByPointer(Info->Object, 0, NULL, KEY_SET_VALUE, *CmKeyObjectType, KernelMode, &keyHandle);
+	status = ObOpenObjectByPointer(Info->Object, 0, NULL, KEY_SET_VALUE, *_cmKeyObjectType, KernelMode, &keyHandle);
 	if (NT_SUCCESS(status)) {
 		status = ZwDeleteValueKey(keyHandle, &Value->Item.Key.String);
 		if (NT_SUCCESS(status)) {
@@ -551,3 +557,33 @@ NTSTATUS ValueRecordOnDeleteValue(_In_ PREGMAN_VALUE_RECORD Value, _In_ PREG_DEL
 	DEBUG_EXIT_FUNCTION("0x%x", status);
 	return status;
 }
+
+
+/************************************************************************/
+/*                      INITIALIZATION AND FINALIZATION                 */
+/************************************************************************/
+
+
+NTSTATUS ValueRecordModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context)
+{
+	UNICODE_STRING uCmKeyObjectType;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"; Context=0x%p", DriverObject, RegistryPath, Context);
+
+	RtlInitUnicodeString(&uCmKeyObjectType, L"CmKeyObjectType");
+	_directCmObjectType = (POBJECT_TYPE)MmGetSystemRoutineAddress(&uCmKeyObjectType);
+	status = STATUS_SUCCESS;
+
+	DEBUG_EXIT_FUNCTION("0x%x", status);
+	return status;
+}
+
+
+void ValueRecordModuleFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context)
+{
+	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"; Context=0x%p", DriverObject, RegistryPath, Context);
+
+	DEBUG_EXIT_FUNCTION_VOID();
+	return;
+}
+
