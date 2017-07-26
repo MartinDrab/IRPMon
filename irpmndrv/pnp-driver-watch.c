@@ -41,6 +41,7 @@ static PDRIVER_OBJECT _driverObject = NULL;
 
 static UNICODE_STRING _driverServiceName;
 static ULONG _currentControlSet = 1;
+static RTL_OSVERSIONINFOW _versionInfo;
 
 /************************************************************************/
 /*                    HELPER FUNCTIONS                                  */
@@ -266,19 +267,83 @@ BOOLEAN _CompareFunction(PHASH_ITEM Item, PVOID Key)
 }
 
 
+static NTSTATUS _InstallUninstallFilterXP(_In_ PUNICODE_STRING ClassGuid, _In_ BOOLEAN UpperFilter, _In_ BOOLEAN Beginning, _In_ BOOLEAN Install);
+
 static VOID _FreeFunction(PHASH_ITEM Item)
 {
 	PDEVICE_CLASS_WATCH_RECORD rec = CONTAINING_RECORD(Item, DEVICE_CLASS_WATCH_RECORD, HashItem);
 	DEBUG_ENTER_FUNCTION("Item=0x%p", Item);
 
-	RegManValueCallbackUnregiser(rec->CallbackHandle);
-	RegManKeyValueDelete(rec->ValueRecord);
-	RegManKeyUnregister(rec->KeyRecord);
+	if (_versionInfo.dwMajorVersion >= 6) {
+		RegManValueCallbackUnregiser(rec->CallbackHandle);
+		RegManKeyValueDelete(rec->ValueRecord);
+		RegManKeyUnregister(rec->KeyRecord);
+	} else _InstallUninstallFilterXP(&rec->ClassGuidString, (rec->Flags & CLASS_WATCH_FLAG_UPPERFILTER) != 0, (rec->Flags & CLASS_WATCH_FLAG_BEGINNING) != 0, FALSE);
+
 	RtlFreeUnicodeString(&rec->ClassGuidString);
 	HeapMemoryFree(rec);
 
 	DEBUG_EXIT_FUNCTION_VOID();
 	return;
+}
+
+
+static NTSTATUS _InstallUninstallFilterXP(_In_ PUNICODE_STRING ClassGuid, _In_ BOOLEAN UpperFilter, _In_ BOOLEAN Beginning, _In_ BOOLEAN Install)
+{
+	HANDLE keyHandle = NULL;
+	OBJECT_ATTRIBUTES oa;
+	UNICODE_STRING uValueName;
+	ULONG kvfiLen = 0;
+	PKEY_VALUE_FULL_INFORMATION kvfi = NULL;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DECLARE_UNICODE_STRING_SIZE(uClassKey, 256);
+	DEBUG_ENTER_FUNCTION("ClassGuid=\"%wZ\"; UpperFilter=%u; Beginning=%u; Install=%u", ClassGuid, UpperFilter, Beginning, Install);
+
+
+	status = RtlUnicodeStringPrintf(&uClassKey, L"\\Registry\\Machine\\SYSTEM\\ControlSet%.3u\\Control\\Class\\%wZ", _currentControlSet, ClassGuid);
+	if (NT_SUCCESS(status)) {
+		if (UpperFilter)
+			RtlInitUnicodeString(&uValueName, L"UpperFilters");
+		else RtlInitUnicodeString(&uValueName, L"LowerFilters");
+
+		InitializeObjectAttributes(&oa, &uClassKey, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, NULL);
+		status = ZwOpenKey(&keyHandle, KEY_QUERY_VALUE | KEY_SET_VALUE, &oa);
+		if (NT_SUCCESS(status)) {
+			status = ZwQueryValueKey(keyHandle, &uValueName, KeyValueFullInformation, NULL, 0, &kvfiLen);
+			if (status == STATUS_BUFFER_TOO_SMALL || status == STATUS_OBJECT_NAME_NOT_FOUND) {
+				kvfiLen += sizeof(KEY_VALUE_FULL_INFORMATION) + _driverServiceName.Length + 2 * sizeof(wchar_t);
+				kvfi = (PKEY_VALUE_FULL_INFORMATION)HeapMemoryAllocPaged(kvfiLen);
+				if (kvfi != NULL) {
+					RtlSecureZeroMemory(kvfi, kvfiLen);
+					status = ZwQueryValueKey(keyHandle, &uValueName, KeyValueFullInformation, kvfi, kvfiLen, &kvfiLen);
+					if (NT_SUCCESS(status)) {
+						size_t newSize = 0;
+						wchar_t *data = (wchar_t *)((PUCHAR)kvfi + kvfi->DataOffset);
+
+						if (Install) {
+							if (_MultiStringExists(data, &_driverServiceName, NULL))
+								status = STATUS_OBJECT_NAME_COLLISION;
+
+							if (NT_SUCCESS(status))
+								_MultiStringInsert(data, &_driverServiceName, Beginning, &newSize);
+						} else status = _MultiStringRemove(data, &_driverServiceName, &newSize) ? STATUS_SUCCESS : STATUS_OBJECT_NAME_NOT_FOUND;
+						
+
+						if (NT_SUCCESS(status))
+							status = ZwSetValueKey(keyHandle, &uValueName, 0, REG_MULTI_SZ, data, (ULONG)newSize);
+
+					}
+
+					HeapMemoryFree(kvfi);
+				} else status = STATUS_INSUFFICIENT_RESOURCES;
+			}
+
+			ZwClose(keyHandle);
+		}
+	}
+
+	DEBUG_EXIT_FUNCTION("0x%x", status);
+	return status;
 }
 
 
@@ -386,25 +451,27 @@ NTSTATUS PDWClassRegister(PGUID ClassGuid, BOOLEAN UpperFilter, BOOLEAN Beginnin
 					_driverObject->DriverExtension->AddDevice = _AddDevice;
 
 				status = RtlUnicodeStringPrintf(&uClassKey, L"\\Registry\\Machine\\SYSTEM\\ControlSet%.3u\\Control\\Class\\%wZ", _currentControlSet, &uGuid);
-				if (NT_SUCCESS(status))
-					status = RegManKeyRegister(&uClassKey, &rec->KeyRecord);
-
 				if (NT_SUCCESS(status)) {
-					UNICODE_STRING uValueName;
+					if (_versionInfo.dwMajorVersion >= 6) {
+						status = RegManKeyRegister(&uClassKey, &rec->KeyRecord);
+						if (NT_SUCCESS(status)) {
+							UNICODE_STRING uValueName;
 
-					RtlInitUnicodeString(&uValueName, (!UpperFilter) ? L"LowerFilters" : L"UpperFilters");
-					status = RegManKeyValueAdd(rec->KeyRecord, &uValueName, NULL, 0, REG_NONE, &rec->ValueRecord);
-					if (NT_SUCCESS(status)) {
-						status = RegManValueCallbacksRegister(rec->ValueRecord, _QueryCallback, _SetCallback, rec, &rec->CallbackHandle);
-						if (NT_SUCCESS(status))
-							HashTableInsert(targetTable, &rec->HashItem, ClassGuid);
-					
-						if (!NT_SUCCESS(status))
-							RegManKeyValueDelete(rec->ValueRecord);
-					}
+							RtlInitUnicodeString(&uValueName, (!UpperFilter) ? L"LowerFilters" : L"UpperFilters");
+							status = RegManKeyValueAdd(rec->KeyRecord, &uValueName, NULL, 0, REG_NONE, &rec->ValueRecord);
+							if (NT_SUCCESS(status)) {
+								status = RegManValueCallbacksRegister(rec->ValueRecord, _QueryCallback, _SetCallback, rec, &rec->CallbackHandle);
+								if (NT_SUCCESS(status))
+									HashTableInsert(targetTable, &rec->HashItem, ClassGuid);
 
-					if (!NT_SUCCESS(status))
-						RegManKeyUnregister(rec->KeyRecord);
+								if (!NT_SUCCESS(status))
+									RegManKeyValueDelete(rec->ValueRecord);
+							}
+
+							if (!NT_SUCCESS(status))
+								RegManKeyUnregister(rec->KeyRecord);
+						}
+					} else status = _InstallUninstallFilterXP(&rec->ClassGuidString, UpperFilter, Beginning, TRUE);
 				}
 
 				if (!NT_SUCCESS(status)) {
@@ -439,13 +506,12 @@ NTSTATUS PDWClassUnregister(PGUID ClassGuid, BOOLEAN UpperFilter, BOOLEAN Beginn
 	targetTable = (UpperFilter) ? _upperClassGuidTable : _lowerClassGuidTable;
 	KeEnterCriticalRegion();
 	ExAcquireResourceExclusiveLite(&_classGuidsLock, TRUE);
-	h = HashTableGet(targetTable, ClassGuid);
+	h = HashTableDelete(targetTable, ClassGuid);
 	if (h != NULL) {
 		rec = CONTAINING_RECORD(h, DEVICE_CLASS_WATCH_RECORD, HashItem);
 		if (InterlockedDecrement(&_numberofClasses) == 0)
 			_driverObject->DriverExtension->AddDevice = NULL;
 
-		HashTableDelete(targetTable, ClassGuid);
 		_FreeFunction(h);
 		status = STATUS_SUCCESS;
 	} else status = STATUS_NOT_FOUND;
@@ -650,38 +716,42 @@ NTSTATUS PWDModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"; Context=0x%p", DriverObject, RegistryPath, Context);
 
-	status = _GetCurrentControlSetNumber();
+	_versionInfo.dwOSVersionInfoSize = sizeof(_versionInfo);
+	status = RtlGetVersion(&_versionInfo);
 	if (NT_SUCCESS(status)) {
-		status = _CaptureServiceName(RegistryPath);
+		status = _GetCurrentControlSetNumber();
 		if (NT_SUCCESS(status)) {
-			_driverObject = DriverObject;
-			status = ExInitializeResourceLite(&_classGuidsLock);
+			status = _CaptureServiceName(RegistryPath);
 			if (NT_SUCCESS(status)) {
-				status = HashTableCreate(httNoSynchronization, 37, _HashFunction, _CompareFunction, _FreeFunction, &_lowerClassGuidTable);
+				_driverObject = DriverObject;
+				status = ExInitializeResourceLite(&_classGuidsLock);
 				if (NT_SUCCESS(status)) {
-					status = HashTableCreate(httNoSynchronization, 37, _HashFunction, _CompareFunction, _FreeFunction, &_upperClassGuidTable);
+					status = HashTableCreate(httNoSynchronization, 37, _HashFunction, _CompareFunction, _FreeFunction, &_lowerClassGuidTable);
 					if (NT_SUCCESS(status)) {
-						status = ExInitializeResourceLite(&_driverNamesLock);
+						status = HashTableCreate(httNoSynchronization, 37, _HashFunction, _CompareFunction, _FreeFunction, &_upperClassGuidTable);
 						if (NT_SUCCESS(status)) {
-							status = StringHashTableCreate(httNoSynchronization, 37, &_driverNameTable);
+							status = ExInitializeResourceLite(&_driverNamesLock);
+							if (NT_SUCCESS(status)) {
+								status = StringHashTableCreate(httNoSynchronization, 37, &_driverNameTable);
+								if (!NT_SUCCESS(status))
+									ExDeleteResourceLite(&_driverNamesLock);
+							}
+
 							if (!NT_SUCCESS(status))
-								ExDeleteResourceLite(&_driverNamesLock);
+								HashTableDestroy(_upperClassGuidTable);
 						}
 
 						if (!NT_SUCCESS(status))
-							HashTableDestroy(_upperClassGuidTable);
+							HashTableDestroy(_lowerClassGuidTable);
 					}
 
 					if (!NT_SUCCESS(status))
-						HashTableDestroy(_lowerClassGuidTable);
+						ExDeleteResourceLite(&_classGuidsLock);
 				}
 
 				if (!NT_SUCCESS(status))
-					ExDeleteResourceLite(&_classGuidsLock);
+					_FreeServiceName();
 			}
-
-			if (!NT_SUCCESS(status))
-				_FreeServiceName();
 		}
 	}
 
