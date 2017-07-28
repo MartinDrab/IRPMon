@@ -1281,7 +1281,7 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 
 				if (driverRecord->MonitorIRPCompletion) {
 					compContext = _HookIRPCompletionRoutine(Irp, Deviceobject->DriverObject, Deviceobject);
-					if (request != NULL)
+					if (compContext != NULL && request != NULL)
 						InterlockedIncrement(&compContext->ReferenceCount);
 				}
 			}

@@ -23,6 +23,7 @@ static KSPIN_LOCK _driverValidationTableLock;
 static PHASH_TABLE _deviceValidationTable = NULL;
 static KSPIN_LOCK _deviceValidationTableLock;
 static IO_REMOVE_LOCK _rundownLock;
+static BOOLEAN _shutdownInProgress = FALSE;
 
 /************************************************************************/
 /*                       FORWARD DECLARATIONS                           */
@@ -619,10 +620,12 @@ PDRIVER_HOOK_RECORD DriverHookRecordGet(PDRIVER_OBJECT DriverObject)
 	DEBUG_ENTER_FUNCTION("DriverObject=0x%p", DriverObject);
 
 	KeAcquireSpinLock(&_driverTableLock, &irql);
-	h = HashTableGet(_driverTable, DriverObject);
-	if (h != NULL) {
-		ret = CONTAINING_RECORD(h, DRIVER_HOOK_RECORD, HashItem);
-		DriverHookRecordReference(ret);
+	if (!_shutdownInProgress) {
+		h = HashTableGet(_driverTable, DriverObject);
+		if (h != NULL) {
+			ret = CONTAINING_RECORD(h, DRIVER_HOOK_RECORD, HashItem);
+			DriverHookRecordReference(ret);
+		}
 	}
 
 	KeReleaseSpinLock(&_driverTableLock, irql);
@@ -1039,19 +1042,20 @@ NTSTATUS HookModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPat
 
 VOID HookModuleFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context)
 {
-	LARGE_INTEGER time;
+	KIRQL irql;
 	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"; Context=0x%p", DriverObject, RegistryPath, Context);
 
 	UNREFERENCED_PARAMETER(DriverObject);
 	UNREFERENCED_PARAMETER(RegistryPath);
 	UNREFERENCED_PARAMETER(Context);
 	
+	KeAcquireSpinLock(&_driverTableLock, &irql);
+	_shutdownInProgress = TRUE;
+	KeReleaseSpinLock(&_driverTableLock, irql);
 	HashTableDestroy(_deviceValidationTable);
 	HashTableDestroy(_driverValidationTable);
 	HashTableDestroy(_driverTable);
 	IoReleaseRemoveLockAndWait(&_rundownLock, DriverObject);
-	time.QuadPart = -50000000;
-	(VOID) KeDelayExecutionThread(KernelMode, FALSE, &time);
 
 	DEBUG_EXIT_FUNCTION_VOID();
 	return;
