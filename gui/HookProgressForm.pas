@@ -41,9 +41,11 @@ Type
       var DefaultDraw: Boolean);
   Private
     FThread : THookProgressThread;
+    FOperationCount : Cardinal;
     FSuccessCount : Cardinal;
     FErrorCount : Cardinal;
     FWarningCount : Cardinal;
+    Procedure OnThreadTerminated(Sender:TObject);
   Public
     Constructor Create(AOwner:TComponent; AOpList:TTaskOperationList); Reintroduce;
   end;
@@ -59,6 +61,7 @@ Var
   lw : TListView;
 begin
 r := FCurrentObject.OperationResult(FCurrentOpType, FStatus);
+Inc(FForm.FOperationCount);
 Case r Of
   hoorSuccess: Inc(FForm.FSuccessCount);
   hoorWarning: Inc(FForm.FWarningCount);
@@ -111,7 +114,7 @@ Inherited Create(ACreateSuspended);
 end;
 
 
-{$R *.dfm}
+{$R *.DFM}
 
 Constructor THookProgressFrm.Create(AOwner:TComponent; AOpList:TTaskOperationList);
 begin
@@ -125,11 +128,19 @@ FThread.WaitFor;
 FThread.Free;
 end;
 
+Procedure THookProgressFrm.OnThreadTerminated(Sender:TObject);
+begin
+If (FErrorCount = 0) Then
+  Close;
+end;
+
 Procedure THookProgressFrm.FormCreate(Sender: TObject);
 begin
+FOperationCount := 0;
 FSuccessCount := 0;
 FErrorCount := 0;
 FWarningCount := 0;
+FThread.OnTerminate := OnThreadTerminated;
 FThread.Resume;
 end;
 
