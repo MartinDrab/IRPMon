@@ -25,12 +25,12 @@ BOOLEAN HookHandlerFastIoMdlReadComplete(PFILE_OBJECT FileObject, PMDL MdlChain,
 BOOLEAN HookHandlerFastIoMdlWriteComplete(PFILE_OBJECT FileObject, PLARGE_INTEGER FileOffset, PMDL MdlChain, PDEVICE_OBJECT DeviceObject);
 BOOLEAN HookHandlerFastIoReadCompressed(PFILE_OBJECT FileObject, PLARGE_INTEGER FileOffset, ULONG Length, ULONG LockKey, PVOID Buffer, PMDL *MdlChain, PIO_STATUS_BLOCK IoStatusBlock, PCOMPRESSED_DATA_INFO CompressedInfo, ULONG CompressedInfoLength, PDEVICE_OBJECT DeviceObject);
 BOOLEAN HookHandlerFastIoWriteCompressed(PFILE_OBJECT FileObject, PLARGE_INTEGER FileOffset, ULONG Length, ULONG LockKey, PVOID Buffer, PMDL *MdlChain, PIO_STATUS_BLOCK IoStatusBlock, PCOMPRESSED_DATA_INFO CompressedInfo, ULONG CompressedInfoLength, PDEVICE_OBJECT DeviceObject);
-NTSTATUS HookHandlerFastIoAcquireForModWrite( IN PFILE_OBJECT FileObject, IN PLARGE_INTEGER EndingOffset, OUT struct _ERESOURCE **ResourceToRelease, IN PDEVICE_OBJECT DeviceObject);
-NTSTATUS HookHandlerFastIoReleaseForModWrite( IN PFILE_OBJECT FileObject, IN struct _ERESOURCE *ResourceToRelease, IN PDEVICE_OBJECT DeviceObject);
-NTSTATUS HookHandlerFastIoAcquireForCcFlush(IN PFILE_OBJECT FileObject,IN PDEVICE_OBJECT DeviceObject);
-NTSTATUS HookHandlerFastIoReleaseForCcFlush( IN PFILE_OBJECT FileObject,IN PDEVICE_OBJECT DeviceObject);
-BOOLEAN HookHandlerFastIoMdlReadCompleteCompressed(IN PFILE_OBJECT FileObject,IN PMDL MdlChain, IN PDEVICE_OBJECT DeviceObject);
-BOOLEAN HookHandlerFastIoMdlWriteCompleteCompressed(IN PFILE_OBJECT FileObject,IN PLARGE_INTEGER FileOffset, IN PMDL MdlChain,  IN PDEVICE_OBJECT DeviceObject);
+NTSTATUS HookHandlerFastIoAcquireForModWrite(PFILE_OBJECT FileObject, PLARGE_INTEGER EndingOffset, PERESOURCE *ResourceToRelease, PDEVICE_OBJECT DeviceObject);
+NTSTATUS HookHandlerFastIoReleaseForModWrite(PFILE_OBJECT FileObject, PERESOURCE ResourceToRelease, PDEVICE_OBJECT DeviceObject);
+NTSTATUS HookHandlerFastIoAcquireForCcFlush(PFILE_OBJECT FileObject, PDEVICE_OBJECT DeviceObject);
+NTSTATUS HookHandlerFastIoReleaseForCcFlush(PFILE_OBJECT FileObject, PDEVICE_OBJECT DeviceObject);
+BOOLEAN HookHandlerFastIoMdlReadCompleteCompressed(PFILE_OBJECT FileObject, PMDL MdlChain, PDEVICE_OBJECT DeviceObject);
+BOOLEAN HookHandlerFastIoMdlWriteCompleteCompressed(PFILE_OBJECT FileObject, PLARGE_INTEGER FileOffset, PMDL MdlChain, PDEVICE_OBJECT DeviceObject);
 
 NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp);
 NTSTATUS HookHandlerAddDeviceDispatch(PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT PhysicalDeviceObject);
