@@ -27,10 +27,6 @@ If you wish to monitor only new devices created by a certain driver (the term "n
 <p>To enumerate hooked objects and their IDs (handles), use the <code>irpmonconsole --enumerate-hooks</code> command. You can use the handles returned to unhook certain drivers or devices (<code>--unhook-driver</code>, <code>--unhook
 -device</code>).
 </p>
-<h2>Current State</h2>
-<p>
-There are currently two major and one "minor" problems with IRPMon. The major problem is that fast I/O filtering might easily crash your system if you are interested in calls taht do not have device object as their parameter. The second major problem is an error in the IRPMon GUI that causes some crashes. The minor problem is that I do not have a certificate to sign the IRPMon drivers for now, although I plan to work on it during May 2017.
-</p>
 <p>
 Also, a new version with some improvements, especially related to filtering new devices and devices belonging to certain device setup classes, is comming soon (I hope at least).
 </p>
