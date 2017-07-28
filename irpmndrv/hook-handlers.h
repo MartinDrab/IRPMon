@@ -29,8 +29,6 @@ NTSTATUS HookHandlerFastIoAcquireForModWrite( IN PFILE_OBJECT FileObject, IN PLA
 NTSTATUS HookHandlerFastIoReleaseForModWrite( IN PFILE_OBJECT FileObject, IN struct _ERESOURCE *ResourceToRelease, IN PDEVICE_OBJECT DeviceObject);
 NTSTATUS HookHandlerFastIoAcquireForCcFlush(IN PFILE_OBJECT FileObject,IN PDEVICE_OBJECT DeviceObject);
 NTSTATUS HookHandlerFastIoReleaseForCcFlush( IN PFILE_OBJECT FileObject,IN PDEVICE_OBJECT DeviceObject);
-VOID HookHandlerFastIoAcquireFile(PFILE_OBJECT FileObject);
-VOID HookHandlerFastIoReleaseFile(PFILE_OBJECT FileObject);
 BOOLEAN HookHandlerFastIoMdlReadCompleteCompressed(IN PFILE_OBJECT FileObject,IN PMDL MdlChain, IN PDEVICE_OBJECT DeviceObject);
 BOOLEAN HookHandlerFastIoMdlWriteCompleteCompressed(IN PFILE_OBJECT FileObject,IN PLARGE_INTEGER FileOffset, IN PMDL MdlChain,  IN PDEVICE_OBJECT DeviceObject);
 
