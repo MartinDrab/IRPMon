@@ -76,6 +76,8 @@ Type
     Procedure OnWatchedDriverNameClick(Sender:TObject);
     procedure IrpMonAppEventsMessage(var Msg: tagMSG; var Handled: Boolean);
     Procedure IrpMonAppEventsException(Sender: TObject; E: Exception);
+    Procedure WriteSettings;
+    Procedure ReadSettings;
   Public
     Procedure OnRequest(AList:TList<PREQUEST_GENERAL>);
   end;
@@ -88,6 +90,7 @@ Implementation
 {$R *.dfm}
 
 Uses
+  IniFiles, ListModel,
   Utils, TreeForm, RequestDetailsForm, AboutForm,
   ClassWatchAdd, ClassWatch, DriverNameWatchAddForm,
   WatchedDriverNames;
@@ -148,6 +151,7 @@ end;
 Procedure TMainFrm.ExitMenuItemClick(Sender: TObject);
 begin
 FAppEvents.Free;
+WriteSettings;
 Close;
 end;
 
@@ -201,6 +205,7 @@ FModel.CreateColumnsMenu(ColumnsMenuItem);
 FModel.SetDisplayer(RequestListView);
 EnumerateClassWatches;
 EnumerateDriverNameWatches;
+ReadSettings;
 end;
 
 Procedure TMainFrm.IrpMonAppEventsException(Sender: TObject; E: Exception);
@@ -515,6 +520,66 @@ Else WinErrorMessage('Failed to enumerate watched driver names', err);
 dnl.Free;
 end;
 
+Procedure TMainFrm.WriteSettings;
+Var
+  I, J : Integer;
+  c : TListModelColumn;
+  iniCOlumnName : WideString;
+  iniFile : TIniFile;
+begin
+Try
+  iniFile := TIniFile.Create(ChangeFileExt(Application.ExeName, '.ini'));
+  iniFile.WriteBool('General', 'CaptureEvents', CaptureEventsMenuItem.Checked);
+  For I := 0 To FModel.ColumnCount - 1 Do
+    begin
+    c := FModel.Columns[I];
+    iniColumnName := c.Caption;
+    For J := 1 To Length(iniColumnName) Do
+      begin
+      If (iniColumnName[J] = ' ') Then
+        iniColumnName[J] := '_';
+      end;
+
+    iniFile.WriteBool('Columns', iniColumnName, c.Visible);
+    end;
+Finally
+  iniFile.Free;
+  End;
+end;
+
+Procedure TMainFrm.ReadSettings;
+Var
+  I, J : Integer;
+  c : TListModelColumn;
+  iniCOlumnName : WideString;
+  iniFile : TIniFile;
+begin
+Try
+  iniFile := TIniFile.Create(ChangeFileExt(Application.ExeName, '.ini'));
+  CaptureEventsMenuItem.Checked := Not iniFile.ReadBool('General', 'CaptureEvents', False);
+  If Not CaptureEventsMenuItem.Checked Then
+    CaptureEventsMenuItemClick(CaptureEventsMenuItem)
+  Else CaptureEventsMenuItem.Checked := False;
+
+  FModel.ColumnUpdateBegin;
+  For I := 0 To FModel.ColumnCount - 1 Do
+    begin
+    c := FModel.Columns[I];
+    iniColumnName := c.Caption;
+    For J := 1 To Length(iniColumnName) Do
+      begin
+      If (iniColumnName[J] = ' ') Then
+        iniColumnName[J] := '_';
+      end;
+
+    FModel.ColumnSetVisible(I, iniFile.ReadBool('Columns', iniColumnName, True));
+    end;
+
+  FModel.ColumnUpdateEnd;
+Finally
+  iniFile.Free;
+  End;
+end;
 
 
 End.
