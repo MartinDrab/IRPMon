@@ -19,6 +19,7 @@ Type
       FForm : THookProgressFrm;
       FOpList : TTaskOperationList;
       FCurrentObject : TTaskObject;
+      FCurrentOpType : EHookObjectOperation;
       FCurrentOp : WideString;
       FStatus : Cardinal;
       Procedure UpdateGUI;
@@ -40,6 +41,9 @@ Type
       var DefaultDraw: Boolean);
   Private
     FThread : THookProgressThread;
+    FSuccessCount : Cardinal;
+    FErrorCount : Cardinal;
+    FWarningCount : Cardinal;
   Public
     Constructor Create(AOwner:TComponent; AOpList:TTaskOperationList); Reintroduce;
   end;
@@ -50,20 +54,30 @@ Implementation
 
 Procedure THookProgressThread.UpdateGUI;
 Var
+  r : EHookObjectOperationResult;
+  addrStr : WideString;
   lw : TListView;
 begin
+r := FCurrentObject.OperationResult(FCurrentOpType, FStatus);
+Case r Of
+  hoorSuccess: Inc(FForm.FSuccessCount);
+  hoorWarning: Inc(FForm.FWarningCount);
+  hoorError: Inc(FForm.FErrorCount);
+  end;
+
 lw := FForm.ProgressListView;
 With lw.Items.Add Do
   begin
-  Data := Pointer(FStatus);
+  Data := Pointer(r);
   Caption := FCurrentOp;
   SubItems.Add(FCurrentObject.ObjectTpye);
-  SubItems.Add(FCurrentObject.Name);
+  addrStr := '';
   If FCurrentObject Is THookObject Then
-     SubItems.Add(Format('0x%p', [(FCurrentObject As THookObject).Address]))
-  Else SubItems.Add('');
+     addrStr := Format(' (0x%p)', [(FCurrentObject As THookObject).Address]);
 
+  SubItems.Add(Format('%s%s', [FCurrentObject.Name, addrStr]));
   SubItems.Add(Format('%u', [FStatus]));
+  SubItems.Add(FCurrentObject.StatusDescription(FCurrentOpType, FStatus))
   end;
 end;
 
@@ -79,7 +93,8 @@ While I < FOpList.Count Do
   begin
   p := FOpList.Items[I];
   FCurrentObject := p.Value;
-  FCurrentOp := TTaskObject.OperationString(p.Key);
+  FCurrentOp := FCurrentObject.OperationString(p.Key);
+  FCurrentOpType := p.Key;
   FStatus := FCurrentObject.Operation(p.Key);
   Synchronize(UpdateGUI);
   Inc(I);
@@ -112,6 +127,9 @@ end;
 
 Procedure THookProgressFrm.FormCreate(Sender: TObject);
 begin
+FSuccessCount := 0;
+FErrorCount := 0;
+FWarningCount := 0;
 FThread.Resume;
 end;
 
@@ -120,11 +138,15 @@ Procedure THookProgressFrm.ProgressListViewAdvancedCustomDrawItem(
   Stage: TCustomDrawStage; var DefaultDraw: Boolean);
 Var
   lw : TListView;
+  r : EHookObjectOperationResult;
 begin
 lw := (Sender As TListView);
-If Assigned(Item.Data) Then
-  lw.Canvas.Font.Color := clRed
-Else lw.Canvas.Font.Color := clGreen;
+r := EHookObjectOperationResult(Item.Data);
+Case r Of
+  hoorSuccess: lw.Canvas.Font.Color := clGreen;
+  hoorWarning: lw.Canvas.Font.Color := clBlue;
+  hoorError: lw.Canvas.Font.Color := clRed;
+  end;
 end;
 
 Procedure THookProgressFrm.CloseButtonClick(Sender: TObject);

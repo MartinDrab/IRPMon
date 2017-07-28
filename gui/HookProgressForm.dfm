@@ -4,7 +4,7 @@ object HookProgressFrm: THookProgressFrm
   BorderIcons = []
   Caption = 'Progress'
   ClientHeight = 244
-  ClientWidth = 468
+  ClientWidth = 589
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -20,10 +20,11 @@ object HookProgressFrm: THookProgressFrm
   object LowerPanel: TPanel
     Left = 0
     Top = 195
-    Width = 468
+    Width = 589
     Height = 49
     Align = alBottom
     TabOrder = 0
+    ExplicitWidth = 468
     object CloseButton: TButton
       Left = 144
       Top = 6
@@ -37,28 +38,28 @@ object HookProgressFrm: THookProgressFrm
   object ProgressListView: TListView
     Left = 0
     Top = 0
-    Width = 468
+    Width = 589
     Height = 195
     Align = alClient
     Columns = <
       item
         Caption = 'Operation'
-        Width = 60
+        Width = 75
       end
       item
         Caption = 'Type'
         Width = 55
       end
       item
-        AutoSize = True
         Caption = 'Name'
-      end
-      item
-        Caption = 'Address'
         Width = 150
       end
       item
         Caption = 'Status'
+      end
+      item
+        Caption = 'Description'
+        Width = 300
       end>
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
@@ -71,5 +72,7 @@ object HookProgressFrm: THookProgressFrm
     TabOrder = 1
     ViewStyle = vsReport
     OnAdvancedCustomDrawItem = ProgressListViewAdvancedCustomDrawItem
+    ExplicitLeft = 16
+    ExplicitWidth = 573
   end
 end

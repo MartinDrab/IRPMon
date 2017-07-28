@@ -28,6 +28,13 @@ Type
     hooUnwatchDriver,
     hooMax
   );
+
+  EHookObjectOperationResult = (
+    hoorSuccess,
+    hoorWarning,
+    hoorError
+  );
+
   THookObjectOperations = Set Of EHookObjectOperation;
 
   TTaskOperationList = Class;
@@ -47,7 +54,10 @@ Type
     Function Operation(AOperationType:EHookObjectOperation):Cardinal; Virtual; Abstract;
     Function FinishCompletion(AOperationType:EHookObjectOperation; AStatus:Cardinal):Cardinal;
     Procedure SetCompletionCallback(ACallback:TTaskObjectCompletionCallback; AContext:Pointer);
-    Class Function OperationString(AOpType:EHookObjectOperation):WideString;
+    Function OperationString(AOpType:EHookObjectOperation):WideString; Virtual;
+    Function OperationResult(AOpType:EHookObjectOperation; AStatus:Cardinal):EHookObjectOperationResult; Virtual;
+    Function StatusDescription(AOpType:EHookObjectOperation; AStatus:Cardinal):WideString; Virtual;
+
     Property SupportedOperations : THookObjectOperations Read FSupportedOperations;
     Property ObjectTpye : WideString Read FObjectType;
     Property Name : WideString Read FName;
@@ -67,6 +77,8 @@ Type
   Public
     Constructor Create(ASCHandle:SC_HANDLE; AServiceName:WideString; AServiceDisplayName:WideString = ''; AServiceDescription:WideString = ''; AFileName:WideString = ''); Reintroduce;
     Function Operation(AOperationType:EHookObjectOperation):Cardinal; Override;
+    Function OperationString(AOpType:EHookObjectOperation):WideString; Override;
+    Function OperationResult(AOpType:EHookObjectOperation; AStatus:Cardinal):EHookObjectOperationResult; Override;
 
     Property ServiceName : WideString Read FServiceName;
     Property ServiceBinary : WideString Read FServiceBinary;
@@ -169,7 +181,7 @@ If Assigned(FCompletionCallback) THen
   Result := FCompletionCallback(FTaskList, Self, AOperationType, AStatus, FCompletionContext);
 end;
 
-Class Function TTaskObject.OperationString(AOpType:EHookObjectOperation):WideString;
+Function TTaskObject.OperationString(AOpType:EHookObjectOperation):WideString;
 begin
 Case AOpType Of
   hooNone: Result := 'None';
@@ -186,6 +198,20 @@ Case AOpType Of
   Else Result := Format('<unknown (%u)>', [Ord(AOpType)]);
   end;
 end;
+
+Function TTaskObject.OperationResult(AOpType:EHookObjectOperation; AStatus:Cardinal):EHookObjectOperationResult;
+begin
+Case AStatus Of
+  0 : Result := hoorSuccess;
+  Else Result := hoorError;
+  end;
+end;
+
+Function TTaskObject.StatusDescription(AOpType:EHookObjectOperation; AStatus:Cardinal):WideString;
+begin
+Result := SysErrorMessage(AStatus);
+end;
+
 
 (** THookObject **)
 
@@ -363,7 +389,7 @@ end;
 
 Constructor TDriverTaskObject.Create(ASCHandle:SC_HANDLE; AServiceName:WideString; AServiceDisplayName:WideString = ''; AServiceDescription:WideString = ''; AFileName:WideString = '');
 begin
-Inherited Create('Service', AServiceName, [hooHook, hooUnhook, hooStart, hooStop]);
+Inherited Create('Driver', AServiceName, [hooHook, hooUnhook, hooStart, hooStop]);
 FServiceName := AServiceName;
 FServiceDisplayName := AServiceDisplayName;
 FServiceDescription := AServiceDescription;
@@ -383,6 +409,33 @@ Case AOperationType Of
 
 Result := FinishCompletion(AOperationType, Result);
 end;
+
+Function TDriverTaskObject.OperationString(AOpType:EHookObjectOperation):WideString;
+begin
+Result := '';
+Case AOpType Of
+  hooHook: Result := 'Install';
+  hooStart : Result := 'Load';
+  hooStop : Result := 'Unload';
+  hooUnhook : Result := 'Uninstall';
+  end;
+end;
+
+Function TDriverTaskObject.OperationResult(AOpType:EHookObjectOperation; AStatus:Cardinal):EHookObjectOperationResult;
+begin
+Result := Inherited OperationResult(AOpType, AStatus);
+Case AOpType Of
+  hooHook : begin
+    If AStatus = ERROR_SERVICE_EXISTS Then
+      Result := hoorWarning;
+    end;
+  hooStart : begin
+    If AStatus = ERROR_SERVICE_ALREADY_RUNNING Then
+      Result := hoorWarning;
+    end;
+  end;
+end;
+
 
 Function TDriverTaskObject.Install:Cardinal;
 Var
