@@ -275,7 +275,6 @@ static VOID _UnhookDriverObject(PDRIVER_HOOK_RECORD HookRecord)
 			PFAST_IO_DISPATCH fastIo = driverObject->FastIoDispatch;
 			PFAST_IO_DISPATCH hookFastIo = &HookRecord->OldFastIoDisptach;
 
-			_UnhookFastIoRoutine((PVOID *)&fastIo->AcquireFileForNtCreateSection, hookFastIo->AcquireFileForNtCreateSection);
 			_UnhookFastIoRoutine((PVOID *)&fastIo->AcquireForCcFlush, hookFastIo->AcquireForCcFlush);
 			_UnhookFastIoRoutine((PVOID *)&fastIo->AcquireForModWrite, hookFastIo->AcquireForModWrite);
 			_UnhookFastIoRoutine((PVOID *)&fastIo->FastIoCheckIfPossible, hookFastIo->FastIoCheckIfPossible);
@@ -299,7 +298,6 @@ static VOID _UnhookDriverObject(PDRIVER_HOOK_RECORD HookRecord)
 			_UnhookFastIoRoutine((PVOID *)&fastIo->MdlWriteComplete, hookFastIo->MdlWriteComplete);
 			_UnhookFastIoRoutine((PVOID *)&fastIo->MdlWriteCompleteCompressed, hookFastIo->MdlWriteCompleteCompressed);
 			_UnhookFastIoRoutine((PVOID *)&fastIo->PrepareMdlWrite, hookFastIo->PrepareMdlWrite);
-			_UnhookFastIoRoutine((PVOID *)&fastIo->ReleaseFileForNtCreateSection, hookFastIo->ReleaseFileForNtCreateSection);
 			_UnhookFastIoRoutine((PVOID *)&fastIo->ReleaseForCcFlush, hookFastIo->ReleaseForCcFlush);
 			_UnhookFastIoRoutine((PVOID *)&fastIo->ReleaseForModWrite, hookFastIo->ReleaseForModWrite);
 		}
