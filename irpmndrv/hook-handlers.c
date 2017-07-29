@@ -163,7 +163,7 @@ BOOLEAN HookHandlerFastIoDeviceControl(PFILE_OBJECT FileObject, BOOLEAN Wait, PV
 	if (driverRecord != NULL) {
 		deviceRecord = DriverHookRecordGetDevice(driverRecord, DeviceObject);
 		if (_CatchRequest(driverRecord, deviceRecord, DeviceObject))
-			request = _CreateFastIoRequest(FastIoDeviceControl, DeviceObject->DriverObject, DeviceObject, FileObject, (PVOID)ControlCode, (PVOID)InputBufferLength, (PVOID)OutputBufferLength, (PVOID)Wait, NULL, NULL, NULL);
+			request = _CreateFastIoRequest(FastIoDeviceControl, DeviceObject->DriverObject, DeviceObject, FileObject, (PVOID)OutputBufferLength, (PVOID)InputBufferLength, (PVOID)ControlCode, (PVOID)Wait, InputBuffer, OutputBuffer, NULL);
 
 		ret = driverRecord->OldFastIoDisptach.FastIoDeviceControl(FileObject, Wait, InputBuffer, InputBufferLength, OutputBuffer, OutputBufferLength, ControlCode, IoStatusBlock, DeviceObject);
 		if (request != NULL) {

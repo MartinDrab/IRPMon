@@ -14,6 +14,10 @@ Type
     FIOSBStatus : Cardinal;
     FIOSBInformation : NativeUInt;
     FFastIoType : EFastIoOperationType;
+    FArg1 : Pointer;
+    FArg2 : Pointer;
+    FArg3 : Pointer;
+    FArg4 : Pointer;
   Public
     Constructor Create(Var ARequest:REQUEST_FASTIO); Reintroduce;
 
@@ -42,6 +46,10 @@ FPreviousMode := ARequest.PreviousMode;
 FIOSBStatus := ARequest.IOSBStatus;
 FIOSBInformation := ARequest.IOSBInformation;
 FFileObject := ARequest.FileObject;
+FArg1 := ARequest.Arg1;
+FArg2 := ARequest.Arg2;
+FArg3 := ARequest.Arg3;
+FArg4 := ARequest.Arg4;
 end;
 
 Function TFastIoRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
@@ -51,6 +59,20 @@ Case AColumnType Of
   rlmctSubType : AResult := FastIoTypeToString(FFastIoType);
   rlmctFileObject : AResult := Format('0x%p', [FFileObject]);
   rlmctPreviousMode : AResult := AccessModeToString(FPreviousMode);
+  rlmctArg1,
+  rlmctArg2,
+  rlmctArg3,
+  rlmctArg4 : begin
+    Result := False;
+    If (FFastIoType = FastIoDeviceControl) Then
+      begin
+      Case AColumnType Of
+        rlmctArg1: AResult := Format('O: %u (0x%p)', [Cardinal(FArg1), FArg1]);
+        rlmctArg2: AResult := Format('I: %u (0x%p)', [Cardinal(FArg2), FArg2]);
+        rlmctArg3: AResult := IOCTLToString(Cardinal(FArg3));
+        end;
+      end;
+    end;
   rlmctIOSBStatus : begin
     Result := False;
     Case FFastIoType Of
