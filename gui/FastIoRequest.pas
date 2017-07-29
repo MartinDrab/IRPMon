@@ -41,6 +41,7 @@ FFastIoType := ARequest.FastIoType;
 FPreviousMode := ARequest.PreviousMode;
 FIOSBStatus := ARequest.IOSBStatus;
 FIOSBInformation := ARequest.IOSBInformation;
+FFileObject := ARequest.FileObject;
 end;
 
 Function TFastIoRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
@@ -48,6 +49,7 @@ begin
 Result := True;
 Case AColumnType Of
   rlmctSubType : AResult := FastIoTypeToString(FFastIoType);
+  rlmctFileObject : AResult := Format('0x%p', [FFileObject]);
   rlmctPreviousMode : AResult := AccessModeToString(FPreviousMode);
   rlmctIOSBStatus : begin
     Result := False;
