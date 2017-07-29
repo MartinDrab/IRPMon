@@ -156,13 +156,6 @@ Type
     Property ThreadId : THandle Read FThreadId;
   end;
 
-  TFastIoRequest = Class (TDriverRequest)
-  Public
-    Constructor Create(Var ARequest:REQUEST_FASTIO); Reintroduce;
-
-    Class Function FastIoToString(AType:EFastIoOperationType):WideString;
-  end;
-
   TStartIoRequest = Class (TDriverRequest)
   Public
     Constructor Create(Var ARequest:REQUEST_STARTIO); Reintroduce;
@@ -194,7 +187,8 @@ Type
 Implementation
 
 Uses
-  SysUtils, NameTables, IRPRequest, XXXDetectedRequests, Utils;
+  SysUtils, NameTables, IRPRequest, FastIoRequest,
+  XXXDetectedRequests, Utils;
 
 (** TDriverRequestComparer **)
 
@@ -568,48 +562,6 @@ Case AColumnType Of
   rlmctIOSBStatus : AResult := Format('%s (0x%x)', [NTSTATUSToString(FIOSBStatus), FIOSBStatus]);
   rlmctIOSBInformation : AResult := Format('0x%p', [Pointer(IOSBInformation)]);
   Else Result := Inherited GetColumnValue(AColumnType, AResult);
-  end;
-end;
-
-(** TFastIoRequest **)
-
-Constructor TFastIoRequest.Create(Var ARequest:REQUEST_FASTIO);
-begin
-Inherited Create(ARequest.Header);
-end;
-
-Class Function TFastIoRequest.FastIoToString(AType:EFastIoOperationType):WideString;
-begin
-Case AType Of
-  FastIoCheckIfPossible: Result := 'FastIoCheckIfPossible';
-  FastIoRead: Result := 'FastIoRead';
-  FastIoWrite: Result := 'FastIoWrite';
-  FastIoQueryBasicInfo: Result := 'FastIoQueryBasicInfo';
-  FastIoQueryStandardInfo: Result := 'FastIoQueryStandardInfo';
-  FastIoLock: Result := 'FastIoLock';
-  FastIoUnlockSingle: Result := 'FastIoUnlockSingle';
-  FastIoUnlockAll: Result := 'FastIoUnlockAll';
-  FastIoUnlockAllByKey: Result := 'FastIoUnlockAllByKey';
-  FastIoDeviceControl: Result := 'FastIoDeviceControl';
-  AcquireFileForNtCreateSection: Result := 'AcquireFileForNtCreateSection';
-  ReleaseFileForNtCreateSection: Result := 'ReleaseFileForNtCreateSection';
-  FastIoDetachDevice: Result := 'FastIoDetachDevice';
-  FastIoQueryNetworkOpenInfo: Result := 'FastIoQueryNetworkOpenInfo';
-  AcquireForModWrite: Result := 'AcquireForModWrite';
-  MdlRead: Result := 'MdlRead';
-  MdlReadComplete: Result := 'MdlReadComplete';
-  PrepareMdlWrite: Result := 'PrepareMdlWrite';
-  MdlWriteComplete: Result := 'MdlWriteComplete';
-  FastIoReadCompressed: Result := 'FastIoReadCompressed';
-  FastIoWriteCompressed: Result := 'FastIoWriteCompressed';
-  MdlReadCompleteCompressed: Result := 'MdlReadCompleteCompressed';
-  MdlWriteCompleteCompressed: Result := 'MdlWriteCompleteCompressed';
-  FastIoQueryOpen: Result := 'FastIoQueryOpen';
-  ReleaseForModWrite: Result := 'ReleaseForModWrite';
-  AcquireForCcFlush: Result := 'AcquireForCcFlush';
-  ReleaseForCcFlush: Result := 'ReleaseForCcFlush';
-  FastIoMax: Result := 'FastIoMax';
-  Else Result := Format('<unknown> (%u)', [Ord(AType)]);
   end;
 end;
 

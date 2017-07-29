@@ -63,7 +63,8 @@ Implementation
 {$R *.dfm}
 
 Uses
-  Utils, RequestListModel, HookProgressForm;
+  Utils, RequestListModel, HookProgressForm,
+  FastIoRequest;
 
 Procedure TTreeFrm.BuildDeviceStack(ALowest:TDeviceHookObject);
 Var
@@ -448,7 +449,7 @@ For I := 0 To $1B Do
   IRPCheckListBox.AddItem(TDriverRequest.MajorFunctionToString(I), Nil);
 
 For I := 0 To Ord(FastIoMax) - 1 Do
-  FastIoCheckListBox.AddItem(TFastIoRequest.FastIoToString(EFastIoOperationType(I)), Nil);
+  FastIoCheckListBox.AddItem(TFastIoRequest.FastIoTypeToString(EFastIoOperationType(I)), Nil);
 
 FDriverMap := TDictionary<Pointer, TDriverHookObject>.Create;
 FDeviceMap := TDictionary<Pointer, TDeviceHookObject>.Create;

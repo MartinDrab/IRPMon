@@ -7,12 +7,7 @@ program IRPMon;
 {$R 'uac.res' 'uac.rc'}
 
 uses
-{$IFnDEF FPC}
   WinSvc,
-{$ELSE}
-  jwaWinSvc,
-  Interfaces,
-{$ENDIF}
   Windows,
   SysUtils,
   Forms,
@@ -36,7 +31,8 @@ uses
   DriverNameWatchAddForm in 'DriverNameWatchAddForm.pas' {DriverNameWatchAddFrm},
   WatchedDriverNames in 'WatchedDriverNames.pas',
   XXXDetectedRequests in 'XXXDetectedRequests.pas',
-  LibJSON in 'LibJSON.pas';
+  LibJSON in 'LibJSON.pas',
+  FastIoRequest in 'FastIoRequest.pas';
 
 {$R *.res}
 
@@ -99,7 +95,7 @@ If IsWow64Process(GetCurrentProcess, wow64) Then
         If err = ERROR_SUCCESS Then
           begin
           Application.CreateForm(TMainFrm, MainFrm);
-          Application.Run;
+  Application.Run;
           IRPMonDllFinalize;
           end
         Else begin
