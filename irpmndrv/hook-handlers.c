@@ -118,7 +118,6 @@ BOOLEAN HookHandlerFastIoCheckIfPossible(PFILE_OBJECT FileObject, PLARGE_INTEGER
 		DriverHookRecordDereference(driverRecord);
 	} else {
 		DEBUG_ERROR("Hook is installed for non-hooked driver object 0x%p", DeviceObject->DriverObject);
-		__debugbreak();
 	}
 
 	return ret;
@@ -147,7 +146,6 @@ VOID HookHandlerFastIoDetachDevice(PDEVICE_OBJECT SourceDevice, PDEVICE_OBJECT T
 		DriverHookRecordDereference(driverRecord);
 	} else {
 		DEBUG_ERROR("Hook is installed for non-hooked driver object 0x%p", SourceDevice->DriverObject);
-		__debugbreak();
 	}
 
 	return;
@@ -184,7 +182,6 @@ BOOLEAN HookHandlerFastIoDeviceControl(PFILE_OBJECT FileObject, BOOLEAN Wait, PV
 		DriverHookRecordDereference(driverRecord);
 	} else {
 		DEBUG_ERROR("Hook is installed for non-hooked driver object 0x%p", DeviceObject->DriverObject);
-		__debugbreak();
 	}
 
 	return ret;
@@ -221,7 +218,6 @@ BOOLEAN HookHandlerFastIoLock(PFILE_OBJECT FileObject, PLARGE_INTEGER FileOffset
 		DriverHookRecordDereference(driverRecord);
 	} else {
 		DEBUG_ERROR("Hook is installed for non-hooked driver object 0x%p", DeviceObject->DriverObject);
-		__debugbreak();
 	}
 
 	return ret;
@@ -269,7 +265,6 @@ BOOLEAN HookHandlerFastIoQueryBasicInfo(PFILE_OBJECT FileObject, BOOLEAN Wait, P
 		DriverHookRecordDereference(driverRecord);
 	} else {
 		DEBUG_ERROR("Hook is installed for non-hooked driver object 0x%p", DeviceObject->DriverObject);
-		__debugbreak();
 	}
 
 	return ret;
@@ -317,7 +312,6 @@ BOOLEAN HookHandlerFastIoQueryNetworkOpenInfo(PFILE_OBJECT FileObject, BOOLEAN W
 		DriverHookRecordDereference(driverRecord);
 	} else {
 		DEBUG_ERROR("Hook is installed for non-hooked driver object 0x%p", DeviceObject->DriverObject);
-		__debugbreak();
 	}
 
 	return ret;
@@ -362,7 +356,6 @@ BOOLEAN HookHandlerFastIoQueryOpenInfo(PIRP Irp, PFILE_NETWORK_OPEN_INFORMATION 
 		DriverHookRecordDereference(driverRecord);
 	} else {
 		DEBUG_ERROR("Hook is installed for non-hooked driver object 0x%p", DeviceObject->DriverObject);
-		__debugbreak();
 	}
 
 	return ret;
@@ -410,7 +403,6 @@ BOOLEAN HookHandlerFastIoQueryStandardInfo(PFILE_OBJECT FileObject, BOOLEAN Wait
 		DriverHookRecordDereference(driverRecord);
 	} else {
 		DEBUG_ERROR("Hook is installed for non-hooked driver object 0x%p", DeviceObject->DriverObject);
-		__debugbreak();
 	}
 
 	return ret;
@@ -447,7 +439,6 @@ BOOLEAN HookHandlerFastIoRead(PFILE_OBJECT FileObject, PLARGE_INTEGER FileOffset
 		DriverHookRecordDereference(driverRecord);
 	} else {
 		DEBUG_ERROR("Hook is installed for non-hooked driver object 0x%p", DeviceObject->DriverObject);
-		__debugbreak();
 	}
 
 	return ret;
@@ -483,7 +474,6 @@ BOOLEAN HookHandlerFastIoUnlockAll(PFILE_OBJECT FileObject, PEPROCESS ProcessId,
 		DriverHookRecordDereference(driverRecord);
 	} else {
 		DEBUG_ERROR("Hook is installed for non-hooked driver object 0x%p", DeviceObject->DriverObject);
-		__debugbreak();
 	}
 
 	return ret;
@@ -520,7 +510,6 @@ BOOLEAN HookHandlerFastIoUnlockByKey(PFILE_OBJECT FileObject, PVOID ProcessId, U
 		DriverHookRecordDereference(driverRecord);
 	} else {
 		DEBUG_ERROR("Hook is installed for non-hooked driver object 0x%p", DeviceObject->DriverObject);
-		__debugbreak();
 	}
 
 	return ret;
@@ -557,7 +546,6 @@ BOOLEAN HookHandlerFastIoUnlockSingle(PFILE_OBJECT FileObject, PLARGE_INTEGER Fi
 		DriverHookRecordDereference(driverRecord);
 	} else {
 		DEBUG_ERROR("Hook is installed for non-hooked driver object 0x%p", DeviceObject->DriverObject);
-		__debugbreak();
 	}
 
 	return ret;
@@ -1069,7 +1057,6 @@ VOID HookHandlerStartIoDispatch(PDEVICE_OBJECT DeviceObject, PIRP Irp)
 		DriverHookRecordDereference(driverRecord);
 	} else {
 		DEBUG_ERROR("Hook is installed for non-hooked driver object 0x%p", DeviceObject->DriverObject);
-		__debugbreak();
 	}
 
 	DEBUG_EXIT_FUNCTION_VOID();
