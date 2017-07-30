@@ -463,7 +463,8 @@ Var
   hService : THandle;
 begin
 Result := ERROR_SUCCESS;
-hService := OpenServiceW(FhSCM, PWideChar(FServiceName), SERVICE_STOP);
+// $10000 is the DELETE access right
+hService := OpenServiceW(FhSCM, PWideChar(FServiceName), $10000);
 If hService <> 0 Then
   begin
   If Not DeleteService(hService) Then
