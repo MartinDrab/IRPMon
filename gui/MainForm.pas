@@ -45,6 +45,9 @@ Type
     WatchDriverNameMenuItem: TMenuItem;
     WatchedDriversMenuItem: TMenuItem;
     SortbyIDMenuItem: TMenuItem;
+    DriverMenuItem: TMenuItem;
+    UnloadOnExitMenuItem: TMenuItem;
+    UninstallOnExitMenuItem: TMenuItem;
     Procedure ClearMenuItemClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure CaptureEventsMenuItemClick(Sender: TObject);
@@ -57,6 +60,7 @@ Type
     procedure WatchClassMenuItemClick(Sender: TObject);
     procedure WatchDriverNameMenuItemClick(Sender: TObject);
     procedure SortbyIDMenuItemClick(Sender: TObject);
+    procedure FormClose(Sender: TObject; var Action: TCloseAction);
   Private
 {$IFDEF FPC}
     FAppEvents: TApplicationProperties;
@@ -79,6 +83,8 @@ Type
     Procedure WriteSettings;
     Procedure ReadSettings;
   Public
+    ServiceTask : TDriverTaskObject;
+    TaskList : TTaskOperationList;
     Procedure OnRequest(AList:TList<PREQUEST_GENERAL>);
   end;
 
@@ -90,7 +96,7 @@ Implementation
 {$R *.dfm}
 
 Uses
-  IniFiles, ListModel,
+  IniFiles, ListModel, HookProgressForm,
   Utils, TreeForm, RequestDetailsForm, AboutForm,
   ClassWatchAdd, ClassWatch, DriverNameWatchAddForm,
   WatchedDriverNames;
@@ -150,9 +156,24 @@ end;
 
 Procedure TMainFrm.ExitMenuItemClick(Sender: TObject);
 begin
+Close;
+end;
+
+Procedure TMainFrm.FormClose(Sender: TObject; var Action: TCloseAction);
+begin
 FAppEvents.Free;
 WriteSettings;
-Close;
+If UnloadOnExitMenuItem.Checked Then
+  taskList.Add(hooStop, serviceTask);
+
+If UninstallOnExitMenuItem.Checked Then
+  taskList.Add(hooUnhook, serviceTask);
+
+With THookProgressFrm.Create(Application, taskList) Do
+  begin
+  ShowModal;
+  Free;
+  end;
 end;
 
 Procedure TMainFrm.FormCreate(Sender: TObject);
@@ -529,6 +550,8 @@ Var
 begin
 Try
   iniFile := TIniFile.Create(ChangeFileExt(Application.ExeName, '.ini'));
+  iniFIle.WriteBool('Driver', 'unload_on_exit', UnloadOnExitMenuItem.Checked);
+  iniFIle.WriteBool('Driver', 'uninstall_on_exit', UninstallOnExitMenuItem.Checked);
   iniFile.WriteBool('General', 'CaptureEvents', CaptureEventsMenuItem.Checked);
   For I := 0 To FModel.ColumnCount - 1 Do
     begin
@@ -556,6 +579,8 @@ Var
 begin
 Try
   iniFile := TIniFile.Create(ChangeFileExt(Application.ExeName, '.ini'));
+  UnloadOnExitMenuItem.Checked := iniFIle.ReadBool('Driver', 'unload_on_exit', False);
+  UninstallOnExitMenuItem.Checked := iniFIle.ReadBool('Driver', 'uninstall_on_exit', True);
   CaptureEventsMenuItem.Checked := Not iniFile.ReadBool('General', 'CaptureEvents', False);
   If Not CaptureEventsMenuItem.Checked Then
     CaptureEventsMenuItemClick(CaptureEventsMenuItem)

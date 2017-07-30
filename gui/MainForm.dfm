@@ -12,6 +12,7 @@ object MainFrm: TMainFrm
   Font.Style = []
   Menu = MainMenu1
   OldCreateOrder = True
+  OnClose = FormClose
   OnCreate = FormCreate
   PixelsPerInch = 96
   TextHeight = 13
@@ -110,6 +111,15 @@ object MainFrm: TMainFrm
       object RequestDetailsMenuItem: TMenuItem
         Caption = 'Details...'
         OnClick = RequestDetailsMenuItemClick
+      end
+    end
+    object DriverMenuItem: TMenuItem
+      Caption = 'Driver'
+      object UnloadOnExitMenuItem: TMenuItem
+        Caption = 'Unload on exit'
+      end
+      object UninstallOnExitMenuItem: TMenuItem
+        Caption = 'Uninstall on exit'
       end
     end
     object ColumnsMenuItem: TMenuItem
