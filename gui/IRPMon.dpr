@@ -85,26 +85,18 @@ If IsWow64Process(GetCurrentProcess, wow64) Then
         serviceTask.SetCompletionCallback(OnServiceTaskComplete, Nil);
         taskList.Add(hooHook, serviceTask);
         taskList.Add(hooStart, serviceTask);
+        taskList.Add(hooLibraryInitialize, serviceTask);
         With THookProgressFrm.Create(Application, taskList) Do
           begin
           ShowModal;
           Free;
           end;
 
-        err := IRPMonDllInitialize;
-        If err = ERROR_SUCCESS Then
-          begin
-          Application.CreateForm(TMainFrm, MainFrm);
-          MainFrm.TaskList := taskList;
-          MainFrm.ServiceTask := serviceTask;
-          Application.Run;
-          IRPMonDllFinalize;
-          end
-        Else begin
-          WinErrorMessage('Unable to initialize irpmondll.dll', err);
-          If driverStarted Then
-            taskList.Add(hooStop, serviceTask);
-          end;
+        Application.CreateForm(TMainFrm, MainFrm);
+        MainFrm.TaskList := taskList;
+        MainFrm.ServiceTask := serviceTask;
+        Application.Run;
+        IRPMonDllFinalize;
 
         serviceTask.Free;
         taskList.Free;

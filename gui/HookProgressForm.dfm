@@ -24,7 +24,6 @@ object HookProgressFrm: THookProgressFrm
     Height = 49
     Align = alBottom
     TabOrder = 0
-    ExplicitWidth = 468
     object CloseButton: TButton
       Left = 144
       Top = 6
@@ -72,7 +71,5 @@ object HookProgressFrm: THookProgressFrm
     TabOrder = 1
     ViewStyle = vsReport
     OnAdvancedCustomDrawItem = ProgressListViewAdvancedCustomDrawItem
-    ExplicitLeft = 16
-    ExplicitWidth = 573
   end
 end

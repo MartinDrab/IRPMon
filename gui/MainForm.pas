@@ -164,6 +164,7 @@ Procedure TMainFrm.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
 FAppEvents.Free;
 WriteSettings;
+taskList.Add(hooLibraryFinalize, serviceTask);
 If UnloadOnExitMenuItem.Checked Then
   taskList.Add(hooStop, serviceTask);
 

@@ -26,6 +26,8 @@ Type
     hooUnwatchClass,
     hooWatchDriver,
     hooUnwatchDriver,
+    hooLibraryInitialize,
+    hooLibraryFinalize,
     hooMax
   );
 
@@ -389,7 +391,7 @@ end;
 
 Constructor TDriverTaskObject.Create(ASCHandle:SC_HANDLE; AServiceName:WideString; AServiceDisplayName:WideString = ''; AServiceDescription:WideString = ''; AFileName:WideString = '');
 begin
-Inherited Create('Driver', AServiceName, [hooHook, hooUnhook, hooStart, hooStop]);
+Inherited Create('Driver', AServiceName, [hooHook, hooUnhook, hooStart, hooStop, hooLibraryInitialize, hooLibraryFinalize]);
 FServiceName := AServiceName;
 FServiceDisplayName := AServiceDisplayName;
 FServiceDescription := AServiceDescription;
@@ -399,11 +401,14 @@ end;
 
 Function TDriverTaskObject.Operation(AOperationType:EHookObjectOperation):Cardinal;
 begin
+Result := ERROR_SUCCESS;
 Case AOperationType Of
   hooHook: Result := Install;
   hooStart : Result := Load;
   hooStop : Result := Unload;
   hooUnhook : Result := Uninstall;
+  hooLibraryInitialize : Result := IRPMonDllInitialize;
+  hooLibraryFinalize : IRPMonDllFInalize;
   Else Result := ERROR_NOT_SUPPORTED;
   end;
 
@@ -418,6 +423,8 @@ Case AOpType Of
   hooStart : Result := 'Load';
   hooStop : Result := 'Unload';
   hooUnhook : Result := 'Uninstall';
+  hooLibraryInitialize : Result := 'Connect';
+  hooLibraryFinalize : Result := 'Disconnect';
   end;
 end;
 
