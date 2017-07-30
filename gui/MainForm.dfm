@@ -117,9 +117,11 @@ object MainFrm: TMainFrm
       Caption = 'Driver'
       object UnloadOnExitMenuItem: TMenuItem
         Caption = 'Unload on exit'
+        OnClick = DriverMenuItemClick
       end
       object UninstallOnExitMenuItem: TMenuItem
         Caption = 'Uninstall on exit'
+        OnClick = DriverMenuItemClick
       end
     end
     object ColumnsMenuItem: TMenuItem

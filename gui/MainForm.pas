@@ -61,6 +61,7 @@ Type
     procedure WatchDriverNameMenuItemClick(Sender: TObject);
     procedure SortbyIDMenuItemClick(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure DriverMenuItemClick(Sender: TObject);
   Private
 {$IFDEF FPC}
     FAppEvents: TApplicationProperties;
@@ -290,6 +291,14 @@ end;
 Procedure TMainFrm.ClearMenuItemClick(Sender: TObject);
 begin
 FModel.Clear;
+end;
+
+Procedure TMainFrm.DriverMenuItemClick(Sender: TObject);
+Var
+  M : TMenuItem;
+begin
+M := Sender As TMenuItem;
+M.Checked := Not M.Checked;
 end;
 
 Procedure TMainFrm.RefreshNameCacheMenuItemClick(Sender: TObject);
