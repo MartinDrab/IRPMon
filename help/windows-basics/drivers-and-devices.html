@@ -14,7 +14,7 @@ Unlike executable programs, drivers have nothing like <i>main</i> function or ma
 It is not possible to communicate with a driver directly, it cannot be specified as a target of a message (a request). However, a driver can create one or more <i>devices</i>, entities suited exactly for receiving requests from user applications or other kernel components. When a request arrives to certain device, the kernel searches for its driver and call one of driver's callback routines to process the request. The resulting error code, together with the output parameters, is then returned to the originator of the request.
 </p>
 <p>
-From application perspective, devices are viewed as special files. The application can open them, access them (read, write, send IOCTL...) and close them when finished. The abstraction is similar to Unix-based systems. The difference is that the devices are not stored inside a file system directory tree together with other files and directories. Instead, they are placed in the namespace of a kernel component called Object Nanager. For example, when an application attempts to open a file named
+From application perspective, devices are viewed as special files. The application can open them, access them (read, write, send IOCTL...) and close them when finished. The abstraction is similar to Unix-based systems. The difference is that the devices are not stored inside a file system directory tree together with other files and directories. Instead, they are placed in the namespace of a kernel component called Object Manager. For example, when an application attempts to open a file named
 </p>
 <p>
 <code>C:\Windows\system32\kernel32.dll</code>

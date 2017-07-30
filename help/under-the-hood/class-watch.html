@@ -5,18 +5,18 @@
 <body>
 <h1>Monitoring Non-existent PnP Drivers</h1>
 <p>
-Automatic monitoring of newly loaded drivers is one of the killer features of the IRPMon project. In short, the IRPMon driver can be configured to watch for a certain driver and start monitoring it automatically justafter its appearance in the kernel is detected. The current implementation of this mechanism works for PnP drivers; drivers that are loaded as function drivers or filter drivers for a PnP device connected to the computer.
+Automatic monitoring of newly loaded drivers is one of the killer features of the IRPMon project. In short, the IRPMon driver can be configured to watch for a certain driver and start monitoring it automatically just after its appearance in the kernel is detected. The current implementation of this mechanism works for PnP drivers; drivers that are loaded as function drivers or filter drivers for a PnP device connected to the computer.
 </p>
 <h2>How it Works</h2>
 <p>
-To monitor particular PnP driver, the user needs to know what class of devices (meaning the device setup class) the driver handles. Then, the user instructs IRPMon to watch for a driver with particular name that handles devices of that class. The IRPMon driver register itself as a filter for that class, so its AddDevice routine is invoked when a device belonging to that class apperas.
+To monitor particular PnP driver, the user needs to know what class of devices (meaning the device setup class) the driver handles. Then, the user instructs IRPMon to watch for a driver with particular name that handles devices of that class. The IRPMon driver register itself as a filter for that class, so its AddDevice routine is invoked when a device belonging to that class appears.
 </p>
 <p>
 Figure 1 shows the order of AddDevice routines invoked when a new device is added to the system. When an AddDevice routine is called, it can observe the current state of the device stack being built. In other words, it can see the results of previous AddDevice calls for that stack (a typical action of an AddDevice routine is to create a device object and attach it to the stack).
 </p>
 <p style='text-align: center'>
 <img src='add-device-order.jpg' src='AddDevice invocation order' /> <br/>
-<b>Fiture 1:</b> AddDevice invocation order
+<b>Figure 1:</b> AddDevice invocation order
 </p>
 <p>
 So, when the AddDevice routine of the IRPMon driver is invoked, the driver potentially see all drivers (and their devices) that contributed to the new device stack before itself. That means, the position of the IRPMon driver amongst the device setup class filters influences its detection capabilities. For that reason, the user may decide:

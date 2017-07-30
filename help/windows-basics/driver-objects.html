@@ -5,7 +5,7 @@
 <body>
 <h1>Driver Objects</h1>
 <p>
-Each loaded driver is represented by a kernel object of Driver type. The structure of the object body is defined as <code>DRIVER_OBJECT</code> and you can see it below. This chapter describes its members that are interesting in the IRPMon context. The most interesting structure fileds in that aspect are printed in bold.
+Each loaded driver is represented by a kernel object of Driver type. The structure of the object body is defined as <code>DRIVER_OBJECT</code> and you can see it below. This chapter describes its members that are interesting in the IRPMon context. The most interesting structure fields in that aspect are printed in bold.
 </p>
 <p>
 <b>Listing 1:</b> The <code>DRIVER_OBJECT</code> structure<br/>
@@ -49,7 +49,7 @@ The <code>MajorFunction</code> array defines all callback routines responsible f
 </p>
 <h2><i>StartIo</i> and fast I/O</h2>
 <p>
-Driver's <i>StartIo</i> can be used to serialize request targetted at certain device or driver. Its signature reflects the <code>DRIVER_DISPATCH</code> type, howerver, there are some differences from callbacks stored inside the <code>MajorFunction</code> array:
+Driver's <i>StartIo</i> can be used to serialize request targeted at certain device or driver. Its signature reflects the <code>DRIVER_DISPATCH</code> type, however, there are some differences from callbacks stored inside the <code>MajorFunction</code> array:
 </p>
 <ul>
 <li>there may be at most one StartIo routine defined per driver, thus serving all types of requests,</li>
@@ -58,11 +58,11 @@ Driver's <i>StartIo</i> can be used to serialize request targetted at certain de
 <li>the routine is optional, the driver can decide not to define any. When a driver decides not to define one of its IRP callbacks, the callback points to a default handler inside the kernel, called <b>IopInvalidDeviceRequest</b>.</li>
 </ul>
 <p>
-If a driver decides to support also fast I/O method of communication (which is completely optional unless the driver is a file system or file system filter), itd <i>DriverEntry</i> routine allocates a <code>FAST_IO_DISPATCH</code> structure and stores its address in the <code>FastIoDispatch</code> field of its driver object structure. The <code>FAST_IO_DISPATCH</code> structure consists of various callbacks with various signatures. The callbacks are invoked at various times and places. If the driver does not support fast I/O, it just leaves the <code>FastIoDispatch</code> field as is.
+If a driver decides to support also fast I/O method of communication (which is completely optional unless the driver is a file system or file system filter), the <i>DriverEntry</i> routine allocates a <code>FAST_IO_DISPATCH</code> structure and stores its address in the <code>FastIoDispatch</code> field of its driver object structure. The <code>FAST_IO_DISPATCH</code> structure consists of various callbacks with various signatures. The callbacks are invoked at various times and places. If the driver does not support fast I/O, it just leaves the <code>FastIoDispatch</code> field as is.
 </p>
 <h2>AddDevice</h2>
 <p>
-When a driver supports Plug&Play (PnP), it needs to be informed when a device of interesting type is connected to the computer (either physically or virually). This purpose is served by the <i>AddDevice</i> routine which is stored in an extension of the driver object (address of the extension is stored in the <code>DriverExtension</code> field). Definition of the driver extension structure and signature of the <i>AddDevice</i> routine are described in Listing 3.
+When a driver supports Plug&Play (PnP), it needs to be informed when a device of interesting type is connected to the computer (either physically or virtually). This purpose is served by the <i>AddDevice</i> routine which is stored in an extension of the driver object (address of the extension is stored in the <code>DriverExtension</code> field). Definition of the driver extension structure and signature of the <i>AddDevice</i> routine are described in Listing 3.
 </p>
 <p><b>Listing 3:</b> Structure of the driver extension and signature of the <i>AddDevice</i> routine<br/>
 <code><pre>
