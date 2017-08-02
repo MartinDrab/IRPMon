@@ -767,7 +767,7 @@ VOID HookAndMonitor(int argc, PWCHAR *argv)
 				for (auto it = hookedDrivers.begin(); it != hookedDrivers.end(); ++it) {
 					err = IRPMonDllUnhookDriver(*it);
 					if (err != ERROR_SUCCESS)
-						printf("ERROR: Unable to unhook the 0x%p driver\n", *it, err);
+						printf("ERROR: Unable to unhook the 0x%p driver: %u\n", *it, err);
 				}
 			}
 		}
