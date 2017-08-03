@@ -4,6 +4,7 @@
 #include "preprocessor.h"
 #include "allocator.h"
 #include "kernel-shared.h"
+#include "utils-dym-array.h"
 #include "utils.h"
 
 #undef DEBUG_TRACE_ENABLED
@@ -50,96 +51,41 @@ __declspec(dllimport) POBJECT_TYPE *IoDriverObjectType;
 /************************************************************************/
 
 
-NTSTATUS _GetDeviceGUIDProperty(PDEVICE_OBJECT DeviceObject, DEVICE_REGISTRY_PROPERTY Property, PGUID Value)
-{
-   ULONG ReturnLength = 0;
-   NTSTATUS Status = STATUS_UNSUCCESSFUL;
-   DEBUG_ENTER_FUNCTION("DeviceObject=0x%p; Property=%u; Value=0x%p", DeviceObject, Property, Value);
 
-   RtlZeroMemory(Value, sizeof(GUID));
-   Status = IoGetDeviceProperty(DeviceObject, Property, sizeof(GUID), Value, &ReturnLength);
-   if (Status == STATUS_INVALID_DEVICE_REQUEST ||
-      Status == STATUS_OBJECT_NAME_NOT_FOUND)
-      Status = STATUS_SUCCESS;
-
-   DEBUG_EXIT_FUNCTION("0x%x", Status);
-   return Status;
-}
-
-NTSTATUS _GetWCharDeviceProperty(PDEVICE_OBJECT DeviceObject, DEVICE_REGISTRY_PROPERTY Property, PWCHAR *Buffer, PULONG BufferLength)
-{
-   NTSTATUS Status = STATUS_UNSUCCESSFUL;
-   PVOID Tmp = NULL;
-   ULONG TmpSize = 64;
-   DEBUG_ENTER_FUNCTION("DeviceObject=0x%p; Property=%u; Buffer=0x%p; BufferLength=0x%p", DeviceObject, Property, Buffer, BufferLength);
-
-   do {
-      if (Tmp != NULL) {
-         HeapMemoryFree(Tmp);
-         Tmp = NULL;
-      }
-
-      Tmp = HeapMemoryAlloc(PagedPool, TmpSize);
-      if (Tmp != NULL) {
-         Status = IoGetDeviceProperty(DeviceObject, Property, TmpSize, Tmp, &TmpSize);
-         if (NT_SUCCESS(Status)) {
-            *BufferLength = TmpSize;
-            *Buffer = (PWCHAR)Tmp;
-         }
-      } else Status = STATUS_INSUFFICIENT_RESOURCES;
-   } while (Status == STATUS_BUFFER_TOO_SMALL);
-
-   if (!NT_SUCCESS(Status)) {
-      if (Tmp != NULL)
-         HeapMemoryFree(Tmp);
-
-      if (Status == STATUS_INVALID_DEVICE_REQUEST || 
-         Status == STATUS_OBJECT_NAME_NOT_FOUND) {
-            *BufferLength = 0;
-            Status = STATUS_SUCCESS;
-      } else {
-         *Buffer = NULL;
-         *BufferLength = 0;
-      }
-   }
-
-   DEBUG_EXIT_FUNCTION("0x%x, *Buffer=0x%p, *BufferLength=%u", Status, *Buffer, *BufferLength);
-   return Status;
-}
 
 
 
 VOID _ReleaseDriverArray(PDRIVER_OBJECT *DriverArray, SIZE_T DriverCount)
 {
-   ULONG i = 0;
-   DEBUG_ENTER_FUNCTION("DriverArray=0x%p; DriverCount=%u", DriverArray, DriverCount);
+	DEBUG_ENTER_FUNCTION("DriverArray=0x%p; DriverCount=%u", DriverArray, DriverCount);
 
-   if (DriverCount > 0) {
-      for (i = 0; i < DriverCount; ++i)
-         ObDereferenceObject(DriverArray[i]);
+	if (DriverCount > 0) {
+		for (ULONG i = 0; i < DriverCount; ++i)
+			ObDereferenceObject(DriverArray[i]);
 
-      HeapMemoryFree(DriverArray);
-   }
+		HeapMemoryFree(DriverArray);
+	}
 
-   DEBUG_EXIT_FUNCTION_VOID();
-   return;
+	DEBUG_EXIT_FUNCTION_VOID();
+	return;
 }
+
 
 VOID _ReleaseDeviceArray(PDEVICE_OBJECT *DeviceArray, SIZE_T ArrayLength)
 {
-   ULONG i = 0;
-   DEBUG_ENTER_FUNCTION("DeviceArray=0x%p; ArrayLength=%u", DeviceArray, ArrayLength);
+	DEBUG_ENTER_FUNCTION("DeviceArray=0x%p; ArrayLength=%u", DeviceArray, ArrayLength);
 
-   if (ArrayLength > 0) {
-      for (i = 0; i < ArrayLength; ++i)
-         ObDereferenceObject(DeviceArray[i]);
+	if (ArrayLength > 0) {
+		for (ULONG i = 0; i < ArrayLength; ++i)
+			ObDereferenceObject(DeviceArray[i]);
 
-      HeapMemoryFree(DeviceArray);
-   }
+		HeapMemoryFree(DeviceArray);
+	}
 
-   DEBUG_EXIT_FUNCTION_VOID();
-   return;
+	DEBUG_EXIT_FUNCTION_VOID();
+	return;
 }
+
 
 NTSTATUS _GetObjectName(PVOID Object, PUNICODE_STRING Name)
 {
@@ -184,174 +130,127 @@ NTSTATUS _GetObjectName(PVOID Object, PUNICODE_STRING Name)
 
 static NTSTATUS _AppendDriverNameToDirectory(PUNICODE_STRING Dest, PUNICODE_STRING Src1, PUNICODE_STRING Src2)
 {
-   NTSTATUS Status = STATUS_UNSUCCESSFUL;
-   DEBUG_ENTER_FUNCTION("Dest=0x%p; Src1=%S; Src2=%S", Dest, Src1->Buffer, Src2->Buffer);
+	NTSTATUS Status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION("Dest=0x%p; Src1=%S; Src2=%S", Dest, Src1->Buffer, Src2->Buffer);
 
-   Dest->Length = Src1->Length + sizeof(WCHAR) + Src2->Length;
-   Dest->MaximumLength = Dest->Length;
-   Dest->Buffer = (PWSTR)HeapMemoryAlloc(PagedPool, Dest->Length + sizeof(WCHAR));
-   if (Dest->Buffer != NULL) {
-      RtlZeroMemory(Dest->Buffer, Dest->Length + sizeof(WCHAR));
-      RtlCopyMemory(Dest->Buffer, Src1->Buffer, Src1->Length);
-      Dest->Buffer[Src1->Length / sizeof(WCHAR)] = L'\\';
-      RtlCopyMemory(&Dest->Buffer[(Src1->Length / sizeof(WCHAR)) + 1], Src2->Buffer, Src2->Length);
-      Status = STATUS_SUCCESS;
-   } else Status = STATUS_INSUFFICIENT_RESOURCES;
+	Dest->Length = Src1->Length + sizeof(WCHAR) + Src2->Length;
+	Dest->MaximumLength = Dest->Length;
+	Dest->Buffer = (PWSTR)HeapMemoryAlloc(PagedPool, Dest->Length + sizeof(WCHAR));
+	if (Dest->Buffer != NULL) {
+		RtlZeroMemory(Dest->Buffer, Dest->Length + sizeof(WCHAR));
+		RtlCopyMemory(Dest->Buffer, Src1->Buffer, Src1->Length);
+		Dest->Buffer[Src1->Length / sizeof(WCHAR)] = L'\\';
+		RtlCopyMemory(&Dest->Buffer[(Src1->Length / sizeof(WCHAR)) + 1], Src2->Buffer, Src2->Length);
+		Status = STATUS_SUCCESS;
+	} else Status = STATUS_INSUFFICIENT_RESOURCES;
 
-   DEBUG_EXIT_FUNCTION("0x%x, *Dest=%S", Status, Dest->Buffer);
-   return Status;
+	DEBUG_EXIT_FUNCTION("0x%x, *Dest=%S", Status, Dest->Buffer);
+	return Status;
 }
 
 
 NTSTATUS _GetDriversInDirectory(PUNICODE_STRING Directory, PDRIVER_OBJECT **DriverArray, PSIZE_T DriverCount)
 {
-   SIZE_T TmpDriverCount = 0;
-   PDRIVER_OBJECT *TmpDriverArray = NULL;
-   HANDLE DirectoryHandle;
-   OBJECT_ATTRIBUTES ObjectAttributes;
-   NTSTATUS Status = STATUS_UNSUCCESSFUL;
-   UNICODE_STRING DriverTypeStr;
-   DEBUG_ENTER_FUNCTION("Directory=%S; DriverArray=0x%p; DriverCount=0x%p", Directory->Buffer, DriverArray, DriverCount);
+	SIZE_T tmpDriverCount = 0;
+	PDRIVER_OBJECT *tmpDriverArray = NULL;
+	HANDLE hDirectory = NULL;
+	PUTILS_DYM_ARRAY driverArray = NULL;
+	OBJECT_ATTRIBUTES oa;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	UNICODE_STRING uDriverTypeString;
+	DEBUG_ENTER_FUNCTION("Directory=%S; DriverArray=0x%p; DriverCount=0x%p", Directory->Buffer, DriverArray, DriverCount);
 
-   *DriverCount = 0;
-   *DriverArray = NULL;
-   RtlInitUnicodeString(&DriverTypeStr, L"Driver");
-   InitializeObjectAttributes(&ObjectAttributes, Directory, OBJ_CASE_INSENSITIVE, NULL, NULL);
-   Status = ZwOpenDirectoryObject(&DirectoryHandle, DIRECTORY_QUERY, &ObjectAttributes);
-   if (NT_SUCCESS(Status)) {
-      ULONG QueryContext = 0;
-      UCHAR Buffer [1024];
-      POBJECT_DIRECTORY_INFORMATION DirInfo = (POBJECT_DIRECTORY_INFORMATION)&Buffer;
+	*DriverCount = 0;
+	*DriverArray = NULL;
+	status = DymArrayCreate(PagedPool, &driverArray);
+	if (NT_SUCCESS(status)) {
+		RtlInitUnicodeString(&uDriverTypeString, L"Driver");
+		InitializeObjectAttributes(&oa, Directory, OBJ_CASE_INSENSITIVE, NULL, NULL);
+		status = ZwOpenDirectoryObject(&hDirectory, DIRECTORY_QUERY, &oa);
+		if (NT_SUCCESS(status)) {
+			ULONG QueryContext = 0;
+			UCHAR Buffer[1024];
+			POBJECT_DIRECTORY_INFORMATION DirInfo = (POBJECT_DIRECTORY_INFORMATION)&Buffer;
 
-      do {
-         RtlZeroMemory(&Buffer, sizeof(Buffer));
-         Status = ZwQueryDirectoryObject(DirectoryHandle, DirInfo, sizeof(Buffer), TRUE, FALSE, &QueryContext, NULL);
-         if (NT_SUCCESS(Status)) {
-            if (RtlCompareUnicodeString(&DirInfo->TypeName, &DriverTypeStr, TRUE) == 0) {
-               UNICODE_STRING FullDriverName;
+			do {
+				RtlZeroMemory(&Buffer, sizeof(Buffer));
+				status = ZwQueryDirectoryObject(hDirectory, DirInfo, sizeof(Buffer), TRUE, FALSE, &QueryContext, NULL);
+				if (NT_SUCCESS(status)) {
+					if (RtlEqualUnicodeString(&DirInfo->TypeName, &uDriverTypeString, TRUE)) {
+						UNICODE_STRING FullDriverName;
 
-               Status = _AppendDriverNameToDirectory(&FullDriverName, Directory, &DirInfo->Name);
-               if (NT_SUCCESS(Status)) {
-                  PDRIVER_OBJECT DriverPtr = NULL;
+						status = _AppendDriverNameToDirectory(&FullDriverName, Directory, &DirInfo->Name);
+						if (NT_SUCCESS(status)) {
+							PDRIVER_OBJECT DriverPtr = NULL;
 
-                  Status = ObReferenceObjectByName(&FullDriverName, OBJ_CASE_INSENSITIVE, NULL, GENERIC_READ, *IoDriverObjectType, KernelMode, NULL, (PVOID *)&DriverPtr);
-                  if (NT_SUCCESS(Status)) {
-                     PDRIVER_OBJECT *Tmp = NULL;
+							status = ObReferenceObjectByName(&FullDriverName, OBJ_CASE_INSENSITIVE, NULL, GENERIC_READ, *IoDriverObjectType, KernelMode, NULL, (PVOID *)&DriverPtr);
+							if (NT_SUCCESS(status)) {
+								status = DymArrayPushBack(driverArray, DriverPtr);
+								if (!NT_SUCCESS(status))
+									ObDereferenceObject(DriverPtr);
+							}
 
-                     Tmp = (PDRIVER_OBJECT *)HeapMemoryAlloc(PagedPool, (TmpDriverCount + 1) * sizeof(PDRIVER_OBJECT));
-                     if (Tmp != NULL) {
-                        RtlCopyMemory(Tmp, TmpDriverArray, TmpDriverCount * sizeof(PDRIVER_OBJECT));
-                        Tmp[TmpDriverCount] = DriverPtr;
-                        if (TmpDriverArray != NULL)
-                           HeapMemoryFree(TmpDriverArray);
+							HeapMemoryFree(FullDriverName.Buffer);
+						}
+					}
+				}
+			} while (NT_SUCCESS(status));
 
-                        TmpDriverArray = Tmp;
-                        ++TmpDriverCount;
-                     } else Status = STATUS_INSUFFICIENT_RESOURCES;
+			if (status == STATUS_NO_MORE_ENTRIES) {
+				tmpDriverCount = DymArrayLength(driverArray);
+				tmpDriverArray = HeapMemoryAllocPaged(tmpDriverCount*sizeof(PDRIVER_OBJECT));
+				if (tmpDriverArray != NULL) {
+					for (SIZE_T i = 0; i < DymArrayLength(driverArray); ++i)
+						tmpDriverArray[i] = (PDRIVER_OBJECT)DymArrayItem(driverArray, i);
 
-                     if (Tmp == NULL)
-                        ObDereferenceObject(DriverPtr);
-                  }
+					*DriverCount = tmpDriverCount;
+					*DriverArray = tmpDriverArray;
+					status = STATUS_SUCCESS;
+				} else status = STATUS_INSUFFICIENT_RESOURCES;
+			}
 
-                  HeapMemoryFree(FullDriverName.Buffer);
-               }
-            }
-         }
-      } while (NT_SUCCESS(Status));
+			ZwClose(hDirectory);
+		}
 
-      if (Status == STATUS_NO_MORE_ENTRIES) {
-         *DriverCount = TmpDriverCount;
-         *DriverArray = TmpDriverArray;
-         Status = STATUS_SUCCESS;
-      } else _ReleaseDriverArray(TmpDriverArray, TmpDriverCount);
+		if (!NT_SUCCESS(status)) {
+			for (SIZE_T i = 0; i < DymArrayLength(driverArray); ++i)
+				ObDereferenceObject(DymArrayItem(driverArray, i));
+		}
 
-      ZwClose(DirectoryHandle);
-   } else {
-      DEBUG_ERROR("ERROR: ZwOpenDirectoryObject: 0x%x", Status);
-   }
+		DymArrayDestroy(driverArray);
+	}
 
-   DEBUG_EXIT_FUNCTION("0x%x, *DriverArray=0x%p, *DriverCount=%u", Status, *DriverArray, *DriverCount);
-   return Status;
+	DEBUG_EXIT_FUNCTION("0x%x, *DriverArray=0x%p, *DriverCount=%zu", status, *DriverArray, *DriverCount);
+	return status;
 }
 
-NTSTATUS _GetLowerUpperDevices(PDEVICE_OBJECT DeviceObject, BOOLEAN Upper, PDEVICE_OBJECT **DeviceArray, PSIZE_T ArrayLength)
-{
-   PDEVICE_OBJECT *TmpDeviceArray = NULL;
-   SIZE_T TmpArrayLength = 0;
-   NTSTATUS Status = STATUS_UNSUCCESSFUL;
-   PDEVICE_OBJECT TmpDeviceObject = NULL;
-   PDEVICE_OBJECT OldTmpDeviceObject = NULL;
-   DEBUG_ENTER_FUNCTION("DeviceObject=0x%p; Upper=%u; DeviceArray=0x%p; ArrayLength=0x%p", DeviceObject, Upper, DeviceArray, ArrayLength);
-
-   *DeviceArray = NULL;
-   *ArrayLength = 0;
-   TmpDeviceObject = Upper ? 
-      IoGetAttachedDeviceReference(DeviceObject) :
-      IoGetLowerDeviceObject(DeviceObject);
-
-   Status = STATUS_SUCCESS;
-   while (((Upper && TmpDeviceObject != DeviceObject) || (!Upper && TmpDeviceObject != NULL))) {
-      PDEVICE_OBJECT *Tmp = NULL;
-
-      OldTmpDeviceObject = TmpDeviceObject;
-      Tmp = (PDEVICE_OBJECT *)HeapMemoryAlloc(PagedPool, (TmpArrayLength + 1) * sizeof(PDEVICE_OBJECT));
-      if (Tmp != NULL) {
-         RtlCopyMemory(Tmp, TmpDeviceArray, TmpArrayLength * sizeof(PDEVICE_OBJECT));
-         Tmp[TmpArrayLength] = OldTmpDeviceObject;
-         TmpArrayLength++;
-         if (TmpDeviceArray != NULL)
-            HeapMemoryFree(TmpDeviceArray);
-
-         TmpDeviceArray = Tmp;
-      } else {
-         ObDereferenceObject(OldTmpDeviceObject);
-         Status = STATUS_INSUFFICIENT_RESOURCES;
-         break;
-      }
-
-      TmpDeviceObject = IoGetLowerDeviceObject(TmpDeviceObject);
-   }
-
-   if (NT_SUCCESS(Status)) {
-      *DeviceArray = TmpDeviceArray;
-      *ArrayLength = TmpArrayLength;
-      if (TmpDeviceObject == DeviceObject)
-         ObDereferenceObject(TmpDeviceObject);
-   }
-
-   if (!NT_SUCCESS(Status))
-      _ReleaseDeviceArray(TmpDeviceArray, TmpArrayLength);
-
-   DEBUG_EXIT_FUNCTION("0x%x, *DeviceArray=0x%p, *ArrayLength=%u", Status, *DeviceArray, *ArrayLength);
-   return Status;
-}
 
 NTSTATUS _EnumDriverDevices(PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT **DeviceArray, PULONG DeviceArrayLength)
 {
-   ULONG TmpArrayLength = 0;
-   PDEVICE_OBJECT *TmpDeviceArray = NULL;
-   NTSTATUS Status = STATUS_SUCCESS;
-   DEBUG_ENTER_FUNCTION("DriverObject=0x%p; DeviceArray=0x%p; DeviceArrayLength=0x%p", DriverObject, DeviceArray, DeviceArrayLength);
+	ULONG TmpArrayLength = 0;
+	PDEVICE_OBJECT *TmpDeviceArray = NULL;
+	NTSTATUS Status = STATUS_SUCCESS;
+	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; DeviceArray=0x%p; DeviceArrayLength=0x%p", DriverObject, DeviceArray, DeviceArrayLength);
 
-   do {
-      Status = IoEnumerateDeviceObjectList(DriverObject, TmpDeviceArray, TmpArrayLength * sizeof(PDEVICE_OBJECT), &TmpArrayLength);
-      if (Status == STATUS_BUFFER_TOO_SMALL) {
-         if (TmpDeviceArray != NULL)
-            HeapMemoryFree(TmpDeviceArray);
+	do {
+		Status = IoEnumerateDeviceObjectList(DriverObject, TmpDeviceArray, TmpArrayLength * sizeof(PDEVICE_OBJECT), &TmpArrayLength);
+		if (Status == STATUS_BUFFER_TOO_SMALL) {
+			if (TmpDeviceArray != NULL)
+				HeapMemoryFree(TmpDeviceArray);
 
-         TmpDeviceArray = (PDEVICE_OBJECT *)HeapMemoryAlloc(NonPagedPool, TmpArrayLength * sizeof(PDEVICE_OBJECT));
-         if (TmpDeviceArray == NULL)
-            Status = STATUS_INSUFFICIENT_RESOURCES;
-      }
-   } while (Status == STATUS_BUFFER_TOO_SMALL);
+			TmpDeviceArray = (PDEVICE_OBJECT *)HeapMemoryAlloc(NonPagedPool, TmpArrayLength * sizeof(PDEVICE_OBJECT));
+			if (TmpDeviceArray == NULL)
+				Status = STATUS_INSUFFICIENT_RESOURCES;
+		}
+	} while (Status == STATUS_BUFFER_TOO_SMALL);
 
-   if (NT_SUCCESS(Status)) {
-      *DeviceArrayLength = TmpArrayLength;
-      *DeviceArray = TmpDeviceArray;
-   }
+	if (NT_SUCCESS(Status)) {
+		*DeviceArrayLength = TmpArrayLength;
+		*DeviceArray = TmpDeviceArray;
+	}
 
-   DEBUG_EXIT_FUNCTION("0x%x, *DeviceArray=0x%p, *DeviceArrayLength=%u", Status, *DeviceArray, *DeviceArrayLength);
-   return Status;
+	DEBUG_EXIT_FUNCTION("0x%x, *DeviceArray=0x%p, *DeviceArrayLength=%u", Status, *DeviceArray, *DeviceArrayLength);
+	return Status;
 }
 
 
@@ -467,6 +366,7 @@ static NTSTATUS _DeviceByNameCondition(PDEVICE_OBJECT DeviceObject, PVOID Contex
    return Status;
 }
 
+
 static NTSTATUS _DeviceByAddressCondition(PDEVICE_OBJECT DeviceObject, PVOID Context, PVOID ReturnBuffer, ULONG ReturnBufferLength)
 {                     
 	PDEVICE_OBJECT targetDeviceAddress = (PDEVICE_OBJECT)Context;
@@ -479,32 +379,6 @@ static NTSTATUS _DeviceByAddressCondition(PDEVICE_OBJECT DeviceObject, PVOID Con
 		Status = STATUS_SUCCESS;
 
 	return Status;
-}
-
-static NTSTATUS _FileSystemDeviceForVolume(PDEVICE_OBJECT FileSystemDevice, PVOID Context, PVOID ReturnBuffer, ULONG ReturnBufferLength)
-{
-   NTSTATUS Status = STATUS_UNSUCCESSFUL;
-   PDEVICE_OBJECT DiskDevice = NULL;
-   DEBUG_ENTER_FUNCTION("FileSystemDevice=0x%p; Context=0x%p; ReturnBuffer=0x%p; ReturnBufferLength=%u", FileSystemDevice, Context, ReturnBuffer, ReturnBufferLength);
-
-   UNREFERENCED_PARAMETER(ReturnBufferLength);
-   UNREFERENCED_PARAMETER(ReturnBuffer);
-
-   Status = IoGetDiskDeviceObject(FileSystemDevice, &DiskDevice);
-   if (NT_SUCCESS(Status)) {
-      DEBUG_PRINT_LOCATION("Disk device object: 0x%p", DiskDevice);
-      if (DiskDevice == Context) {
-         Status = STATUS_SUCCESS;
-      } else Status = STATUS_NOT_FOUND;
-
-      ObDereferenceObject(DiskDevice);
-   } else {
-     DEBUG_PRINT_LOCATION("IoGetDiskDeviceObject: 0x%x", Status);
-      Status = STATUS_NOT_FOUND;
-   }
-
-   DEBUG_EXIT_FUNCTION("0x%x", Status);
-   return Status;
 }
 
 
@@ -522,6 +396,7 @@ NTSTATUS _GetDeviceAddress(PUNICODE_STRING DeviceName, BOOLEAN SearchDrivers, BO
    return Status;
 }
 
+
 NTSTATUS VerifyDeviceByAddress(PVOID Address, BOOLEAN SearchDrivers, BOOLEAN SearchFileSystems, PDEVICE_OBJECT *Object)
 {
 	NTSTATUS Status = STATUS_UNSUCCESSFUL;
@@ -534,76 +409,16 @@ NTSTATUS VerifyDeviceByAddress(PVOID Address, BOOLEAN SearchDrivers, BOOLEAN Sea
 }
 
 
-NTSTATUS _GetFileSystemDeviceForVolume(PDEVICE_OBJECT VolumeDevice, PDEVICE_OBJECT *FileSystemDevice)
-{
-   NTSTATUS Status = STATUS_UNSUCCESSFUL;
-   DEBUG_ENTER_FUNCTION("VolumeDevice=0x%p; FileSystemDevice=0x%p", VolumeDevice, FileSystemDevice);
-
-   Status = _GetDeviceAddressByCondition(_FileSystemDeviceForVolume, FALSE, TRUE, VolumeDevice, FileSystemDevice, NULL, 0);
-
-   DEBUG_EXIT_FUNCTION("0x%x, *FileSystemDevice=0x%p", Status, *FileSystemDevice);
-   return Status;
-}
-
-
-VOID LogError(PDRIVER_OBJECT DriverObject, NTSTATUS Status)
-{
-   PIO_ERROR_LOG_PACKET packet = NULL;
-
-   packet = IoAllocateErrorLogEntry(DriverObject, sizeof(IO_ERROR_LOG_MESSAGE));
-   packet->ErrorCode = Status;
-   packet->FinalStatus = Status;
-   packet->DumpDataSize = 0;
-   packet->NumberOfStrings = 0;
-   IoWriteErrorLogEntry(packet);
-
-   return;
-}
-
-NTSTATUS QueryDeviceRelations(PDEVICE_OBJECT DeviceObject, DEVICE_RELATION_TYPE RelationType, PDEVICE_RELATIONS *Relations)
-{
-   KEVENT event;
-   PIRP irp = NULL;
-   IO_STATUS_BLOCK statusBlock;
-   PIO_STACK_LOCATION irpStack = NULL;
-   NTSTATUS status = STATUS_UNSUCCESSFUL;
-   DEBUG_ENTER_FUNCTION("DeviceObject=0x%p; RelationType=%u; Relations=0x%p", DeviceObject, RelationType, Relations);
-
-   KeInitializeEvent(&event, NotificationEvent, FALSE);
-   irp = IoBuildSynchronousFsdRequest(IRP_MJ_PNP, DeviceObject, NULL, 0, NULL, &event, &statusBlock);
-   if (irp != NULL) {
-      statusBlock.Information = 0;
-      statusBlock.Status = STATUS_NOT_SUPPORTED;
-      irpStack = IoGetNextIrpStackLocation(irp);
-      irpStack->MajorFunction = IRP_MJ_PNP;
-      irpStack->MinorFunction = IRP_MN_QUERY_DEVICE_RELATIONS;
-      irpStack->Parameters.QueryDeviceRelations.Type = RelationType;
-      status = IoCallDriver(DeviceObject, irp);
-      if (status == STATUS_PENDING) {
-         (VOID) KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, NULL);
-         status = statusBlock.Status;
-      }
-
-      if (status == STATUS_SUCCESS) 
-         *Relations = (PDEVICE_RELATIONS)statusBlock.Information;
-   } else status = STATUS_INSUFFICIENT_RESOURCES;
-   
-
-   DEBUG_EXIT_FUNCTION("0x%x, *Relations=0x%p", status, *Relations);
-   return status;
-}
-
 NTSTATUS GetDriverObjectByName(PUNICODE_STRING Name, PDRIVER_OBJECT *DriverObject)
 {
-   PDRIVER_OBJECT tmpDriverObject = NULL;
-   NTSTATUS status = STATUS_UNSUCCESSFUL;
-   DEBUG_ENTER_FUNCTION("Name=0x%p; DriverObject=0x%p", Name, DriverObject);
+	PDRIVER_OBJECT tmpDriverObject = NULL;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION("Name=0x%p; DriverObject=0x%p", Name, DriverObject);
 
-   status = ObReferenceObjectByName(Name, 0, NULL, 0, *IoDriverObjectType, KernelMode, NULL, &tmpDriverObject);
-   if (NT_SUCCESS(status)) {
-      *DriverObject = tmpDriverObject;
-   }
+	status = ObReferenceObjectByName(Name, 0, NULL, 0, *IoDriverObjectType, KernelMode, NULL, &tmpDriverObject);
+	if (NT_SUCCESS(status))
+		*DriverObject = tmpDriverObject;
 
-   DEBUG_EXIT_FUNCTION("0x%x, *DriverObject=0x%p", status, *DriverObject);
-   return status;
+	DEBUG_EXIT_FUNCTION("0x%x, *DriverObject=0x%p", status, *DriverObject);
+	return status;
 }
