@@ -85,11 +85,11 @@ NTSTATUS DymArrayCreate(POOL_TYPE PoolType, PUTILS_DYM_ARRAY *Array)
       tmpArray->ValidLength = 0;
       status = _DymArraySynchronizationAlloc(tmpArray);
       if (NT_SUCCESS(status)) {
-         tmpArray->Data = (PVOID *)HeapMemoryAlloc(tmpArray->PoolType, DYM_ARRAY_INITIAL_ALLOC_LENGTH * sizeof(PVOID));
-         if (tmpArray != NULL) {
+         tmpArray->Data = HeapMemoryAlloc(tmpArray->PoolType, DYM_ARRAY_INITIAL_ALLOC_LENGTH * sizeof(PVOID));
+         if (tmpArray->Data != NULL)
             *Array = tmpArray;
-         } else status = STATUS_INSUFFICIENT_RESOURCES;
-
+         else status = STATUS_INSUFFICIENT_RESOURCES;
+		 
          if (!NT_SUCCESS(status))
             _DymArraySynchronizationFree(tmpArray);
       }
