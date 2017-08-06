@@ -244,55 +244,6 @@ NTSTATUS RequestXXXDetectedCreate(ERequesttype Type, PDRIVER_OBJECT DriverObject
 }
 
 
-NTSTATUS RequestProcessCreatedCreated(HANDLE ProcessId, HANDLE ParentId, HANDLE CreatorId, PCUNICODE_STRING ImageName, PCUNICODE_STRING CommandLine, PREQUEST_PROCESS_CREATED *Request)
-{
-	NTSTATUS status = STATUS_UNSUCCESSFUL;
-	PREQUEST_PROCESS_CREATED tmpRequest = NULL;
-	SIZE_T tmpRequestSize = sizeof(REQUEST_PROCESS_CREATED);
-	DEBUG_ENTER_FUNCTION("ProcessId=0x%p; ParentId=0x%p; CreatorId=0x%p; ImageName=\"%wZ\"; CommandLine=\"%wZ\"; Request=0x%p", ProcessId, ParentId, CreatorId, ImageName, CommandLine, Request);
-
-	tmpRequestSize += ImageName->Length;
-	tmpRequestSize += CommandLine->Length;
-	tmpRequest = (PREQUEST_PROCESS_CREATED)HeapMemoryAllocNonPaged(tmpRequestSize);
-	if (tmpRequest != NULL) {
-		RequestHeaderInit(&tmpRequest->Header, NULL, NULL, ertProcessCreated);
-		tmpRequest->ProcessId = ProcessId;
-		tmpRequest->ParentId = ParentId;
-		tmpRequest->CreatorId = CreatorId;
-		tmpRequest->ImageNameOffset = sizeof(REQUEST_PROCESS_CREATED);
-		tmpRequest->ImageNameLength = ImageName->Length;
-		memcpy((PUCHAR)tmpRequest + tmpRequest->ImageNameOffset, ImageName->Buffer, tmpRequest->ImageNameLength);
-		tmpRequest->CommandLineOffset = tmpRequest->ImageNameOffset + tmpRequest->ImageNameLength;
-		tmpRequest->CommandLineLength = CommandLine->Length;
-		memcpy((PUCHAR)tmpRequest + tmpRequest->CommandLineOffset, CommandLine->Buffer, tmpRequest->CommandLineLength);
-		*Request = tmpRequest;
-		status = STATUS_SUCCESS;
-	} else status = STATUS_INSUFFICIENT_RESOURCES;
-
-	DEBUG_EXIT_FUNCTION("0x%x, *Request=0x%p", status, *Request);
-	return status;
-}
-
-
-NTSTATUS RequestProcessExittedCreate(HANDLE ProcessId, PREQUEST_PROCESS_EXITTED *Request)
-{
-	PREQUEST_PROCESS_EXITTED tmpRequest = NULL;
-	NTSTATUS status = STATUS_UNSUCCESSFUL;
-	DEBUG_ENTER_FUNCTION("ProcessId=0x%p; Request=0x%p", ProcessId, Request);
-
-	tmpRequest = (PREQUEST_PROCESS_EXITTED)HeapMemoryAllocNonPaged(sizeof(REQUEST_PROCESS_EXITTED));
-	if (tmpRequest != NULL) {
-		RequestHeaderInit(&tmpRequest->Header, NULL, NULL, ertProcessExitted);
-		tmpRequest->ProcessId = ProcessId;
-		*Request = tmpRequest;
-		status = STATUS_SUCCESS;
-	} else status = STATUS_INSUFFICIENT_RESOURCES;
-
-	DEBUG_EXIT_FUNCTION("0x%x, *Request=0x%p", status, *Request);
-	return status;
-}
-
-
 NTSTATUS RequestQueueGet(PREQUEST_HEADER Buffer, PULONG Length)
 {
 	ULONG reqSize = 0;

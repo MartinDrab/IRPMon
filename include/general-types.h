@@ -61,8 +61,6 @@ typedef enum _ERequestType {
 	ertStartIo,
 	ertDriverDetected,
 	ertDeviceDetected,
-	ertProcessCreated,
-	ertProcessExitted,
 } ERequesttype, *PERequestPype;
 
 /** Determines the type returned in the Result union of the @link(REQUEST_HEADER) structure. */
