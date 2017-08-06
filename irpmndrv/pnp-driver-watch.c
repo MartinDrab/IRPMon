@@ -351,7 +351,7 @@ static NTSTATUS _InstallUninstallFilterXP(_In_ PUNICODE_STRING ClassGuid, _In_ B
 }
 
 
-static NTSTATUS _QueryCallback(_In_ PREGMAN_VALUE_INFO ValueInfo, _In_opt_ PVOID Context)
+static NTSTATUS _QueryCallback(_Inout_ PREGMAN_VALUE_INFO ValueInfo, _In_opt_ PVOID Context)
 {
 	size_t newSize = 0;
 	BOOLEAN inserted = FALSE;
@@ -384,7 +384,7 @@ static NTSTATUS _QueryCallback(_In_ PREGMAN_VALUE_INFO ValueInfo, _In_opt_ PVOID
 }
 
 
-static NTSTATUS _SetCallback(_In_ PREGMAN_VALUE_INFO ValueInfo, _In_opt_ PVOID Context)
+static NTSTATUS _SetCallback(_Inout_ PREGMAN_VALUE_INFO ValueInfo, _In_opt_ PVOID Context)
 {
 	size_t newSize = 0;
 	BOOLEAN removed = FALSE;
