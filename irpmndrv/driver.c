@@ -28,6 +28,44 @@ static volatile LONG _openHandles = 0;
 /*                            HELPER FUNCTIONS                          */
 /************************************************************************/
 
+#if defined(_AMD64_) || defined(_IA64_)
+
+#define PROCESS_QUERY_INFORMATION			0x0400
+
+typedef NTSTATUS (NTAPI ZWQUERYINFORMATIONPROCESS)(
+	_In_      HANDLE           ProcessHandle,
+	_In_      PROCESSINFOCLASS ProcessInformationClass,
+	_Out_     PVOID            ProcessInformation,
+	_In_      ULONG            ProcessInformationLength,
+	_Out_opt_ PULONG           ReturnLength
+);
+
+__declspec(dllimport) ZWQUERYINFORMATIONPROCESS ZwQueryInformationProcess;
+
+
+static NTSTATUS _Wow64Check(void)
+{
+	HANDLE hProcess = NULL;
+	ULONG_PTR isWow64 = 0;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION_NO_ARGS();
+
+	status = ObOpenObjectByPointer(PsGetCurrentProcess(), OBJ_KERNEL_HANDLE, NULL, PROCESS_QUERY_INFORMATION, *PsProcessType, KernelMode, &hProcess);
+	if (NT_SUCCESS(status)) {
+		status = ZwQueryInformationProcess(hProcess, ProcessWow64Information, &isWow64, sizeof(isWow64), NULL);
+		if (NT_SUCCESS(status) && isWow64)
+			status = STATUS_NOT_SUPPORTED;
+
+		ZwClose(hProcess);
+	}
+
+	DEBUG_EXIT_FUNCTION("0x%x", status);
+	return status;
+}
+
+#endif
+
+
 NTSTATUS DriverCreateCleanup(PDEVICE_OBJECT DeviceObject, PIRP Irp)
 {
 	PIO_STACK_LOCATION irpStack = NULL;
@@ -47,9 +85,14 @@ NTSTATUS DriverCreateCleanup(PDEVICE_OBJECT DeviceObject, PIRP Irp)
 	ExReleaseResourceLite(&_createCloseLock);
 	KeLeaveCriticalRegion();
 	status = STATUS_SUCCESS;
-	if (irpStack->MajorFunction == IRP_MJ_CREATE)
-		Irp->IoStatus.Information = FILE_OPENED;
-	
+	if (irpStack->MajorFunction == IRP_MJ_CREATE) {
+#if defined(_AMD64_) || defined(_IA64_)
+		status = _Wow64Check();
+#endif
+		if (NT_SUCCESS(status))
+			Irp->IoStatus.Information = FILE_OPENED;
+	}
+
 	Irp->IoStatus.Status = status;
 	IoCompleteRequest(Irp, IO_NO_INCREMENT);
 
