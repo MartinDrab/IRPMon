@@ -563,13 +563,14 @@ NTSTATUS KeyRecordOnDeleteValue(_In_ PREGMAN_KEY_RECORD Record, _In_ PREG_DELETE
 }
 
 
-NTSTATUS KeyRecordOnQuery(_In_ PREGMAN_KEY_RECORD Record, PREG_QUERY_KEY_INFORMATION Info)
+NTSTATUS KeyRecordOnQuery(_In_ PREGMAN_KEY_RECORD Record, PREG_QUERY_KEY_INFORMATION Info, _Out_opt_ PBOOLEAN Bypass)
 {
 	ULONG retLength = 0;
 	PVOID keyInfo = NULL;
 	HANDLE keyHandle = NULL;
+	BOOLEAN emulated = TRUE;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
-	DEBUG_ENTER_FUNCTION("Record=0x%p; Info=0x%p", Record, Info);
+	DEBUG_ENTER_FUNCTION("Record=0x%p; Info=0x%p; Bypass=0x%p", Record, Info, Bypass);
 
 	status = ObOpenObjectByPointer(Info->Object, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, KEY_READ, NULL, KernelMode, &keyHandle);
 	if (NT_SUCCESS(status)) {
@@ -607,13 +608,18 @@ NTSTATUS KeyRecordOnQuery(_In_ PREGMAN_KEY_RECORD Record, PREG_QUERY_KEY_INFORMA
 							kci->MaxValueNameLen = maxValueNameLen;
 							kci->MaxValueDataLen = maxValueDataLen;
 						} break;
+						default:
+							emulated = FALSE;
+							break;
 					}
 
-					__try {
-						memcpy(Info->KeyInformation, keyInfo, retLength);
-						*Info->ResultLength = retLength;
-					} __except (EXCEPTION_EXECUTE_HANDLER) {
-						status = GetExceptionCode();
+					if (emulated) {
+						__try {
+							memcpy(Info->KeyInformation, keyInfo, retLength);
+							*Info->ResultLength = retLength;
+						} __except (EXCEPTION_EXECUTE_HANDLER) {
+							status = GetExceptionCode();
+						}
 					}
 				}
 			} else if (status == STATUS_BUFFER_TOO_SMALL || status == STATUS_BUFFER_OVERFLOW) {
@@ -632,11 +638,9 @@ NTSTATUS KeyRecordOnQuery(_In_ PREGMAN_KEY_RECORD Record, PREG_QUERY_KEY_INFORMA
 		ZwClose(keyHandle);
 	}
 
-	if (!NT_SUCCESS(status)) {
-		DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, "QUERY: 0x%x\n", status);
-		DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, "  Key = %wZ\n", &Record->Item.Key.String);
-	}
+	if (NT_SUCCESS(status) && Bypass != NULL)
+		*Bypass = emulated;
 
-	DEBUG_EXIT_FUNCTION("0x%x", status);
+	DEBUG_EXIT_FUNCTION("0x%x, *Bypass=%u", status, emulated);
 	return status;
 }

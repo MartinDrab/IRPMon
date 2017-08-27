@@ -42,7 +42,7 @@ static NTSTATUS _GetObjectName(_In_ PVOID Object, _Out_ POBJECT_NAME_INFORMATION
 
 	if (!NT_SUCCESS(status)) {
 		DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, "Failed to retrieve name for 0x%p: 0x%x\n", Object, status);
-		__debugbreak();
+		KeBugCheckEx(0, status, (ULONG_PTR)Object, 0, 0);
 	}
 
 	return status;
@@ -76,6 +76,8 @@ static NTSTATUS _GetKeyRecord(_In_ REG_NOTIFY_CLASS OpType, _In_opt_ PVOID Data,
 			case RegNtPreQueryKey:
 				keyObject = ((PREG_QUERY_KEY_INFORMATION)Data)->Object;
 				break;
+			default:
+				break;
 		}
 
 		if (keyObject != NULL) {
@@ -98,6 +100,7 @@ static NTSTATUS _GetKeyRecord(_In_ REG_NOTIFY_CLASS OpType, _In_opt_ PVOID Data,
 
 static NTSTATUS _RegistryCallback(_In_ PVOID Context, _In_opt_ PVOID Argument1, _In_opt_ PVOID Argument2)
 {
+	BOOLEAN emulated = FALSE;
 	PREGMAN_KEY_RECORD keyRecord = NULL;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	REG_NOTIFY_CLASS opType = (REG_NOTIFY_CLASS)PtrToUlong(Argument1);
@@ -133,9 +136,11 @@ static NTSTATUS _RegistryCallback(_In_ PVOID Context, _In_opt_ PVOID Argument1, 
 					status = STATUS_CALLBACK_BYPASS;
 				break;
 			case RegNtPreQueryKey:
-				status = KeyRecordOnQuery(keyRecord, Argument2);
-				if (NT_SUCCESS(status))
+				status = KeyRecordOnQuery(keyRecord, Argument2, &emulated);
+				if (NT_SUCCESS(status) && emulated)
 					status = STATUS_CALLBACK_BYPASS;
+				break;
+			default:
 				break;
 		}
 	
