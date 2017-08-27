@@ -224,7 +224,7 @@ static VOID _PoolFindUnfreedMemory(POOL_TYPE PoolType)
       DEBUG_PRINT_LOCATION("Pool type: %s", header->PoolType == NonPagedPool ? "nonpaged" : "paged");
       DEBUG_PRINT_LOCATION("Size:      %u", header->NumberOfBytes);
       DEBUG_PRINT_LOCATION("Allocated in function %s at line %u", header->Function, header->Line);
-      __debugbreak();
+//      __debugbreak();
       header = CONTAINING_RECORD(header->Entry.Flink, DEBUG_BLOCK_HEADER, Entry);
    }
 
