@@ -9,7 +9,7 @@ IRPMon allows the user to monitor PnP drivers that are not present in the kernel
 </p>
 <h2>Watching Classes</h2>
 <p>
-To watch for new devices of a certain device setup class, the user needs to select  the <b>Watch class...</b> item from the <b>File</b> menu. Then a form is displayed, allowing to specify the target class and a position for the IRPMon driver within its filters (Figure 1). The driver may be installed only once for each filter type (upper or lower) for a given class. The filter position determines which devices and drivers IRPMon would be able to detect and possibly monitor their activity. Effects of individual filter positions and types are summarized in Table 1. 
+To watch for new devices of a certain device setup class, the user needs to select  the <b>Watch class...</b> item from the <b>Action</b> menu. Then a form is displayed, allowing to specify the target class and a position for the IRPMon driver within its filters (Figure 1). The driver may be installed only once for each filter type (upper or lower) for a given class. The filter position determines which devices and drivers IRPMon would be able to detect and possibly monitor their activity. Effects of individual filter positions and types are summarized in Table 1. 
 </p>
 <p style='text-align: center'>
 <img src='class-watch.jpg' alt='The Add a Class Watch window' /><br/>
@@ -52,7 +52,7 @@ Class watches themselves do not automatically start monitoring of detected drive
 <b>Figure 2:</b> The <i>Watch for a Driver</i> window
 </p>
 <p>
-To add a driver name watch, the user needs to select the <b>Watch Driver</b> item from the <b>File</b> menu. A new dialog is displayed (Figure 2) that allows the user to specify the driver name in question (such as <i>\Driver\USBSTOR</i>) and monitoring settings for drivers matching the watch. Similarly to class watches, installed driver name matches appears under the <b>Watched drivers</b> submenu of the <b>File</b> menu and can be removed there. Removing a driver name watch, however, does not stop monitoring of drivers that it discovered. The user has to stop their monitoring the same way as in case of drivers she manually selected for monitoring.
+To add a driver name watch, the user needs to select the <b>Watch Driver...</b> item from the <b>Action</b> menu. A new dialog is displayed (Figure 2) that allows the user to specify the driver name in question (such as <i>\Driver\USBSTOR</i>) and monitoring settings for drivers matching the watch. Similarly to class watches, installed driver name matches appears under the <b>Watched drivers</b> submenu of the <b>File</b> menu and can be removed there. Removing a driver name watch, however, does not stop monitoring of drivers that it discovered. The user has to stop their monitoring the same way as in case of drivers she manually selected for monitoring.
 </p>
 <p>
 A newly added driver name watch has effect only for drivers and devices appearing after its creation. IRPMon does not search the device tree for drivers that are already present and their name matches the watch. Also, the current implementation of driver name watches does not support wildcards or regular expressions, and is case insensitive.

@@ -48,6 +48,7 @@ Type
     DriverMenuItem: TMenuItem;
     UnloadOnExitMenuItem: TMenuItem;
     UninstallOnExitMenuItem: TMenuItem;
+    Documentation1: TMenuItem;
     Procedure ClearMenuItemClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure CaptureEventsMenuItemClick(Sender: TObject);
@@ -62,6 +63,7 @@ Type
     procedure SortbyIDMenuItemClick(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure DriverMenuItemClick(Sender: TObject);
+    procedure Documentation1Click(Sender: TObject);
   Private
 {$IFDEF FPC}
     FAppEvents: TApplicationProperties;
@@ -97,7 +99,8 @@ Implementation
 {$R *.dfm}
 
 Uses
-  IniFiles, ListModel, HookProgressForm,
+  IniFiles, ShellAPI,
+  ListModel, HookProgressForm,
   Utils, TreeForm, RequestDetailsForm, AboutForm,
   ClassWatchAdd, ClassWatch, DriverNameWatchAddForm,
   WatchedDriverNames;
@@ -304,6 +307,16 @@ end;
 Procedure TMainFrm.ClearMenuItemClick(Sender: TObject);
 begin
 FModel.Clear;
+end;
+
+Procedure TMainFrm.Documentation1Click(Sender: TObject);
+Var
+  appDirectory : WideString;
+  helpFileName : WideString;
+begin
+appDirectory := ExtractFileDir(Application.ExeName);
+helpFileName := ExtractFilePath(Application.ExeName) + 'IRPMon.chm';
+ShellExecuteW(0, 'open', PWideChar(helpFileName), '', PWideChar(AppDirectory), SW_NORMAL);
 end;
 
 Procedure TMainFrm.DriverMenuItemClick(Sender: TObject);

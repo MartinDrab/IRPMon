@@ -129,6 +129,10 @@ object MainFrm: TMainFrm
     end
     object HelpMenuItem: TMenuItem
       Caption = 'Help'
+      object Documentation1: TMenuItem
+        Caption = 'Documentation...'
+        OnClick = Documentation1Click
+      end
       object AboutMenuItem: TMenuItem
         Caption = 'About IRPMon...'
         OnClick = AboutMenuItemClick
