@@ -576,6 +576,7 @@ Function IRPMonDllDriverNameWatchEnum(Var AArray:PDRIVER_NAME_WATCH_RECORD; Var 
 Procedure IRPMonDllDriverNameWatchEnumFree(AArray:PDRIVER_NAME_WATCH_RECORD; ACount:Cardinal); StdCall;
 
 
+Function IRPMonDllInitialized:LongBool; StdCall;
 Function IRPMonDllInitialize:Cardinal; StdCall;
 Procedure IRPMonDllFinalize; StdCall;
 
@@ -625,6 +626,7 @@ Function IRPMonDllDriverNameWatchEnum(Var AArray:PDRIVER_NAME_WATCH_RECORD; Var 
 Procedure IRPMonDllDriverNameWatchEnumFree(AArray:PDRIVER_NAME_WATCH_RECORD; ACount:Cardinal); StdCall; External LibraryName;
 
 
+Function IRPMonDllInitialized:LongBool; StdCall; External LibraryName;
 Function IRPMonDllInitialize:Cardinal; StdCall; External LibraryName;
 Procedure IRPMonDllFinalize; StdCall; External LibraryName;
 
@@ -668,7 +670,7 @@ Function IRPMonDllDriverNameWatchUnregister(ADriverName:PWideChar):Cardinal; Std
 Function IRPMonDllDriverNameWatchEnum(Var AArray:PDRIVER_NAME_WATCH_RECORD; Var ACount:Cardinal):Cardinal; StdCall; External LibraryName name '_IRPMonDllDriverNameWatchEnum@8';
 Procedure IRPMonDllDriverNameWatchEnumFree(AArray:PDRIVER_NAME_WATCH_RECORD; ACount:Cardinal); StdCall; External LibraryName name '_IRPMonDllDriverNameWatchEnumFree@8';
 
-
+Function IRPMonDllInitialized:LongBool; StdCall; External LibraryName name '_IRPMonDllInitialized@0';
 Function IRPMonDllInitialize:Cardinal; StdCall; External LibraryName name '_IRPMonDllInitialize@0';
 Procedure IRPMonDllFinalize; StdCall; External LibraryName name '_IRPMonDllFinalize@0';
 

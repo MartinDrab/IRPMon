@@ -438,6 +438,20 @@ IRPMONDLL_API VOID WINAPI IRPMonDllDriverNameWatchEnumFree(PDRIVER_NAME_WATCH_RE
 /*           INITIALIZATION AND FINALIZATION                            */
 /************************************************************************/
 
+
+/** @brief
+ *  Checks whether the IRPMon library is initialized.
+ *
+ *  @return
+ *  Returns a boolean value indicating whether the library is initialized.
+ *
+ *  @remark
+ *  The library is considered initialized if and only if a connection to the IRPMon
+ *  driver device is established.
+ */
+IRPMONDLL_API BOOL WINAPI IRPMonDllInitialized(VOID);
+
+
 /** Initializes the IRPMon library and connects the current process to the
  *  IRPMon driver.
  *

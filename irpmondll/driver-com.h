@@ -44,6 +44,7 @@ DWORD DriverComDriverNameWatchUnregister(PWCHAR DriverName);
 DWORD DriverComDriverNameWatchEnum(PDRIVER_NAME_WATCH_RECORD *Array, PULONG Count);
 VOID DriverComDriverNameWatchEnumFree(PDRIVER_NAME_WATCH_RECORD Array, ULONG Count);
 
+BOOL DriverComDeviceConnected(VOID);
 DWORD DriverComModuleInit(VOID);
 VOID DriverComModuleFinit(VOID);
 

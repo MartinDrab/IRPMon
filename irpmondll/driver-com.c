@@ -1039,6 +1039,12 @@ VOID DriverComDriverNameWatchEnumFree(PDRIVER_NAME_WATCH_RECORD Array, ULONG Cou
 /************************************************************************/
 
 
+BOOL DriverComDeviceConnected(VOID)
+{
+	return (_deviceHandle != INVALID_HANDLE_VALUE);
+}
+
+
 DWORD DriverComModuleInit(VOID)
 {
 	HMODULE HNtdll = NULL;

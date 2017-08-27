@@ -201,6 +201,17 @@ IRPMONDLL_API VOID WINAPI IRPMonDllDriverNameWatchEnumFree(PDRIVER_NAME_WATCH_RE
 /*                          INITIALIZATION AND FINALIZATION             */
 /************************************************************************/
 
+IRPMONDLL_API BOOL WINAPI IRPMonDllInitialized(VOID)
+{
+	BOOL ret = FALSE;
+	DEBUG_ENTER_FUNCTION_NO_ARGS();
+
+	ret = DriverComDeviceConnected();
+
+	DEBUG_EXIT_FUNCTION("%u", ret);
+	return ret;
+}
+
 IRPMONDLL_API DWORD WINAPI IRPMonDllInitialize(VOID)
 {
 	DWORD ret = ERROR_GEN_FAILURE;

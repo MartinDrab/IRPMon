@@ -226,8 +226,20 @@ FModel.
 FModel.ColumnUpdateEnd;
 FModel.CreateColumnsMenu(ColumnsMenuItem);
 FModel.SetDisplayer(RequestListView);
-EnumerateClassWatches;
-EnumerateDriverNameWatches;
+If IRPMonDllInitialized Then
+  begin
+  EnumerateClassWatches;
+  EnumerateDriverNameWatches;
+  end
+Else begin
+  SelectDriversDevicesMenuItem.Enabled := False;
+  WatchClassMenuItem.Enabled := False;
+  WatchDriverNameMenuItem.Enabled := False;
+
+  CaptureEventsMenuItem.Enabled := False;
+  RefreshNameCacheMenuItem.Enabled := False;
+  end;
+
 ReadSettings;
 end;
 
