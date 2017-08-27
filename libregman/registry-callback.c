@@ -40,10 +40,8 @@ static NTSTATUS _GetObjectName(_In_ PVOID Object, _Out_ POBJECT_NAME_INFORMATION
 		} else status = STATUS_INSUFFICIENT_RESOURCES;
 	}
 
-	if (!NT_SUCCESS(status)) {
+	if (!NT_SUCCESS(status))
 		DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, "Failed to retrieve name for 0x%p: 0x%x\n", Object, status);
-		KeBugCheckEx(0, status, (ULONG_PTR)Object, 0, 0);
-	}
 
 	return status;
 }
@@ -91,6 +89,8 @@ static NTSTATUS _GetKeyRecord(_In_ REG_NOTIFY_CLASS OpType, _In_opt_ PVOID Data,
 
 				HeapMemoryFree(nameInfo);
 			}
+
+			status = STATUS_SUCCESS;
 		}
 	}
 
