@@ -104,6 +104,7 @@ While I < FOpList.Count Do
   end;
 
 FOpList.Clear;
+FForm.CloseButton.Enabled := True;
 end;
 
 Constructor THookProgressThread.Create(ACreateSuspended:Boolean; AForm:THookProgressFrm; AOpList:TTaskOperationList);

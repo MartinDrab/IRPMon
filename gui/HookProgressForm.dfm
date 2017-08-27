@@ -30,6 +30,7 @@ object HookProgressFrm: THookProgressFrm
       Width = 65
       Height = 33
       Caption = 'Close'
+      Enabled = False
       TabOrder = 0
       OnClick = CloseButtonClick
     end
