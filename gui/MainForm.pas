@@ -616,10 +616,13 @@ Try
   iniFile := TIniFile.Create(ChangeFileExt(Application.ExeName, '.ini'));
   UnloadOnExitMenuItem.Checked := iniFIle.ReadBool('Driver', 'unload_on_exit', False);
   UninstallOnExitMenuItem.Checked := iniFIle.ReadBool('Driver', 'uninstall_on_exit', True);
-  CaptureEventsMenuItem.Checked := Not iniFile.ReadBool('General', 'CaptureEvents', False);
-  If Not CaptureEventsMenuItem.Checked Then
-    CaptureEventsMenuItemClick(CaptureEventsMenuItem)
-  Else CaptureEventsMenuItem.Checked := False;
+  If IRPMonDllInitialized Then
+    begin
+    CaptureEventsMenuItem.Checked := Not iniFile.ReadBool('General', 'CaptureEvents', False);
+    If Not CaptureEventsMenuItem.Checked Then
+      CaptureEventsMenuItemClick(CaptureEventsMenuItem)
+    Else CaptureEventsMenuItem.Checked := False;
+    end;
 
   FModel.ColumnUpdateBegin;
   For I := 0 To FModel.ColumnCount - 1 Do
