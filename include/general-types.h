@@ -152,6 +152,8 @@ typedef struct _REQUEST_IRP {
 	NTSTATUS IOSBStatus;
 	/** Value of the Irp->IoStatus.Information at time of IRP detection. */
 	ULONG_PTR IOSBInformation;
+	/** PID of the process originally requesting the operation. */
+	ULONG_PTR RequestorProcessId;
 } REQUEST_IRP, *PREQUEST_IRP;
 
 typedef struct _REQUEST_IRP_COMPLETION {
