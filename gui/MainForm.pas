@@ -225,7 +225,8 @@ FModel.
     ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctArg3), Ord(rlmctArg3), False, 75).
     ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctArg4), Ord(rlmctArg4), False, 75).
     ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctPreviousMode), Ord(rlmctPreviousMode)).
-    ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctRequestorMode), Ord(rlmctRequestorMode));
+    ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctRequestorMode), Ord(rlmctRequestorMode)).
+    ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctRequestorPID), Ord(rlmctRequestorPID));
 FModel.ColumnUpdateEnd;
 FModel.CreateColumnsMenu(ColumnsMenuItem);
 FModel.SetDisplayer(RequestListView);

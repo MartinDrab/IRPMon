@@ -288,6 +288,8 @@ Type
     IOSBStatus : Cardinal;
     (** Value of Irp->IoStatus.Information at time of IRP detection. **)
     IOSBInformation : NativeUInt;
+	  (** PID of the process originally requesting the operation. **)
+    RequestorProcessId : NativeUInt;
     end;
   REQUEST_IRP = _REQUEST_IRP;
   PREQUEST_IRP = ^REQUEST_IRP;

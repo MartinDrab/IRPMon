@@ -25,6 +25,7 @@ Type
     FThreadId : THandle;
     FIOSBStatus : Cardinal;
     FIOSBInformation : NativeUInt;
+    FRequestorProcessId : NativeUInt;
   Public
     Constructor Create(Var ARequest:REQUEST_IRP); Reintroduce;
 
@@ -49,6 +50,7 @@ Type
     Property ThreadId : THandle Read FThreadId;
     Property IOSBStatus : Cardinal Read FIOSBStatus;
     Property IOSBInformation : NativeUInt Read FIOSBInformation;
+    Property RequestorProcessId : NativeUInt Read FRequestorProcessId;
   end;
 
   TZeroArgIRPRequest = Class (TIRPRequest)
@@ -162,6 +164,7 @@ FIRPAddress := ARequest.IRPAddress;
 FIRPFlags := ARequest.IrpFlags;
 FFileObject := ARequest.FileObject;
 FArgs := ARequest.Args;
+FRequestorProcessId := ARequest.RequestorProcessId;
 end;
 
 
@@ -169,6 +172,7 @@ Function TIRPRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var
 begin
 Result := True;
 Case AColumnType Of
+  rlmctRequestorPID : AResult := Format('%d', [FRequestorProcessId]);
   rlmctSubType: AResult := Format('%s:%s', [MajorFunctionToString(FMajorFunction), MinorFunctionToString(FMajorFunction, FMinorFunction)]);
   rlmctIRPAddress: AResult := Format('0x%p', [FIRPAddress]);
   rlmctFileObject: AResult := Format('0x%p', [FFileObject]);

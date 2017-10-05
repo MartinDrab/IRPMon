@@ -35,13 +35,14 @@ Type
     rlmctPreviousMode,
     rlmctRequestorMode,
     rlmctIOSBStatus,
-    rlmctIOSBInformation);
+    rlmctIOSBInformation,
+    rlmctRequestorPID);
   PERequestListModelColumnType = ^ERequestListModelColumnType;
 
   RequestListModelColumnSet = Set Of ERequestListModelColumnType;
 
 Const
-  RequestListModelColumnNames : Array [0..Ord(rlmctIOSBInformation)] Of String = (
+  RequestListModelColumnNames : Array [0..Ord(rlmctRequestorPID)] Of String = (
     'ID',
     'Time',
     'Type',
@@ -64,7 +65,8 @@ Const
     'Previous mode',
     'Requestor mode',
     'IOSB.Status',
-    'IOSB.Information'
+    'IOSB.Information',
+    'Requestor PID'
   );
 
 Type
