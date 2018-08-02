@@ -93,12 +93,7 @@ NTSTATUS RegManInit(_In_ PDRIVER_OBJECT DriverObject, _In_ PUNICODE_STRING Regis
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"; Context=0x%p", DriverObject, RegistryPath, Context);
 
-	status = ValueRecordModuleInit(DriverObject, RegistryPath, Context);
-	if (NT_SUCCESS(status)) {
-		status = RegCallbackModuleInit(DriverObject, RegistryPath, Context);
-		if (!NT_SUCCESS(status))
-			ValueRecordModuleFinit(DriverObject, RegistryPath, Context);
-	}
+	status = RegCallbackModuleInit(DriverObject, RegistryPath, Context);
 
 	DEBUG_EXIT_FUNCTION("0x%x", status);
 	return status;
@@ -110,7 +105,6 @@ VOID RegManFinit(_In_ PDRIVER_OBJECT DriverObject, _In_opt_ PUNICODE_STRING Regi
 	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"; Context=0x%p", DriverObject, RegistryPath, Context);
 
 	RegCallbackModuleFinit(DriverObject, RegistryPath, Context);
-	ValueRecordModuleFinit(DriverObject, RegistryPath, Context);
 
 	DEBUG_EXIT_FUNCTION_VOID();
 	return;
