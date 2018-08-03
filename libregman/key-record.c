@@ -90,6 +90,11 @@ static NTSTATUS _KeyRecordGatherStatistics(PREGMAN_KEY_RECORD Record, PULONG Max
 				*MaxValueDataLen = dataLen;
 		}
 
+		if (status == STATUS_OBJECT_NAME_NOT_FOUND) {
+			*ValueCount--;
+			status = STATUS_SUCCESS;
+		}
+
 		if (!NT_SUCCESS(status))
 			break;
 	}
