@@ -74,6 +74,10 @@ static NTSTATUS _GetKeyRecord(_In_ REG_NOTIFY_CLASS OpType, _In_opt_ PVOID Data,
 			case RegNtPreQueryKey:
 				keyObject = ((PREG_QUERY_KEY_INFORMATION)Data)->Object;
 				break;
+			case RegNtPostSetValueKey:
+			case RegNtPostDeleteValueKey:
+				keyObject = ((PREG_POST_OPERATION_INFORMATION)Data)->Object;
+				break;
 			default:
 				break;
 		}
@@ -111,39 +115,34 @@ static NTSTATUS _RegistryCallback(_In_ PVOID Context, _In_opt_ PVOID Argument1, 
 	if (NT_SUCCESS(status) && keyRecord != NULL) {
 		switch (opType) {
 			case RegNtPreDeleteValueKey:
-				status = KeyRecordOnDeleteValue(keyRecord, Argument2);
-				if (NT_SUCCESS(status))
-					status = STATUS_CALLBACK_BYPASS;
+				status = KeyRecordOnDeleteValue(keyRecord, Argument2, &emulated);
 				break;
 			case RegNtPreSetValueKey:
-				status = KeyRecordOnSetValue(keyRecord, Argument2);
-				if (NT_SUCCESS(status))
-					status = STATUS_CALLBACK_BYPASS;
+				status = KeyRecordOnSetValue(keyRecord, Argument2, &emulated);
 				break;
 			case RegNtPreQueryValueKey:
-				status = KeyRecordOnQueryValue(keyRecord, Argument2);
-				if (NT_SUCCESS(status))
-					status = STATUS_CALLBACK_BYPASS;
+				status = KeyRecordOnQueryValue(keyRecord, Argument2, &emulated);
 				break;
 			case RegNtPreQueryMultipleValueKey:
-				status = KeyRecordQueryMultipleValues(keyRecord, Argument2);
-				if (NT_SUCCESS(status))
-					status = STATUS_CALLBACK_BYPASS;
+				status = KeyRecordQueryMultipleValues(keyRecord, Argument2, &emulated);
 				break;
 			case RegNtPreEnumerateValueKey:
-				status = KeyRecordOnEnumValue(keyRecord, Argument2);
-				if (NT_SUCCESS(status))
-					status = STATUS_CALLBACK_BYPASS;
+				status = KeyRecordOnEnumValue(keyRecord, Argument2, &emulated);
 				break;
 			case RegNtPreQueryKey:
 				status = KeyRecordOnQuery(keyRecord, Argument2, &emulated);
-				if (NT_SUCCESS(status) && emulated)
-					status = STATUS_CALLBACK_BYPASS;
+				break;
+			case RegNtPostSetValueKey:
+			case RegNtPostDeleteValueKey:
+				status = KeyRecordOnPostOperation(keyRecord, (PREG_POST_OPERATION_INFORMATION)Argument2, &emulated);
 				break;
 			default:
 				break;
 		}
 	
+		if (NT_SUCCESS(status) && emulated)
+			status = STATUS_CALLBACK_BYPASS;
+
 		KeyRecordDereference(keyRecord);
 	}
 

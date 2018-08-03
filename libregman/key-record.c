@@ -316,16 +316,16 @@ NTSTATUS KeyRecordFromKey(_In_ PUNICODE_STRING KeyName, PREGMAN_KEY_RECORD *Reco
 }
 
 
-NTSTATUS KeyRecordQueryMultipleValues(_In_ PREGMAN_KEY_RECORD Record, _Inout_ PREG_QUERY_MULTIPLE_VALUE_KEY_INFORMATION Info)
+NTSTATUS KeyRecordQueryMultipleValues(_In_ PREGMAN_KEY_RECORD Record, _Inout_ PREG_QUERY_MULTIPLE_VALUE_KEY_INFORMATION Info, PBOOLEAN Emulated)
 {
 	ULONG requiredLength = 0;
 	ULONG bufferLength = 0;
 	KEY_VALUE_ENTRY oneEntry;
 	PVOID *buffers = NULL;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
-	DEBUG_ENTER_FUNCTION("Record=0x%p; Info=0x%p", Record, Info);
+	DEBUG_ENTER_FUNCTION("Record=0x%p; Info=0x%p; Emulated=0x%p", Record, Info, Emulated);
 
-	buffers = (PVOID *)HeapMemoryAllocPaged(Info->EntryCount * sizeof(PVOID));
+	buffers = HeapMemoryAllocPaged(Info->EntryCount * sizeof(PVOID));
 	if (buffers != NULL) {
 		status = STATUS_SUCCESS;
 		RtlSecureZeroMemory(buffers, sizeof(PVOID)*Info->EntryCount);
@@ -408,21 +408,23 @@ NTSTATUS KeyRecordQueryMultipleValues(_In_ PREGMAN_KEY_RECORD Record, _Inout_ PR
 		HeapMemoryFree(buffers);
 	} else status = STATUS_INSUFFICIENT_RESOURCES;
 
+	*Emulated = NT_SUCCESS(status);
+
 	if (!NT_SUCCESS(status)) {
 		DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, "QUERYMULTIPLEE: 0x%x\n", status);
 		DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, "  Key = %wZ\n", &Record->Item.Key.String);
 	}
 
-	DEBUG_EXIT_FUNCTION("0x%x", status);
+	DEBUG_EXIT_FUNCTION("0x%x, *Emulated=%u", status, *Emulated);
 	return status;
 }
 
 
-NTSTATUS KeyRecordOnQueryValue(_In_ PREGMAN_KEY_RECORD Record, _Inout_ PREG_QUERY_VALUE_KEY_INFORMATION Info)
+NTSTATUS KeyRecordOnQueryValue(_In_ PREGMAN_KEY_RECORD Record, _Inout_ PREG_QUERY_VALUE_KEY_INFORMATION Info, PBOOLEAN Emulate)
 {
 	PUNICODE_STRING valueName = NULL;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
-	DEBUG_ENTER_FUNCTION("Record=0x%p; Info=0x%p", Record, Info);
+	DEBUG_ENTER_FUNCTION("Record=0x%p; Info=0x%p; Emulate=0x%p", Record, Info, Emulate);
 
 	status = _CaptureUnicodeString(Info->ValueName, &valueName);
 	if (NT_SUCCESS(status)) {
@@ -432,7 +434,7 @@ NTSTATUS KeyRecordOnQueryValue(_In_ PREGMAN_KEY_RECORD Record, _Inout_ PREG_QUER
 		ExAcquireResourceSharedLite(&Record->OperationLock, TRUE);
 		valueRecord = (PREGMAN_VALUE_RECORD)StringRefTableGet(&Record->ValueTable, valueName);
 		if (valueRecord != NULL) {
-			status = ValueRecordOnQueryValue(valueRecord, Info);
+			status = ValueRecordOnQueryValue(valueRecord, Info, Emulate);
 			ValueRecordDereference(valueRecord);
 		} else status = STATUS_OBJECT_NAME_NOT_FOUND;
 
@@ -447,23 +449,23 @@ NTSTATUS KeyRecordOnQueryValue(_In_ PREGMAN_KEY_RECORD Record, _Inout_ PREG_QUER
 		HeapMemoryFree(valueName);
 	}
 
-	DEBUG_EXIT_FUNCTION("0x%x", status);
+	DEBUG_EXIT_FUNCTION("0x%x, *Emulate=%u", status, *Emulate);
 	return status;
 }
 
 
-NTSTATUS KeyRecordOnEnumValue(_In_ PREGMAN_KEY_RECORD Record, _Inout_ PREG_ENUMERATE_VALUE_KEY_INFORMATION Info)
+NTSTATUS KeyRecordOnEnumValue(_In_ PREGMAN_KEY_RECORD Record, _Inout_ PREG_ENUMERATE_VALUE_KEY_INFORMATION Info, PBOOLEAN Emulated)
 {
 	PREGMAN_VALUE_RECORD valueRecord = NULL;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
-	DEBUG_ENTER_FUNCTION("Record=0x%p; Info=0x%p", Record, Info);
+	DEBUG_ENTER_FUNCTION("Record=0x%p; Info=0x%p; Emulated=0x%p", Record, Info, Emulated);
 
 	if (Info->Index < (ULONG)Record->ValueCount) {
 		KeEnterCriticalRegion();
 		ExAcquireResourceSharedLite(&Record->OperationLock, TRUE);
 		valueRecord = Record->ValueRecords[Info->Index];
 		ValueRecordReference(valueRecord);
-		status = ValueRecordOnEnumValue(valueRecord, Info);
+		status = ValueRecordOnEnumValue(valueRecord, Info, Emulated);
 		if (!NT_SUCCESS(status)) {
 			DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, "ENUM: 0x%x\n", status);
 			DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, "  Key = %wZ\n", &Record->Item.Key.String);
@@ -475,16 +477,16 @@ NTSTATUS KeyRecordOnEnumValue(_In_ PREGMAN_KEY_RECORD Record, _Inout_ PREG_ENUME
 		KeLeaveCriticalRegion();
 	} else status = STATUS_NO_MORE_ENTRIES;
 
-	DEBUG_EXIT_FUNCTION("0x%x", status);
+	DEBUG_EXIT_FUNCTION("0x%x, *Emulated=%u", status, Emulated);
 	return status;
 }
 
 
-NTSTATUS KeyRecordOnSetValue(_In_ PREGMAN_KEY_RECORD Record, _In_ PREG_SET_VALUE_KEY_INFORMATION Info)
+NTSTATUS KeyRecordOnSetValue(_In_ PREGMAN_KEY_RECORD Record, _In_ PREG_SET_VALUE_KEY_INFORMATION Info, PBOOLEAN Emulated)
 {
 	PUNICODE_STRING valueName = NULL;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
-	DEBUG_ENTER_FUNCTION("Record=0x%p; Info=0x%p", Record, Info);
+	DEBUG_ENTER_FUNCTION("Record=0x%p; Info=0x%p; Emulated=0x%p", Record, Info, Emulated);
 
 	status = _CaptureUnicodeString(Info->ValueName, &valueName);
 	if (NT_SUCCESS(status)) {
@@ -494,43 +496,31 @@ NTSTATUS KeyRecordOnSetValue(_In_ PREGMAN_KEY_RECORD Record, _In_ PREG_SET_VALUE
 		ExAcquireResourceExclusiveLite(&Record->OperationLock, TRUE);
 		valueRecord = (PREGMAN_VALUE_RECORD)StringRefTableGet(&Record->ValueTable, valueName);
 		if (valueRecord != NULL) {
-			status = ValueRecordOnSetValue(valueRecord, Info);
+			status = ValueRecordOnSetValue(valueRecord, Info, Emulated);
 			ValueRecordDereference(valueRecord);
 		} else {
 			status = ValueRecordAlloc(valueName, REG_NONE, NULL, 0, &valueRecord);
 			if (NT_SUCCESS(status)) {
-				StringRefTableInsert(&Record->ValueTable, &valueRecord->Item);
-				status = ValueRecordOnSetValue(valueRecord, Info);
-				if (!NT_SUCCESS(status)) {
-					StringRefTableDelete(&Record->ValueTable, valueName);
-					ValueRecordDereference(valueRecord);
-				}
-
+				status = ValueRecordOnSetValue(valueRecord, Info, Emulated);
 				ValueRecordDereference(valueRecord);
 			}
 		}
 
 		ExReleaseResourceLite(&Record->OperationLock);
 		KeLeaveCriticalRegion();
-		if (!NT_SUCCESS(status)) {
-			DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, "SET: 0x%x\n", status);
-			DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, "  Key = %wZ\n", &Record->Item.Key.String);
-			DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, "  Value = %wZ\n", valueName);
-		}
-
 		HeapMemoryFree(valueName);
 	}
 
-	DEBUG_EXIT_FUNCTION("0x%x", status);
+	DEBUG_EXIT_FUNCTION("0x%x, *Emulated=%u", status, *Emulated);
 	return status;
 }
 
 
-NTSTATUS KeyRecordOnDeleteValue(_In_ PREGMAN_KEY_RECORD Record, _In_ PREG_DELETE_VALUE_KEY_INFORMATION Info)
+NTSTATUS KeyRecordOnDeleteValue(_In_ PREGMAN_KEY_RECORD Record, _In_ PREG_DELETE_VALUE_KEY_INFORMATION Info, PBOOLEAN Emulated)
 {
 	PUNICODE_STRING valueName = NULL;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
-	DEBUG_ENTER_FUNCTION("Record=0x%p; Info=0x%p", Record, Info);
+	DEBUG_ENTER_FUNCTION("Record=0x%p; Info=0x%p; Emulated=0x%p", Record, Info, Emulated);
 
 	status = _CaptureUnicodeString(Info->ValueName, &valueName);
 	if (NT_SUCCESS(status)) {
@@ -540,60 +530,55 @@ NTSTATUS KeyRecordOnDeleteValue(_In_ PREGMAN_KEY_RECORD Record, _In_ PREG_DELETE
 		ExAcquireResourceExclusiveLite(&Record->OperationLock, TRUE);
 		valueRecord = (PREGMAN_VALUE_RECORD)StringRefTableGet(&Record->ValueTable, valueName);
 		if (valueRecord != NULL) {
-			status = ValueRecordOnDeleteValue(valueRecord, Info);
-			if (NT_SUCCESS(status) && valueRecord->CallbackCount == 0)
-				KeyRecordValueDelete(Record, &valueRecord->Item.Key.String);
-
+			status = ValueRecordOnDeleteValue(valueRecord, Info, Emulated);
 			ValueRecordDereference(valueRecord);
 		} else status = STATUS_OBJECT_NAME_NOT_FOUND;
 
 		ExReleaseResourceLite(&Record->OperationLock);
 		KeLeaveCriticalRegion();
-		if (!NT_SUCCESS(status)) {
-			DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, "DELETE: 0x%x\n", status);
-			DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, "  Key = %wZ\n", &Record->Item.Key.String);
-			DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, "  Value = %wZ\n", valueName);
-		}
-
 		HeapMemoryFree(valueName);
 	}
 
-	DEBUG_EXIT_FUNCTION("0x%x", status);
+	DEBUG_EXIT_FUNCTION("0x%x; *Emulated=%u", status, *Emulated);
 	return status;
 }
 
 
-NTSTATUS KeyRecordOnQuery(_In_ PREGMAN_KEY_RECORD Record, PREG_QUERY_KEY_INFORMATION Info, _Out_opt_ PBOOLEAN Bypass)
+NTSTATUS KeyRecordOnQuery(_In_ PREGMAN_KEY_RECORD Record, PREG_QUERY_KEY_INFORMATION Info, _Out_opt_ PBOOLEAN Emulated)
 {
 	ULONG retLength = 0;
 	PVOID keyInfo = NULL;
 	HANDLE keyHandle = NULL;
-	BOOLEAN emulated = TRUE;
+	BOOLEAN emulated = FALSE;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
-	DEBUG_ENTER_FUNCTION("Record=0x%p; Info=0x%p; Bypass=0x%p", Record, Info, Bypass);
+	DEBUG_ENTER_FUNCTION("Record=0x%p; Info=0x%p; Bypass=0x%p", Record, Info, Emulated);
 
-	status = ObOpenObjectByPointer(Info->Object, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, KEY_READ, NULL, KernelMode, &keyHandle);
-	if (NT_SUCCESS(status)) {
-		if (Info->Length > 0) {
-			keyInfo = HeapMemoryAllocPaged(Info->Length);
-			if (keyInfo == NULL)
-				status = STATUS_INSUFFICIENT_RESOURCES;
-		}
-
+	emulated = (
+			Info->KeyInformationClass == KeyFullInformation ||
+			Info->KeyInformationClass == KeyCachedInformation);
+	if (emulated) {
+		status = ObOpenObjectByPointer(Info->Object, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, KEY_READ, NULL, KernelMode, &keyHandle);
 		if (NT_SUCCESS(status)) {
-			status = ZwQueryKey(keyHandle, Info->KeyInformationClass, keyInfo, Info->Length, &retLength);
+			if (Info->Length > 0) {
+				keyInfo = HeapMemoryAllocPaged(Info->Length);
+				if (keyInfo == NULL)
+					status = STATUS_INSUFFICIENT_RESOURCES;
+			}
+
 			if (NT_SUCCESS(status)) {
-				ULONG maxValueNameLen = 0;
-				ULONG maxValueDataLen = 0;
-				ULONG valueCount = 0;
-				
-				KeEnterCriticalRegion();
-				ExAcquireResourceSharedLite(&Record->OperationLock, TRUE);
-				status = _KeyRecordGatherStatistics(Record, &maxValueNameLen, &maxValueDataLen, &valueCount);
-				ExReleaseResourceLite(&Record->OperationLock);
-				KeLeaveCriticalRegion();
+				status = ZwQueryKey(keyHandle, Info->KeyInformationClass, keyInfo, Info->Length, &retLength);
 				if (NT_SUCCESS(status)) {
-					switch (Info->KeyInformationClass) {
+					ULONG maxValueNameLen = 0;
+					ULONG maxValueDataLen = 0;
+					ULONG valueCount = 0;
+
+					KeEnterCriticalRegion();
+					ExAcquireResourceSharedLite(&Record->OperationLock, TRUE);
+					status = _KeyRecordGatherStatistics(Record, &maxValueNameLen, &maxValueDataLen, &valueCount);
+					ExReleaseResourceLite(&Record->OperationLock);
+					KeLeaveCriticalRegion();
+					if (NT_SUCCESS(status)) {
+						switch (Info->KeyInformationClass) {
 						case KeyFullInformation: {
 							PKEY_FULL_INFORMATION kfi = (PKEY_FULL_INFORMATION)keyInfo;
 
@@ -611,36 +596,81 @@ NTSTATUS KeyRecordOnQuery(_In_ PREGMAN_KEY_RECORD Record, PREG_QUERY_KEY_INFORMA
 						default:
 							emulated = FALSE;
 							break;
-					}
+						}
 
-					if (emulated) {
-						__try {
-							memcpy(Info->KeyInformation, keyInfo, retLength);
-							*Info->ResultLength = retLength;
-						} __except (EXCEPTION_EXECUTE_HANDLER) {
-							status = GetExceptionCode();
+						if (emulated) {
+							__try {
+								memcpy(Info->KeyInformation, keyInfo, retLength);
+								*Info->ResultLength = retLength;
+							}
+							__except (EXCEPTION_EXECUTE_HANDLER) {
+								status = GetExceptionCode();
+							}
 						}
 					}
+				} else if (status == STATUS_BUFFER_TOO_SMALL || status == STATUS_BUFFER_OVERFLOW) {
+					__try {
+						memcpy(Info->KeyInformation, keyInfo, Info->Length);
+						*Info->ResultLength = retLength;
+					}
+					__except (EXCEPTION_EXECUTE_HANDLER) {
+						status = GetExceptionCode();
+					}
 				}
-			} else if (status == STATUS_BUFFER_TOO_SMALL || status == STATUS_BUFFER_OVERFLOW) {
-				__try {
-					memcpy(Info->KeyInformation, keyInfo, Info->Length);
-					*Info->ResultLength = retLength;
-				} __except (EXCEPTION_EXECUTE_HANDLER) {
-					status = GetExceptionCode();
-				}
+
+				if (keyInfo != NULL)
+					HeapMemoryFree(keyInfo);
 			}
 
-			if (keyInfo != NULL)
-				HeapMemoryFree(keyInfo);
+			ZwClose(keyHandle);
 		}
-
-		ZwClose(keyHandle);
 	}
 
-	if (NT_SUCCESS(status) && Bypass != NULL)
-		*Bypass = emulated;
+	if (NT_SUCCESS(status) && Emulated != NULL)
+		*Emulated = emulated;
 
 	DEBUG_EXIT_FUNCTION("0x%x, *Bypass=%u", status, emulated);
+	return status;
+}
+
+
+NTSTATUS KeyRecordOnPostOperation(PREGMAN_KEY_RECORD Record, PREG_POST_OPERATION_INFORMATION Info, PBOOLEAN Emulated)
+{
+	PREGMAN_VALUE_POST_CONTEXT postRecord = NULL;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+
+	*Emulated = FALSE;
+	status = STATUS_SUCCESS;
+	postRecord = Info->CallContext;
+	if (postRecord != NULL) {
+		DEBUG_ENTER_FUNCTION("Record=0x%p; Info=0x%p; Emulated=0x%p", Record, Info, Emulated);
+
+		if (NT_SUCCESS(Info->Status)) {
+			PREGMAN_VALUE_RECORD valueRecord = postRecord->ValueRecord;
+
+			switch (postRecord->Type) {
+				case rmvpctSetValue: {
+					status = ValueRecordOnPostOperation(Info, Emulated);
+					if (NT_SUCCESS(status))
+						StringRefTableInsert(&Record->ValueTable, &valueRecord->Item);
+				} break;
+				case rmvpctDeleteValue: {
+					ValueRecordReference(valueRecord);
+					status = ValueRecordOnPostOperation(Info, Emulated);
+					if (NT_SUCCESS(status))
+						KeyRecordValueDelete(Record, &valueRecord->Item.Key.String);
+			
+					ValueRecordDereference(valueRecord);
+				} break;
+			default:
+				break;
+			}
+		}
+
+		ValuePostRecordFree(postRecord, !NT_SUCCESS(Info->Status));
+		Info->CallContext = NULL;
+		DEBUG_EXIT_FUNCTION("0x%x, *Emulated=0x%p", status, *Emulated);
+	}
+
 	return status;
 }

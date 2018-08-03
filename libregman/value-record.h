@@ -31,6 +31,25 @@ typedef struct _REGMAN_VALUE_RECORD {
 } REGMAN_VALUE_RECORD, *PREGMAN_VALUE_RECORD;
 
 
+typedef enum _ERegManValuePostContextType {
+	rmvpctUnknown,
+	rmvpctSetValue,
+	rmvpctDeleteValue,
+	rmvpctMax,
+} ERegManValuePostContextType, *PERegManValuePostContextType;
+
+typedef struct _REGMAN_VALUE_POST_CONTEXT {
+	PREGMAN_VALUE_RECORD ValueRecord;
+	ERegManValuePostContextType Type;
+	union {
+		struct {
+			PVOID Data;
+			ULONG Length;
+			ULONG Type;
+		} SetValue;
+	} Data;
+} REGMAN_VALUE_POST_CONTEXT, *PREGMAN_VALUE_POST_CONTEXT;
+
 
 NTSTATUS ValueRecordAlloc(_In_opt_ PUNICODE_STRING Name, _In_ ULONG Type, _In_opt_ PVOID Data, _In_ ULONG DataLength, _Out_ PREGMAN_VALUE_RECORD *Record);
 VOID ValueRecordReference(_Inout_ PREGMAN_VALUE_RECORD Record);
@@ -42,13 +61,12 @@ NTSTATUS ValueRecordCallbackQueryInvoke(_In_ PREGMAN_VALUE_RECORD Record, _Inout
 NTSTATUS ValueRecordCallbackSetInvoke(_In_ PREGMAN_VALUE_RECORD Record, _Inout_ PVOID *Data, _Inout_ PULONG DataSize, _Inout_ PULONG Type);
 
 NTSTATUS ValueRecordOnQueryValueEntry(_In_ PREGMAN_VALUE_RECORD Value, _Out_ PVOID *Data, _Out_ PULONG DataLength, _Out_ PULONG Type);
-NTSTATUS ValueRecordOnQueryValue(_In_ PREGMAN_VALUE_RECORD Value, _Inout_ PREG_QUERY_VALUE_KEY_INFORMATION Info);
-NTSTATUS ValueRecordOnEnumValue(_In_ PREGMAN_VALUE_RECORD Value, _Inout_ PREG_ENUMERATE_VALUE_KEY_INFORMATION Info);
-NTSTATUS ValueRecordOnSetValue(_In_ PREGMAN_VALUE_RECORD Value, _In_ PREG_SET_VALUE_KEY_INFORMATION Info);
-NTSTATUS ValueRecordOnDeleteValue(_In_ PREGMAN_VALUE_RECORD Value, _In_ PREG_DELETE_VALUE_KEY_INFORMATION Info);
-
-NTSTATUS ValueRecordModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context);
-void ValueRecordModuleFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context);
+NTSTATUS ValueRecordOnQueryValue(_In_ PREGMAN_VALUE_RECORD Value, _Inout_ PREG_QUERY_VALUE_KEY_INFORMATION Info, PBOOLEAN Emulated);
+NTSTATUS ValueRecordOnEnumValue(_In_ PREGMAN_VALUE_RECORD Value, _Inout_ PREG_ENUMERATE_VALUE_KEY_INFORMATION Info, PBOOLEAN Emulated);
+NTSTATUS ValueRecordOnSetValue(_In_ PREGMAN_VALUE_RECORD Value, _In_ PREG_SET_VALUE_KEY_INFORMATION Info, PBOOLEAN Emulated);
+NTSTATUS ValueRecordOnDeleteValue(_In_ PREGMAN_VALUE_RECORD Value, _In_ PREG_DELETE_VALUE_KEY_INFORMATION Info, PBOOLEAN Emulated);
+NTSTATUS ValueRecordOnPostOperation(PREG_POST_OPERATION_INFORMATION Info, PBOOLEAN Emulated);
+VOID ValuePostRecordFree(PREGMAN_VALUE_POST_CONTEXT Record, BOOLEAN DeepFree);
 
 
 
