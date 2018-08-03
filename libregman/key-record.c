@@ -445,12 +445,6 @@ NTSTATUS KeyRecordOnQueryValue(_In_ PREGMAN_KEY_RECORD Record, _Inout_ PREG_QUER
 
 		ExReleaseResourceLite(&Record->OperationLock);
 		KeLeaveCriticalRegion();
-		if (!NT_SUCCESS(status)) {
-			DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, "QUERY: 0x%x\n", status);
-			DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, "  Key = %wZ\n", &Record->Item.Key.String);
-			DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, "  Value = %wZ\n", valueName);
-		}
-
 		HeapMemoryFree(valueName);
 	}
 
@@ -471,12 +465,6 @@ NTSTATUS KeyRecordOnEnumValue(_In_ PREGMAN_KEY_RECORD Record, _Inout_ PREG_ENUME
 		valueRecord = Record->ValueRecords[Info->Index];
 		ValueRecordReference(valueRecord);
 		status = ValueRecordOnEnumValue(valueRecord, Info, Emulated);
-		if (!NT_SUCCESS(status)) {
-			DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, "ENUM: 0x%x\n", status);
-			DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, "  Key = %wZ\n", &Record->Item.Key.String);
-			DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, "  Value = %wZ\n", &valueRecord->Item.Key.String);
-		}
-
 		ValueRecordDereference(valueRecord);
 		ExReleaseResourceLite(&Record->OperationLock);
 		KeLeaveCriticalRegion();
@@ -599,18 +587,15 @@ NTSTATUS KeyRecordOnQuery(_In_ PREGMAN_KEY_RECORD Record, PREG_QUERY_KEY_INFORMA
 							kci->MaxValueDataLen = maxValueDataLen;
 						} break;
 						default:
-							emulated = FALSE;
+							__debugbreak();
 							break;
 						}
 
-						if (emulated) {
-							__try {
-								memcpy(Info->KeyInformation, keyInfo, retLength);
-								*Info->ResultLength = retLength;
-							}
-							__except (EXCEPTION_EXECUTE_HANDLER) {
-								status = GetExceptionCode();
-							}
+						__try {
+							memcpy(Info->KeyInformation, keyInfo, retLength);
+							*Info->ResultLength = retLength;
+						} __except (EXCEPTION_EXECUTE_HANDLER) {
+							status = GetExceptionCode();
 						}
 					}
 				} else if (status == STATUS_BUFFER_TOO_SMALL || status == STATUS_BUFFER_OVERFLOW) {
