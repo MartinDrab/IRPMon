@@ -41,13 +41,6 @@ typedef enum _ERegManValuePostContextType {
 typedef struct _REGMAN_VALUE_POST_CONTEXT {
 	PREGMAN_VALUE_RECORD ValueRecord;
 	ERegManValuePostContextType Type;
-	union {
-		struct {
-			PVOID Data;
-			ULONG Length;
-			ULONG Type;
-		} SetValue;
-	} Data;
 } REGMAN_VALUE_POST_CONTEXT, *PREGMAN_VALUE_POST_CONTEXT;
 
 

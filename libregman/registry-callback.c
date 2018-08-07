@@ -74,7 +74,6 @@ static NTSTATUS _GetKeyRecord(_In_ REG_NOTIFY_CLASS OpType, _In_opt_ PVOID Data,
 			case RegNtPreQueryKey:
 				keyObject = ((PREG_QUERY_KEY_INFORMATION)Data)->Object;
 				break;
-			case RegNtPostSetValueKey:
 			case RegNtPostDeleteValueKey:
 				keyObject = ((PREG_POST_OPERATION_INFORMATION)Data)->Object;
 				break;
@@ -132,7 +131,6 @@ static NTSTATUS _RegistryCallback(_In_ PVOID Context, _In_opt_ PVOID Argument1, 
 			case RegNtPreQueryKey:
 				status = KeyRecordOnQuery(keyRecord, Argument2, &emulated);
 				break;
-			case RegNtPostSetValueKey:
 			case RegNtPostDeleteValueKey:
 				status = KeyRecordOnPostOperation(keyRecord, (PREG_POST_OPERATION_INFORMATION)Argument2, &emulated);
 				break;

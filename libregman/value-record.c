@@ -493,7 +493,6 @@ NTSTATUS ValueRecordOnSetValue(_In_ PREGMAN_VALUE_RECORD Value, _In_ PREG_SET_VA
 	ULONG valueType = REG_NONE;
 	ULONG valueSize = 0;
 	PVOID valueData = NULL;
-	PREGMAN_VALUE_POST_CONTEXT postRecord = NULL;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("Value=0x%p; Info=0x%p; Emulated=0x%p", Value, Info, Emulated);
 
@@ -518,14 +517,26 @@ NTSTATUS ValueRecordOnSetValue(_In_ PREGMAN_VALUE_RECORD Value, _In_ PREG_SET_VA
 	if (NT_SUCCESS(status)) {
 		status = ValueRecordCallbackSetInvoke(Value, &valueData, &valueSize, &valueType);
 		if (NT_SUCCESS(status)) {
-			status = _ValuePostRecordAlloc(Value, rmvpctSetValue, &postRecord);
-			if (NT_SUCCESS(status)) {
-				postRecord->Data.SetValue.Data = valueData;
-				postRecord->Data.SetValue.Length = valueSize;
-				postRecord->Data.SetValue.Type = valueType;
-				Info->CallContext = postRecord;
-			}
+			HANDLE keyHandle = NULL;
 
+			status = ObOpenObjectByPointer(Info->Object, OBJ_KERNEL_HANDLE, NULL, KEY_SET_VALUE, NULL, KernelMode, &keyHandle);
+			if (NT_SUCCESS(status)) {
+				status = ZwSetValueKey(keyHandle, &Value->Item.Key.String, 0, valueType, valueData, valueSize);
+				ZwClose(keyHandle);
+				if (NT_SUCCESS(status)) {
+					*Emulated = TRUE;
+					KeEnterCriticalRegion();
+					ExAcquireResourceExclusiveLite(&Value->Lock, TRUE);
+					if (Value->Data != NULL)
+						ExFreePoolWithTag(Value->Data, 0);
+
+					Value->Data = valueData;
+					Value->DataSize = valueSize;
+					Value->Type = valueType;
+					ExReleaseResourceLite(&Value->Lock);
+					KeLeaveCriticalRegion();
+				}
+			}
 		}
 
 		if (!NT_SUCCESS(status) && valueData != NULL)
@@ -566,18 +577,6 @@ NTSTATUS ValueRecordOnPostOperation(PREG_POST_OPERATION_INFORMATION Info, PBOOLE
 		PREGMAN_VALUE_RECORD valueRecord = postRecord->ValueRecord;
 
 		switch (postRecord->Type) {
-			case rmvpctSetValue: {
-				KeEnterCriticalRegion();
-				ExAcquireResourceExclusiveLite(&valueRecord->Lock, TRUE);
-				if (valueRecord->Data != NULL)
-					ExFreePoolWithTag(valueRecord->Data, 0);
-
-				valueRecord->Data = postRecord->Data.SetValue.Data;
-				valueRecord->DataSize = postRecord->Data.SetValue.Length;
-				valueRecord->Type = postRecord->Data.SetValue.Type;
-				ExReleaseResourceLite(&valueRecord->Lock);
-				KeLeaveCriticalRegion();
-			} break;
 			case rmvpctDeleteValue: {
 				KeEnterCriticalRegion();
 				ExAcquireResourceExclusiveLite(&valueRecord->Lock, TRUE);
@@ -605,18 +604,6 @@ VOID ValuePostRecordFree(PREGMAN_VALUE_POST_CONTEXT Record, BOOLEAN DeepFree)
 	DEBUG_ENTER_FUNCTION("Record=0x%p; DeepFree=%u", Record, DeepFree);
 
 	ValueRecordDereference(Record->ValueRecord);
-	if (DeepFree) {
-		switch (Record->Type) {
-		case rmvpctSetValue:
-			if (Record->Data.SetValue.Data != NULL)
-				ExFreePoolWithTag(Record->Data.SetValue.Data, 0);
-			break;
-		default:
-			break;
-		}
-
-	}
-
 	HeapMemoryFree(Record);
 
 	DEBUG_EXIT_FUNCTION_VOID();

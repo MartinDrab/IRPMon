@@ -495,6 +495,9 @@ NTSTATUS KeyRecordOnSetValue(_In_ PREGMAN_KEY_RECORD Record, _In_ PREG_SET_VALUE
 			status = ValueRecordAlloc(valueName, REG_NONE, NULL, 0, &valueRecord);
 			if (NT_SUCCESS(status)) {
 				status = ValueRecordOnSetValue(valueRecord, Info, Emulated);
+				if (NT_SUCCESS(status))
+					StringRefTableInsert(&Record->ValueTable, &valueRecord->Item);
+
 				ValueRecordDereference(valueRecord);
 			}
 		}
@@ -639,11 +642,6 @@ NTSTATUS KeyRecordOnPostOperation(PREGMAN_KEY_RECORD Record, PREG_POST_OPERATION
 			PREGMAN_VALUE_RECORD valueRecord = postRecord->ValueRecord;
 
 			switch (postRecord->Type) {
-				case rmvpctSetValue: {
-					status = ValueRecordOnPostOperation(Info, Emulated);
-					if (NT_SUCCESS(status))
-						StringRefTableInsert(&Record->ValueTable, &valueRecord->Item);
-				} break;
 				case rmvpctDeleteValue: {
 					ValueRecordReference(valueRecord);
 					status = ValueRecordOnPostOperation(Info, Emulated);
