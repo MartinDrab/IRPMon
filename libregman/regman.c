@@ -8,6 +8,11 @@
 #include "regman.h"
 
 
+/************************************************************************/
+/*                  GLOBAL VARIABLES                                   */
+/************************************************************************/
+
+static BOOLEAN _emulationSupported = FALSE;
 
 /************************************************************************/
 /*                PUBLIC FUNCTIONS                                      */
@@ -64,12 +69,12 @@ VOID RegManKeyValueDelete(_In_ HANDLE ValueHandle)
 }
 
 
-NTSTATUS RegManValueCallbacksRegister(_In_ HANDLE ValueHandle, _In_ REGMAN_VALUE_QUERY_CALLBACK *QueryCallback, _In_ REGMAN_VALUE_SET_CALLBACK *SetCallback, _In_opt_ PVOID Context, _Out_ PHANDLE CallbackHandle)
+NTSTATUS RegManValueCallbacksRegister(_In_ HANDLE ValueHandle, _In_ const REGMAN_CALLBACKS *Callbacks, _Out_ PHANDLE CallbackHandle)
 {
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
-	DEBUG_ENTER_FUNCTION("ValueHandle=0x%p; QueryCallback=0x%p; SetCallback=0x%p; Context=0x%p; CallbackHandle=0x%p", ValueHandle, QueryCallback, SetCallback, Context, CallbackHandle);
+	DEBUG_ENTER_FUNCTION("ValueHandle=0x%p; Callbacks=0x%p; CallbackHandle=0x%p", ValueHandle, Callbacks, CallbackHandle);
 
-	status = ValueRecordCallbackRegister((PREGMAN_VALUE_RECORD)ValueHandle, QueryCallback, SetCallback, Context, CallbackHandle);
+	status = ValueRecordCallbackRegister((PREGMAN_VALUE_RECORD)ValueHandle, Callbacks, CallbackHandle);
 
 	DEBUG_EXIT_FUNCTION("0x%x, *CallbackHandle=0x%p", status, *CallbackHandle);
 	return status;
@@ -90,10 +95,17 @@ VOID RegManValueCallbackUnregiser(_In_ HANDLE CallbackHandle)
 
 NTSTATUS RegManInit(_In_ PDRIVER_OBJECT DriverObject, _In_ PUNICODE_STRING RegistryPath, PVOID Context)
 {
+	RTL_OSVERSIONINFOW versionInfo;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"; Context=0x%p", DriverObject, RegistryPath, Context);
 
-	status = RegCallbackModuleInit(DriverObject, RegistryPath, Context);
+	versionInfo.dwOSVersionInfoSize = sizeof(versionInfo);
+	status = RtlGetVersion(&versionInfo);
+	if (NT_SUCCESS(status)) {
+		_emulationSupported = (versionInfo.dwMajorVersion >= 6);
+		if (_emulationSupported)
+			status = RegCallbackModuleInit(DriverObject, RegistryPath, Context);		
+	}
 
 	DEBUG_EXIT_FUNCTION("0x%x", status);
 	return status;
@@ -104,7 +116,8 @@ VOID RegManFinit(_In_ PDRIVER_OBJECT DriverObject, _In_opt_ PUNICODE_STRING Regi
 {
 	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"; Context=0x%p", DriverObject, RegistryPath, Context);
 
-	RegCallbackModuleFinit(DriverObject, RegistryPath, Context);
+	if (_emulationSupported)
+		RegCallbackModuleFinit(DriverObject, RegistryPath, Context);
 
 	DEBUG_EXIT_FUNCTION_VOID();
 	return;

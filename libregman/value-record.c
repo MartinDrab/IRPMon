@@ -10,6 +10,7 @@
 /*                    HEPER FUNCTIONS                                   */
 /************************************************************************/
 
+
 static VOID _ValueRecordDestroy(_In_ PREGMAN_VALUE_RECORD Record)
 {
 	DEBUG_ENTER_FUNCTION("Record=0x%p", Record);
@@ -47,6 +48,82 @@ static NTSTATUS _ValuePostRecordAlloc(PREGMAN_VALUE_RECORD ValueRecord, ERegManV
 }
 
 
+static NTSTATUS _ValueRecordCallbackDeleteInvoke(_In_ PREGMAN_VALUE_RECORD Record, _Out_ PBOOLEAN Delete)
+{
+	REGMAN_DELETE_INFO info;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	PREGMAN_VALUE_QUERY_CALLBACK_RECORD cr = NULL;
+	DEBUG_ENTER_FUNCTION("Record=0x%p; Delete=0x%p", Record, Delete);
+
+	status = STATUS_SUCCESS;
+	info.ValueRecord = Record;
+	info.StopEmulation = FALSE;
+	KeEnterCriticalRegion();
+	ExAcquireResourceExclusiveLite(&Record->CallbackLock, TRUE);
+	cr = CONTAINING_RECORD(Record->CallbackList.Flink, REGMAN_VALUE_QUERY_CALLBACK_RECORD, ListEntry);
+	while (&cr->ListEntry != &Record->CallbackList) {
+		status = cr->Callbacks.DeleteValue(&info, cr->Callbacks.Context);
+		if (!NT_SUCCESS(status))
+			break;
+
+		cr = CONTAINING_RECORD(cr->ListEntry.Flink, REGMAN_VALUE_QUERY_CALLBACK_RECORD, ListEntry);
+	}
+
+	ExReleaseResourceLite(&Record->CallbackLock);
+	KeLeaveCriticalRegion();
+	if (NT_SUCCESS(status))
+		*Delete = info.StopEmulation;
+
+	DEBUG_EXIT_FUNCTION("0x%x, *Delete=%u", status, *Delete);
+	return status;
+}
+
+
+static NTSTATUS _ValueRecordCallbackSetInvoke(_In_ PREGMAN_VALUE_RECORD Record, _Inout_ PVOID *Data, _Inout_ PULONG DataSize, _Inout_ PULONG Type)
+{
+	PREGMAN_VALUE_QUERY_CALLBACK_RECORD cr = NULL;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	REGMAN_QUERY_INFO info;
+	DEBUG_ENTER_FUNCTION("Record=0x%p; Data=0x%p; DataSize=0x%p; Type=0x%p", Record, Data, DataSize, Type);
+
+	info.ValueRecord = Record;
+	info.CurrentDataSize = *DataSize;
+	info.CurrentType = *Type;
+	info.CurrentData = ExAllocatePoolWithTag(PagedPool, info.CurrentDataSize, 0);
+	if (info.CurrentData != NULL) {
+		status = STATUS_SUCCESS;
+		memcpy(info.CurrentData, *Data, info.CurrentDataSize);
+		KeEnterCriticalRegion();
+		ExAcquireResourceSharedLite(&Record->CallbackLock, TRUE);
+		cr = CONTAINING_RECORD(Record->CallbackList.Flink, REGMAN_VALUE_QUERY_CALLBACK_RECORD, ListEntry);
+		while (&cr->ListEntry != &Record->CallbackList) {
+			status = cr->Callbacks.SetValue(&info, cr->Callbacks.Context);
+			if (!NT_SUCCESS(status))
+				break;
+
+			cr = CONTAINING_RECORD(cr->ListEntry.Flink, REGMAN_VALUE_QUERY_CALLBACK_RECORD, ListEntry);
+		}
+
+		ExReleaseResourceLite(&Record->CallbackLock);
+		KeLeaveCriticalRegion();
+		if (NT_SUCCESS(status)) {
+			if (*Data != NULL)
+				ExFreePoolWithTag(*Data, 0);
+
+			*Data = info.CurrentData;
+			*DataSize = info.CurrentDataSize;
+			*Type = info.CurrentType;
+		}
+
+		if (!NT_SUCCESS(status) && info.CurrentData != NULL)
+			ExFreePoolWithTag(info.CurrentData, 0);
+	} else status = STATUS_INSUFFICIENT_RESOURCES;
+
+	DEBUG_EXIT_FUNCTION("0x%x, *Data=0x%p, *DataSize=%u, *Type=%u", status, *Data, *DataSize, *Type);
+	return status;
+}
+
+
 /************************************************************************/
 /*                    PUBLIC FUNCTIONS                                  */
 /************************************************************************/
@@ -65,7 +142,7 @@ NTSTATUS ValueRecordAlloc(_In_opt_ PUNICODE_STRING Name, _In_ ULONG Type, _In_op
 		nameBuffer = Name->Buffer;
 	}
 
-	tmpRecord = (PREGMAN_VALUE_RECORD)HeapMemoryAllocNonPaged(sizeof(REGMAN_VALUE_RECORD) + nameLen);
+	tmpRecord = HeapMemoryAllocNonPaged(sizeof(REGMAN_VALUE_RECORD) + nameLen);
 	if (tmpRecord != NULL) {
 		tmpRecord->ReferenceCount = 1;
 		tmpRecord->KeyRecord = NULL;
@@ -133,18 +210,17 @@ VOID ValueRecordDereference(_Inout_ PREGMAN_VALUE_RECORD Record)
 }
 
 
-NTSTATUS ValueRecordCallbackRegister(_In_ PREGMAN_VALUE_RECORD Record, _In_ _In_opt_ REGMAN_VALUE_QUERY_CALLBACK *QueryRoutine, _In_opt_ REGMAN_VALUE_SET_CALLBACK *SetRoutine, _In_opt_ PVOID Context, _Out_ PHANDLE Handle)
+NTSTATUS ValueRecordCallbackRegister(_In_ PREGMAN_VALUE_RECORD Record, _In_ const REGMAN_CALLBACKS *Callbacks, _Out_ PHANDLE Handle)
 {
 	PREGMAN_VALUE_QUERY_CALLBACK_RECORD tmpRecord = NULL;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
-	DEBUG_ENTER_FUNCTION("Record=0x%p; QueryRoutine=0x%p; SetRoutine=0x%p; Context=0x%p; Handle=0x%p", Record, QueryRoutine, SetRoutine, Context, Handle);
+	DEBUG_ENTER_FUNCTION("Record=0x%p; Callbacks=0x%p; Handle=0x%p", Record, Callbacks, Handle);
 
-	tmpRecord = (PREGMAN_VALUE_QUERY_CALLBACK_RECORD)HeapMemoryAllocPaged(sizeof(REGMAN_VALUE_QUERY_CALLBACK_RECORD));
+	tmpRecord = HeapMemoryAllocPaged(sizeof(REGMAN_VALUE_QUERY_CALLBACK_RECORD));
 	if (tmpRecord != NULL) {
-		tmpRecord->QueryRoutine = QueryRoutine;
-		tmpRecord->SetRoutine = SetRoutine;
-		tmpRecord->Context = Context;
+		memset(tmpRecord, 0, sizeof(REGMAN_VALUE_QUERY_CALLBACK_RECORD));
 		tmpRecord->Record = Record;
+		tmpRecord->Callbacks = *Callbacks;
 		InitializeListHead(&tmpRecord->ListEntry);
 		KeEnterCriticalRegion();
 		ExAcquireResourceExclusiveLite(&Record->CallbackLock, TRUE);
@@ -159,7 +235,6 @@ NTSTATUS ValueRecordCallbackRegister(_In_ PREGMAN_VALUE_RECORD Record, _In_ _In_
 	DEBUG_EXIT_FUNCTION("0x%x, *Handle=0x%p", status, *Handle);
 	return status;
 }
-
 
 
 VOID ValueRecordCallbackUnregister(_In_ HANDLE Handle)
@@ -198,7 +273,7 @@ NTSTATUS ValueRecordCallbackQueryInvoke(_In_ PREGMAN_VALUE_RECORD Record, _Inout
 		ExAcquireResourceExclusiveLite(&Record->CallbackLock, TRUE);
 		cr = CONTAINING_RECORD(Record->CallbackList.Flink, REGMAN_VALUE_QUERY_CALLBACK_RECORD, ListEntry);
 		while (&cr->ListEntry != &Record->CallbackList) {
-			status = cr->QueryRoutine(&info, cr->Context);
+			status = cr->Callbacks.QueryValue(&info, cr->Callbacks.Context);
 			if (!NT_SUCCESS(status))
 				break;
 
@@ -224,51 +299,6 @@ NTSTATUS ValueRecordCallbackQueryInvoke(_In_ PREGMAN_VALUE_RECORD Record, _Inout
 	} else status = STATUS_INSUFFICIENT_RESOURCES;
 
 	DEBUG_EXIT_FUNCTION("0x%x", status);
-	return status;
-}
-
-
-NTSTATUS ValueRecordCallbackSetInvoke(_In_ PREGMAN_VALUE_RECORD Record, _Inout_ PVOID *Data, _Inout_ PULONG DataSize, _Inout_ PULONG Type)
-{
-	PREGMAN_VALUE_QUERY_CALLBACK_RECORD cr = NULL;
-	NTSTATUS status = STATUS_UNSUCCESSFUL;
-	REGMAN_QUERY_INFO info;
-	DEBUG_ENTER_FUNCTION("Record=0x%p; Data=0x%p; DataSize=0x%p; Type=0x%p", Record, Data, DataSize, Type);
-
-	info.ValueRecord = Record;
-	info.CurrentDataSize = *DataSize;
-	info.CurrentType = *Type;
-	info.CurrentData = ExAllocatePoolWithTag(PagedPool, info.CurrentDataSize, 0);
-	if (info.CurrentData != NULL) {
-		status = STATUS_SUCCESS;
-		memcpy(info.CurrentData, *Data, info.CurrentDataSize);		
-		KeEnterCriticalRegion();
-		ExAcquireResourceSharedLite(&Record->CallbackLock, TRUE);
-		cr = CONTAINING_RECORD(Record->CallbackList.Flink, REGMAN_VALUE_QUERY_CALLBACK_RECORD, ListEntry);
-		while (&cr->ListEntry != &Record->CallbackList) {
-			status = cr->SetRoutine(&info, cr->Context);
-			if (!NT_SUCCESS(status))
-				break;
-
-			cr = CONTAINING_RECORD(cr->ListEntry.Flink, REGMAN_VALUE_QUERY_CALLBACK_RECORD, ListEntry);
-		}
-
-		ExReleaseResourceLite(&Record->CallbackLock);
-		KeLeaveCriticalRegion();
-		if (NT_SUCCESS(status)) {
-			if (*Data != NULL)
-				ExFreePoolWithTag(*Data, 0);
-			
-			*Data = info.CurrentData;
-			*DataSize = info.CurrentDataSize;
-			*Type = info.CurrentType;
-		}
-
-		if (!NT_SUCCESS(status) && info.CurrentData != NULL)
-			ExFreePoolWithTag(info.CurrentData, 0);
-	} else status = STATUS_INSUFFICIENT_RESOURCES;
-
-	DEBUG_EXIT_FUNCTION("0x%x, *Data=0x%p, *DataSize=%u, *Type=%u", status, *Data, *DataSize, *Type);
 	return status;
 }
 
@@ -307,11 +337,6 @@ NTSTATUS ValueRecordOnQueryValue(_In_ PREGMAN_VALUE_RECORD Value, _Inout_ PREG_Q
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("Value=0x%p; Info=0x%p; Emulated=0x%p", Value, Info, Emulated);
 
-	DEBUG_PRINT_LOCATION("KeyValueInformation      = 0x%p", Info->KeyValueInformation);
-	DEBUG_PRINT_LOCATION("KeyValueInformationClass = %u", Info->KeyValueInformationClass);
-	DEBUG_PRINT_LOCATION("Length                   = %u", Info->Length);
-	DEBUG_PRINT_LOCATION("ReturnLength             = 0x%p", Info->ResultLength);
-	DEBUG_PRINT_LOCATION("Value name               = %wZ", Info->ValueName);
 	*Emulated = FALSE;
 	status = STATUS_SUCCESS;
 	if (Info->KeyValueInformationClass == KeyValueBasicInformation || Info->KeyValueInformationClass == KeyValuePartialInformation ||
@@ -320,130 +345,132 @@ NTSTATUS ValueRecordOnQueryValue(_In_ PREGMAN_VALUE_RECORD Value, _Inout_ PREG_Q
 		status = ValueRecordCallbackQueryInvoke(Value, &valueData, &valueDataLength, &valueType);
 		if (NT_SUCCESS(status)) {
 			switch (Info->KeyValueInformationClass) {
-			case KeyValueBasicInformation:
-				requiredLength = FIELD_OFFSET(KEY_VALUE_BASIC_INFORMATION, Name) + Value->Item.Key.String.Length;
-				break;
-			case KeyValuePartialInformation:
-				requiredLength = FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data) + valueDataLength;
-				break;
-			case KeyValuePartialInformationAlign64:
-				requiredLength = FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION_ALIGN64, Data) + valueDataLength;
-				break;
-			case KeyValueFullInformation:
-				requiredLength = FIELD_OFFSET(KEY_VALUE_FULL_INFORMATION, Name) + Value->Item.Key.String.Length + valueDataLength;
-				break;
-			case KeyValueFullInformationAlign64:
-				requiredLength = FIELD_OFFSET(KEY_VALUE_FULL_INFORMATION, Name) + Value->Item.Key.String.Length + valueDataLength;
-				requiredLength += (ULONG)(ALIGN_UP_BY((ULONG_PTR)Info->KeyValueInformation, 8) - (ULONG_PTR)Info->KeyValueInformation);
-				break;
-			default:
-				ASSERT(FALSE);
-				break;
+				case KeyValueBasicInformation:
+					requiredLength = FIELD_OFFSET(KEY_VALUE_BASIC_INFORMATION, Name) + Value->Item.Key.String.Length;
+					break;
+				case KeyValuePartialInformation:
+					requiredLength = FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data) + valueDataLength;
+					break;
+				case KeyValuePartialInformationAlign64:
+					requiredLength = FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION_ALIGN64, Data) + valueDataLength;
+					break;
+				case KeyValueFullInformation:
+					requiredLength = FIELD_OFFSET(KEY_VALUE_FULL_INFORMATION, Name) + Value->Item.Key.String.Length + valueDataLength;
+					break;
+				case KeyValueFullInformationAlign64:
+					requiredLength = FIELD_OFFSET(KEY_VALUE_FULL_INFORMATION, Name) + Value->Item.Key.String.Length + valueDataLength;
+					requiredLength += (ULONG)(ALIGN_UP_BY((ULONG_PTR)Info->KeyValueInformation, 8) - (ULONG_PTR)Info->KeyValueInformation);
+					break;
+				default:
+					ASSERT(FALSE);
+					break;
 			}
 
 			DEBUG_PRINT_LOCATION("Requred length           = %u", requiredLength);
 			if (Info->Length >= requiredLength) {
 				switch (Info->KeyValueInformationClass) {
-				case KeyValueBasicInformation: {
-					PKEY_VALUE_BASIC_INFORMATION kvbi = NULL;
+					case KeyValueBasicInformation: {
+						PKEY_VALUE_BASIC_INFORMATION kvbi = NULL;
 
-					kvbi = (PKEY_VALUE_BASIC_INFORMATION)Info->KeyValueInformation;
-					__try {
-						kvbi->TitleIndex = 0;
-						kvbi->Type = valueType;
-						kvbi->NameLength = Value->Item.Key.String.Length;
-						memcpy(kvbi->Name, Value->Item.Key.String.Buffer, Value->Item.Key.String.Length);
-						*Info->ResultLength = requiredLength;
-					} __except (EXCEPTION_EXECUTE_HANDLER) {
-						status = GetExceptionCode();
-					}
-				} break;
-				case KeyValuePartialInformation: {
-					PKEY_VALUE_PARTIAL_INFORMATION kvpi = NULL;
-
-					kvpi = (PKEY_VALUE_PARTIAL_INFORMATION)Info->KeyValueInformation;
-					__try {
-						kvpi->TitleIndex = 0;
-						kvpi->Type = valueType;
-						kvpi->DataLength = valueDataLength;
-						memcpy(kvpi->Data, valueData, valueDataLength);
-						*Info->ResultLength = requiredLength;
-					} __except (EXCEPTION_EXECUTE_HANDLER) {
-						status = GetExceptionCode();
-					}
-				} break;
-				case KeyValuePartialInformationAlign64: {
-					PKEY_VALUE_PARTIAL_INFORMATION_ALIGN64 kvpi64 = NULL;
-
-					kvpi64 = (PKEY_VALUE_PARTIAL_INFORMATION_ALIGN64)Info->KeyValueInformation;
-					__try {
-						kvpi64->Type = valueType;
-						kvpi64->DataLength = valueDataLength;
-						memcpy(kvpi64->Data, valueData, valueDataLength);
-						*Info->ResultLength = requiredLength;
-					} __except (EXCEPTION_EXECUTE_HANDLER) {
-						status = GetExceptionCode();
-					}
-				} break;
-				case KeyValueFullInformation:
-				case KeyValueFullInformationAlign64: {
-					PKEY_VALUE_FULL_INFORMATION kvfi = NULL;
-
-					kvfi = (PKEY_VALUE_FULL_INFORMATION)Info->KeyValueInformation;
-					if (Info->KeyValueInformationClass == KeyValueFullInformationAlign64)
-						kvfi = (PKEY_VALUE_FULL_INFORMATION)ALIGN_UP_BY((ULONG_PTR)kvfi, 8);
-
-					__try {
-						ULONG dataOffset = FIELD_OFFSET(KEY_VALUE_FULL_INFORMATION, Name) + Value->Item.Key.String.Length;
-
-						kvfi->TitleIndex = 0;
-						kvfi->Type = valueType;
-						kvfi->NameLength = Value->Item.Key.String.Length;
-						memcpy(kvfi->Name, Value->Item.Key.String.Buffer, Value->Item.Key.String.Length);
-						kvfi->DataOffset = dataOffset;
-						kvfi->DataLength = valueDataLength;
-						memcpy((PUCHAR)kvfi + dataOffset, valueData, valueDataLength);
-						*Info->ResultLength = requiredLength;
-					} __except (EXCEPTION_EXECUTE_HANDLER) {
-						status = GetExceptionCode();
-					}
-				} break;
-				default:
-					ASSERT(FALSE);
-					break;
-				}
-			} else {
-				status = STATUS_BUFFER_TOO_SMALL;
-				switch (Info->KeyValueInformationClass) {
-				case KeyValuePartialInformation:
-					if (Info->Length >= (ULONG)FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data)) {
+						kvbi = (PKEY_VALUE_BASIC_INFORMATION)Info->KeyValueInformation;
+						__try {
+							kvbi->TitleIndex = 0;
+							kvbi->Type = valueType;
+							kvbi->NameLength = Value->Item.Key.String.Length;
+							memcpy(kvbi->Name, Value->Item.Key.String.Buffer, Value->Item.Key.String.Length);
+							*Info->ResultLength = requiredLength;
+						} __except (EXCEPTION_EXECUTE_HANDLER) {
+							status = GetExceptionCode();
+						}
+					} break;
+					case KeyValuePartialInformation: {
 						PKEY_VALUE_PARTIAL_INFORMATION kvpi = NULL;
 
-						status = STATUS_BUFFER_OVERFLOW;
 						kvpi = (PKEY_VALUE_PARTIAL_INFORMATION)Info->KeyValueInformation;
 						__try {
 							kvpi->TitleIndex = 0;
 							kvpi->Type = valueType;
 							kvpi->DataLength = valueDataLength;
+							memcpy(kvpi->Data, valueData, valueDataLength);
+							*Info->ResultLength = requiredLength;
 						} __except (EXCEPTION_EXECUTE_HANDLER) {
 							status = GetExceptionCode();
 						}
-					}
-					break;
-				case KeyValuePartialInformationAlign64:
-					if (Info->Length >= (ULONG)FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION_ALIGN64, Data)) {
+					} break;
+					case KeyValuePartialInformationAlign64: {
 						PKEY_VALUE_PARTIAL_INFORMATION_ALIGN64 kvpi64 = NULL;
 
-						status = STATUS_BUFFER_OVERFLOW;
 						kvpi64 = (PKEY_VALUE_PARTIAL_INFORMATION_ALIGN64)Info->KeyValueInformation;
 						__try {
 							kvpi64->Type = valueType;
 							kvpi64->DataLength = valueDataLength;
+							memcpy(kvpi64->Data, valueData, valueDataLength);
+							*Info->ResultLength = requiredLength;
 						} __except (EXCEPTION_EXECUTE_HANDLER) {
 							status = GetExceptionCode();
 						}
-					}
-					break;
+					} break;
+					case KeyValueFullInformation:
+					case KeyValueFullInformationAlign64: {
+						PKEY_VALUE_FULL_INFORMATION kvfi = NULL;
+
+						kvfi = (PKEY_VALUE_FULL_INFORMATION)Info->KeyValueInformation;
+						if (Info->KeyValueInformationClass == KeyValueFullInformationAlign64)
+							kvfi = (PKEY_VALUE_FULL_INFORMATION)ALIGN_UP_BY((ULONG_PTR)kvfi, 8);
+
+						__try {
+							ULONG dataOffset = FIELD_OFFSET(KEY_VALUE_FULL_INFORMATION, Name) + Value->Item.Key.String.Length;
+
+							kvfi->TitleIndex = 0;
+							kvfi->Type = valueType;
+							kvfi->NameLength = Value->Item.Key.String.Length;
+							memcpy(kvfi->Name, Value->Item.Key.String.Buffer, Value->Item.Key.String.Length);
+							kvfi->DataOffset = dataOffset;
+							kvfi->DataLength = valueDataLength;
+							memcpy((PUCHAR)kvfi + dataOffset, valueData, valueDataLength);
+							*Info->ResultLength = requiredLength;
+						} __except (EXCEPTION_EXECUTE_HANDLER) {
+							status = GetExceptionCode();
+						}
+					} break;
+					default:
+						ASSERT(FALSE);
+						break;
+				}
+			} else {
+				status = STATUS_BUFFER_TOO_SMALL;
+				switch (Info->KeyValueInformationClass) {
+					case KeyValuePartialInformation:
+						if (Info->Length >= (ULONG)FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data)) {
+							PKEY_VALUE_PARTIAL_INFORMATION kvpi = NULL;
+
+							status = STATUS_BUFFER_OVERFLOW;
+							kvpi = (PKEY_VALUE_PARTIAL_INFORMATION)Info->KeyValueInformation;
+							__try {
+								kvpi->TitleIndex = 0;
+								kvpi->Type = valueType;
+								kvpi->DataLength = valueDataLength;
+							} __except (EXCEPTION_EXECUTE_HANDLER) {
+								status = GetExceptionCode();
+							}
+						}
+						break;
+					case KeyValuePartialInformationAlign64:
+						if (Info->Length >= (ULONG)FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION_ALIGN64, Data)) {
+							PKEY_VALUE_PARTIAL_INFORMATION_ALIGN64 kvpi64 = NULL;
+
+							status = STATUS_BUFFER_OVERFLOW;
+							kvpi64 = (PKEY_VALUE_PARTIAL_INFORMATION_ALIGN64)Info->KeyValueInformation;
+							__try {
+								kvpi64->Type = valueType;
+								kvpi64->DataLength = valueDataLength;
+							} __except (EXCEPTION_EXECUTE_HANDLER) {
+								status = GetExceptionCode();
+							}
+						}
+						break;
+					default:
+						break;
 				}
 
 				__try {
@@ -515,7 +542,7 @@ NTSTATUS ValueRecordOnSetValue(_In_ PREGMAN_VALUE_RECORD Value, _In_ PREG_SET_VA
 	}
 
 	if (NT_SUCCESS(status)) {
-		status = ValueRecordCallbackSetInvoke(Value, &valueData, &valueSize, &valueType);
+		status = _ValueRecordCallbackSetInvoke(Value, &valueData, &valueSize, &valueType);
 		if (NT_SUCCESS(status)) {
 			HANDLE keyHandle = NULL;
 
@@ -550,14 +577,20 @@ NTSTATUS ValueRecordOnSetValue(_In_ PREGMAN_VALUE_RECORD Value, _In_ PREG_SET_VA
 
 NTSTATUS ValueRecordOnDeleteValue(_In_ PREGMAN_VALUE_RECORD Value, _In_ PREG_DELETE_VALUE_KEY_INFORMATION Info, PBOOLEAN Emulated)
 {
+	BOOLEAN stopEmulation = TRUE;
 	PREGMAN_VALUE_POST_CONTEXT postRecord = NULL;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("Value=0x%p; Info=0x%p; Emulated=0x%p", Value, Info, Emulated);
 
 	*Emulated = FALSE;
-	status = _ValuePostRecordAlloc(Value, rmvpctDeleteValue, &postRecord);
-	if (NT_SUCCESS(status))
-		Info->CallContext = postRecord;
+	status = _ValueRecordCallbackDeleteInvoke(Value, &stopEmulation);
+	if (NT_SUCCESS(status)) {
+		status = _ValuePostRecordAlloc(Value, rmvpctDeleteValue, &postRecord);
+		if (NT_SUCCESS(status)) {
+			postRecord->Data.DeleteValue.StopEmulation = stopEmulation;
+			Info->CallContext = postRecord;
+		}
+	}
 
 	DEBUG_EXIT_FUNCTION("0x%x", status);
 	return status;
@@ -573,7 +606,7 @@ NTSTATUS ValueRecordOnPostOperation(PREG_POST_OPERATION_INFORMATION Info, PBOOLE
 	*Emulated = FALSE;
 	status = STATUS_SUCCESS;
 	postRecord = Info->CallContext;
-	if (NT_SUCCESS(Info->Status)) {
+	if (NT_SUCCESS(Info->Status) || Info->Status == STATUS_OBJECT_NAME_NOT_FOUND) {
 		PREGMAN_VALUE_RECORD valueRecord = postRecord->ValueRecord;
 
 		switch (postRecord->Type) {
@@ -588,6 +621,10 @@ NTSTATUS ValueRecordOnPostOperation(PREG_POST_OPERATION_INFORMATION Info, PBOOLE
 				valueRecord->Type = REG_NONE;
 				ExReleaseResourceLite(&valueRecord->Lock);
 				KeLeaveCriticalRegion();
+				if (Info->Status == STATUS_OBJECT_NAME_NOT_FOUND) {
+					Info->ReturnStatus = STATUS_SUCCESS;
+					*Emulated = TRUE;
+				}
 			} break;
 			default:
 				break;
@@ -599,9 +636,9 @@ NTSTATUS ValueRecordOnPostOperation(PREG_POST_OPERATION_INFORMATION Info, PBOOLE
 }
 
 
-VOID ValuePostRecordFree(PREGMAN_VALUE_POST_CONTEXT Record, BOOLEAN DeepFree)
+VOID ValuePostRecordFree(_Inout_ PREGMAN_VALUE_POST_CONTEXT Record)
 {
-	DEBUG_ENTER_FUNCTION("Record=0x%p; DeepFree=%u", Record, DeepFree);
+	DEBUG_ENTER_FUNCTION("Record=0x%p", Record);
 
 	ValueRecordDereference(Record->ValueRecord);
 	HeapMemoryFree(Record);

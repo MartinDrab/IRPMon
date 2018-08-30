@@ -464,7 +464,13 @@ NTSTATUS PDWClassRegister(PGUID ClassGuid, BOOLEAN UpperFilter, BOOLEAN Beginnin
 							RtlInitUnicodeString(&uValueName, (!UpperFilter) ? L"LowerFilters" : L"UpperFilters");
 							status = RegManKeyValueAdd(rec->KeyRecord, &uValueName, NULL, 0, REG_NONE, &rec->ValueRecord);
 							if (NT_SUCCESS(status)) {
-								status = RegManValueCallbacksRegister(rec->ValueRecord, _QueryCallback, _SetCallback, rec, &rec->CallbackHandle);
+								REGMAN_CALLBACKS callbacks;
+
+								memset(&callbacks, 0, sizeof(callbacks));
+								callbacks.QueryValue = _QueryCallback;
+								callbacks.SetValue = _SetCallback;
+								callbacks.Context = rec;
+								status = RegManValueCallbacksRegister(rec->ValueRecord, &callbacks, &rec->CallbackHandle);
 								if (!NT_SUCCESS(status))
 									RegManKeyValueDelete(rec->ValueRecord);
 							}

@@ -431,6 +431,7 @@ NTSTATUS KeyRecordOnQueryValue(_In_ PREGMAN_KEY_RECORD Record, _Inout_ PREG_QUER
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("Record=0x%p; Info=0x%p; Emulate=0x%p", Record, Info, Emulate);
 
+	*Emulate = FALSE;
 	status = _CaptureUnicodeString(Info->ValueName, &valueName);
 	if (NT_SUCCESS(status)) {
 		PREGMAN_VALUE_RECORD valueRecord = NULL;
@@ -441,7 +442,7 @@ NTSTATUS KeyRecordOnQueryValue(_In_ PREGMAN_KEY_RECORD Record, _Inout_ PREG_QUER
 		if (valueRecord != NULL) {
 			status = ValueRecordOnQueryValue(valueRecord, Info, Emulate);
 			ValueRecordDereference(valueRecord);
-		} else status = STATUS_OBJECT_NAME_NOT_FOUND;
+		}
 
 		ExReleaseResourceLite(&Record->OperationLock);
 		KeLeaveCriticalRegion();
@@ -459,6 +460,7 @@ NTSTATUS KeyRecordOnEnumValue(_In_ PREGMAN_KEY_RECORD Record, _Inout_ PREG_ENUME
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("Record=0x%p; Info=0x%p; Emulated=0x%p", Record, Info, Emulated);
 
+	*Emulated = FALSE;
 	if (Info->Index < (ULONG)Record->ValueCount) {
 		KeEnterCriticalRegion();
 		ExAcquireResourceSharedLite(&Record->OperationLock, TRUE);
@@ -481,6 +483,7 @@ NTSTATUS KeyRecordOnSetValue(_In_ PREGMAN_KEY_RECORD Record, _In_ PREG_SET_VALUE
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("Record=0x%p; Info=0x%p; Emulated=0x%p", Record, Info, Emulated);
 
+	*Emulated = FALSE;
 	status = _CaptureUnicodeString(Info->ValueName, &valueName);
 	if (NT_SUCCESS(status)) {
 		PREGMAN_VALUE_RECORD valueRecord = NULL;
@@ -492,11 +495,11 @@ NTSTATUS KeyRecordOnSetValue(_In_ PREGMAN_KEY_RECORD Record, _In_ PREG_SET_VALUE
 			status = ValueRecordOnSetValue(valueRecord, Info, Emulated);
 			ValueRecordDereference(valueRecord);
 		} else {
-			status = ValueRecordAlloc(valueName, REG_NONE, NULL, 0, &valueRecord);
+			status = KeyRecordValueAdd(Record, valueName, NULL, 0, REG_NONE, &valueRecord);
 			if (NT_SUCCESS(status)) {
 				status = ValueRecordOnSetValue(valueRecord, Info, Emulated);
-				if (NT_SUCCESS(status))
-					StringRefTableInsert(&Record->ValueTable, &valueRecord->Item);
+				if (!NT_SUCCESS(status))
+					KeyRecordValueDelete(Record, &valueRecord->Item.Key.String);
 
 				ValueRecordDereference(valueRecord);
 			}
@@ -518,6 +521,7 @@ NTSTATUS KeyRecordOnDeleteValue(_In_ PREGMAN_KEY_RECORD Record, _In_ PREG_DELETE
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("Record=0x%p; Info=0x%p; Emulated=0x%p", Record, Info, Emulated);
 
+	*Emulated = FALSE;
 	status = _CaptureUnicodeString(Info->ValueName, &valueName);
 	if (NT_SUCCESS(status)) {
 		PREGMAN_VALUE_RECORD valueRecord = NULL;
@@ -528,7 +532,7 @@ NTSTATUS KeyRecordOnDeleteValue(_In_ PREGMAN_KEY_RECORD Record, _In_ PREG_DELETE
 		if (valueRecord != NULL) {
 			status = ValueRecordOnDeleteValue(valueRecord, Info, Emulated);
 			ValueRecordDereference(valueRecord);
-		} else status = STATUS_OBJECT_NAME_NOT_FOUND;
+		}
 
 		ExReleaseResourceLite(&Record->OperationLock);
 		KeLeaveCriticalRegion();
@@ -575,23 +579,22 @@ NTSTATUS KeyRecordOnQuery(_In_ PREGMAN_KEY_RECORD Record, PREG_QUERY_KEY_INFORMA
 					KeLeaveCriticalRegion();
 					if (NT_SUCCESS(status)) {
 						switch (Info->KeyInformationClass) {
-						case KeyFullInformation: {
-							PKEY_FULL_INFORMATION kfi = (PKEY_FULL_INFORMATION)keyInfo;
+							case KeyFullInformation: {
+								PKEY_FULL_INFORMATION kfi = (PKEY_FULL_INFORMATION)keyInfo;
 
-							kfi->Values = valueCount;
-							kfi->MaxValueNameLen = maxValueNameLen;
-							kfi->MaxValueDataLen = maxValueDataLen;
-						} break;
-						case KeyCachedInformation: {
-							PKEY_CACHED_INFORMATION kci = (PKEY_CACHED_INFORMATION)keyInfo;
-
-							kci->Values = valueCount;
-							kci->MaxValueNameLen = maxValueNameLen;
-							kci->MaxValueDataLen = maxValueDataLen;
-						} break;
-						default:
-							__debugbreak();
-							break;
+								kfi->Values = valueCount;
+								kfi->MaxValueNameLen = maxValueNameLen;
+								kfi->MaxValueDataLen = maxValueDataLen;
+							} break;
+							case KeyCachedInformation: {
+								PKEY_CACHED_INFORMATION kci = (PKEY_CACHED_INFORMATION)keyInfo;
+							
+								kci->Values = valueCount;
+								kci->MaxValueNameLen = maxValueNameLen;
+								kci->MaxValueDataLen = maxValueDataLen;
+							} break;
+							default:
+								break;
 						}
 
 						__try {
@@ -627,7 +630,7 @@ NTSTATUS KeyRecordOnQuery(_In_ PREGMAN_KEY_RECORD Record, PREG_QUERY_KEY_INFORMA
 }
 
 
-NTSTATUS KeyRecordOnPostOperation(PREGMAN_KEY_RECORD Record, PREG_POST_OPERATION_INFORMATION Info, PBOOLEAN Emulated)
+NTSTATUS KeyRecordOnPostOperation(_Inout_ PREGMAN_KEY_RECORD Record, _Inout_ PREG_POST_OPERATION_INFORMATION Info, _Out_ PBOOLEAN Emulated)
 {
 	PREGMAN_VALUE_POST_CONTEXT postRecord = NULL;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
@@ -636,26 +639,23 @@ NTSTATUS KeyRecordOnPostOperation(PREGMAN_KEY_RECORD Record, PREG_POST_OPERATION
 	status = STATUS_SUCCESS;
 	postRecord = Info->CallContext;
 	if (postRecord != NULL) {
+		PREGMAN_VALUE_RECORD valueRecord = postRecord->ValueRecord;
 		DEBUG_ENTER_FUNCTION("Record=0x%p; Info=0x%p; Emulated=0x%p", Record, Info, Emulated);
 
-		if (NT_SUCCESS(Info->Status)) {
-			PREGMAN_VALUE_RECORD valueRecord = postRecord->ValueRecord;
-
-			switch (postRecord->Type) {
-				case rmvpctDeleteValue: {
-					ValueRecordReference(valueRecord);
-					status = ValueRecordOnPostOperation(Info, Emulated);
-					if (NT_SUCCESS(status))
-						KeyRecordValueDelete(Record, &valueRecord->Item.Key.String);
-			
-					ValueRecordDereference(valueRecord);
-				} break;
+		switch (postRecord->Type) {
+			case rmvpctDeleteValue: {
+				ValueRecordReference(valueRecord);
+				status = ValueRecordOnPostOperation(Info, Emulated);			
+				if (NT_SUCCESS(status) && postRecord->Data.DeleteValue.StopEmulation)
+					KeyRecordValueDelete(Record, &valueRecord->Item.Key.String);
+				
+				ValueRecordDereference(valueRecord);
+			} break;
 			default:
 				break;
-			}
 		}
 
-		ValuePostRecordFree(postRecord, !NT_SUCCESS(Info->Status));
+		ValuePostRecordFree(postRecord);
 		Info->CallContext = NULL;
 		DEBUG_EXIT_FUNCTION("0x%x, *Emulated=0x%p", status, *Emulated);
 	}
