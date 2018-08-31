@@ -8,6 +8,7 @@
 #include "utils.h"
 #include "hook.h"
 #include "req-queue.h"
+#include "data-loggers.h"
 #include "hook-handlers.h"
 
 
