@@ -226,6 +226,8 @@ FResultValue := NativeUInt(ARequest.Other);
 FProcessId := ARequest.ProcessId;
 FThreadId := ARequest.ThreadId;
 FIRQL := ARequest.Irql;
+FData := Nil;
+FDataSize := 0;
 end;
 
 Destructor TDriverRequest.Destroy;
