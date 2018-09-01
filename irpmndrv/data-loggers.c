@@ -83,22 +83,26 @@ void IRPDataLogger(PIRP Irp, BOOLEAN Completion, PDATA_LOGGER_RESULT Result)
 	switch (irpStack->MajorFunction) {
 		case IRP_MJ_READ: {
 			if (Completion) {
-				Result->BufferSize = Irp->IoStatus.Information;
 				if (Irp->MdlAddress != NULL) {
 					Result->BufferMdl = Irp->MdlAddress;
 					Result->Buffer = MmGetSystemAddressForMdlSafe(Irp->MdlAddress, NormalPagePriority);
 				} else if (Irp->AssociatedIrp.SystemBuffer != NULL)
 					Result->Buffer = Irp->AssociatedIrp.SystemBuffer;
+
+				if (Result->Buffer != NULL)
+					Result->BufferSize = Irp->IoStatus.Information;
 			}
 		} break;
 		case IRP_MJ_WRITE:
 			if (!Completion) {
-				Result->BufferSize = irpStack->Parameters.Write.Length;
 				if (Irp->MdlAddress != NULL) {
 					Result->BufferMdl = Irp->MdlAddress;
 					Result->Buffer = MmGetSystemAddressForMdlSafe(Irp->MdlAddress, NormalPagePriority);
 				} else if (Irp->AssociatedIrp.SystemBuffer != NULL)
 					Result->Buffer = Irp->AssociatedIrp.SystemBuffer;
+
+				if (Result->Buffer != NULL)
+					Result->BufferSize = irpStack->Parameters.Write.Length;
 			}
 			break;
 		case IRP_MJ_DEVICE_CONTROL:
