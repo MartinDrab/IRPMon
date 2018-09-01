@@ -11,9 +11,8 @@ typedef enum _EDataLoggerResultType {
 
 
 typedef struct _DATA_LOGGER_RESULT {
-	EDataLoggerResultType Type;
 	void *Buffer;
-	ULONG BufferSize;
+	SIZE_T BufferSize;
 	PMDL BufferMdl;
 } DATA_LOGGER_RESULT, *PDATA_LOGGER_RESULT;
 

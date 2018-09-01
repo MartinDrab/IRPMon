@@ -40,7 +40,7 @@ static SIZE_T _MultiStringSize(const wchar_t *MS)
 	DEBUG_ENTER_FUNCTION("MS=0x%p", MS);
 
 	if (MS != NULL) {
-		MS = sizeof(wchar_t);
+		ret = sizeof(wchar_t);
 		while (*MS != L'\0') {
 			len = wcslen(MS) + 1;
 			ret += len * sizeof(wchar_t);
@@ -103,9 +103,8 @@ void IRPDataLogger(PIRP Irp, BOOLEAN Completion, PDATA_LOGGER_RESULT Result)
 			break;
 		case IRP_MJ_DEVICE_CONTROL:
 		case IRP_MJ_INTERNAL_DEVICE_CONTROL: {
-			ULONG method = irpStack->Parameters.DeviceIoControl & 3;
+			ULONG method = irpStack->Parameters.DeviceIoControl.IoControlCode & 3;
 
-			Result->Type = dlrtTwoBuffers;
 			switch (method) {
 				case METHOD_NEITHER:
 					if (!Completion) {
@@ -120,7 +119,7 @@ void IRPDataLogger(PIRP Irp, BOOLEAN Completion, PDATA_LOGGER_RESULT Result)
 					if (!Completion) {
 						Result->BufferMdl = Irp->MdlAddress;
 						if (Irp->MdlAddress != NULL)
-							Result->Buffer = MmGetSystemAddressForMdlSafe(Irp->MdlAddress);
+							Result->Buffer = MmGetSystemAddressForMdlSafe(Irp->MdlAddress, NormalPagePriority);
 						else Result->Buffer = Irp->AssociatedIrp.SystemBuffer;
 
 						Result->BufferSize = irpStack->Parameters.DeviceIoControl.InputBufferLength;
@@ -130,7 +129,7 @@ void IRPDataLogger(PIRP Irp, BOOLEAN Completion, PDATA_LOGGER_RESULT Result)
 					if (Completion) {
 						Result->BufferMdl = Irp->MdlAddress;
 						if (Irp->MdlAddress != NULL)
-							Result->Buffer = MmGetSystemAddressForMdlSafe(Irp->MdlAddress);
+							Result->Buffer = MmGetSystemAddressForMdlSafe(Irp->MdlAddress, NormalPagePriority);
 						else Result->Buffer = Irp->AssociatedIrp.SystemBuffer;
 					
 						Result->BufferSize = Irp->IoStatus.Information;
