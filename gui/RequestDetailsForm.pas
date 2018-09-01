@@ -17,6 +17,8 @@ Type
     LowerPanel: TPanel;
     OkButton: TButton;
     NameValueListView: TListView;
+    DataPanel: TPanel;
+    DataRichEdit: TRichEdit;
     Procedure OkButtonClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
   Private
@@ -36,9 +38,9 @@ end;
 
 {$R *.dfm}
 
-procedure TRequestDetailsFrm.FormCreate(Sender: TObject);
+Procedure TRequestDetailsFrm.FormCreate(Sender: TObject);
 Var
-  value : WIdeString;
+  value : WideString;
   ct : ERequestListModelColumnType;
 begin
 For ct := Low(ERequestListModelColumnType) To High(ERequestListModelColumnType) Do

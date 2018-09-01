@@ -892,7 +892,7 @@ object RequestDetailsFrm: TRequestDetailsFrm
     Left = 0
     Top = 0
     Width = 279
-    Height = 281
+    Height = 168
     Align = alClient
     Columns = <
       item
@@ -911,5 +911,33 @@ object RequestDetailsFrm: TRequestDetailsFrm
     ShowWorkAreas = True
     TabOrder = 1
     ViewStyle = vsReport
+    ExplicitHeight = 281
+  end
+  object DataPanel: TPanel
+    Left = 0
+    Top = 168
+    Width = 279
+    Height = 113
+    Align = alBottom
+    TabOrder = 2
+    object DataRichEdit: TRichEdit
+      Left = 1
+      Top = 1
+      Width = 277
+      Height = 111
+      Align = alClient
+      Font.Charset = EASTEUROPE_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -11
+      Font.Name = 'Tahoma'
+      Font.Style = []
+      ParentFont = False
+      PlainText = True
+      TabOrder = 0
+      ExplicitLeft = 160
+      ExplicitTop = 32
+      ExplicitWidth = 73
+      ExplicitHeight = 49
+    end
   end
 end
