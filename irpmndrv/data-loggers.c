@@ -86,7 +86,7 @@ void IRPDataLogger(PIRP Irp, BOOLEAN Completion, PDATA_LOGGER_RESULT Result)
 				Result->BufferSize = Irp->IoStatus.Information;
 				if (Irp->MdlAddress != NULL) {
 					Result->BufferMdl = Irp->MdlAddress;
-					Result->Buffer = MmGetSystemAddressForMdl(Irp->MdlAddress);
+					Result->Buffer = MmGetSystemAddressForMdlSafe(Irp->MdlAddress, NormalPagePriority);
 				} else if (Irp->AssociatedIrp.SystemBuffer != NULL)
 					Result->Buffer = Irp->AssociatedIrp.SystemBuffer;
 			}
@@ -96,7 +96,7 @@ void IRPDataLogger(PIRP Irp, BOOLEAN Completion, PDATA_LOGGER_RESULT Result)
 				Result->BufferSize = irpStack->Parameters.Write.Length;
 				if (Irp->MdlAddress != NULL) {
 					Result->BufferMdl = Irp->MdlAddress;
-					Result->Buffer = MmGetSystemAddressForMdl(Irp->MdlAddress);
+					Result->Buffer = MmGetSystemAddressForMdlSafe(Irp->MdlAddress, NormalPagePriority);
 				} else if (Irp->AssociatedIrp.SystemBuffer != NULL)
 					Result->Buffer = Irp->AssociatedIrp.SystemBuffer;
 			}
