@@ -379,9 +379,10 @@ NTSTATUS UMHookDeleteDevice(PIOCTL_IRPMNDRV_HOOK_REMOVE_DEVICE_INPUT InputBuffer
 	return status;
 }
 
-NTSTATUS UMGetRequestRecord(PVOID Buffer, ULONG BufferLength, PULONG ReturnLength)
+NTSTATUS UMGetRequestRecord(PVOID Buffer, ULONG BufferLength, PSIZE_T ReturnLength)
 {
-	REQUEST_GENERAL request;
+	SIZE_T requestSize = 0;
+	PREQUEST_HEADER request;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("Buffer=0x%p; BufferLength=%u; ReturnLength=0x%p", Buffer, BufferLength, ReturnLength);
 
@@ -396,24 +397,27 @@ NTSTATUS UMGetRequestRecord(PVOID Buffer, ULONG BufferLength, PULONG ReturnLengt
 		} else status = STATUS_SUCCESS;
 
 		if (NT_SUCCESS(status)) {
-			status = RequestQueueGet(&request.RequestTypes.Other, &BufferLength);
+			requestSize = BufferLength;
+			status = RequestQueueGet(&request, &requestSize);
 			if (NT_SUCCESS(status)) {
 				if (ExGetPreviousMode() == UserMode) {
 					__try {
-						memcpy(Buffer, &request, BufferLength);
-						*ReturnLength = BufferLength;
+						memcpy(Buffer, request, requestSize);
+						*ReturnLength = requestSize;
 					} __except (EXCEPTION_EXECUTE_HANDLER) {
 						status = GetExceptionCode();
 					}
 				} else {
-					memcpy(Buffer, &request, BufferLength);
-					*ReturnLength = BufferLength;
+					memcpy(Buffer, request, requestSize);
+					*ReturnLength = requestSize;
 				}
+
+				HeapMemoryFree(request);
 			}
 		}
 	} else status = STATUS_BUFFER_TOO_SMALL;
 
-	DEBUG_EXIT_FUNCTION("0x%x", status);
+	DEBUG_EXIT_FUNCTION("0x%x, *ReturnLength=%Iu", status, *ReturnLength);
 	return status;
 }
 

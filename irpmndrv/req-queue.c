@@ -24,18 +24,24 @@ static volatile LONG _lastRequestId = 0;
 /************************************************************************/
 
 
-static ULONG _GetRequestSize(PREQUEST_HEADER Header)
+static SIZE_T _GetRequestSize(PREQUEST_HEADER Header)
 {
-	ULONG ret = 0;
+	SIZE_T ret = 0;
+	PREQUEST_IRP irp = NULL;
+	PREQUEST_IRP_COMPLETION irpComp = NULL;
 	PREQUEST_DRIVER_DETECTED drr = CONTAINING_RECORD(Header, REQUEST_DRIVER_DETECTED, Header);
 	PREQUEST_DEVICE_DETECTED der = CONTAINING_RECORD(Header, REQUEST_DEVICE_DETECTED, Header);
 
 	switch (Header->Type) {
 		case ertIRP:
 			ret = sizeof(REQUEST_IRP);
+			irp = CONTAINING_RECORD(Header, REQUEST_IRP, Header);
+			ret += irp->DataSize;
 			break;
 		case ertIRPCompletion:
 			ret = sizeof(REQUEST_IRP_COMPLETION);
+			irpComp = CONTAINING_RECORD(Header, REQUEST_IRP_COMPLETION, Header);
+			ret += irpComp->DataSize;
 			break;
 		case ertFastIo:
 			ret = sizeof(REQUEST_FASTIO);
@@ -244,9 +250,9 @@ NTSTATUS RequestXXXDetectedCreate(ERequesttype Type, PDRIVER_OBJECT DriverObject
 }
 
 
-NTSTATUS RequestQueueGet(PREQUEST_HEADER Buffer, PULONG Length)
+NTSTATUS RequestQueueGet(PREQUEST_HEADER *Buffer, PSIZE_T Length)
 {
-	ULONG reqSize = 0;
+	SIZE_T reqSize = 0;
 	PREQUEST_HEADER h = NULL;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("Buffer=0x%p; Length=0x%p", Buffer, Length);
@@ -263,8 +269,7 @@ NTSTATUS RequestQueueGet(PREQUEST_HEADER Buffer, PULONG Length)
 				reqSize = _GetRequestSize(h);
 				if (reqSize <= *Length) {
 					InterlockedDecrement(&_requestCount);
-					memcpy(Buffer, h, reqSize);
-					HeapMemoryFree(h);
+					*Buffer = h;
 					status = STATUS_SUCCESS;
 				} else {
 					ExInterlockedInsertHeadList(&_requestListHead, l, &_requestListLock);

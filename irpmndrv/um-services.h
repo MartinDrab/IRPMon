@@ -24,7 +24,7 @@ NTSTATUS UMHookDriver(PIOCTL_IRPMNDRV_HOOK_DRIVER_INPUT InputBuffer, ULONG Input
 NTSTATUS UMUnhookDriver(PIOCTL_IRPMNDRV_UNHOOK_DRIVER_INPUT InputBuffer, ULONG InputBufferLength);
 NTSTATUS UMHookAddDevice(PIOCTL_IRPMNDRV_HOOK_ADD_DEVICE_INPUT InputBUffer, ULONG InputBufferLength, PIOCTL_IRPMNDRV_HOOK_ADD_DEVICE_OUTPUT OutputBuffer, ULONG OutputBufferLength);
 NTSTATUS UMHookDeleteDevice(PIOCTL_IRPMNDRV_HOOK_REMOVE_DEVICE_INPUT InputBuffer, ULONG InputBufferLength);
-NTSTATUS UMGetRequestRecord(PVOID Buffer, ULONG BufferLength, PULONG ReturnLength);
+NTSTATUS UMGetRequestRecord(PVOID Buffer, ULONG BufferLength, PSIZE_T ReturnLength);
 NTSTATUS UMEnumDriversDevices(PVOID OutputBuffer, ULONG OutputBufferLength, PULONG ReturnLength);
 NTSTATUS UMRequestQueueConnect(PIOCTL_IRPMNDRV_CONNECT_INPUT InputBuffer, ULONG InputBufferLength);
 VOID UMRequestQueueDisconnect(VOID);
