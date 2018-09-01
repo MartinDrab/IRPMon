@@ -78,8 +78,11 @@ void IRPDataLogger(PIRP Irp, BOOLEAN Completion, PDATA_LOGGER_RESULT Result)
 	DEBUG_ENTER_FUNCTION("Irp=0x%p; Result=0x%p", Irp, Result);
 
 	mode = ExGetPreviousMode();
-	irpStack = IoGetCurrentIrpStackLocation(Irp);
-	memset(Result, 0, sizeof(Result));
+	memset(Result, 0, sizeof(DATA_LOGGER_RESULT));
+	irpStack = (!Completion) ?
+		IoGetCurrentIrpStackLocation(Irp) :
+		IoGetNextIrpStackLocation(Irp);
+
 	switch (irpStack->MajorFunction) {
 		case IRP_MJ_READ: {
 			if (Completion) {
