@@ -290,6 +290,8 @@ Type
     IOSBInformation : NativeUInt;
 	  (** PID of the process originally requesting the operation. **)
     RequestorProcessId : NativeUInt;
+    DataSize : NativeUInt;
+    // Data
     end;
   REQUEST_IRP = _REQUEST_IRP;
   PREQUEST_IRP = ^REQUEST_IRP;
@@ -299,6 +301,7 @@ Type
 	  IRPAddress : Pointer;
 	  CompletionStatus : Cardinal;
 	  CompletionInformation : NativeUInt;
+    DataSize : NativeUInt;
     end;
   REQUEST_IRP_COMPLETION = _REQUEST_IRP_COMPLETION;
   PREQUEST_IRP_COMPLETION = ^REQUEST_IRP_COMPLETION;
