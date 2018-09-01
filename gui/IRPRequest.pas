@@ -154,8 +154,12 @@ Uses
 (** TIRPRequest **)
 
 Constructor TIRPRequest.Create(Var ARequest:REQUEST_IRP);
+Var
+  d : Pointer;
 begin
 Inherited Create(ARequest.Header);
+d := PByte(@ARequest) + SizeOf(ARequest);
+AssignData(d, ARequest.DataSize);
 FMajorFunction := ARequest.MajorFunction;
 FMinorFunction := ARequest.MinorFunction;
 FPreviousMode := ARequest.PreviousMode;
