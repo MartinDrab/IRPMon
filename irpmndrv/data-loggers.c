@@ -187,6 +187,6 @@ void IRPDataLogger(PIRP Irp, BOOLEAN Completion, PDATA_LOGGER_RESULT Result)
 			break;
 	}
 
-	DEBUG_EXIT_FUNCTION_VOID();
+	DEBUG_EXIT_FUNCTION("void, *Buffer=0x%p, *BufferSize=%Iu, *BfferMdl=0x%p", Result->Buffer, Result->BufferSize, Result->BufferMdl);
 	return;
 }
