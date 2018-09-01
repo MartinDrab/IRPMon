@@ -238,13 +238,17 @@ end;
 
 Function TDriverRequest.AssignData(AData:Pointer; ASize:NativeUInt):Boolean;
 begin
-Result := Not Assigned(FData);
-If Result Then
+Result := True;
+If ASize > 0 Then
   begin
-  FData := AllocMem(ASize);
-  Result := Assigned(FData);
+  Result := Not Assigned(FData);
   If Result Then
-    Move(AData^, FData^, ASize);
+    begin
+    FData := AllocMem(ASize);
+    Result := Assigned(FData);
+    If Result Then
+      Move(AData^, FData^, ASize);
+    end;
   end;
 end;
 
