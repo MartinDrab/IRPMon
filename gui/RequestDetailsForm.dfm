@@ -911,7 +911,6 @@ object RequestDetailsFrm: TRequestDetailsFrm
     ShowWorkAreas = True
     TabOrder = 1
     ViewStyle = vsReport
-    ExplicitHeight = 281
   end
   object DataPanel: TPanel
     Left = 0
@@ -933,11 +932,10 @@ object RequestDetailsFrm: TRequestDetailsFrm
       Font.Style = []
       ParentFont = False
       PlainText = True
+      ReadOnly = True
+      ScrollBars = ssBoth
       TabOrder = 0
-      ExplicitLeft = 160
-      ExplicitTop = 32
-      ExplicitWidth = 73
-      ExplicitHeight = 49
+      WordWrap = False
     end
   end
 end

@@ -30,6 +30,9 @@ Type
 
 Implementation
 
+Uses
+  Utils;
+
 Constructor TRequestDetailsFrm.Create(AOwner:TComponent; ARequest:TDriverRequest);
 begin
 FRequest := ARequest;
@@ -67,37 +70,7 @@ With NameValueListVIew.Items.Add Do
   end;
 
 If FRequest.DataSize > 0 Then
-  begin
-  hexLine := '';
-  dispLine := '';
-  index := 0;
-  d := FRequest.Data;
-  For I := 0 To FRequest.DataSize - 1 Do
-    begin
-    hexLine := hexLine + ' ' + IntToHex(d^, 2);
-    If d^ >= Ord(' ') Then
-      dispLine := dispLine + Chr(d^)
-    Else dispLine := dispLine + '.';
-
-    Inc(Index);
-    Inc(d);
-    If index = 16 Then
-      begin
-      DataRichEdit.Lines.Add(Format('%s  %s', [hexLine, dispLine]));
-      hexLine := '';
-      dispLine := '';
-      index := 0;
-      end;
-    end;
-
-  If index > 0 Then
-    begin
-    For I := index To 16 - 1 Do
-      hexLine := hexLine + '   ';
-
-    DataRichEdit.Lines.Add(Format('%s  %s', [hexLine, dispLine]));
-    end;
-  end;
+  DataRichEdit.Text := BufferToHex(FRequest.Data, FRequest.DataSize);
 end;
 
 Procedure TRequestDetailsFrm.OkButtonClick(Sender: TObject);
@@ -106,3 +79,4 @@ Close;
 end;
 
 End.
+

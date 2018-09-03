@@ -270,6 +270,12 @@ For ct := Low(ERequestListModelColumnType) To High(ERequestListModelColumnType) 
     s.Add(Format('%s = %s', [GetColumnName(ct), value]));
   end;
 
+If FDataSize > 0 Then
+  begin
+  S.Add(Format('Data size = %d', [FDataSize]));
+  S.Text := S.Text + BufferToHex(FData, FDataSize);
+  end;
+
 s.Add('');
 s.SaveToStream(AStream);
 s.Free;
