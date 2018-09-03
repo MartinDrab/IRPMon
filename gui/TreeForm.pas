@@ -33,6 +33,7 @@ Type
     LowerPanel: TPanel;
     StornoButton: TButton;
     OkButton: TButton;
+    DataMenuItem: TMenuItem;
     Procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure DeviceTreeViewPopupMenuPopup(Sender: TObject);
@@ -412,6 +413,7 @@ If Assigned(tn) Then
   AddDeviceMenuItem.Checked := hdr.Settings.MonitorAddDevice;
   DriverUnloadMenuItem.Checked := hdr.Settings.MonitorUnload;
   NewDevicesMenuItem.Checked := hdr.Settings.MonitorNewDevices;
+  DataMenuItem.Checked := hdr.Settings.MonitorData;
   end;
 end;
 
@@ -603,7 +605,9 @@ If Assigned(tn) Then
   Else If M = AddDeviceMenuItem Then
     hdr.Settings.MonitorAddDevice := M.Checked
   Else If M = DriverUnloadMenuItem Then
-    hdr.Settings.MonitorUnload := M.Checked;
+    hdr.Settings.MonitorUnload := M.Checked
+  Else If M = DataMenuItem Then
+    hdr.Settings.MonitorData := M.Checked;
   end;
 
 DeviceTreeView.Invalidate;

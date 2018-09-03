@@ -317,6 +317,7 @@ typedef struct _DRIVER_MONITOR_SETTINGS {
 	BOOLEAN MonitorFastIo;
 	BOOLEAN MonitorIRP;
 	BOOLEAN MonitorIRPCompletion;
+	BOOLEAN MonitorData;
 	/** IRPSettings for newly hooked devices. */
 	UCHAR IRPSettings[0x1b + 1];
 	/** FastIoSettings for newly hooked devices. */

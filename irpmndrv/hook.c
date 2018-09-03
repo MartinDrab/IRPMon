@@ -333,6 +333,7 @@ static NTSTATUS _DriverHookRecordCreate(PDRIVER_OBJECT DriverObject, PDRIVER_MON
 				tmpRecord->MonitorDriverUnload = MonitorSettings->MonitorUnload;
 				tmpRecord->MonitorIRP = MonitorSettings->MonitorIRP;
 				tmpRecord->MonitorIRPCompletion = MonitorSettings->MonitorIRPCompletion;
+				tmpRecord->MonitorData = MonitorSettings->MonitorData;
 				tmpRecord->MonitorFastIo = MonitorSettings->MonitorFastIo;
 				memcpy(tmpRecord->IRPSettings, MonitorSettings->IRPSettings, sizeof(tmpRecord->IRPSettings));
 				memcpy(tmpRecord->FastIoSettings, MonitorSettings->FastIoSettings, sizeof(tmpRecord->FastIoSettings));
@@ -637,6 +638,7 @@ NTSTATUS DriverHookRecordSetInfo(PDRIVER_HOOK_RECORD Record, PDRIVER_MONITOR_SET
 
 	Record->MonitorNewDevices = DriverSettings->MonitorNewDevices;
 	Record->MonitorIRPCompletion = DriverSettings->MonitorIRPCompletion;
+	Record->MonitorData = DriverSettings->MonitorData;
 	if (!Record->MonitoringEnabled) {
 		Record->MonitorAddDevice = DriverSettings->MonitorAddDevice;
 		Record->MonitorStartIo = DriverSettings->MonitorStartIo;
@@ -664,6 +666,7 @@ VOID DriverHookRecordGetInfo(PDRIVER_HOOK_RECORD Record, PDRIVER_MONITOR_SETTING
 	DriverSettings->MonitorNewDevices = Record->MonitorNewDevices;
 	DriverSettings->MonitorStartIo = Record->MonitorStartIo;
 	DriverSettings->MonitorUnload = Record->MonitorDriverUnload;
+	DriverSettings->MonitorData = Record->MonitorData;
 	memcpy(DriverSettings->IRPSettings, Record->IRPSettings, sizeof(DriverSettings->IRPSettings));
 	memcpy(DriverSettings->FastIoSettings, Record->FastIoSettings, sizeof(DriverSettings->FastIoSettings));
 	*Enabled = Record->MonitoringEnabled;
@@ -908,6 +911,7 @@ NTSTATUS HookObjectsEnumerate(PVOID Buffer, ULONG BufferLength, PULONG ReturnLen
 				driverInfo->MonitorSettings.MonitorIRP = driverRecord->MonitorIRP;
 				driverInfo->MonitorSettings.MonitorIRPCompletion = driverRecord->MonitorIRPCompletion;
 				driverInfo->MonitorSettings.MonitorFastIo = driverRecord->MonitorFastIo;
+				driverInfo->MonitorSettings.MonitorData = driverRecord->MonitorData;
 				memcpy(driverInfo->MonitorSettings.IRPSettings, driverRecord->IRPSettings, sizeof(driverInfo->MonitorSettings.IRPSettings));
 				memcpy(driverInfo->MonitorSettings.FastIoSettings, driverRecord->FastIoSettings, sizeof(driverInfo->MonitorSettings.FastIoSettings));
 				driverInfo->NumberOfHookedDevices = 0;

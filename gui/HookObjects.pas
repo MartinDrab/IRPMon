@@ -246,6 +246,7 @@ Settings.MonitorStartIo := False;
 Settings.MonitorFastIo := True;
 Settings.MonitorIRP := True;
 Settings.MonitorIRPCompletion := True;
+Settings.MonitorData := False;
 Settings.MonitorUnload := False;
 FillChar(Settings.IRPSettings, SizeOf(Settings.IRPSettings), Ord(True));
 FillChar(Settings.FastIoSettings, SizeOf(Settings.FastIoSettings), Ord(True));
