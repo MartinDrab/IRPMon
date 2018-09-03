@@ -249,7 +249,10 @@ If ASize > 0 Then
     FData := AllocMem(ASize);
     Result := Assigned(FData);
     If Result Then
+      begin
       Move(AData^, FData^, ASize);
+      FDataSize := ASize;
+      end;
     end;
   end;
 end;
