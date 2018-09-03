@@ -1072,6 +1072,7 @@ typedef struct _IRP_COMPLETION_CONTEXT {
 	PDRIVER_OBJECT DriverObject;
 	PDEVICE_OBJECT DeviceObject;
 	volatile PREQUEST_IRP_COMPLETION CompRequest;
+	IO_STACK_LOCATION StackLocation;
 } IRP_COMPLETION_CONTEXT, *PIRP_COMPLETION_CONTEXT;
 
 
@@ -1090,7 +1091,7 @@ static NTSTATUS _HookHandlerIRPCompletion(PDEVICE_OBJECT DeviceObject, PIRP Irp,
 	driverRecord = DriverHookRecordGet(cc->DriverObject);
 	if (driverRecord != NULL) {
 		if (driverRecord->MonitorData)
-			IRPDataLogger(Irp, TRUE, &loggedData);
+			IRPDataLogger(Irp, &cc->StackLocation, TRUE, &loggedData);
 	
 		DriverHookRecordDereference(driverRecord);
 	}
@@ -1165,6 +1166,7 @@ static PIRP_COMPLETION_CONTEXT _HookIRPCompletionRoutine(PIRP Irp, PDRIVER_OBJEC
 			ret->DriverObject = DriverObject;
 			ret->DeviceObject = DeviceObject;
 			irpStack = IoGetCurrentIrpStackLocation(Irp);
+			ret->StackLocation = *irpStack;
 			if (irpStack->CompletionRoutine != NULL) {
 				ret->OriginalContext = irpStack->Context;
 				ret->OriginalRoutine = irpStack->CompletionRoutine;
@@ -1205,7 +1207,7 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 
 					memset(&loggedData, 0, sizeof(loggedData));
 					if (driverRecord->MonitorData)
-						IRPDataLogger(Irp, FALSE, &loggedData);
+						IRPDataLogger(Irp, irpStack, FALSE, &loggedData);
 					
 					request = HeapMemoryAllocNonPaged(sizeof(REQUEST_IRP) + loggedData.BufferSize);
 					if (request != NULL) {

@@ -18,7 +18,7 @@ typedef struct _DATA_LOGGER_RESULT {
 
 
 
-void IRPDataLogger(PIRP Irp, BOOLEAN Completion, PDATA_LOGGER_RESULT Result);
+void IRPDataLogger(PIRP Irp, PIO_STACK_LOCATION IrpStack, BOOLEAN Completion, PDATA_LOGGER_RESULT Result);
 
 
 

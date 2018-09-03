@@ -71,19 +71,14 @@ static SIZE_T _DeviceRelationSize(const DEVICE_RELATIONS *R)
 /************************************************************************/
 
 
-void IRPDataLogger(PIRP Irp, BOOLEAN Completion, PDATA_LOGGER_RESULT Result)
+void IRPDataLogger(PIRP Irp, PIO_STACK_LOCATION IrpStack, BOOLEAN Completion, PDATA_LOGGER_RESULT Result)
 {
 	KPROCESSOR_MODE mode;
-	PIO_STACK_LOCATION irpStack = NULL;
-	DEBUG_ENTER_FUNCTION("Irp=0x%p; Result=0x%p", Irp, Result);
+	DEBUG_ENTER_FUNCTION("Irp=0x%p; IrpStack=0x%p; Completion=%u; Result=0x%p", Irp, IrpStack, Completion, Result);
 
 	mode = ExGetPreviousMode();
 	memset(Result, 0, sizeof(DATA_LOGGER_RESULT));
-	irpStack = (!Completion) ?
-		IoGetCurrentIrpStackLocation(Irp) :
-		IoGetNextIrpStackLocation(Irp);
-
-	switch (irpStack->MajorFunction) {
+	switch (IrpStack->MajorFunction) {
 		case IRP_MJ_READ: {
 			if (Completion) {
 				if (Irp->MdlAddress != NULL) {
@@ -105,21 +100,21 @@ void IRPDataLogger(PIRP Irp, BOOLEAN Completion, PDATA_LOGGER_RESULT Result)
 					Result->Buffer = Irp->AssociatedIrp.SystemBuffer;
 
 				if (Result->Buffer != NULL)
-					Result->BufferSize = irpStack->Parameters.Write.Length;
+					Result->BufferSize = IrpStack->Parameters.Write.Length;
 			}
 			break;
 		case IRP_MJ_DEVICE_CONTROL:
 		case IRP_MJ_INTERNAL_DEVICE_CONTROL: {
-			ULONG method = irpStack->Parameters.DeviceIoControl.IoControlCode & 3;
+			ULONG method = IrpStack->Parameters.DeviceIoControl.IoControlCode & 3;
 
 			switch (method) {
 				case METHOD_NEITHER:
 					if (!Completion) {
-						Result->Buffer = irpStack->Parameters.DeviceIoControl.Type3InputBuffer;
-						Result->BufferSize = irpStack->Parameters.DeviceIoControl.InputBufferLength;
+						Result->Buffer = IrpStack->Parameters.DeviceIoControl.Type3InputBuffer;
+						Result->BufferSize = IrpStack->Parameters.DeviceIoControl.InputBufferLength;
 					} else {
 						Result->Buffer = Irp->UserBuffer;
-						Result->BufferSize = irpStack->Parameters.DeviceIoControl.OutputBufferLength;
+						Result->BufferSize = IrpStack->Parameters.DeviceIoControl.OutputBufferLength;
 					}
 					break;
 				case METHOD_IN_DIRECT:
@@ -129,7 +124,7 @@ void IRPDataLogger(PIRP Irp, BOOLEAN Completion, PDATA_LOGGER_RESULT Result)
 							Result->Buffer = MmGetSystemAddressForMdlSafe(Irp->MdlAddress, NormalPagePriority);
 						else Result->Buffer = Irp->AssociatedIrp.SystemBuffer;
 
-						Result->BufferSize = irpStack->Parameters.DeviceIoControl.InputBufferLength;
+						Result->BufferSize = IrpStack->Parameters.DeviceIoControl.InputBufferLength;
 					}
 					break;
 				case METHOD_OUT_DIRECT:
@@ -142,23 +137,23 @@ void IRPDataLogger(PIRP Irp, BOOLEAN Completion, PDATA_LOGGER_RESULT Result)
 						Result->BufferSize = Irp->IoStatus.Information;
 					} else {
 						Result->Buffer = Irp->AssociatedIrp.SystemBuffer;
-						Result->BufferSize = irpStack->Parameters.DeviceIoControl.InputBufferLength;
+						Result->BufferSize = IrpStack->Parameters.DeviceIoControl.InputBufferLength;
 					}
 					break;
 				case METHOD_BUFFERED:
 					Result->Buffer = Irp->AssociatedIrp.SystemBuffer;
 					if (!Completion)
-						Result->BufferSize = irpStack->Parameters.DeviceIoControl.InputBufferLength;
+						Result->BufferSize = IrpStack->Parameters.DeviceIoControl.InputBufferLength;
 					else Result->BufferSize = Irp->IoStatus.Information;
 					break;
 			}
 			} break;
 		case IRP_MJ_PNP: {
 			if (Completion && NT_SUCCESS(Irp->IoStatus.Status)) {
-				switch (irpStack->MinorFunction) {
+				switch (IrpStack->MinorFunction) {
 					case IRP_MN_QUERY_ID:
 						Result->Buffer = Irp->IoStatus.Pointer;
-						switch (irpStack->Parameters.QueryId.IdType) {
+						switch (IrpStack->Parameters.QueryId.IdType) {
 							case BusQueryDeviceID:
 							case BusQueryInstanceID:
 							case BusQueryContainerID:
@@ -176,7 +171,7 @@ void IRPDataLogger(PIRP Irp, BOOLEAN Completion, PDATA_LOGGER_RESULT Result)
 						Result->BufferSize = _StringSize(Result->Buffer);
 						break;
 					case IRP_MN_QUERY_CAPABILITIES:
-						Result->Buffer = irpStack->Parameters.DeviceCapabilities.Capabilities;
+						Result->Buffer = IrpStack->Parameters.DeviceCapabilities.Capabilities;
 						Result->BufferSize = sizeof(DEVICE_CAPABILITIES);
 						break;
 					case IRP_MN_QUERY_DEVICE_RELATIONS:
