@@ -152,7 +152,7 @@ void IRPDataLogger(PIRP Irp, PIO_STACK_LOCATION IrpStack, BOOLEAN Completion, PD
 			if (Completion && NT_SUCCESS(Irp->IoStatus.Status)) {
 				switch (IrpStack->MinorFunction) {
 					case IRP_MN_QUERY_ID:
-						Result->Buffer = Irp->IoStatus.Pointer;
+						Result->Buffer = (void *)Irp->IoStatus.Information;
 						switch (IrpStack->Parameters.QueryId.IdType) {
 							case BusQueryDeviceID:
 							case BusQueryInstanceID:
@@ -167,7 +167,7 @@ void IRPDataLogger(PIRP Irp, PIO_STACK_LOCATION IrpStack, BOOLEAN Completion, PD
 						}
 						break;
 					case IRP_MN_QUERY_DEVICE_TEXT:
-						Result->Buffer = Irp->IoStatus.Pointer;
+						Result->Buffer = (void *)Irp->IoStatus.Information;
 						Result->BufferSize = _StringSize(Result->Buffer);
 						break;
 					case IRP_MN_QUERY_CAPABILITIES:
@@ -175,11 +175,11 @@ void IRPDataLogger(PIRP Irp, PIO_STACK_LOCATION IrpStack, BOOLEAN Completion, PD
 						Result->BufferSize = sizeof(DEVICE_CAPABILITIES);
 						break;
 					case IRP_MN_QUERY_DEVICE_RELATIONS:
-						Result->Buffer = Irp->IoStatus.Pointer;
+						Result->Buffer = (void *)Irp->IoStatus.Information;
 						Result->BufferSize = _DeviceRelationSize(Result->Buffer);
 						break;
 					case IRP_MN_QUERY_BUS_INFORMATION:
-						Result->Buffer = Irp->IoStatus.Pointer;
+						Result->Buffer = (void *)Irp->IoStatus.Information;
 						Result->BufferSize = sizeof(PNP_BUS_INFORMATION);
 						break;
 				}
