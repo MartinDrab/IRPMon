@@ -148,6 +148,29 @@ void IRPDataLogger(PIRP Irp, PIO_STACK_LOCATION IrpStack, BOOLEAN Completion, PD
 					break;
 			}
 			} break;
+		case IRP_MJ_QUERY_VOLUME_INFORMATION:
+		case IRP_MJ_QUERY_INFORMATION:
+			if (Completion) {
+				Result->Buffer = Irp->AssociatedIrp.SystemBuffer;
+				Result->BufferSize = Irp->IoStatus.Information;
+			}
+			break;
+		case IRP_MJ_SET_INFORMATION:
+			if (!Completion) {
+				Result->Buffer = Irp->AssociatedIrp.SystemBuffer;
+				Result->BufferSize = IrpStack->Parameters.SetFile.Length;
+			}
+			break;
+		case IRP_MJ_SET_VOLUME_INFORMATION:
+			if (!Completion) {
+				Result->Buffer = Irp->AssociatedIrp.SystemBuffer;
+				Result->BufferSize = IrpStack->Parameters.SetVolume.Length;
+			}
+			break;
+		case IRP_MJ_DIRECTORY_CONTROL:
+			Result->Buffer = Irp->UserBuffer;
+			Result->BufferSize = Irp->IoStatus.Information;
+			break;
 		case IRP_MJ_PNP: {
 			if (Completion && NT_SUCCESS(Irp->IoStatus.Status)) {
 				switch (IrpStack->MinorFunction) {
