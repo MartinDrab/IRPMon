@@ -1029,8 +1029,15 @@ VOID HookHandlerStartIoDispatch(PDEVICE_OBJECT DeviceObject, PIRP Irp)
 	if (driverRecord != NULL) {
 		deviceRecord = DriverHookRecordGetDevice(driverRecord, DeviceObject);
 		if (driverRecord->MonitorStartIo && _CatchRequest(driverRecord, deviceRecord, DeviceObject)) {
-			request = (PREQUEST_STARTIO)HeapMemoryAllocNonPaged(sizeof(REQUEST_STARTIO));
+			DATA_LOGGER_RESULT loggedData;
+
+			memset(&loggedData, 0, sizeof(loggedData));
+			if (driverRecord->MonitorData)
+				IRPDataLogger(Irp, IrpStack, FALSE, &loggedData);
+			
+			request = HeapMemoryAllocNonPaged(sizeof(REQUEST_STARTIO) + loggedData.BufferSize);
 			if (request != NULL) {
+				memset(request, 0, sizeof(REQUEST_STARTIO) + loggedData.BufferSize);
 				RequestHeaderInit(&request->Header, DeviceObject->DriverObject, DeviceObject, ertStartIo);
 				request->IRPAddress = Irp;
 				request->MajorFunction = IrpStack->MajorFunction;
@@ -1039,6 +1046,14 @@ VOID HookHandlerStartIoDispatch(PDEVICE_OBJECT DeviceObject, PIRP Irp)
 				request->FileObject = IrpStack->FileObject;
 				request->Status = STATUS_UNSUCCESSFUL;
 				request->Information = 0;
+				if (loggedData.Buffer != NULL && loggedData.BufferSize > 0) {
+					request->DataSize = loggedData.BufferSize;
+					__try {
+						memcpy(request + 1, loggedData.Buffer, request->DataSize);
+					} __except (EXCEPTION_EXECUTE_HANDLER) {
+
+					}
+				}
 			}
 		}
 

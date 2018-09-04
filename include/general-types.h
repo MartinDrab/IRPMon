@@ -234,6 +234,9 @@ typedef struct _REQUEST_STARTIO {
 	/** Value of the Irp->IoStatus.Status after calling the original
 	    dispatch routine. */
 	LONG Status;
+	/** Length of data associated with the request. */
+	SIZE_T DataSize;
+	// Data
 } REQUEST_STARTIO, *PREQUEST_STARTIO;
 
 typedef struct _REQUEST_DRIVER_DETECTED {

@@ -378,6 +378,8 @@ Type
 	  (** Value of the Irp->IoStatus.Status after calling the original
 	    dispatch routine. *)
 	  Status : Cardinal;
+    (** Length of data associated with the request. *)
+    DataSize : NativeUInt;
     end;
   REQUEST_STARTIO = _REQUEST_STARTIO;
   PREQUEST_STARTIO = ^REQUEST_STARTIO;

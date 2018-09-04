@@ -29,6 +29,7 @@ static SIZE_T _GetRequestSize(PREQUEST_HEADER Header)
 	SIZE_T ret = 0;
 	PREQUEST_IRP irp = NULL;
 	PREQUEST_IRP_COMPLETION irpComp = NULL;
+	PREQUEST_STARTIO startIo = NULL;
 	PREQUEST_DRIVER_DETECTED drr = CONTAINING_RECORD(Header, REQUEST_DRIVER_DETECTED, Header);
 	PREQUEST_DEVICE_DETECTED der = CONTAINING_RECORD(Header, REQUEST_DEVICE_DETECTED, Header);
 
@@ -54,6 +55,8 @@ static SIZE_T _GetRequestSize(PREQUEST_HEADER Header)
 			break;
 		case ertStartIo:
 			ret = sizeof(REQUEST_STARTIO);
+			startIo = CONTAINING_RECORD(Header, REQUEST_STARTIO, Header);
+			ret += startIo->DataSize;
 			break;
 		case ertDriverDetected:
 			ret = sizeof(REQUEST_DRIVER_DETECTED) + drr->DriverNameLength;

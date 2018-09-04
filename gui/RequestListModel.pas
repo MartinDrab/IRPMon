@@ -615,8 +615,12 @@ end;
 (** TStartIoRequest **)
 
 Constructor TStartIoRequest.Create(Var ARequest:REQUEST_STARTIO);
+Var
+  d : Pointer;
 begin
 Inherited Create(ARequest.Header);
+d := PByte(@ARequest) + aRequest.DataSize;
+AssignData(d, ARequest.DataSize);
 end;
 
 (** TRequestListModel **)
