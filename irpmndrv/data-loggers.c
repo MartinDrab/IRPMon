@@ -171,6 +171,18 @@ void IRPDataLogger(PIRP Irp, PIO_STACK_LOCATION IrpStack, BOOLEAN Completion, PD
 			Result->Buffer = Irp->UserBuffer;
 			Result->BufferSize = Irp->IoStatus.Information;
 			break;
+		case IRP_MJ_QUERY_EA:
+			if (Completion) {
+				Result->Buffer = Irp->AssociatedIrp.SystemBuffer;
+				Result->BufferSize = Irp->IoStatus.Information;
+			}
+			break;
+		case IRP_MJ_SET_EA:
+			if (!Completion) {
+				Result->Buffer = Irp->AssociatedIrp.SystemBuffer;
+				Result->BufferSize = IrpStack->Parameters.SetEa.Length;
+			}
+			break;
 		case IRP_MJ_PNP: {
 			if (Completion && NT_SUCCESS(Irp->IoStatus.Status)) {
 				switch (IrpStack->MinorFunction) {
