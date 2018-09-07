@@ -23,5 +23,8 @@
     <ClInclude Include="..\include\parser-base.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="parser-internal.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
