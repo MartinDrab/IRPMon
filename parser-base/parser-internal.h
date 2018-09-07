@@ -15,7 +15,10 @@ typedef struct _PARSER_PLUGIN {
 	wchar_t *Description;
 } PARSER_PLUGIN, *PPARSER_PLUGIN;
 
-
+typedef struct _PARSED_FIELD_ARRAY {
+	size_t Count;
+	PPARSED_FIELD Entries;
+} _PARSED_FIELD_ARRAY, *PPARSED_FIELD_ARRAY;
 
 
 
