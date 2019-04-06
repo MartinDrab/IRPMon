@@ -10,7 +10,7 @@
 #define STRINGIFY(x) #x
 #define TOSTRING(x) STRINGIFY(x)
 
-#define AT_FUNCTION __FILE__ ":" __FUNCTION__
+#define AT_FUNCTION __FUNCTION__
 #define AT_LINE AT_FUNCTION ":" TOSTRING(__LINE__ " ")
 
 #ifdef DBG

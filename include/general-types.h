@@ -154,6 +154,9 @@ typedef struct _REQUEST_IRP {
 	ULONG_PTR IOSBInformation;
 	/** PID of the process originally requesting the operation. */
 	ULONG_PTR RequestorProcessId;
+	/** Number of data bytes associated with the request. */
+	SIZE_T DataSize;
+	// Data bytes
 } REQUEST_IRP, *PREQUEST_IRP;
 
 typedef struct _REQUEST_IRP_COMPLETION {
@@ -161,6 +164,8 @@ typedef struct _REQUEST_IRP_COMPLETION {
 	PVOID IRPAddress;
 	NTSTATUS CompletionStatus;
 	ULONG_PTR CompletionInformation;
+	ULONG_PTR DataSize;
+	// Data
 } REQUEST_IRP_COMPLETION, *PREQUEST_IRP_COMPLETION;
 
 /** Represents a fast I/O request. */
@@ -229,6 +234,9 @@ typedef struct _REQUEST_STARTIO {
 	/** Value of the Irp->IoStatus.Status after calling the original
 	    dispatch routine. */
 	LONG Status;
+	/** Length of data associated with the request. */
+	SIZE_T DataSize;
+	// Data
 } REQUEST_STARTIO, *PREQUEST_STARTIO;
 
 typedef struct _REQUEST_DRIVER_DETECTED {
@@ -312,6 +320,7 @@ typedef struct _DRIVER_MONITOR_SETTINGS {
 	BOOLEAN MonitorFastIo;
 	BOOLEAN MonitorIRP;
 	BOOLEAN MonitorIRPCompletion;
+	BOOLEAN MonitorData;
 	/** IRPSettings for newly hooked devices. */
 	UCHAR IRPSettings[0x1b + 1];
 	/** FastIoSettings for newly hooked devices. */

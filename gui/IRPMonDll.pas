@@ -290,6 +290,8 @@ Type
     IOSBInformation : NativeUInt;
 	  (** PID of the process originally requesting the operation. **)
     RequestorProcessId : NativeUInt;
+    DataSize : NativeUInt;
+    // Data
     end;
   REQUEST_IRP = _REQUEST_IRP;
   PREQUEST_IRP = ^REQUEST_IRP;
@@ -299,6 +301,7 @@ Type
 	  IRPAddress : Pointer;
 	  CompletionStatus : Cardinal;
 	  CompletionInformation : NativeUInt;
+    DataSize : NativeUInt;
     end;
   REQUEST_IRP_COMPLETION = _REQUEST_IRP_COMPLETION;
   PREQUEST_IRP_COMPLETION = ^REQUEST_IRP_COMPLETION;
@@ -375,6 +378,8 @@ Type
 	  (** Value of the Irp->IoStatus.Status after calling the original
 	    dispatch routine. *)
 	  Status : Cardinal;
+    (** Length of data associated with the request. *)
+    DataSize : NativeUInt;
     end;
   REQUEST_STARTIO = _REQUEST_STARTIO;
   PREQUEST_STARTIO = ^REQUEST_STARTIO;
@@ -458,6 +463,7 @@ Type
     MonitorFastIo : ByteBool;
     MonitorIRP : ByteBool;
     MonitorIRPCompletion : ByteBool;
+    MonitorData : ByteBool;
     IRPSettings : IRP_SETTINGS;
     FastIoSettings : FASTIO_SETTINGS;
     end;

@@ -64,10 +64,10 @@ While Not Terminated  Do
   err := WaitForMultipleObjects(2, @otw, False, 100);
   Case err Of
     WAIT_OBJECT_0 : begin
-      rq := AllocMem(SizeOf(REQUEST_GENERAL));
+      rq := AllocMem(SizeOf(REQUEST_GENERAL) + 2048);
       If Assigned(rq) Then
         begin
-        err := IRPMonDllGetRequest(@rq.Header, SizeOf(REQUEST_GENERAL));
+        err := IRPMonDllGetRequest(@rq.Header, SizeOf(REQUEST_GENERAL) + 2048);
         If err = ERROR_SUCCESS Then
           begin
           l.Add(rq);

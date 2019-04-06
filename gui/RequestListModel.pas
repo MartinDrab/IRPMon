@@ -84,16 +84,20 @@ Type
     FThreadId : THandle;
     FProcessId : THandle;
     FIRQL : Byte;
+    FDataSize : NativeUInt;
+    FData : Pointer;
   Protected
     Procedure SetDriverName(AName:WideString);
     Procedure SetDeviceName(AName:WideString);
   Public
     Constructor Create(Var ARequest:REQUEST_HEADER); Reintroduce;
+    Destructor Destroy; Override;
 
     Function GetColumnName(AColumnType:ERequestListModelColumnType):WideString; Virtual;
     Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Virtual;
     Procedure SaveToStream(AStream:TStream); Virtual;
     Procedure SaveToFile(AFileName:WideString); Virtual;
+    Function AssignData(AData:Pointer; ASize:NativeUInt):Boolean;
 
     Class Function GetBaseColumnName(AColumnType:ERequestListModelColumnType):WideString;
     Class Function IOCTLToString(AControlCode:Cardinal):WideString;
@@ -117,6 +121,8 @@ Type
     Property ThreadId : THandle Read FThreadId;
     Property ProcessId : THandle Read FProcessId;
     Property IRQL : Byte Read FIRQL;
+    Property DataSize : NativeUInt Read FDataSize;
+    Property Data : Pointer Read FData;
   end;
 
   TDriverRequestComparer = Class (TComparer<TDriverRequest>)
@@ -220,6 +226,35 @@ FResultValue := NativeUInt(ARequest.Other);
 FProcessId := ARequest.ProcessId;
 FThreadId := ARequest.ThreadId;
 FIRQL := ARequest.Irql;
+FData := Nil;
+FDataSize := 0;
+end;
+
+Destructor TDriverRequest.Destroy;
+begin
+If Assigned(FData) Then
+  FreeMem(FData);
+
+Inherited Destroy;
+end;
+
+Function TDriverRequest.AssignData(AData:Pointer; ASize:NativeUInt):Boolean;
+begin
+Result := True;
+If ASize > 0 Then
+  begin
+  Result := Not Assigned(FData);
+  If Result Then
+    begin
+    FData := AllocMem(ASize);
+    Result := Assigned(FData);
+    If Result Then
+      begin
+      Move(AData^, FData^, ASize);
+      FDataSize := ASize;
+      end;
+    end;
+  end;
 end;
 
 Procedure TDriverRequest.SaveToStream(AStream: TStream);
@@ -233,6 +268,12 @@ For ct := Low(ERequestListModelColumnType) To High(ERequestListModelColumnType) 
   begin
   If GetColumnValue(ct, value) Then
     s.Add(Format('%s = %s', [GetColumnName(ct), value]));
+  end;
+
+If FDataSize > 0 Then
+  begin
+  S.Add(Format('Data size = %d', [FDataSize]));
+  S.Text := S.Text + BufferToHex(FData, FDataSize);
   end;
 
 s.Add('');
@@ -549,8 +590,12 @@ end;
 (** TIRPCompleteRequest **)
 
 Constructor TIRPCompleteRequest.Create(Var ARequest:REQUEST_IRP_COMPLETION);
+Var
+  d : Pointer;
 begin
 Inherited Create(ARequest.Header);
+d := PByte(@ARequest) + SizeOf(ARequest);
+AssignData(d, ARequest.DataSize);
 FIRPAddress := ARequest.IRPAddress;
 FIOSBStatus := ARequest.CompletionStatus;
 FIOSBInformation := ARequest.CompletionInformation;
@@ -570,8 +615,12 @@ end;
 (** TStartIoRequest **)
 
 Constructor TStartIoRequest.Create(Var ARequest:REQUEST_STARTIO);
+Var
+  d : Pointer;
 begin
 Inherited Create(ARequest.Header);
+d := PByte(@ARequest) + aRequest.DataSize;
+AssignData(d, ARequest.DataSize);
 end;
 
 (** TRequestListModel **)

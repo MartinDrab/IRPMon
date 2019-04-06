@@ -115,9 +115,7 @@ static NTSTATUS _HandleCDORequest(ULONG ControlCode, PVOID InputBuffer, ULONG In
 			status = STATUS_SUCCESS;
 			break;
 		case IOCTL_IRPMNDRV_GET_RECORD:
-			status = UMGetRequestRecord(OutputBuffer, OutputBufferLength, &OutputBufferLength);
-			if (NT_SUCCESS(status))
-				IoStatus->Information = OutputBufferLength;
+			status = UMGetRequestRecord(OutputBuffer, OutputBufferLength, &IoStatus->Information);
 			break;
 		case IOCTL_IRPMNDRV_HOOK_DRIVER:
 			status = UMHookDriver((PIOCTL_IRPMNDRV_HOOK_DRIVER_INPUT)InputBuffer, InputBufferLength, (PIOCTL_IRPMNDRV_HOOK_DRIVER_OUTPUT)OutputBuffer, OutputBufferLength);

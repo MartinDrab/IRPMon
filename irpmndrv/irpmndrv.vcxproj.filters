@@ -57,6 +57,9 @@
     <ClCompile Include="..\km-shared\utils-dym-array.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="data-loggers.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="driver.h">
@@ -120,6 +123,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\include\regman.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="data-loggers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

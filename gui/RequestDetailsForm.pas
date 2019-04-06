@@ -17,6 +17,8 @@ Type
     LowerPanel: TPanel;
     OkButton: TButton;
     NameValueListView: TListView;
+    DataPanel: TPanel;
+    DataRichEdit: TRichEdit;
     Procedure OkButtonClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
   Private
@@ -28,6 +30,9 @@ Type
 
 Implementation
 
+Uses
+  Utils;
+
 Constructor TRequestDetailsFrm.Create(AOwner:TComponent; ARequest:TDriverRequest);
 begin
 FRequest := ARequest;
@@ -36,9 +41,14 @@ end;
 
 {$R *.dfm}
 
-procedure TRequestDetailsFrm.FormCreate(Sender: TObject);
+Procedure TRequestDetailsFrm.FormCreate(Sender: TObject);
 Var
-  value : WIdeString;
+  d : PByte;
+  hexLine : WideString;
+  dispLine : WideString;
+  I : Integer;
+  index : Integer;
+  value : WideString;
   ct : ERequestListModelColumnType;
 begin
 For ct := Low(ERequestListModelColumnType) To High(ERequestListModelColumnType) Do
@@ -52,6 +62,15 @@ For ct := Low(ERequestListModelColumnType) To High(ERequestListModelColumnType) 
       end;
     end;
   end;
+
+With NameValueListVIew.Items.Add Do
+  begin
+  Caption := 'Data size';
+  SubItems.Add(Format('%d', [FRequest.DataSize]));
+  end;
+
+If FRequest.DataSize > 0 Then
+  DataRichEdit.Text := BufferToHex(FRequest.Data, FRequest.DataSize);
 end;
 
 Procedure TRequestDetailsFrm.OkButtonClick(Sender: TObject);
@@ -60,3 +79,4 @@ Close;
 end;
 
 End.
+

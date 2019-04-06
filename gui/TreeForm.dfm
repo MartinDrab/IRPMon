@@ -965,6 +965,10 @@ object TreeFrm: TTreeFrm
       Caption = 'New devices'
       OnClick = TreePopupMenuClick
     end
+    object DataMenuItem: TMenuItem
+      Caption = 'Data'
+      OnClick = TreePopupMenuClick
+    end
     object IRPMenuItem: TMenuItem
       Caption = 'IRP'
       OnClick = TreePopupMenuClick
