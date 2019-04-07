@@ -16,8 +16,10 @@ Type
   TRequestDetailsFrm = Class (TForm)
     LowerPanel: TPanel;
     OkButton: TButton;
+    PageControl1: TPageControl;
+    HeadersTabSheet: TTabSheet;
+    RawDataTabSheet: TTabSheet;
     NameValueListView: TListView;
-    DataPanel: TPanel;
     DataRichEdit: TRichEdit;
     Procedure OkButtonClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
