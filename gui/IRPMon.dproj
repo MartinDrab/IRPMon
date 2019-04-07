@@ -176,6 +176,7 @@
 			<DCCReference Include="XXXDetectedRequests.pas"/>
 			<DCCReference Include="LibJSON.pas"/>
 			<DCCReference Include="FastIoRequest.pas"/>
+			<DCCReference Include="DataParsers.pas"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>
 				<CfgParent>Base</CfgParent>

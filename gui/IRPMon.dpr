@@ -32,7 +32,8 @@ uses
   WatchedDriverNames in 'WatchedDriverNames.pas',
   XXXDetectedRequests in 'XXXDetectedRequests.pas',
   LibJSON in 'LibJSON.pas',
-  FastIoRequest in 'FastIoRequest.pas';
+  FastIoRequest in 'FastIoRequest.pas',
+  DataParsers in 'DataParsers.pas';
 
 {$R *.res}
 
@@ -93,7 +94,7 @@ If IsWow64Process(GetCurrentProcess, wow64) Then
           end;
 
         Application.CreateForm(TMainFrm, MainFrm);
-        MainFrm.TaskList := taskList;
+  MainFrm.TaskList := taskList;
         MainFrm.ServiceTask := serviceTask;
         Application.Run;
         IRPMonDllFinalize;

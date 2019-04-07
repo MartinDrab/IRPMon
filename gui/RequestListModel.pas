@@ -86,6 +86,8 @@ Type
     FIRQL : Byte;
     FDataSize : NativeUInt;
     FData : Pointer;
+    FRaw : PREQUEST_HEADER;
+    FRawSize : Cardinal;
   Protected
     Procedure SetDriverName(AName:WideString);
     Procedure SetDeviceName(AName:WideString);
@@ -123,6 +125,8 @@ Type
     Property IRQL : Byte Read FIRQL;
     Property DataSize : NativeUInt Read FDataSize;
     Property Data : Pointer Read FData;
+    Property Raw : PREQUEST_HEADER Read FRaw;
+    Property RawSize : Cardinal Read FRawSize;
   end;
 
   TDriverRequestComparer = Class (TComparer<TDriverRequest>)
@@ -228,10 +232,22 @@ FThreadId := ARequest.ThreadId;
 FIRQL := ARequest.Irql;
 FData := Nil;
 FDataSize := 0;
+FRawSize := IRPMonDllGetRequestSize(@ARequest);
+If FRawSize = 0 Then
+  Raise Exception.Create('Request raw size is zero');
+
+FRaw := AllocMem(FRawSize);
+If Not Assigned(FRaw) THen
+  Raise Exception.Create('Not enough memory');
+
+CopyMemory(FRaw, @ARequest, FRawSize);
 end;
 
 Destructor TDriverRequest.Destroy;
 begin
+If Assigned(FRaw) Then
+  FreeMem(FRaw);
+
 If Assigned(FData) Then
   FreeMem(FData);
 
