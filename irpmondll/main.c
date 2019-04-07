@@ -17,6 +17,45 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllGetRequest(PREQUEST_HEADER Request, DWORD Si
 }
 
 
+IRPMONDLL_API DWORD WINAPI IRPMonDllGetRequestSize(PREQUEST_HEADER Request)
+{
+	DWORD ret = 0;
+	PREQUEST_GENERAL genReq = NULL;
+
+	genReq = (PREQUEST_GENERAL)Request;
+	switch (genReq->RequestTypes.Other.Type) {
+		case ertIRP:
+			ret = sizeof(genReq->RequestTypes.Irp) + sizeof(genReq->RequestTypes.Irp.DataSize);
+			break;
+		case ertIRPCompletion:
+			ret = sizeof(genReq->RequestTypes.IrpComplete) + sizeof(genReq->RequestTypes.IrpComplete.DataSize);
+			break;
+		case ertAddDevice:
+			ret = sizeof(genReq->RequestTypes.AddDevice);
+			break;
+		case ertDriverUnload:
+			ret = sizeof(genReq->RequestTypes.DriverUnload);
+			break;
+		case ertFastIo:
+			ret = sizeof(genReq->RequestTypes.FastIo);
+			break;
+		case ertStartIo:
+			ret = sizeof(genReq->RequestTypes.StartIo) + sizeof(genReq->RequestTypes.StartIo.DataSize);
+			break;
+		case ertDriverDetected:
+			ret = sizeof(genReq->RequestTypes.DriverDetected) + sizeof(genReq->RequestTypes.DriverDetected.DriverNameLength);
+			break;
+		case ertDeviceDetected:
+			ret = sizeof(genReq->RequestTypes.DeviceDetected) + sizeof(genReq->RequestTypes.DeviceDetected.DeviceNameLength);
+			break;
+		default:
+			break;
+	}
+
+	return ret;
+}
+
+
 IRPMONDLL_API DWORD WINAPI IRPMonDllConnect(HANDLE hSemaphore)
 {
 	return DriverComConnect(hSemaphore);

@@ -355,6 +355,21 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllDisconnect(VOID);
 IRPMONDLL_API DWORD WINAPI IRPMonDllGetRequest(PREQUEST_HEADER Request, DWORD Size);
 
 
+/** Get size of a request, in bytes.
+ *
+ *  @param Request Pointer to the request retrieved via @link(IRPMonDllGetRequest).
+ *
+ *  @returns
+ *  If successful, returns the request size, in bytes.
+ *  On error, zero is returned.
+ *
+ *  @remark
+ *  The routine just looks at request type and performs necessary
+ *  calculcations to obtain the total size, including general data
+ *  associated with the request.
+ */
+IRPMONDLL_API DWORD WINAPI IRPMonDllGetRequestSize(PREQUEST_HEADER Request);
+
 /** Open a handle to a given driver monitored by the IRPMon driver.
  *
  *  @param ObjectId ID of the target driver. IDs can be obtained from the
