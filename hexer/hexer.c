@@ -57,7 +57,7 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const wchar_t *D
 		lineCount = (dataLen + 15) / 16;
 		if (_displayAddress) {
 			addressSize = 31;
-			while (addressSize > 0 && (size_t)(1 << addressSize) > lineCount * 16)
+			while (addressSize > 0 && (size_t)(1 << addressSize) >= lineCount * 16)
 				--addressSize;
 
 			++addressSize;
