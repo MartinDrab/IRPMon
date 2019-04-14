@@ -1,13 +1,13 @@
 <h1>IRPMon</h1>
 <p>
-The goal of the tool is to monitor requests received by selected device objects or kernel drivers. The tool is quite similar to IrpTracker but has several enhancements. It supports 64-bit versions of Windows (no inline hooks are used, only moodifications to driver object structures are performed) and monitors IRP, FastIo, AddDevice, DriverUnload and StartIo requests.
+The goal of the tool is to monitor requests received by selected device objects or kernel drivers. The tool is quite similar to IrpTracker but has several enhancements. It supports 64-bit versions of Windows (no inline hooks are used, only modifications to driver object structures are performed) and monitors IRP, FastIo, AddDevice, DriverUnload and StartIo requests.
 </p>
 <p>
 The tool should compile fine in Microsoft Visual Studio 2013. MSVS 2015 seems to cause problems due to tons of warnings. I will have a look at the problem soon.
 </p>
 <h2>How to Test It</h2>
 <p>
-To test the program, you may compile it and than use the <strong>irpmonconsole</strong> applicaton. If you cannot or do not want to compile the project yourself, use the binaries in the <code>binaries</code>
+To test the program, you may compile it and than use the <strong>irpmonconsole</strong> application. If you cannot or do not want to compile the project yourself, use the binaries in the <code>binaries</code>
 </p>
 <ol>
 <li>Install the driver by <code>irpmonconsole --install</code> </li>
@@ -28,7 +28,7 @@ If you wish to monitor only new devices created by a certain driver (the term "n
 -device</code>).
 </p>
 <p>
-Also, a new version with some improvements, especially related to filtering new devices and devices belonging to certain device setup classes, is comming soon (I hope at least).
+Also, a new version with some improvements, especially related to filtering new devices and devices belonging to certain device setup classes, is coming soon (I hope at least).
 </p>
 <h2>Donations</h2>
 <p>
