@@ -13,7 +13,7 @@ static BOOLEAN _displayUpperDigits = FALSE;
 
 
 
-static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const wchar_t *DriverName, const wchar_t *DeviceName, PBOOLEAN Handled, wchar_t ***Names, wchar_t ***Values, size_t *RowCount)
+static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST_EXTRA_INFO *ExtraInfo, PBOOLEAN Handled, wchar_t ***Names, wchar_t ***Values, size_t *RowCount)
 {
 	DWORD ret = ERROR_GEN_FAILURE;
 	const unsigned char *data = NULL;

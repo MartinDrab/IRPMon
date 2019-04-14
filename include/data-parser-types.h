@@ -8,7 +8,12 @@
 
 #define DP_INIT_ROUTINE_NAME 	DataParserInit
 
-typedef DWORD (cdecl DP_PARSE_ROUTINE)(const REQUEST_HEADER *Request, const wchar_t *DriverName, const wchar_t *DeviceName, PBOOLEAN Handled, wchar_t ***Names, wchar_t ***Values, size_t *RowCount);
+typedef struct _DP_REQUEST_EXTRA_INFO {
+	PWCHAR DriverName;
+	PWCHAR DeviceName;
+} DP_REQUEST_EXTRA_INFO, *PDP_REQUEST_EXTRA_INFO;
+
+typedef DWORD (cdecl DP_PARSE_ROUTINE)(const REQUEST_HEADER *Request, const DP_REQUEST_EXTRA_INFO *ExtraInfo, PBOOLEAN Handled, wchar_t ***Names, wchar_t ***Values, size_t *RowCount);
 typedef void (cdecl DP_FREE_ROUTINE)(wchar_t **Names, wchar_t **Values, size_t Count);
 
 typedef struct _IRPMON_DATA_PARSER {

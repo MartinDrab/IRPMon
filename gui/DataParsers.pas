@@ -10,7 +10,14 @@ Const
   DATA_PARSER_INIT_ROUTINE = 'DataParserInit';
 
 Type
-  TDataParserParseRoutine = Function (AHeader:PREQUEST_HEADER; ADriverName:PWideChar; ADeviceName:PWideChar; Var AHandled:ByteBool; Var ANames:PPWideChar; Var AValues:PPWideChar; Var ARowCount:NativeUInt):Cardinal; Cdecl;
+  _DP_REQUEST_EXTRA_INFO = Record
+    DriverName : PWideChar;
+    DeviceName : PWideChar;
+    end;
+  DP_REQUEST_EXTRA_INFO = _DP_REQUEST_EXTRA_INFO;
+  PDP_REQUEST_EXTRA_INFO = ^DP_REQUEST_EXTRA_INFO;
+
+  TDataParserParseRoutine = Function (AHeader:PREQUEST_HEADER; Var AExtraInfo:DP_REQUEST_EXTRA_INFO; Var AHandled:ByteBool; Var ANames:PPWideChar; Var AValues:PPWideChar; Var ARowCount:NativeUInt):Cardinal; Cdecl;
   TDataParserFreeRoutine = Procedure (ANames:PPWideChar; AValues:PPWideChar; ACount:NativeUInt); Cdecl;
 
   _IRPMON_DATA_PARSER = Record
@@ -92,9 +99,12 @@ Var
   _rsCount : NativeUInt;
   n : PPWideChar;
   v : PPWideChar;
+  ei : DP_REQUEST_EXTRA_INFO;
 begin
 AHandled := False;
-Result := FParseRoutine(ARequest.Raw, PWideChar(ARequest.DriverName), PWideChar(ARequest.DeviceName), _handled, _ns, _vs, _rsCount);
+ei.DriverName := PWideChar(ARequest.DriverName);
+ei.DeviceName := PWideChar(ARequest.DeviceName);
+Result := FParseRoutine(ARequest.Raw, ei, _handled, _ns, _vs, _rsCount);
 If (Result = 0) And (_handled) Then
   begin
   AHandled := True;
