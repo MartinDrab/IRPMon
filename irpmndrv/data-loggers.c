@@ -220,6 +220,18 @@ void IRPDataLogger(PIRP Irp, PIO_STACK_LOCATION IrpStack, BOOLEAN Completion, PD
 				}
 			}
 		} break;
+		case IRP_MJ_QUERY_SECURITY: {
+			if (Completion && NT_SUCCESS(Irp->IoStatus.Status)) {
+				Result->Buffer = Irp->UserBuffer;
+				Result->BufferSize = IrpStack->Parameters.QuerySecurity.Length;
+			}
+		} break;
+		case IRP_MJ_SET_SECURITY: {
+			if (!Completion) {
+				Result->Buffer = Irp->UserBuffer;
+				Result->BufferSize = RtlLengthSecurityDescriptor(IrpStack->Parameters.SetSecurity.SecurityDescriptor);
+			}
+		} break;
 		default:
 			break;
 	}
