@@ -15,7 +15,7 @@
  * 4) a free function that is used to delete all items present in the table
  *    during its destruction. Specifying this function is optional.
  *
- * General hash tables solves colisions by chaining.
+ * General hash tables solves collisions by chaining.
  *
  * Probably the most interesting feature is that no memory allocations
  * are needed when inserting items to the table because table contents
@@ -29,7 +29,7 @@
  *   either in paged or in nonpaged memory. The table must be accessed
  *   at IRQL below DISPATCH_LEVEL.
  * * Reader-writer spin locks (dispatch IRQL table). Access to the table
- *   is synchronized via a reader-writer spin lock. Table itmes must be
+ *   is synchronized via a reader-writer spin lock. Table items must be
  *   stored in nonpaged memory. The table can be accessed at IRQL <= DISPATCH_LEVEL,
  *   however, its contents is always accessed at DISPATCH_LEVEL, including table
  *   traversal function calls and usage of iterators.
@@ -299,7 +299,7 @@ static NTSTATUS _HashTableSynchronizationAlloc(PHASH_TABLE Table)
    return status;
 }
 
-/** Deletes a synchronization privitive used to synchronize access to
+/** Deletes a synchronization primitive used to synchronize access to
  *  a given hash table.
  *
  *  @param Table The hash table in question.
@@ -473,7 +473,7 @@ VOID HashTableInsert(PHASH_TABLE Table, PHASH_ITEM Object, PVOID Key)
 {
    KIRQL Irql;
    ULONG32 Index = 0;
-   DEBUG_ENTER_FUNCTION("Tabulka=0x%p; Object=0x%p; Key=0x%p", Table, Object, Key);
+   DEBUG_ENTER_FUNCTION("Table=0x%p; Object=0x%p; Key=0x%p", Table, Object, Key);
    HASH_TABLE_IRQL_VALIDATE(Table);
 
    Index = Table->HashFunction(Key) % Table->Size;
@@ -494,7 +494,7 @@ VOID HashTableInsert(PHASH_TABLE Table, PHASH_ITEM Object, PVOID Key)
  *
  *  @return
  *  If the routine successfully finds and deletes the item identified
- *  by the given key, it returns its address. Otherwsie, NULL is returned.
+ *  by the given key, it returns its address. Otherwise, NULL is returned.
  *
  *  @remark
  *  The @link(HASH_TABLE_IRQL_VALIDATE) macro is used to check whether

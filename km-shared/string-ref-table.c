@@ -7,7 +7,7 @@
 
 
 /************************************************************************/
-/*                 HEPER FUNCTIONS                                      */
+/*                 HELPER FUNCTIONS                                     */
 /************************************************************************/
 
 static BOOLEAN _KeysEqual(PSTRING_REF_KEY K1, PSTRING_REF_KEY K2)
