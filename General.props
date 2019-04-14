@@ -6,6 +6,9 @@
     <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)\tmp\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
+  <PropertyGroup Label="Configuration">
+    <SpectreMitigation>false</SpectreMitigation>
+  </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
       <AdditionalIncludeDirectories>$(SolutionDir)km-shared;$(SolutionDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
