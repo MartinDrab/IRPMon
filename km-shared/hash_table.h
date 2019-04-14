@@ -11,7 +11,7 @@
 #include <ntifs.h>
 
 
-/** Links hash table items stored in one bucket together. TThese structures
+/** Links hash table items stored in one bucket together. These structures
     are expected to be a members of data that the user actually wishes to
     store inside a general hash table. Some table support routines return 
     address of the HASH_ITEM structure, the user can use CONTAINING_RECORD
@@ -26,7 +26,7 @@ typedef struct _HASH_ITEM {
  *
  *  Converts a given key value to index of the target
  *  bucket. Implementation of the callback should not target specific
- *  number of buckets, general hash tables perform a mdoulo operation
+ *  number of buckets, general hash tables perform a modulo operation
  *  automatically to ensure that the result of the callback is a valid
  *  bucket index.
  *
@@ -181,7 +181,7 @@ typedef struct {
    /** Address of the hash table item of which the iterator represents. */
    PHASH_TABLE Table;
    /** If set to TRUE, the iterator does not represent any hash item. It
-       points afte rhe last item of the table. */
+       points after the last item of the table. */
    BOOLEAN PointsToEnd;
 } HASH_TABLE_ITERATOR, *PHASH_TABLE_ITERATOR;
 

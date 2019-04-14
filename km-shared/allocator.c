@@ -5,14 +5,14 @@
  * Implementation of a special memory allocator. 
  * 
  * The allocator records information
- * about every memory allocation adn deallocation, attempts to check validity of
- * a heap, which should catch writting too many data to small buffers, and keeps
+ * about every memory allocation and deallocation, attempts to check validity of
+ * a heap, which should catch writing too many data to small buffers, and keeps
  * an eye on memory leaks.
  *
  * Structure of every memory block allocated by the allocator looks as follows:
  * - THE HEADER (allocator-specific information are stored here)
  * - THE BLOCK (user gets pointer to beginning of this member)
- * - THE FOOTER (contains signature in order to detect writting to small buffers)
+ * - THE FOOTER (contains signature in order to detect writing to small buffers)
  *
  * The allocator records the following information about every allocated block:
  * - Type of memory pool
@@ -74,7 +74,7 @@ static LIST_ENTRY _poolLists [2];
    Footer->Signature = BLOCK_FOOTER_SIGNATURE 
  
 /************************************************************************/
-/*                        HELPER ROUTIENS                               */
+/*                        HELPER ROUTINES                               */
 /************************************************************************/
 
 /** Locks list of allocated blocks of given memory pool.

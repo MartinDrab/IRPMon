@@ -75,7 +75,7 @@ typedef struct _HOOKED_DRIVER_INFO {
 /** Stores information about hooked devices and drivers. */
 typedef struct _HOOKED_OBJECTS_INFO {
 	/** Number of hooked drivers. Each is represented by a single @link(DRIVER_HOOK_INFO) record. 
-	    The first record immediatelly follows this structure. */
+	    The first record immediately follows this structure. */
 	ULONG NumberOfHookedDrivers;
 	/** Number of hooked devices. */
 	ULONG NumberOfHookedDevices;
