@@ -11,7 +11,7 @@ Uses
   Controls, Forms, Dialogs, ComCtrls, Menus,
   Generics.Collections,
   IRPMonDll, RequestListModel, ExtCtrls,
-  HookObjects, RequestThread
+  HookObjects, RequestThread, DataParsers
 {$IFNDEF FPC}
   , AppEvnts
 {$ENDIF}
@@ -49,6 +49,8 @@ Type
     UnloadOnExitMenuItem: TMenuItem;
     UninstallOnExitMenuItem: TMenuItem;
     Documentation1: TMenuItem;
+    DataParsersTabSheet: TTabSheet;
+    DataParsersListView: TListView;
     Procedure ClearMenuItemClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure CaptureEventsMenuItemClick(Sender: TObject);
@@ -64,6 +66,8 @@ Type
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure DriverMenuItemClick(Sender: TObject);
     procedure Documentation1Click(Sender: TObject);
+    procedure DataParsersListViewData(Sender: TObject; Item: TListItem);
+    procedure DataParsersTabSheetShow(Sender: TObject);
   Private
 {$IFDEF FPC}
     FAppEvents: TApplicationProperties;
@@ -76,6 +80,7 @@ Type
     FHookedDeviceDriverMap : TDictionary<Pointer, Pointer>;
     FRequestTHread : TRequestThread;
     FRequestMsgCode : Cardinal;
+    FParsers : TObjectList<TDataParser>;
     Procedure EnumerateHooks;
     Procedure EnumerateClassWatches;
     Procedure EnumerateDriverNameWatches;
@@ -167,6 +172,7 @@ Procedure TMainFrm.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
 FAppEvents.Free;
 WriteSettings;
+FParsers.Free;
 taskList.Add(hooLibraryFinalize, serviceTask);
 If UnloadOnExitMenuItem.Checked Then
   taskList.Add(hooStop, serviceTask);
@@ -244,6 +250,8 @@ Else begin
   RefreshNameCacheMenuItem.Enabled := False;
   end;
 
+FParsers := TObjectList<TDataParser>.Create;
+DataPrasersLoad(ExtractFileDir(Application.ExeName), FParsers);
 ReadSettings;
 end;
 
@@ -310,6 +318,25 @@ begin
 FModel.Clear;
 end;
 
+Procedure TMainFrm.DataParsersListViewData(Sender: TObject; Item: TListItem);
+Var
+  dp : TDataParser;
+begin
+With Item Do
+  begin
+  dp := FParsers[Index];
+  Caption := Format('%d', [UInt64(dp.Priority)]);
+  SubItems.Add(dp.Name);
+  SubItems.Add(Format('%d.%d.%d', [dp.MajorVersion, dp.MinorVersion, dp.BuildNumber]));
+  SubItems.Add(dp.LibraryName);
+  end;
+end;
+
+Procedure TMainFrm.DataParsersTabSheetShow(Sender: TObject);
+begin
+DataParsersListView.Items.Count := FParsers.Count;
+end;
+
 Procedure TMainFrm.Documentation1Click(Sender: TObject);
 Var
   appDirectory : WideString;
@@ -344,7 +371,7 @@ begin
 rq := FModel.Selected;
 If Assigned(rq) Then
   begin
-  With TRequestDetailsFrm.Create(Self, rq) Do
+  With TRequestDetailsFrm.Create(Self, rq, FParsers) Do
     begin
     ShowModal;
     Free;

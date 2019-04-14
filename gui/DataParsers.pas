@@ -10,8 +10,8 @@ Const
   DATA_PARSER_INIT_ROUTINE = 'DataParserInit';
 
 Type
-  TDataParserParseRoutine = Function (AHeader:PREQUEST_HEADER; ADriverName:PWideChar; ADeviceName:PWideChar; Var AHandled:ByteBool; Var ANames:PPWideChar; Var AValues:PPWideChar; Var ARowCount:Cardinal):Cardinal; Cdecl;
-  TDataParserFreeRoutine = Procedure (ANames:PPWideChar; AValues:PPWideChar; ACount:Cardinal); Cdecl;
+  TDataParserParseRoutine = Function (AHeader:PREQUEST_HEADER; ADriverName:PWideChar; ADeviceName:PWideChar; Var AHandled:ByteBool; Var ANames:PPWideChar; Var AValues:PPWideChar; Var ARowCount:NativeUInt):Cardinal; Cdecl;
+  TDataParserFreeRoutine = Procedure (ANames:PPWideChar; AValues:PPWideChar; ACount:NativeUInt); Cdecl;
 
   _IRPMON_DATA_PARSER = Record
     Name : PWideChar;
@@ -20,6 +20,7 @@ Type
     MajorVersion : Cardinal;
     MinorVersion : Cardinal;
     BuildVersion : Cardinal;
+    Priority : Cardinal;
     end;
   IRPMON_DATA_PARSER = _IRPMON_DATA_PARSER;
   PIRPMON_DATA_PARSER = ^IRPMON_DATA_PARSER;
@@ -33,19 +34,27 @@ Type
       FName : WideString;
       FParseRoutine : TDataParserParseRoutine;
       FFreeRoutine : TDataParserFreeRoutine;
+      FPriority : Cardinal;
+      FMajorVersion : Cardinal;
+      FMinorVersion : Cardinal;
+      FBuildNumber : Cardinal;
     Public
       Constructor Create(ALibraryHandle:THandle; ALibraryName:WideString; Var ARaw:IRPMON_DATA_PARSER); Reintroduce;
       Destructor Destroy; Override;
       Class Function CreateForLibrary(ALibraryName:WideString; Var AError:Cardinal):TDataParser;
 
-      Function Parse(ARequest:TDriverRequest; ADriverName:WideString; ADeviceName:WideString; Var AHandled:Boolean; ANames:TStrings; AValues:TStrings):Cardinal;
+      Function Parse(ARequest:TDriverRequest; Var AHandled:ByteBool; ANames:TStrings; AValues:TStrings):Cardinal;
 
       Property Name : WideString Read FName;
       Property LibraryName : WideString Read FLibraryName;
+      Property Priority : Cardinal Read FPriority;
+      Property MajorVersion : Cardinal Read FMajorVersion;
+      Property MinorVersion : Cardinal Read FMinorVersion;
+      Property BuildNumber : Cardinal Read FBuildNumber;
     end;
 
 
-Function DataParserLoad(AFileName:WideString; Var AError:Cardinal; Var AParser:TDataParser):Boolean;
+Procedure DataPrasersLoad(ADirectory:WideString; AList:TObjectList<TDataParser>);
 
 Implementation
 
@@ -58,6 +67,10 @@ Inherited Create;
 FParseRoutine := ARaw.ParseRoutine;
 FFreeRoutine := ARaw.FreeRoutine;
 FName := WideCharToString(ARaw.Name);
+FPriority := ARaw.Priority;
+FMajorVersion := ARaw.MajorVersion;
+FMinorVersion := ARaw.MinorVersion;
+FBuildNumber := ARaw.BuildVersion;
 FLibraryName := ALibraryName;
 FLibraryHandle := ALibraryHandle;
 end;
@@ -70,18 +83,18 @@ If FLibraryHandle <> 0 Then
 Inherited Destroy;
 end;
 
-Function TDataParser.Parse(ARequest:TDriverRequest; ADriverName:WideString; ADeviceName:WideString; Var AHandled:Boolean; ANames:TStrings; AValues:TStrings):Cardinal;
+Function TDataParser.Parse(ARequest:TDriverRequest; Var AHandled:ByteBool; ANames:TStrings; AValues:TStrings):Cardinal;
 Var
   I : Integer;
   _handled : ByteBool;
   _ns : PPWideChar;
   _vs : PPWideChar;
-  _rsCount : Cardinal;
+  _rsCount : NativeUInt;
   n : PPWideChar;
   v : PPWideChar;
 begin
 AHandled := False;
-Result := FParseRoutine(ARequest.Raw, PWideChar(ADriverName), PWideChar(ADeviceName), _handled, _ns, _vs, _rsCount);
+Result := FParseRoutine(ARequest.Raw, PWideChar(ARequest.DriverName), PWideChar(ARequest.DeviceName), _handled, _ns, _vs, _rsCount);
 If (Result = 0) And (_handled) Then
   begin
   AHandled := True;
@@ -89,9 +102,13 @@ If (Result = 0) And (_handled) Then
   v := _vs;
   For I := 0 To _rsCount - 1 Do
     begin
-    ANames.Add(WideCharToString(n^));
+    If Assigned(n) Then
+      begin
+      ANames.Add(WideCharToString(n^));
+      Inc(n);
+      end;
+
     AValues.Add(WideCharToString(v^));
-    Inc(n);
     Inc(v);
     end;
 
@@ -106,19 +123,31 @@ Var
   lh : THandle;
 begin
 Result := Nil;
-lh := LoadLibraryW(PWideChar(ALibraryName));
+initRoutine := Nil;
+lh := LoadLibraryExW(PWideChar(ALibraryName), 0, DONT_RESOLVE_DLL_REFERENCES);
 If lh <> 0 Then
   begin
   initRoutine := GetProcAddress(lh, DATA_PARSER_INIT_ROUTINE);
-  If Assigned(initRoutine) Then
+  FreeLibrary(lh);
+  end;
+
+If Assigned(initRoutine) Then
+  begin
+  initRoutine := Nil;
+  lh := LoadLibraryW(PWideChar(ALibraryName));
+  If lh <> 0 Then
     begin
-    AError := initRoutine(p);
-    If AError = ERROR_SUCCESS Then
+    initRoutine := GetProcAddress(lh, DATA_PARSER_INIT_ROUTINE);
+    If Assigned(initRoutine) Then
       begin
-      Try
-        Result := TDataParser.Create(lh, ALibraryName, p);
-      Except
-        Result := Nil;
+      AError := initRoutine(p);
+      If AError = ERROR_SUCCESS Then
+        begin
+        Try
+          Result := TDataParser.Create(lh, ALibraryName, p);
+        Except
+          Result := Nil;
+          end;
         end;
       end;
     end;
@@ -128,11 +157,35 @@ If lh <> 0 Then
   end;
 end;
 
-Function DataParserLoad(AFileName:WideString; Var AError:Cardinal; Var AParser:TDataParser):Boolean;
+
+Procedure DataPrasersLoad(ADirectory:WideString; AList:TObjectList<TDataParser>);
+Var
+  mask : WideString;
+  hSearch : THandle;
+  d : WIN32_FIND_DATAW;
+  dp : TDataParser;
+  e : Cardinal;
 begin
-AParser := TDataParser.CreateForLibrary(AFileName, AError);
-Result := Assigned(AParser);
+If ADirectory[Length(ADirectory)] = '\' Then
+  Delete(ADirectory, Length(ADirectory), 1);
+
+mask := ADirectory + '\*.dll';
+hSearch := FIndFirstFileW(PWideChar(mask), d);
+If hSearch <> INVALID_HANDLE_VALUE THen
+  begin
+  Repeat
+  If ((d.dwFileAttributes And FILE_ATTRIBUTE_DIRECTORY) = 0) Then
+    begin
+    dp := TDataParser.CreateForLibrary(ADirectory + '\' + d.cFileName, e);
+    If Assigned(dp) THen
+      AList.Add(dp);
+    end;
+  Until Not FindNextFile(hSearch, d);
+
+  Windows.FindClose(hSearch);
+  end;
 end;
 
 
 End.
+

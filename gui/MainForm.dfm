@@ -876,7 +876,7 @@ object MainFrm: TMainFrm
     Top = 0
     Width = 483
     Height = 244
-    ActivePage = RequestTabSheet
+    ActivePage = DataParsersTabSheet
     Align = alClient
     TabOrder = 0
     object RequestTabSheet: TTabSheet
@@ -894,6 +894,41 @@ object MainFrm: TMainFrm
         TabOrder = 0
         ViewStyle = vsReport
         OnDblClick = RequestDetailsMenuItemClick
+      end
+    end
+    object DataParsersTabSheet: TTabSheet
+      Caption = 'Data Parsers'
+      ImageIndex = 1
+      OnShow = DataParsersTabSheetShow
+      object DataParsersListView: TListView
+        Left = 0
+        Top = 0
+        Width = 475
+        Height = 216
+        Align = alClient
+        Columns = <
+          item
+            Caption = 'Priority'
+          end
+          item
+            Caption = 'Name'
+            Width = 75
+          end
+          item
+            Caption = 'Version'
+          end
+          item
+            AutoSize = True
+            Caption = 'FileName'
+          end>
+        OwnerData = True
+        ReadOnly = True
+        RowSelect = True
+        TabOrder = 0
+        ViewStyle = vsReport
+        OnData = DataParsersListViewData
+        ExplicitLeft = 16
+        ExplicitWidth = 459
       end
     end
   end

@@ -94,7 +94,7 @@ If IsWow64Process(GetCurrentProcess, wow64) Then
           end;
 
         Application.CreateForm(TMainFrm, MainFrm);
-  MainFrm.TaskList := taskList;
+        MainFrm.TaskList := taskList;
         MainFrm.ServiceTask := serviceTask;
         Application.Run;
         IRPMonDllFinalize;

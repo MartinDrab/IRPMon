@@ -10,7 +10,8 @@ Uses
   Windows, Messages, SysUtils, Variants,
   Classes, Graphics,
   Controls, Forms, Dialogs, ExtCtrls, StdCtrls,
-  RequestListModel, ComCtrls;
+  RequestListModel, ComCtrls,
+  Generics.Collections, DataParsers;
 
 Type
   TRequestDetailsFrm = Class (TForm)
@@ -18,15 +19,15 @@ Type
     OkButton: TButton;
     PageControl1: TPageControl;
     HeadersTabSheet: TTabSheet;
-    RawDataTabSheet: TTabSheet;
     NameValueListView: TListView;
-    DataRichEdit: TRichEdit;
     Procedure OkButtonClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
   Private
     FRequest : TDriverRequest;
+    FParsers : TObjectList<TDataParser>;
+    Procedure ProcessParsers;
   Public
-    Constructor Create(AOwner:TComponent; ARequest:TDriverRequest); Reintroduce;
+    Constructor Create(AOwner:TComponent; ARequest:TDriverRequest; AParsers:TObjectList<TDataParser>); Reintroduce;
   end;
 
 
@@ -35,13 +36,57 @@ Implementation
 Uses
   Utils;
 
-Constructor TRequestDetailsFrm.Create(AOwner:TComponent; ARequest:TDriverRequest);
+Constructor TRequestDetailsFrm.Create(AOwner:TComponent; ARequest:TDriverRequest; AParsers:TObjectList<TDataParser>);
 begin
 FRequest := ARequest;
+FParsers := AParsers;
 Inherited Create(AOwner);
 end;
 
 {$R *.dfm}
+
+Procedure TRequestDetailsFrm.ProcessParsers;
+Var
+  I : Integer;
+  err : Cardinal;
+  _handled : ByteBool;
+  names : TStringList;
+  values : TStringList;
+  pd : TDataParser;
+  tb : TTabSheet;
+  re : TRichEdit;
+begin
+names := TStringList.Create;
+values := TStringList.Create;
+For pd In FParsers Do
+  begin
+  err := pd.Parse(FRequest, _handled, names, values);
+  If (err = ERROR_SUCCESS) And (_handled) Then
+    begin
+    tb := TTabSheet.Create(PageControl1);
+    tb.Parent := PageControl1;
+    tb.Caption := pd.Name;
+    tb.PageControl := PageControl1;
+    re := TRichEdit.Create(tb);
+    re.Parent := tb;
+    re.Align := alClient;
+    re.PlainText := True;
+    re.Font.Name := 'Courier New';
+    For I := 0 To values.Count - 1 Do
+      begin
+      If names.Count > 0 Then
+        re.Lines.Add(Format('%s: %s', [names[I], values[I]]))
+      Else re.Lines.Add(values[I]);
+      end;
+
+    values.Clear;
+    names.Clear;
+    end;
+  end;
+
+values.Free;
+names.Free;
+end;
 
 Procedure TRequestDetailsFrm.FormCreate(Sender: TObject);
 Var
@@ -72,7 +117,7 @@ With NameValueListVIew.Items.Add Do
   end;
 
 If FRequest.DataSize > 0 Then
-  DataRichEdit.Text := BufferToHex(FRequest.Data, FRequest.DataSize);
+  ProcessParsers;
 end;
 
 Procedure TRequestDetailsFrm.OkButtonClick(Sender: TObject);

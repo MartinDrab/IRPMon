@@ -898,7 +898,6 @@ object RequestDetailsFrm: TRequestDetailsFrm
     TabOrder = 1
     object HeadersTabSheet: TTabSheet
       Caption = 'Headers'
-      ExplicitHeight = 140
       object NameValueListView: TListView
         Left = 0
         Top = 0
@@ -922,34 +921,6 @@ object RequestDetailsFrm: TRequestDetailsFrm
         ShowWorkAreas = True
         TabOrder = 0
         ViewStyle = vsReport
-        ExplicitHeight = 140
-      end
-    end
-    object RawDataTabSheet: TTabSheet
-      Caption = 'Raw Data'
-      ImageIndex = 1
-      ExplicitHeight = 140
-      object DataRichEdit: TRichEdit
-        Left = 0
-        Top = 0
-        Width = 271
-        Height = 253
-        Align = alClient
-        Font.Charset = EASTEUROPE_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -11
-        Font.Name = 'Courier New'
-        Font.Style = []
-        ParentFont = False
-        PlainText = True
-        ReadOnly = True
-        ScrollBars = ssBoth
-        TabOrder = 0
-        WordWrap = False
-        ExplicitLeft = 1
-        ExplicitTop = 1
-        ExplicitWidth = 277
-        ExplicitHeight = 111
       end
     end
   end
