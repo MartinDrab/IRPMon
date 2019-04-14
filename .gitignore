@@ -3,9 +3,10 @@ bin/
 dumps/
 gui/*.bak
 gui/__history
-*.lib
+lib/
 tmp/
 *.sdf
+
 /gui/IRPMon.dproj.local
 /gui/IRPMon.identcache
-/irpmndrv/irpmndrv.vcxproj.user
+*.user
