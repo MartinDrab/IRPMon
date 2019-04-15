@@ -24,6 +24,7 @@ Type
     rlmctSubType,
     rlmctIRPAddress,
     rlmctFileObject,
+    rlmctFileName,
     rlmctIRPFlags,
     rlmctArg1,
     rlmctArg2,
@@ -54,6 +55,7 @@ Const
     'Subtype',
     'IRP address',
     'File object',
+    'File name',
     'IRP flags',
     'Argument1',
     'Argument2',
@@ -353,6 +355,7 @@ Case AColumnType Of
   rlmctDriverObject: AResult := Format('0x%p', [FDriverObject]);
   rlmctDriverName: AResult := FDriverName;
   rlmctFileObject : AResult := Format('0x%p', [FFileObject]);
+  rlmctFileName: AResult := FFileName;
   rlmctResult: AResult := RequestResultToString(FResultValue, FResultType);
   rlmctProcessId : AResult := Format('%u', [FProcessId]);
   rlmctThreadId :  AResult := Format('%u', [FThreadId]);
