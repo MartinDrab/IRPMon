@@ -23,6 +23,17 @@ Type
       Property FileName : WideString Read FFileName;
     end;
 
+  TFileObjectNameDeletedRequest = Class (TDriverRequest)
+    Private
+      FFileObject : Pointer;
+    Public
+      Constructor Create(Var ARequest:REQUEST_FILE_OBJECT_NAME_DELETED); Reintroduce;
+      Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
+
+      Property FileObject : Pointer Read FFileObject;
+    end;
+
+
 
 Implementation
 
@@ -54,6 +65,29 @@ Case AColumnType Of
   rlmctDriverName : Result := False;
   rlmctFileObject : AResult := Format('0x%p', [FFileObject]);
 //  rlmctDriverName : AResult := FDriverName;
+  Else Result := Inherited GetColumnValue(AColumnType, AResult);
+  end;
+end;
+
+
+(** TFileObjectNameDeletedRequest **)
+
+Constructor TFileObjectNameDeletedRequest.Create(Var ARequest:REQUEST_FILE_OBJECT_NAME_DELETED);
+begin
+Inherited Create(ARequest.Header);
+FFileObject := ARequest.FileObject;
+end;
+
+Function TFileObjectNameDeletedRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
+begin
+Result := True;
+Case AColumnType Of
+  rlmctDeviceObject,
+  rlmctDeviceName,
+  rlmctResult,
+  rlmctDriverObject,
+  rlmctDriverName : Result := False;
+  rlmctFileObject : AResult := Format('0x%p', [FFileObject]);
   Else Result := Inherited GetColumnValue(AColumnType, AResult);
   end;
 end;
