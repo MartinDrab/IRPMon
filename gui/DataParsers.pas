@@ -13,6 +13,7 @@ Type
   _DP_REQUEST_EXTRA_INFO = Record
     DriverName : PWideChar;
     DeviceName : PWideChar;
+    FileName : PWideChar;
     end;
   DP_REQUEST_EXTRA_INFO = _DP_REQUEST_EXTRA_INFO;
   PDP_REQUEST_EXTRA_INFO = ^DP_REQUEST_EXTRA_INFO;
@@ -104,6 +105,7 @@ begin
 AHandled := False;
 ei.DriverName := PWideChar(ARequest.DriverName);
 ei.DeviceName := PWideChar(ARequest.DeviceName);
+ei.FileName := PWideChar(ARequest.FileName);
 Result := FParseRoutine(ARequest.Raw, ei, _handled, _ns, _vs, _rsCount);
 If (Result = 0) And (_handled) Then
   begin
