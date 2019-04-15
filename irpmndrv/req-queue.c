@@ -32,6 +32,8 @@ static SIZE_T _GetRequestSize(PREQUEST_HEADER Header)
 	PREQUEST_STARTIO startIo = NULL;
 	PREQUEST_DRIVER_DETECTED drr = CONTAINING_RECORD(Header, REQUEST_DRIVER_DETECTED, Header);
 	PREQUEST_DEVICE_DETECTED der = CONTAINING_RECORD(Header, REQUEST_DEVICE_DETECTED, Header);
+	PREQUEST_FILE_OBJECT_NAME_ASSIGNED ar = NULL;
+	PREQUEST_FILE_OBJECT_NAME_DELETED dr = NULL;
 
 	switch (Header->Type) {
 		case ertIRP:
@@ -63,6 +65,14 @@ static SIZE_T _GetRequestSize(PREQUEST_HEADER Header)
 			break;
 		case ertDeviceDetected:
 			ret = sizeof(REQUEST_DEVICE_DETECTED) + der->DeviceNameLength;
+			break;
+		case ertFileObjectNameAssigned:
+			ar = CONTAINING_RECORD(Header, REQUEST_FILE_OBJECT_NAME_ASSIGNED, Header);
+			ret = sizeof(REQUEST_FILE_OBJECT_NAME_ASSIGNED) + ar->NameLength;
+			break;
+		case ertFileObjectNameDeleted:
+			dr = CONTAINING_RECORD(Header, REQUEST_FILE_OBJECT_NAME_DELETED, Header);
+			ret = sizeof(REQUEST_FILE_OBJECT_NAME_DELETED);
 			break;
 	}
 
