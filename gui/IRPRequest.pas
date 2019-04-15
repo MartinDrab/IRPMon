@@ -13,7 +13,6 @@ Uses
 Type
   TIRPRequest = Class (TDriverRequest)
   Private
-    FFileObject : Pointer;
     FArgs : TIRPArguments;
     FIRPAddress : Pointer;
     FMajorFunction : Byte;
@@ -38,7 +37,6 @@ Type
     Class Function DeviceRelationTypeToString(AType:DEVICE_RELATION_TYPE):WideString;
     Class Function Build(Var ARequest:REQUEST_IRP):TIRPRequest;
 
-    Property FileObject : Pointer Read FFileObject;
     Property Args : TIRPArguments Read FArgs;
     Property Address : Pointer Read FIRPAddress;
     Property MajorFunction : Byte Read FMajorFunction;
@@ -166,7 +164,7 @@ FPreviousMode := ARequest.PreviousMode;
 FRequestorMode := ARequest.RequestorMode;
 FIRPAddress := ARequest.IRPAddress;
 FIRPFlags := ARequest.IrpFlags;
-FFileObject := ARequest.FileObject;
+SetFileObject(ARequest.FileObject);
 FArgs := ARequest.Args;
 FRequestorProcessId := ARequest.RequestorProcessId;
 end;
@@ -179,7 +177,6 @@ Case AColumnType Of
   rlmctRequestorPID : AResult := Format('%d', [FRequestorProcessId]);
   rlmctSubType: AResult := Format('%s:%s', [MajorFunctionToString(FMajorFunction), MinorFunctionToString(FMajorFunction, FMinorFunction)]);
   rlmctIRPAddress: AResult := Format('0x%p', [FIRPAddress]);
-  rlmctFileObject: AResult := Format('0x%p', [FFileObject]);
   rlmctIRPFlags: AResult := Format('0x%x', [FIRPFlags]);
   rlmctArg1: AResult := Format('0x%p', [FArgs.Other.Arg1]);
   rlmctArg2: AResult := Format('0x%p', [FArgs.Other.Arg2]);

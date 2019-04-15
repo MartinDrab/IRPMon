@@ -9,7 +9,6 @@ Uses
 Type
   TFastIoRequest = Class (TDriverRequest)
   Private
-    FFileObject : Pointer;
     FPreviousMode : Byte;
     FIOSBStatus : Cardinal;
     FIOSBInformation : NativeUInt;
@@ -45,7 +44,7 @@ FFastIoType := ARequest.FastIoType;
 FPreviousMode := ARequest.PreviousMode;
 FIOSBStatus := ARequest.IOSBStatus;
 FIOSBInformation := ARequest.IOSBInformation;
-FFileObject := ARequest.FileObject;
+SetFileObject(ARequest.FileObject);
 FArg1 := ARequest.Arg1;
 FArg2 := ARequest.Arg2;
 FArg3 := ARequest.Arg3;
@@ -57,7 +56,6 @@ begin
 Result := True;
 Case AColumnType Of
   rlmctSubType : AResult := FastIoTypeToString(FFastIoType);
-  rlmctFileObject : AResult := Format('0x%p', [FFileObject]);
   rlmctPreviousMode : AResult := AccessModeToString(FPreviousMode);
   rlmctArg1,
   rlmctArg2,

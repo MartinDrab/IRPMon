@@ -75,8 +75,10 @@ Type
     FId : Cardinal;
     FDriverName : WideString;
     FDeviceName : WideString;
+    FFileName : WideString;
     FDriverObject : Pointer;
     FDeviceObject : Pointer;
+    FFileObject : Pointer;
     FRequestType : ERequestType;
     FResultType : ERequestResultType;
     FResultValue : NativeUInt;
@@ -91,6 +93,8 @@ Type
   Protected
     Procedure SetDriverName(AName:WideString);
     Procedure SetDeviceName(AName:WideString);
+    Procedure SetFileName(AName:WideString);
+    Procedure SetFileObject(AObject:Pointer);
   Public
     Constructor Create(Var ARequest:REQUEST_HEADER); Reintroduce;
     Destructor Destroy; Override;
@@ -114,8 +118,10 @@ Type
     Property Id : Cardinal Read FId;
     Property DriverName : WideString Read FDriverName Write SetDriverName;
     Property DeviceName : WideString Read FDeviceName Write SetDeviceName;
+    Property FileName : WideString Read FFileName Write SetFileName;
     Property DriverObject : Pointer Read FDriverObject;
     Property DeviceObject : Pointer Read FDeviceObject;
+    Property FileObject : Pointer Read FFileObject Write SetFileObject;
     Property RequestType : ERequestType Read FRequestType;
     Property ResultType : ERequestResultType Read FResultType;
     Property ResultValueRaw : NativeUInt Read FResultValue;
@@ -319,6 +325,16 @@ begin
 FDeviceName := AName;
 end;
 
+Procedure TDriverRequest.SetFileName(AName:WideString);
+begin
+FFileName := AName;
+end;
+
+Procedure TDriverRequest.SetFileObject(AObject:Pointer);
+begin
+FFileObject := AObject;
+end;
+
 Function TDriverRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
 Var
   s : SYSTEMTIME;
@@ -336,6 +352,7 @@ Case AColumnType Of
   rlmctDeviceName: AResult := FDeviceName;
   rlmctDriverObject: AResult := Format('0x%p', [FDriverObject]);
   rlmctDriverName: AResult := FDriverName;
+  rlmctFileObject : AResult := Format('0x%p', [FFileObject]);
   rlmctResult: AResult := RequestResultToString(FResultValue, FResultType);
   rlmctProcessId : AResult := Format('%u', [FProcessId]);
   rlmctThreadId :  AResult := Format('%u', [FThreadId]);

@@ -33,7 +33,8 @@ uses
   XXXDetectedRequests in 'XXXDetectedRequests.pas',
   LibJSON in 'LibJSON.pas',
   FastIoRequest in 'FastIoRequest.pas',
-  DataParsers in 'DataParsers.pas';
+  DataParsers in 'DataParsers.pas',
+  FileObjectNameXXXRequest in 'FileObjectNameXXXRequest.pas';
 
 {$R *.res}
 
@@ -94,7 +95,7 @@ If IsWow64Process(GetCurrentProcess, wow64) Then
           end;
 
         Application.CreateForm(TMainFrm, MainFrm);
-        MainFrm.TaskList := taskList;
+  MainFrm.TaskList := taskList;
         MainFrm.ServiceTask := serviceTask;
         Application.Run;
         IRPMonDllFinalize;
