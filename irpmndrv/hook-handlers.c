@@ -1297,7 +1297,7 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 			if (NT_SUCCESS(tmpStatus)) {
 				tmpStatus = FltParseFileNameInformation(fi);
 				if (NT_SUCCESS(tmpStatus)) {
-					ar = HeapMemoryAllocPaged(sizeof(REQUEST_FILE_OBJECT_NAME_ASSIGNED) + fi->Name.Length);
+					ar = HeapMemoryAllocNonPaged(sizeof(REQUEST_FILE_OBJECT_NAME_ASSIGNED) + fi->Name.Length);
 					if (ar != NULL) {
 						memset(ar, 0, sizeof(REQUEST_FILE_OBJECT_NAME_ASSIGNED) + fi->Name.Length);
 						RequestHeaderInit(&ar->Header, Deviceobject->DriverObject, Deviceobject, ertFileObjectNameAssigned);
