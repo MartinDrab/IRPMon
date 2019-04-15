@@ -881,6 +881,10 @@ object MainFrm: TMainFrm
     TabOrder = 0
     object RequestTabSheet: TTabSheet
       Caption = 'Requests'
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object RequestListView: TListView
         Left = 0
         Top = 0
@@ -927,8 +931,6 @@ object MainFrm: TMainFrm
         TabOrder = 0
         ViewStyle = vsReport
         OnData = DataParsersListViewData
-        ExplicitLeft = 16
-        ExplicitWidth = 459
       end
     end
   end
