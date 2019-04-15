@@ -48,6 +48,12 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllGetRequestSize(PREQUEST_HEADER Request)
 		case ertDeviceDetected:
 			ret = sizeof(genReq->RequestTypes.DeviceDetected) + sizeof(genReq->RequestTypes.DeviceDetected.DeviceNameLength);
 			break;
+		case ertFileObjectNameAssigned:
+			ret = sizeof(genReq->RequestTypes.FileObjectNameAssigned) + genReq->RequestTypes.FileObjectNameAssigned.NameLength;
+			break;
+		case ertFileObjectNameDeleted:
+			ret = sizeof(genReq->RequestTypes.FileObjectNameDeleted);
+			break;
 		default:
 			break;
 	}
