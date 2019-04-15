@@ -1204,6 +1204,8 @@ static PIRP_COMPLETION_CONTEXT _HookIRPCompletionRoutine(PIRP Irp, PDRIVER_OBJEC
 
 NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 {
+	BOOLEAN isCleanup = FALSE;
+	PFILE_OBJECT cleanupFileObject = NULL;
 	BOOLEAN isCreate = FALSE;
 	PFILE_OBJECT createFileObject = NULL;
 	PIRP_COMPLETION_CONTEXT compContext = NULL;
@@ -1268,6 +1270,23 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 		if (isCreate)
 			createFileObject = irpStack->FileObject;
 		
+		isCleanup = (irpStack->MajorFunction == IRP_MJ_CLEANUP);
+		if (isCleanup && KeGetCurrentIrql() < DISPATCH_LEVEL) {
+			cleanupFileObject = irpStack->FileObject;
+			if (cleanupFileObject != NULL) {
+				PREQUEST_FILE_OBJECT_NAME_DELETED dr = NULL;
+
+				dr = HeapMemoryAllocPaged(sizeof(REQUEST_FILE_OBJECT_NAME_DELETED));
+				if (dr != NULL) {
+					memset(dr, 0, sizeof(REQUEST_FILE_OBJECT_NAME_DELETED));
+					RequestHeaderInit(&dr->Header, Deviceobject->DriverObject, Deviceobject, ertFileObjectNameDeleted);
+					RequestHeaderSetResult(dr->Header, NTSTATUS, STATUS_SUCCESS);
+					dr->FileObject = cleanupFileObject;
+					RequestQueueInsert(&dr->Header);
+				}
+			}
+		}
+
 		status = driverRecord->OldMajorFunction[irpStack->MajorFunction](Deviceobject, Irp);
 		if (isCreate && NT_SUCCESS(status) && KeGetCurrentIrql() < DISPATCH_LEVEL && status != STATUS_PENDING) {
 			PFLT_FILE_NAME_INFORMATION fi = NULL;
