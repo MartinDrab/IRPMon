@@ -208,7 +208,7 @@ Implementation
 
 Uses
   SysUtils, NameTables, IRPRequest, FastIoRequest,
-  XXXDetectedRequests, Utils;
+  XXXDetectedRequests, FileObjectNameXXXRequest, Utils;
 
 (** TDriverRequestComparer **)
 
@@ -715,6 +715,12 @@ If Assigned(UpdateRequest) Then
 
         FDeviceMap.Add(dr.DeviceObject, dr.DeviceName);
         end;
+      ertFileObjectNameAssigned : begin
+        dr := TFileObjectNameAssignedRequest.Create(ur.FileObjectNameAssigned);
+        end;
+      ertFileObjectNameDeleted : begin
+        dr := TFileObjectNameDeletedRequest.Create(ur.FileObjectNameDeleted);
+        end
       Else dr := TDriverRequest.Create(ur.Header);
       end;
 
