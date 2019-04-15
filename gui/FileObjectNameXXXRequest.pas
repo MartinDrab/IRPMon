@@ -44,14 +44,14 @@ Uses
 
 Constructor TFileObjectNameAssignedRequest.Create(Var ARequest:REQUEST_FILE_OBJECT_NAME_ASSIGNED);
 Var
-  dn : PWideChar;
+  fn : PWideChar;
 begin
 Inherited Create(ARequest.Header);
 FFileObject := ARequest.FileObject;
-dn := PWideChar(PByte(@ARequest) + SizeOf(REQUEST_FILE_OBJECT_NAME_ASSIGNED));
+fn := PWideChar(PByte(@ARequest) + SizeOf(REQUEST_FILE_OBJECT_NAME_ASSIGNED));
 SetLength(FFileName, ARequest.FileNameLength Div SizeOf(WideChar));
-CopyMemory(PWideChar(FFileName), dn, ARequest.FileNameLength);
-// SetDriverName(FDriverName);
+CopyMemory(PWideChar(FFileName), fn, ARequest.FileNameLength);
+SetFileName(FFileName);
 end;
 
 Function TFileObjectNameAssignedRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
@@ -64,7 +64,6 @@ Case AColumnType Of
   rlmctDriverObject,
   rlmctDriverName : Result := False;
   rlmctFileObject : AResult := Format('0x%p', [FFileObject]);
-//  rlmctDriverName : AResult := FDriverName;
   Else Result := Inherited GetColumnValue(AColumnType, AResult);
   end;
 end;
