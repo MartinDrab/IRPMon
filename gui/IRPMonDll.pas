@@ -212,7 +212,12 @@ Type
     (** Previously unknown or not-monitored driver has been detected. *)
     ertDriverDetected,
     (** A new device has been detected. **)
-    ertDeviceDetected);
+    ertDeviceDetected,
+    (** An IRP_MJ_CREATE has just been performed on a file object **)
+    ertFileObjectNameAssigned,
+    (** Last handle to a file object has been closed (IRP_MJ_CLEANUP) **)
+    ertFileObjectNameDeleted
+  );
   ERequesttype = _ERequestType;
   PERequesttype = ^ERequesttype;
 
@@ -398,6 +403,21 @@ Type
   REQUEST_DEVICE_DETECTED = _REQUEST_DEVICE_DETECTED;
   PREQUEST_DEVICE_DETECTED = ^REQUEST_DEVICE_DETECTED;
 
+  _REQUEST_FILE_OBJECT_NAME_ASSIGNED = Record
+    Header : REQUEST_HEADER;
+    FileObject : Pointer;
+    FileNameLength : Cardinal;
+    end;
+  REQUEST_FILE_OBJECT_NAME_ASSIGNED = _REQUEST_FILE_OBJECT_NAME_ASSIGNED;
+  PREQUEST_FILE_OBJECT_NAME_ASSIGNED = ^REQUEST_FILE_OBJECT_NAME_ASSIGNED;
+
+  _REQUEST_FILE_OBJECT_NAME_DELETED = Record
+    Header : REQUEST_HEADER;
+    FileObject : Pointer;
+    end;
+  REQUEST_FILE_OBJECT_NAME_DELETED = _REQUEST_FILE_OBJECT_NAME_DELETED;
+  PREQUEST_FILE_OBJECT_NAME_DELETED = ^REQUEST_FILE_OBJECT_NAME_DELETED;
+
   _REQUEST_GENERAL = Record
     Case ERequestType Of
       ertUndefined : ( Header : REQUEST_HEADER);
@@ -409,6 +429,8 @@ Type
 		  ertStartIo : (StartIo : REQUEST_STARTIO);
       ertDriverDetected : (DriverDetected : REQUEST_DRIVER_DETECTED);
       ertDeviceDetected : (DeviceDetected : REQUEST_DEVICE_DETECTED);
+      ertFileObjectNameAssigned : (FileObjectNameAssigned : REQUEST_FILE_OBJECT_NAME_ASSIGNED);
+      ertFileObjectNameDeleted : (FileObjectNameDeleted : REQUEST_FILE_OBJECT_NAME_DELETED);
     end;
   REQUEST_GENERAL = _REQUEST_GENERAL;
   PREQUEST_GENERAL = ^REQUEST_GENERAL;
