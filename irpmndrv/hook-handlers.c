@@ -1288,7 +1288,7 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 		}
 
 		status = driverRecord->OldMajorFunction[irpStack->MajorFunction](Deviceobject, Irp);
-		if (isCreate && NT_SUCCESS(status) && KeGetCurrentIrql() < DISPATCH_LEVEL && status != STATUS_PENDING) {
+		if (isCreate && createFileObject != NULL && NT_SUCCESS(status) && KeGetCurrentIrql() < DISPATCH_LEVEL && status != STATUS_PENDING) {
 			PFLT_FILE_NAME_INFORMATION fi = NULL;
 			NTSTATUS tmpStatus = STATUS_UNSUCCESSFUL;
 			PREQUEST_FILE_OBJECT_NAME_ASSIGNED ar = NULL;
