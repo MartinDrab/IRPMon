@@ -1276,7 +1276,7 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 			if (cleanupFileObject != NULL) {
 				PREQUEST_FILE_OBJECT_NAME_DELETED dr = NULL;
 
-				dr = HeapMemoryAllocPaged(sizeof(REQUEST_FILE_OBJECT_NAME_DELETED));
+				dr = HeapMemoryAllocNonPaged(sizeof(REQUEST_FILE_OBJECT_NAME_DELETED));
 				if (dr != NULL) {
 					memset(dr, 0, sizeof(REQUEST_FILE_OBJECT_NAME_DELETED));
 					RequestHeaderInit(&dr->Header, Deviceobject->DriverObject, Deviceobject, ertFileObjectNameDeleted);
