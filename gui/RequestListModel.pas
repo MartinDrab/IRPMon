@@ -186,6 +186,7 @@ Type
       FRequests : TList<TDriverRequest>;
       FDriverMap : TDictionary<Pointer, WideString>;
       FDeviceMap : TDictionary<Pointer, WideString>;
+      FFileMap : TDictionary<Pointer, WideString>;
     Protected
       Function GetColumn(AItem:TDriverRequest; ATag:NativeUInt):WideString; Override;
       Procedure FreeItem(AItem:TDriverRequest); Override;
@@ -688,6 +689,7 @@ Var
   dr : TDriverRequest;
   deviceName : WideString;
   driverName : WideString;
+  fileName : WideString;
 begin
 Result := ERROR_SUCCESS;
 If Assigned(UpdateRequest) Then
@@ -717,9 +719,15 @@ If Assigned(UpdateRequest) Then
         end;
       ertFileObjectNameAssigned : begin
         dr := TFileObjectNameAssignedRequest.Create(ur.FileObjectNameAssigned);
+        If FFileMap.ContainsKey(dr.FileObject) Then
+          FFileMap.Remove(dr.FileObject);
+
+        FFileMap.Add(dr.FileObject, dr.FileName);
         end;
       ertFileObjectNameDeleted : begin
         dr := TFileObjectNameDeletedRequest.Create(ur.FileObjectNameDeleted);
+        If FFileMap.ContainsKey(dr.FileObject) Then
+          FFileMap.Remove(dr.FileObject);
         end
       Else dr := TDriverRequest.Create(ur.Header);
       end;
@@ -729,6 +737,9 @@ If Assigned(UpdateRequest) Then
 
     If FDeviceMap.TryGetValue(dr.DeviceObject, deviceName) Then
       dr.DeviceName := deviceName;
+
+    If FFileMap.TryGetValue(dr.FileObject, fileName) Then
+      dr.SetFileName(fileName);
 
     FRequests.Add(dr);
     end;
@@ -793,11 +804,13 @@ UpdateRequest := Nil;
 FRequests := TList<TDriverRequest>.Create;
 FDriverMap := TDictionary<Pointer, WideString>.Create;
 FDeviceMap := TDictionary<Pointer, WideString>.Create;
+FFileMap := TDictionary<Pointer, WideString>.Create;
 RefreshMaps;
 end;
 
 Destructor TRequestListModel.Destroy;
 begin
+FFileMap.Free;
 FDriverMap.Free;
 FDeviceMap.Free;
 Clear;
