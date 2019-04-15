@@ -1204,6 +1204,8 @@ static PIRP_COMPLETION_CONTEXT _HookIRPCompletionRoutine(PIRP Irp, PDRIVER_OBJEC
 
 NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 {
+	BOOLEAN isCreate = FALSE;
+	PFILE_OBJECT createFileObject = NULL;
 	PIRP_COMPLETION_CONTEXT compContext = NULL;
 	PREQUEST_IRP request = NULL;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
@@ -1262,7 +1264,36 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 			}
 		}
 
+		isCreate = (irpStack->MajorFunction == IRP_MJ_CREATE);
+		if (isCreate)
+			createFileObject = irpStack->FileObject;
+		
 		status = driverRecord->OldMajorFunction[irpStack->MajorFunction](Deviceobject, Irp);
+		if (isCreate && NT_SUCCESS(status) && KeGetCurrentIrql() < DISPATCH_LEVEL && status != STATUS_PENDING) {
+			PFLT_FILE_NAME_INFORMATION fi = NULL;
+			NTSTATUS tmpStatus = STATUS_UNSUCCESSFUL;
+			PREQUEST_FILE_OBJECT_NAME_ASSIGNED ar = NULL;
+
+			tmpStatus = FltGetFileNameInformationUnsafe(createFileObject, NULL, FLT_FILE_NAME_NORMALIZED | FLT_FILE_NAME_QUERY_DEFAULT, &fi);
+			if (NT_SUCCESS(tmpStatus)) {
+				tmpStatus = FltParseFileNameInformation(fi);
+				if (NT_SUCCESS(tmpStatus)) {
+					ar = HeapMemoryAllocPaged(sizeof(REQUEST_FILE_OBJECT_NAME_ASSIGNED) + fi->Name.Length);
+					if (ar != NULL) {
+						memset(ar, 0, sizeof(REQUEST_FILE_OBJECT_NAME_ASSIGNED) + fi->Name.Length);
+						RequestHeaderInit(&ar->Header, Deviceobject->DriverObject, Deviceobject, ertFileObjectNameAssigned);
+						RequestHeaderSetResult(ar->Header, NTSTATUS, STATUS_SUCCESS);
+						ar->FileObject = createFileObject;
+						ar->NameLength = fi->Name.Length;
+						memcpy(ar + 1, fi->Name.Buffer, ar->NameLength);
+						RequestQueueInsert(&ar->Header);
+					} else tmpStatus = STATUS_INSUFFICIENT_RESOURCES;
+				}
+
+				FltReleaseFileNameInformation(fi);
+			}
+		}
+		
 		if (request != NULL) {
 			RequestHeaderSetResult(request->Header, NTSTATUS, status);
 			RequestQueueInsert(&request->Header);
