@@ -12,25 +12,15 @@ Uses
 
 Type
   TFileObjectNameAssignedRequest = Class (TDriverRequest)
-    Private
-      FFileObject : Pointer;
-      FFileName : WideString;
     Public
       Constructor Create(Var ARequest:REQUEST_FILE_OBJECT_NAME_ASSIGNED); Reintroduce;
       Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
-
-      Property FileObject : Pointer Read FFileObject;
-      Property FileName : WideString Read FFileName;
     end;
 
   TFileObjectNameDeletedRequest = Class (TDriverRequest)
-    Private
-      FFileObject : Pointer;
     Public
       Constructor Create(Var ARequest:REQUEST_FILE_OBJECT_NAME_DELETED); Reintroduce;
       Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
-
-      Property FileObject : Pointer Read FFileObject;
     end;
 
 
@@ -45,13 +35,14 @@ Uses
 Constructor TFileObjectNameAssignedRequest.Create(Var ARequest:REQUEST_FILE_OBJECT_NAME_ASSIGNED);
 Var
   fn : PWideChar;
+  tmpFileName : WideString;
 begin
 Inherited Create(ARequest.Header);
-FFileObject := ARequest.FileObject;
+SetFileObject(ARequest.FileObject);
 fn := PWideChar(PByte(@ARequest) + SizeOf(REQUEST_FILE_OBJECT_NAME_ASSIGNED));
-SetLength(FFileName, ARequest.FileNameLength Div SizeOf(WideChar));
-CopyMemory(PWideChar(FFileName), fn, ARequest.FileNameLength);
-SetFileName(FFileName);
+SetLength(tmpFileName, ARequest.FileNameLength Div SizeOf(WideChar));
+CopyMemory(PWideChar(tmpFileName), fn, ARequest.FileNameLength);
+SetFileName(tmpFileName);
 end;
 
 Function TFileObjectNameAssignedRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
@@ -63,7 +54,6 @@ Case AColumnType Of
   rlmctResult,
   rlmctDriverObject,
   rlmctDriverName : Result := False;
-  rlmctFileObject : AResult := Format('0x%p', [FFileObject]);
   Else Result := Inherited GetColumnValue(AColumnType, AResult);
   end;
 end;
@@ -74,7 +64,7 @@ end;
 Constructor TFileObjectNameDeletedRequest.Create(Var ARequest:REQUEST_FILE_OBJECT_NAME_DELETED);
 begin
 Inherited Create(ARequest.Header);
-FFileObject := ARequest.FileObject;
+SetFileObject(ARequest.FileObject);
 end;
 
 Function TFileObjectNameDeletedRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
@@ -86,7 +76,6 @@ Case AColumnType Of
   rlmctResult,
   rlmctDriverObject,
   rlmctDriverName : Result := False;
-  rlmctFileObject : AResult := Format('0x%p', [FFileObject]);
   Else Result := Inherited GetColumnValue(AColumnType, AResult);
   end;
 end;
