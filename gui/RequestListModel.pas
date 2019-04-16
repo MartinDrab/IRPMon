@@ -543,6 +543,8 @@ Case ARequestType Of
   ertStartIo: Result := 'StartIo';
   ertDriverDetected : Result := 'DriverDetected';
   ertDeviceDetected : Result := 'DeviceDetected';
+  ertFileObjectNameAssigned : Result := 'FONameAssigned';
+  ertFileObjectNameDeleted : Result := 'FONameDeleted';
   Else Result := Format('<unknown> (%u)', [Ord(ARequestType)]);
   end;
 end;
