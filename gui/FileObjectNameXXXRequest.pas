@@ -51,7 +51,8 @@ Result := True;
 Case AColumnType Of
   rlmctDeviceObject,
   rlmctDeviceName,
-  rlmctResult,
+  rlmctResultValue,
+  rlmctResultConstant,
   rlmctDriverObject,
   rlmctDriverName : Result := False;
   Else Result := Inherited GetColumnValue(AColumnType, AResult);
@@ -73,7 +74,8 @@ Result := True;
 Case AColumnType Of
   rlmctDeviceObject,
   rlmctDeviceName,
-  rlmctResult,
+  rlmctResultValue,
+  rlmctResultConstant,
   rlmctDriverObject,
   rlmctDriverName : Result := False;
   Else Result := Inherited GetColumnValue(AColumnType, AResult);

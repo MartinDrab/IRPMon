@@ -20,7 +20,8 @@ Type
     rlmctDeviceName,
     rlmctDriverObject,
     rlmctDriverName,
-    rlmctResult,
+    rlmctResultValue,
+    rlmctResultConstant,
     rlmctSubType,
     rlmctIRPAddress,
     rlmctFileObject,
@@ -35,7 +36,8 @@ Type
     rlmctIRQL,
     rlmctPreviousMode,
     rlmctRequestorMode,
-    rlmctIOSBStatus,
+    rlmctIOSBStatusValue,
+    rlmctIOSBStatusConstant,
     rlmctIOSBInformation,
     rlmctRequestorPID);
   PERequestListModelColumnType = ^ERequestListModelColumnType;
@@ -51,7 +53,8 @@ Const
     'Device name',
     'Driver object',
     'Driver name',
-    'Result',
+    'Result value',
+    'Result constant',
     'Subtype',
     'IRP address',
     'File object',
@@ -66,7 +69,8 @@ Const
     'IRQL',
     'Previous mode',
     'Requestor mode',
-    'IOSB.Status',
+    'IOSB.Status value',
+    'IOSB.Status constant',
     'IOSB.Information',
     'Requestor PID'
   );
@@ -110,7 +114,7 @@ Type
     Class Function GetBaseColumnName(AColumnType:ERequestListModelColumnType):WideString;
     Class Function IOCTLToString(AControlCode:Cardinal):WideString;
     Class Function RequestTypeToString(ARequestType:ERequestType):WideString;
-    Class Function RequestResultToString(AResult:NativeUInt; AResultType:ERequestResultType):WideString;
+    Class Function RequestResultToString(AResult:NativeUInt; AResultType:ERequestResultType; AConstant:Boolean = False):WideString;
     Class Function NTSTATUSToString(AValue:Cardinal):WideString;
     Class Function AccessModeToString(AMode:Byte):WideString;
     Class Function IRQLToString(AValue:Byte):WideString;
@@ -357,7 +361,8 @@ Case AColumnType Of
   rlmctDriverName: AResult := FDriverName;
   rlmctFileObject : AResult := Format('0x%p', [FFileObject]);
   rlmctFileName: AResult := FFileName;
-  rlmctResult: AResult := RequestResultToString(FResultValue, FResultType);
+  rlmctResultValue: AResult := RequestResultToString(FResultValue, FResultType);
+  rlmctResultConstant: AResult := RequestResultToString(FResultValue, FResultType, True);
   rlmctProcessId : AResult := Format('%u', [FProcessId]);
   rlmctThreadId :  AResult := Format('%u', [FThreadId]);
   rlmctIRQL : AResult := IRQLToString(FIRQL);
@@ -549,11 +554,15 @@ Case ARequestType Of
   end;
 end;
 
-Class Function TDriverRequest.RequestResultToString(AResult:NativeUInt; AResultType:ERequestResultType):WideString;
+Class Function TDriverRequest.RequestResultToString(AResult:NativeUInt; AResultType:ERequestResultType; AConstant:Boolean = False):WideString;
 begin
 Case AResultType Of
   rrtUndefined: Result := 'None';
-  rrtNTSTATUS: Result := Format('%s (0x%x)', [NTSTATUSToString(AResult), AResult]);
+  rrtNTSTATUS: begin
+    If AConstant Then
+      Result := Format('%s', [NTSTATUSToString(AResult)])
+    Else Result := Format('0x%x', [AResult]);
+    end;
   rrtBOOLEAN: begin
     If AResult <> 0 Then
       Result := 'TRUE'
@@ -613,7 +622,8 @@ Result := True;
 Case AColumnType Of
   rlmctDeviceObject,
   rlmctDeviceName,
-  rlmctResult : Result := False;
+  rlmctResultValue,
+  rlmctResultConstant  : Result := False;
   Else Result := Inherited GetColumnValue(AColumnType, AResult);
   end;
 end;
@@ -645,7 +655,8 @@ begin
 Result := True;
 Case AColumnType Of
   rlmctIRPAddress: AResult := Format('0x%p', [FIRPAddress]);
-  rlmctIOSBStatus : AResult := Format('%s (0x%x)', [NTSTATUSToString(FIOSBStatus), FIOSBStatus]);
+  rlmctIOSBStatusValue : AResult := Format('0x%x', [FIOSBStatus]);
+  rlmctIOSBStatusConstant : AResult := Format('%s', [NTSTATUSToString(FIOSBStatus)]);
   rlmctIOSBInformation : AResult := Format('0x%p', [Pointer(IOSBInformation)]);
   Else Result := Inherited GetColumnValue(AColumnType, AResult);
   end;

@@ -71,7 +71,7 @@ Case AColumnType Of
         end;
       end;
     end;
-  rlmctIOSBStatus : begin
+  rlmctIOSBStatusValue : begin
     Result := False;
     Case FFastIoType Of
       FastIoCheckIfPossible,
@@ -88,7 +88,27 @@ Case AColumnType Of
       MdlRead,
       PrepareMdlWrite,
       FastIoReadCompressed,
-      FastIoWriteCompressed : AResult := Format('0x%x (%s)', [FIOSBStatus, NTSTATUSToString(FIOSBStatus)]);
+      FastIoWriteCompressed : AResult := Format('0x%x', [FIOSBStatus]);
+      end;
+    end;
+  rlmctIOSBStatusConstant : begin
+    Result := False;
+    Case FFastIoType Of
+      FastIoCheckIfPossible,
+      FastIoRead,
+      FastIoWrite,
+      FastIoQueryBasicInfo,
+      FastIoQueryStandardInfo,
+      FastIoLock,
+      FastIoUnlockSingle,
+      FastIoUnlockAll,
+      FastIoUnlockAllByKey,
+      FastIoDeviceControl,
+      FastIoQueryNetworkOpenInfo,
+      MdlRead,
+      PrepareMdlWrite,
+      FastIoReadCompressed,
+      FastIoWriteCompressed : AResult := Format('%s', [NTSTATUSToString(FIOSBStatus)]);
       end;
     end;
   rlmctIOSBInformation : begin

@@ -184,7 +184,8 @@ Case AColumnType Of
   rlmctArg4: AResult := Format('0x%p', [FArgs.Other.Arg4]);
   rlmctPreviousMode: AResult := AccessModeToString(FPreviousMode);
   rlmctRequestorMode: AResult := AccessModeToString(FRequestorMode);
-  rlmctIOSBStatus : AResult := Format('0x%x (%s)', [FIOSBStatus, NTSTATUSToString(FIOSBStatus)]);
+  rlmctIOSBStatusValue : AResult := Format('0x%x', [FIOSBStatus]);
+  rlmctIOSBStatusConstant : AResult := Format('%s', [NTSTATUSToString(FIOSBStatus)]);
   rlmctIOSBInformation : AResult := Format('%u (0x%p)', [FIOSBInformation, Pointer(FIOSBInformation)]);
   Else Result := Inherited GetColumnValue(AColumnType, AResult);
   end;

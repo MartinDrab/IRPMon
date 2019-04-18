@@ -219,9 +219,11 @@ FModel.
     ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctDeviceName), Ord(rlmctDeviceName), True).
     ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctDriverObject), Ord(rlmctDriverObject)).
     ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctDriverName), Ord(rlmctDriverName), True).
-    ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctResult), Ord(rlmctResult), False, 75).
+    ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctResultValue), Ord(rlmctResultValue), False, 75).
+    ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctResultConstant), Ord(rlmctResultConstant), True).
     ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctIRPAddress), Ord(rlmctIRPAddress), False, 75).
-    ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctIOSBStatus), Ord(rlmctIOSBStatus), False, 75).
+    ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctIOSBStatusValue), Ord(rlmctIOSBStatusValue), False, 75).
+    ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctIOSBStatusConstant), Ord(rlmctIOSBStatusConstant), True).
     ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctIOSBInformation), Ord(rlmctIOSBInformation), False, 75).
     ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctSubType), Ord(rlmctSubType), False, 100).
     ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctFileObject), Ord(rlmctFileObject), False, 75).
