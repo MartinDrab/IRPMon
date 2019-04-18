@@ -1297,14 +1297,23 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 			if (NT_SUCCESS(tmpStatus)) {
 				tmpStatus = FltParseFileNameInformation(fi);
 				if (NT_SUCCESS(tmpStatus)) {
-					ar = HeapMemoryAllocNonPaged(sizeof(REQUEST_FILE_OBJECT_NAME_ASSIGNED) + fi->Name.Length);
+					UNICODE_STRING uFileName;
+
+					uFileName = fi->Name;
+					if (fi->Volume.Length > 0 && fi->Volume.Length <= fi->Name.Length) {
+						uFileName.Length -= fi->Volume.Length;
+						uFileName.MaximumLength = uFileName.Length;
+						uFileName.Buffer += fi->Volume.Length / sizeof(wchar_t);
+					}
+
+					ar = HeapMemoryAllocNonPaged(sizeof(REQUEST_FILE_OBJECT_NAME_ASSIGNED) + uFileName.Length);
 					if (ar != NULL) {
-						memset(ar, 0, sizeof(REQUEST_FILE_OBJECT_NAME_ASSIGNED) + fi->Name.Length);
+						memset(ar, 0, sizeof(REQUEST_FILE_OBJECT_NAME_ASSIGNED) + uFileName.Length);
 						RequestHeaderInit(&ar->Header, Deviceobject->DriverObject, Deviceobject, ertFileObjectNameAssigned);
 						RequestHeaderSetResult(ar->Header, NTSTATUS, STATUS_SUCCESS);
 						ar->FileObject = createFileObject;
-						ar->NameLength = fi->Name.Length;
-						memcpy(ar + 1, fi->Name.Buffer, ar->NameLength);
+						ar->NameLength = uFileName.Length;
+						memcpy(ar + 1, uFileName.Buffer, uFileName.Length);
 						RequestQueueInsert(&ar->Header);
 					} else tmpStatus = STATUS_INSUFFICIENT_RESOURCES;
 				}
