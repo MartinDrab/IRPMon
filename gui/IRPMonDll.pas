@@ -306,6 +306,10 @@ Type
 	  IRPAddress : Pointer;
 	  CompletionStatus : Cardinal;
 	  CompletionInformation : NativeUInt;
+    MajorFunction : Cardinal;
+    MinorFunction : Cardinal;
+    Arguments : Packed Array [0..3] Of Pointer;
+    FileObject : Pointer;
     DataSize : NativeUInt;
     end;
   REQUEST_IRP_COMPLETION = _REQUEST_IRP_COMPLETION;
