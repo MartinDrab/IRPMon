@@ -1118,6 +1118,10 @@ static NTSTATUS _HookHandlerIRPCompletion(PDEVICE_OBJECT DeviceObject, PIRP Irp,
 		completionRequest->IRPAddress = Irp;
 		completionRequest->CompletionInformation = Irp->IoStatus.Information;
 		completionRequest->CompletionStatus = Irp->IoStatus.Status;
+		completionRequest->FileObject = cc->StackLocation.FileObject;
+		memcpy(completionRequest->Arguments, &cc->StackLocation.Parameters.Others, sizeof(completionRequest->Arguments));
+		completionRequest->MajorFunction = cc->StackLocation.MajorFunction;
+		completionRequest->MinorFunction = cc->StackLocation.MinorFunction;
 		cc->CompRequest = completionRequest;
 		if (loggedData.BufferSize > 0 && loggedData.Buffer != NULL) {
 			completionRequest->DataSize = loggedData.BufferSize;
