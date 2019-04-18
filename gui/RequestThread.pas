@@ -20,6 +20,7 @@ Type
     FCurrentList : TList<PREQUEST_GENERAL>;
     Procedure PortablePostMessage;
     Procedure PostRequestList;
+    Function ProcessRequest(AList:TList<PREQUEST_GENERAL>):Cardinal;
   Protected
     Procedure Execute; Override;
   Public
@@ -48,50 +49,55 @@ PostMessage(Application.Handle, FMsgCode, 0, lParam(FCurrentList));
 {$ENDIF}
 end;
 
-Procedure TRequestThread.Execute;
+Function TRequestThread.ProcessRequest(AList:TList<PREQUEST_GENERAL>):Cardinal;
 Var
   rq : PREQUEST_GENERAL;
+  bufSize : Cardinal;
+begin
+bufSize := SizeOf(REQUEST_GENERAL) + 2048;
+Repeat
+rq := AllocMem(bufSize);
+If Assigned(rq) Then
+  begin
+  Result := IRPMonDllGetRequest(@rq.Header, SizeOf(REQUEST_GENERAL) + 2048);
+  If Result = ERROR_SUCCESS Then
+    AList.Add(rq);
+
+  If Result <> ERROR_SUCCESS Then
+    begin
+    FreeMem(rq);
+    If Result = ERROR_INSUFFICIENT_BUFFER Then
+      bufSize := bufSize * 2;
+    end;
+  end
+Else Result := ERROR_NOT_ENOUGH_MEMORY;
+
+Until Result <> ERROR_INSUFFICIENT_BUFFER;
+end;
+
+Procedure TRequestThread.Execute;
+Var
   err : Cardinal;
   otw : Packed Array [0..1] Of THandle;
   l : TList<PREQUEST_GENERAL>;
-  bufSize : Cardinal;
 begin
 FreeOnTerminate := False;
 l := TList<PREQUEST_GENERAL>.Create;
-otw[0] := FSemaphore;
-otw[1] := FEvent;
+otw[0] := FEvent;
+otw[1] := FSemaphore;
 While Not Terminated  Do
   begin
   err := WaitForMultipleObjects(2, @otw, False, 100);
   Case err Of
-    WAIT_OBJECT_0 : begin
-      bufSize := SizeOf(REQUEST_GENERAL) + 2048;
-      Repeat
-      rq := AllocMem(bufSize);
-      If Assigned(rq) Then
+    WAIT_OBJECT_0 : Terminate;
+    WAIT_OBJECT_0 + 1 : begin
+      ProcessRequest(l);
+      If l.Count > 20 Then
         begin
-        err := IRPMonDllGetRequest(@rq.Header, SizeOf(REQUEST_GENERAL) + 2048);
-        If err = ERROR_SUCCESS Then
-          begin
-          l.Add(rq);
-          If l.Count > 20 Then
-            begin
-            FCurrentList := l;
-            PostRequestList;
-            l := TList<PREQUEST_GENERAL>.Create;
-            end;
-          end;
-
-        If err <> ERROR_SUCCESS Then
-          begin
-          FreeMem(rq);
-          If err = ERROR_INSUFFICIENT_BUFFER Then
-            bufSize := bufSize * 2;
-          end;
-        end
-      Else err := ERROR_NOT_ENOUGH_MEMORY;
-
-      Until err = ERROR_INSUFFICIENT_BUFFER;
+        FCurrentList := l;
+        PostRequestList;
+        l := TList<PREQUEST_GENERAL>.Create;
+        end;
       end;
     WAIT_TIMEOUT: begin
       If l.Count > 0 Then
@@ -101,9 +107,24 @@ While Not Terminated  Do
         l := TList<PREQUEST_GENERAL>.Create;
         end;
       end;
-    WAIT_OBJECT_0 + 1 : Terminate;
     end;
   end;
+
+FConnected := False;
+IRPMonDllDisconnect;
+Repeat
+err := WaitForSingleObject(FSemaphore, 400);
+If err = WAIT_OBJECT_0 Then
+  begin
+  ProcessRequest(l);
+  If l.Count > 20 Then
+    begin
+    FCurrentList := l;
+    PostRequestList;
+    l := TList<PREQUEST_GENERAL>.Create;
+    end;
+  end;
+Until err <> WAIT_OBJECT_0;
 
 l.Free;
 end;
@@ -111,6 +132,7 @@ end;
 
 Procedure TRequestTHread.SignalTerminate;
 begin
+FConnected := False;
 SetEvent(FEvent);
 end;
 
