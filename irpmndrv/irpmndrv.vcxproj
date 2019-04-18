@@ -146,6 +146,7 @@
     <ClCompile Include="..\km-shared\string-hash-table.c" />
     <ClCompile Include="..\km-shared\utils-dym-array.c" />
     <ClCompile Include="..\km-shared\utils.c" />
+    <ClCompile Include="..\shared\request.c" />
     <ClCompile Include="data-loggers.c" />
     <ClCompile Include="driver.c" />
     <ClCompile Include="hook-handlers.c" />
@@ -169,6 +170,7 @@
     <ClInclude Include="..\km-shared\utils-dym-array-types.h" />
     <ClInclude Include="..\km-shared\utils-dym-array.h" />
     <ClInclude Include="..\km-shared\utils.h" />
+    <ClInclude Include="..\shared\request.h" />
     <ClInclude Include="data-loggers.h" />
     <ClInclude Include="driver.h" />
     <ClInclude Include="hook-handlers.h" />

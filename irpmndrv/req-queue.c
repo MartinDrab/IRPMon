@@ -3,6 +3,7 @@
 #include "preprocessor.h"
 #include "allocator.h"
 #include "utils.h"
+#include "request.h"
 #include "req-queue.h"
 
 
@@ -22,67 +23,6 @@ static volatile LONG _lastRequestId = 0;
 /************************************************************************/
 /*                             HELPER FUNCTIONS                         */
 /************************************************************************/
-
-
-static SIZE_T _GetRequestSize(PREQUEST_HEADER Header)
-{
-	SIZE_T ret = 0;
-	PREQUEST_IRP irp = NULL;
-	PREQUEST_IRP_COMPLETION irpComp = NULL;
-	PREQUEST_STARTIO startIo = NULL;
-	PREQUEST_DRIVER_DETECTED drr = CONTAINING_RECORD(Header, REQUEST_DRIVER_DETECTED, Header);
-	PREQUEST_DEVICE_DETECTED der = CONTAINING_RECORD(Header, REQUEST_DEVICE_DETECTED, Header);
-	PREQUEST_FILE_OBJECT_NAME_ASSIGNED ar = NULL;
-	PREQUEST_FILE_OBJECT_NAME_DELETED dr = NULL;
-
-	switch (Header->Type) {
-		case ertIRP:
-			ret = sizeof(REQUEST_IRP);
-			irp = CONTAINING_RECORD(Header, REQUEST_IRP, Header);
-			ret += irp->DataSize;
-			break;
-		case ertIRPCompletion:
-			ret = sizeof(REQUEST_IRP_COMPLETION);
-			irpComp = CONTAINING_RECORD(Header, REQUEST_IRP_COMPLETION, Header);
-			ret += irpComp->DataSize;
-			break;
-		case ertFastIo:
-			ret = sizeof(REQUEST_FASTIO);
-			break;
-		case ertAddDevice:
-			ret = sizeof(REQUEST_ADDDEVICE);
-			break;
-		case ertDriverUnload:
-			ret = sizeof(REQUEST_UNLOAD);
-			break;
-		case ertStartIo:
-			ret = sizeof(REQUEST_STARTIO);
-			startIo = CONTAINING_RECORD(Header, REQUEST_STARTIO, Header);
-			ret += startIo->DataSize;
-			break;
-		case ertDriverDetected:
-			ret = sizeof(REQUEST_DRIVER_DETECTED) + drr->DriverNameLength;
-			break;
-		case ertDeviceDetected:
-			ret = sizeof(REQUEST_DEVICE_DETECTED) + der->DeviceNameLength;
-			break;
-		case ertFileObjectNameAssigned:
-			ar = CONTAINING_RECORD(Header, REQUEST_FILE_OBJECT_NAME_ASSIGNED, Header);
-			ret = sizeof(REQUEST_FILE_OBJECT_NAME_ASSIGNED) + ar->NameLength;
-			break;
-		case ertFileObjectNameDeleted:
-			dr = CONTAINING_RECORD(Header, REQUEST_FILE_OBJECT_NAME_DELETED, Header);
-			ret = sizeof(REQUEST_FILE_OBJECT_NAME_DELETED);
-			break;
-	}
-
-	if (ret == 0) {
-		DEBUG_ERROR("Invalid request type: %u", Header->Type);
-		__debugbreak();
-	}
-
-	return ret;
-}
 
 
 static VOID _RequestQueueClear(VOID)
@@ -279,7 +219,7 @@ NTSTATUS RequestQueueGet(PREQUEST_HEADER *Buffer, PSIZE_T Length)
 			l = ExInterlockedRemoveHeadList(&_requestListHead, &_requestListLock);
 			if (l != NULL) {
 				h = CONTAINING_RECORD(l, REQUEST_HEADER, Entry);
-				reqSize = _GetRequestSize(h);
+				reqSize = RequestGetSize(h);
 				if (reqSize <= *Length) {
 					InterlockedDecrement(&_requestCount);
 					*Buffer = h;

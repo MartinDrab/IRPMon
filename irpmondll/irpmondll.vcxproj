@@ -165,9 +165,11 @@
     <ClInclude Include="..\include\irpmondll-types.h" />
     <ClInclude Include="..\include\irpmondll.h" />
     <ClInclude Include="..\include\kernel-shared.h" />
+    <ClInclude Include="..\shared\request.h" />
     <ClInclude Include="driver-com.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\shared\request.c" />
     <ClCompile Include="driver-com.c" />
     <ClCompile Include="main.c" />
   </ItemGroup>

@@ -368,7 +368,7 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllGetRequest(PREQUEST_HEADER Request, DWORD Si
  *  calculcations to obtain the total size, including general data
  *  associated with the request.
  */
-IRPMONDLL_API DWORD WINAPI IRPMonDllGetRequestSize(PREQUEST_HEADER Request);
+IRPMONDLL_API size_t WINAPI IRPMonDllGetRequestSize(const REQUEST_HEADER *Request);
 
 /** Open a handle to a given driver monitored by the IRPMon driver.
  *
