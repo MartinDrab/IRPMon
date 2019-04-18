@@ -54,6 +54,7 @@ Var
   err : Cardinal;
   otw : Packed Array [0..1] Of THandle;
   l : TList<PREQUEST_GENERAL>;
+  bufSize : Cardinal;
 begin
 FreeOnTerminate := False;
 l := TList<PREQUEST_GENERAL>.Create;
@@ -64,7 +65,9 @@ While Not Terminated  Do
   err := WaitForMultipleObjects(2, @otw, False, 100);
   Case err Of
     WAIT_OBJECT_0 : begin
-      rq := AllocMem(SizeOf(REQUEST_GENERAL) + 2048);
+      bufSize := SizeOf(REQUEST_GENERAL) + 2048;
+      Repeat
+      rq := AllocMem(bufSize);
       If Assigned(rq) Then
         begin
         err := IRPMonDllGetRequest(@rq.Header, SizeOf(REQUEST_GENERAL) + 2048);
@@ -80,8 +83,15 @@ While Not Terminated  Do
           end;
 
         If err <> ERROR_SUCCESS Then
+          begin
           FreeMem(rq);
-        end;
+          If err = ERROR_INSUFFICIENT_BUFFER Then
+            bufSize := bufSize * 2;
+          end;
+        end
+      Else err := ERROR_NOT_ENOUGH_MEMORY;
+
+      Until err = ERROR_INSUFFICIENT_BUFFER;
       end;
     WAIT_TIMEOUT: begin
       If l.Count > 0 Then
