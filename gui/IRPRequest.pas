@@ -175,7 +175,8 @@ begin
 Result := True;
 Case AColumnType Of
   rlmctRequestorPID : AResult := Format('%d', [FRequestorProcessId]);
-  rlmctSubType: AResult := Format('%s:%s', [MajorFunctionToString(FMajorFunction), MinorFunctionToString(FMajorFunction, FMinorFunction)]);
+  rlmctSubType: AResult := Format('%s', [MajorFunctionToString(FMajorFunction)]);
+  rlmctMinorFunction: AResult := Format('%s', [MinorFunctionToString(FMajorFunction, FMinorFunction)]);
   rlmctIRPAddress: AResult := Format('0x%p', [FIRPAddress]);
   rlmctIRPFlags: AResult := Format('0x%x', [FIRPFlags]);
   rlmctArg1: AResult := Format('0x%p', [FArgs.Other.Arg1]);

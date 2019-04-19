@@ -12,6 +12,16 @@ Uses
 
 
 Type
+  ERequestListModelColumnValueType = (
+    rlmcvtInteger,
+    rlmcvtString,
+    rlmcvtTime,
+    rlmcvtMajorFunction,
+    rlmcvtMinorFunction,
+    rlmcvtProcessorMode,
+    rlmcvtIRQL
+  );
+
   ERequestListModelColumnType = (
     rlmctId,
     rlmctTime,
@@ -23,6 +33,7 @@ Type
     rlmctResultValue,
     rlmctResultConstant,
     rlmctSubType,
+    rlmctMinorFunction,
     rlmctIRPAddress,
     rlmctFileObject,
     rlmctFileName,
@@ -56,6 +67,7 @@ Const
     'Result value',
     'Result constant',
     'Subtype',
+    'Minor function',
     'IRP address',
     'File object',
     'File name',
@@ -73,6 +85,37 @@ Const
     'IOSB.Status constant',
     'IOSB.Information',
     'Requestor PID'
+  );
+
+  RequestListModelColumnValueTypes : Array [0..Ord(rlmctRequestorPID)] Of ERequestListModelColumnValueType = (
+    rlmcvtInteger,
+    rlmcvtTime,
+    rlmcvtInteger,
+    rlmcvtInteger,
+    rlmcvtString,
+    rlmcvtInteger,
+    rlmcvtString,
+    rlmcvtInteger,
+    rlmcvtString,
+    rlmcvtMajorFunction,
+    rlmcvtMinorFunction,
+    rlmcvtInteger,
+    rlmcvtInteger,
+    rlmcvtString,
+    rlmcvtInteger,
+    rlmcvtInteger,
+    rlmcvtInteger,
+    rlmcvtInteger,
+    rlmcvtInteger,
+    rlmcvtInteger,
+    rlmcvtInteger,
+    rlmcvtIRQL,
+    rlmcvtProcessorMode,
+    rlmcvtProcessorMode,
+    rlmcvtInteger,
+    rlmcvtString,
+    rlmcvtInteger,
+    rlmcvtInteger
   );
 
 Type
@@ -423,117 +466,115 @@ end;
 Class Function TDriverRequest.MinorFunctionToString(AMajor:Byte; AMinor:Byte):WideString;
 begin
 Result := '';
-If AMajor = 27 Then
-  begin
-  Case AMinor Of
-    0 : Result := 'Start';
-    1 : Result := 'QueryRemove';
-    2 : Result := 'Remove';
-    3 : Result := 'CancelRemove';
-    4 : Result := 'Stop';
-    5 : Result := 'QueryStop';
-    6 : Result := 'CancelStop ';
-    7 : Result := 'QueryRelations';
-    8 : Result := 'QueryInterface';
-    9 : Result := 'QueryCapabilities';
-    10 : Result := 'QueryResources';
-    11 : Result := 'QueryResourceRequirements';
-    12 : Result := 'QueryDeviceText';
-    13 : Result := 'FilterResourceRequirements';
-    15 : Result := 'ReadConfig';
-    16 : Result := 'WriteConfig';
-    17 : Result := 'Eject';
-    18 : Result := 'SetLock';
-    19 : Result := 'QueryId';
-    20 : Result := 'QueryState';
-    21 : Result := 'QueryBusInfo';
-    22 : Result := 'UsageNotifications';
-    23 : Result := 'SurpriseRemoval';
-    25 : Result := 'Enumerated';
-    Else Result := Format('0x%x', [AMinor]);
+Case AMajor Of
+  27 : begin
+    Case AMinor Of
+      0 : Result := 'Start';
+      1 : Result := 'QueryRemove';
+      2 : Result := 'Remove';
+      3 : Result := 'CancelRemove';
+      4 : Result := 'Stop';
+      5 : Result := 'QueryStop';
+      6 : Result := 'CancelStop ';
+      7 : Result := 'QueryRelations';
+      8 : Result := 'QueryInterface';
+      9 : Result := 'QueryCapabilities';
+      10 : Result := 'QueryResources';
+      11 : Result := 'QueryResourceRequirements';
+      12 : Result := 'QueryDeviceText';
+      13 : Result := 'FilterResourceRequirements';
+      15 : Result := 'ReadConfig';
+      16 : Result := 'WriteConfig';
+      17 : Result := 'Eject';
+      18 : Result := 'SetLock';
+      19 : Result := 'QueryId';
+      20 : Result := 'QueryState';
+      21 : Result := 'QueryBusInfo';
+      22 : Result := 'UsageNotifications';
+      23 : Result := 'SurpriseRemoval';
+      25 : Result := 'Enumerated';
+      Else Result := Format('0x%x', [AMinor]);
+      end;
     end;
-  end
-Else If AMajor = 22 Then
-  begin
-  Case AMinor Of
-    0 : Result := 'WaitWake';
-    1 : Result := 'PowerSequence';
-    2 : Result := 'SetPower';
-    3 : Result := 'QueryPower';
+  22 : begin
+    Case AMinor Of
+      0 : Result := 'WaitWake';
+      1 : Result := 'PowerSequence';
+      2 : Result := 'SetPower';
+      3 : Result := 'QueryPower';
+      end;
     end;
-  end
-Else If AMajor = 23 Then
-  begin
-  Case AMinor Of
-    0 : Result := 'QueryAllData';
-    1 : Result := 'QuerySingleInstance';
-    2 : Result := 'ChangeSingleInstance';
-    3 : Result := 'ChangeSingleItem';
-    4 : Result := 'EnableEvents';
-    5 : Result := 'DisableEvents';
-    6 : Result := 'EnableCollection';
-    7 : Result := 'DisableCollection';
-    8 : Result := 'RegInfo';
-    9 : Result := 'Execute';
-    11 : Result := 'RegInfoEx';
-    Else Result := Format('0x%x', [AMinor]);
+  23 : begin
+    Case AMinor Of
+      0 : Result := 'QueryAllData';
+      1 : Result := 'QuerySingleInstance';
+      2 : Result := 'ChangeSingleInstance';
+      3 : Result := 'ChangeSingleItem';
+      4 : Result := 'EnableEvents';
+      5 : Result := 'DisableEvents';
+      6 : Result := 'EnableCollection';
+      7 : Result := 'DisableCollection';
+      8 : Result := 'RegInfo';
+      9 : Result := 'Execute';
+      11 : Result := 'RegInfoEx';
+      Else Result := Format('0x%x', [AMinor]);
+      end;
     end;
-  end
-Else If AMajor = 12 Then
-  begin
-  Case AMinor Of
-    1 : Result := 'QueryDirectory';
-    2 : Result := 'ChangeNotify';
-    Else Result := Format('0x%x', [AMinor]);
+  12 : begin
+    Case AMinor Of
+      1 : Result := 'QueryDirectory';
+      2 : Result := 'ChangeNotify';
+      Else Result := Format('0x%x', [AMinor]);
+      end;
     end;
-  end
-Else If AMajor = 13 Then
-  begin
-  Case AMinor Of
-    0 : Result := 'UserRequest';
-    1 : Result := 'MountVolume';
-    2 : Result := 'VerifyVolume';
-    3 : Result := 'LoadFS';
-    4 : Result := 'KernelCall';
-    Else Result := Format('0x%x', [AMinor]);
+  13 : begin
+    Case AMinor Of
+      0 : Result := 'UserRequest';
+      1 : Result := 'MountVolume';
+      2 : Result := 'VerifyVolume';
+      3 : Result := 'LoadFS';
+      4 : Result := 'KernelCall';
+      Else Result := Format('0x%x', [AMinor]);
+      end;
     end;
-  end
-Else If AMajor = 17 Then
-  begin
-  Case AMinor Of
-    1 : Result := 'Lock';
-    2 : Result := 'UnlockSingle';
-    3 : Result := 'UnlockAll';
-    4 : Result := 'UnlockAllByKey';
-    Else Result := Format('0x%x', [AMinor]);
+  17 : begin
+    Case AMinor Of
+      1 : Result := 'Lock';
+      2 : Result := 'UnlockSingle';
+      3 : Result := 'UnlockAll';
+      4 : Result := 'UnlockAllByKey';
+      Else Result := Format('0x%x', [AMinor]);
+      end;
     end;
-  end
-Else If AMajor = 9 Then
-  begin
-  Case AMinor Of
-    1 : Result := 'FlushAndPurge';
-    2 : Result := 'DataOnly';
-    3 : Result := 'NoSync';
-    Else Result := Format('0x%x', [AMinor]);
+  9 : begin
+    Case AMinor Of
+      1 : Result := 'FlushAndPurge';
+      2 : Result := 'DataOnly';
+      3 : Result := 'NoSync';
+      Else Result := Format('0x%x', [AMinor]);
+      end;
     end;
-  end
-Else If (AMajor = 3) Or (AMajor = 4) Then
-  begin
-  If ((AMinor And 1) <> 0) Then
-    Result := Result + ',Dpc';
-
-  If ((AMinor And 2) <> 0) Then
-    Result := Result + ',Mdl';
-
-  If ((AMinor And 3) <> 0) Then
-    Result := Result + ',Complete';
-
-  If ((AMinor And 4) <> 0) Then
-    Result := Result + ',Compressed';
-
-  If Result = '' Then
-    Result := 'Normal'
-  Else Delete(Result, 1, 1);
+  3,
+  4 : begin
+    Case AMinor Of
+      0 : Result := 'Normal';
+      1 : Result := 'Dpc';
+      2 : Result := 'Mdl';
+      3 : Result := 'Dpc,Mdl';
+      4 : Result := 'Complete';
+      5 : Result := 'Complete,Dpc';
+      6 : Result := 'Complete,Mdl';
+      7 : Result := 'Complete,Dpc,Mdl';
+      8 : Result := 'Compressed';
+      9 : Result := 'Compressed,Dpc';
+      10 : Result := 'Compressed,Mdl';
+      11 : Result := 'Compressed,Dpc,Mdl';
+      12 : Result := 'Complete,Compressed';
+      13 : Result := 'Complete,Compressed,Dpc';
+      14 : Result := 'Complete,Compressed,Mdl';
+      15 : Result := 'Complete,Compressed,Dpc,Mdl';
+      end;
+    end;
   end;
 end;
 

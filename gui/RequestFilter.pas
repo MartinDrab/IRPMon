@@ -17,12 +17,15 @@ Type
     rftPID,
     rftTID,
     rftIRQL,
-    rftResult,
+    rftResultValue,
+    rftResultConstant,
     rftDriverObject,
     rftDriverName,
     rftDeviceObject,
     rftDeviceName,
 
+    rftFileObject,
+    rftFileName,
     rftIRPAddress,
     rftIRPMajorFunction,
     rftIRPMinorFunction,
@@ -33,9 +36,9 @@ Type
     rftIRPRequestorMode,
     rftIRPFlags,
 
-    rftIOSBStatus,
+    rftIOSBStatusValue,
+    rftIOSBStatusConstant,
     rftIOSBInformation,
-    rftFileObject,
     rftPreviousMode,
 
     rftFastIOType
@@ -56,13 +59,7 @@ Type
     rfoDoesNotEnd
   );
 
-  EFilterFormulaOperator = (
-    ffoAND,
-    ffoOR,
-    ffoNOT
-  );
-
-  EFilterFormulaAction = (
+  EFilterAction = (
     ffaUndefined,
     ffaShow,
     ffaNoShow,
@@ -83,36 +80,11 @@ Type
     Property Value : WideString Read FValue;
   end;
 
-  TFilterFormula = Class
-  Private
-    FAction : EFilterFormulaAction;
-    FOp : EFilterFormulaOperator;
-    FArgs : TList<TFilterFormula>;
-  Protected
-    Function GetArgCount:Cardinal;
-    Function GetArg(AIndex:Integer):TFilterFormula;
-  Public
-    Property Action : EFilterFormulaAction Read FAction;
-    Property Op : EFilterFormulaOperator Read FOp;
-    Property Args [Index:Integer] : TFilterFormula Read GetArg;
-    Property ArgCount : Cardinal Read GetArgCount;
-  end;
 
 
 Implementation
 
 
-(** TFilterFormula **)
-
-Function TFilterFormula.GetArgCount:Cardinal;
-begin
-Result := FArgs.Count;
-end;
-
-Function TFilterFormula.GetArg(AIndex:Integer):TFilterFormula;
-begin
-Result := FArgs[AIndex];
-end;
 
 
 End.
