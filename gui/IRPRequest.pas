@@ -95,6 +95,12 @@ Type
       Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
     end;
 
+  TSetSecurityRequest = Class (TIRPRequest)
+    Public
+      Function GetColumnName(AColumnType:ERequestListModelColumnType):WideString; Override;
+      Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
+    end;
+
   TCloseCleanupRequest = Class (TIRPRequest)
     Public
       Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
@@ -412,6 +418,8 @@ Case ARequest.MajorFunction Of
   12 : ;     // DirectoryControl
   13 : Result := TFileSystemControlRequest.Create(ARequest);
   14, 15 : Result := TDeviceControlRequest.Create(ARequest);
+  20 : Result := TQuerySecurityRequest.Create(ARequest);
+  21 : Result := TSetSecurityRequest.Create(ARequest);
   22 : begin
     Case ARequest.MinorFunction Of
       0 : Result := TWaitWakeRequest.Create(ARequest);
@@ -606,6 +614,7 @@ Function TQuerySecurityRequest.GetColumnValue(AColumnType:ERequestListModelColum
 begin
 Result := True;
 Case AColumnType Of
+  rlmctArg1: AResult := SecurityInformationToString(FArgs.QuerySecurity.SecurityInformation);
   rlmctArg2: AResult := Format('%u', [FArgs.QuerySecurity.Length]);
   rlmctArg3,
   rlmctArg4: Result := False
@@ -618,6 +627,29 @@ begin
 Case AColumnType Of
   rlmctArg1 : Result := 'Security information';
   rlmctArg2 : Result := 'Length';
+  Else Result := Inherited GetColumnName(AColumnType);
+  end;
+end;
+
+(** TSetSecurityRequest **)
+
+Function TSetSecurityRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
+begin
+Result := True;
+Case AColumnType Of
+  rlmctArg1: AResult := SecurityInformationToString(FArgs.SetSecurity.SecurityInformation);
+  rlmctArg2: AResult := Format('0x%p', [FArgs.SetSecurity.SecurityDescriptor]);
+  rlmctArg3,
+  rlmctArg4: Result := False
+  Else Result := Inherited GetColumnValue(AColumnType, AResult);
+  end;
+end;
+
+Function TSetSecurityRequest.GetColumnName(AColumnType:ERequestListModelColumnType):WideString;
+begin
+Case AColumnType Of
+  rlmctArg1 : Result := 'Security information';
+  rlmctArg2 : Result := 'Descriptor';
   Else Result := Inherited GetColumnName(AColumnType);
   end;
 end;
