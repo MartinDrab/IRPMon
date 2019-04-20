@@ -53,12 +53,14 @@ Type
     Function AddNext(AFilter:TRequestFilter):Cardinal;
     Procedure RemoveFromChain;
   Public
+    Constructor Create(AName:WideString; ARequestType:ERequestType = ertUndefined); Reintroduce;
+
     Procedure GetPossibleValues(AValues:TDictionary<UInt64, WideString>); Virtual; Abstract;
 
     Function Match(ARequest:TDriverRequest; AChainStart:Boolean = True):TRequestFilter;
     Function SetAction(AAction:EFilterAction; AHighlightColor:Cardinal = 0; ANextFilter:TRequestFilter = Nil):Cardinal;
 
-    Property Name : WideString Read FName;
+    Property Name : WideString Read FName Write FName;
     Property Field : ERequestListModelColumnType Read FField;
     Property Op : ERequestFilterOperator Read FOp;
     Property StringValue : WideString Read FStringValue;
@@ -74,6 +76,17 @@ Implementation
 
 Uses
   SysUtils;
+
+Constructor TRequestFilter.Create(AName:WideString; ARequestType:ERequestType = ertUndefined);
+begin
+Inherited Create;
+FName := AName;
+FRequestType := ARequestType;
+FOp := rfoAlwaysTrue;
+FAction := ffaInclude;
+FNextFilter := Nil;
+FPreviousFilter := Nil;
+end;
 
 Function TRequestFilter.Match(ARequest:TDriverRequest; AChainStart:Boolean = True):TRequestFilter;
 Var
