@@ -82,7 +82,7 @@ begin
 Result := Nil;
 If (FEnabled) And
     ((Not AChainStart) Or (Not Assigned(FPreviousFIlter))) And
-   (ARequest.RequestType = FRequestType) Then
+   ((FRequestType = ertUndefined) Or (ARequest.RequestType = FRequestType)) Then
   begin
   ret := ARequest.GetColumnValueRaw(FField, d, l);
   If ret Then
