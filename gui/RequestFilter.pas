@@ -54,6 +54,8 @@ Type
     Procedure GetPossibleValues(AValues:TDictionary<UInt64, WideString>); Virtual; Abstract;
 
     Function Match(ARequest:TDriverRequest; AChainStart:Boolean = True):TRequestFilter;
+    Function AddNext(AFilter:TRequestFilter):Cardinal;
+    Procedure RemoveFromChain;
 
     Property Name : WideString Read FName;
     Property Field : ERequestListModelColumnType Read FField;
@@ -158,6 +160,41 @@ While Assigned(tmp) Do
   tmp := tmp.FNextFilter;
   end;
 end;
+
+Function TRequestFilter.AddNext(AFilter:TRequestFilter):Cardinal;
+begin
+Result := 0;
+If (FRequestType = ertUndefined) Or (FRequestType = AFilter.FRequestType) Then
+  begin
+  If (Not Assigned(AFilter.FNextFilter)) And
+     (Not Assigned(AFilter.FPreviousFilter)) Then
+    begin
+    FAction := ffaPassToFilter;
+    AFilter.FNextFilter := FNextFilter;
+    AFilter.FPreviousFilter := Self;
+    FNextFilter := AFIlter;
+    end
+  Else Result := 2;
+  end
+Else Result := 1;
+end;
+
+Procedure TRequestFilter.RemoveFromChain;
+begin
+If (Assigned(FNextFilter)) Or (Assigned(FPreviousFilter)) Then
+  begin
+  FAction := ffaInclude;
+  If Assigned(FPreviousFilter) Then
+    FPreviousFilter.FNextFilter := FNextFilter;
+
+  If Assigned(FNextFilter) Then
+    FNextFilter.FPreviousFilter := FPreviousFilter;
+
+  FNextFilter := Nil;
+  FPreviousFilter := Nil;
+  end;
+end;
+
 
 End.
 
