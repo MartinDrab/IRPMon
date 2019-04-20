@@ -48,6 +48,8 @@ Type
     FRequestType : ERequestType;
     FEnabled : Boolean;
     FAction : EFilterAction;
+  Protected
+    Procedure SetEnable(AValue:Boolean);
   Public
     Procedure GetPossibleValues(AValues:TDictionary<UInt64, WideString>); Virtual; Abstract;
 
@@ -59,7 +61,7 @@ Type
     Property StringValue : WideString Read FStringValue;
     Property IntValue : UInt64 Read FIntValue;
     Property RequestType : ERequesttype Read FRequestType;
-    Property Enabled : Boolean Read FEnabled;
+    Property Enabled : Boolean Read FEnabled Write SetEnable;
     Property Action : EFilterAction Read FAction;
   end;
 
@@ -137,4 +139,25 @@ If (FEnabled) And
 end;
 
 
+Procedure TRequestFilter.SetEnable(AValue:Boolean);
+Var
+  tmp : TRequestFilter;
+begin
+FEnabled := AValue;
+tmp := FPreviousFilter;
+While Assigned(tmp) Do
+  begin
+  tmp.FEnabled := AValue;
+  tmp := tmp.FPreviousFilter;
+  end;
+
+tmp := FNextFilter;
+While Assigned(tmp) Do
+  begin
+  tmp.FEnabled := AValue;
+  tmp := tmp.FNextFilter;
+  end;
+end;
+
 End.
+
