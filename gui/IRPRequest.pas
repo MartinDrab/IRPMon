@@ -36,6 +36,7 @@ Type
     Class Function BusQueryIdTypeToString(AType:BUS_QUERY_ID_TYPE):WideString;
     Class Function DeviceTextTypeToString(AType:DEVICE_TEXT_TYPE):WideString;
     Class Function DeviceRelationTypeToString(AType:DEVICE_RELATION_TYPE):WideString;
+    Class Function SecurityInformationToString(AInfo:Cardinal):WideString;
     Class Function Build(Var ARequest:REQUEST_IRP):TIRPRequest;
 
     Property Args : TIRPArguments Read FArgs;
@@ -84,6 +85,12 @@ Type
   TQuerySetVolumeRequest = Class (TIRPRequest)
     Public
       Class Function InformationClassToString(AInfoClass:Cardinal):WideString;
+      Function GetColumnName(AColumnType:ERequestListModelColumnType):WideString; Override;
+      Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
+    end;
+
+  TQuerySecurityRequest = Class (TIRPRequest)
+    Public
       Function GetColumnName(AColumnType:ERequestListModelColumnType):WideString; Override;
       Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
     end;
@@ -360,6 +367,40 @@ Case AType Of
   end;
 end;
 
+Class Function TIRPRequest.SecurityInformationToString(AInfo:Cardinal):WideString;
+begin
+Result := '';
+If ((AInfo And OWNER_SECURITY_INFORMATION) <> 0) Then
+  Result := Result + ' Owner';
+If ((AInfo And GROUP_SECURITY_INFORMATION) <> 0) Then
+  Result := Result + ' Group';
+If ((AInfo And DACL_SECURITY_INFORMATION) <> 0) Then
+  Result := Result + ' Dacl';
+If ((AInfo And SACL_SECURITY_INFORMATION) <> 0) Then
+  Result := Result + ' Sacl';
+If ((AInfo And LABEL_SECURITY_INFORMATION) <> 0) Then
+  Result := Result + ' Label';
+If ((AInfo And ATTRIBUTE_SECURITY_INFORMATION) <> 0) Then
+  Result := Result + ' Attribute';
+If ((AInfo And SCOPE_SECURITY_INFORMATION) <> 0) Then
+  Result := Result + ' Scope';
+If ((AInfo And PROCESS_TRUST_LABEL_SECURITY_INFORMATION) <> 0) Then
+  Result := Result + ' ProcessTrust';
+If ((AInfo And ACCESS_FILTER_SECURITY_INFORMATION) <> 0) Then
+  Result := Result + ' AccessFilter';
+If ((AInfo And PROTECTED_DACL_SECURITY_INFORMATION) <> 0) Then
+  Result := Result + ' ProtectedDaclt';
+If ((AInfo And PROTECTED_SACL_SECURITY_INFORMATION) <> 0) Then
+  Result := Result + ' ProtectedSacl';
+If ((AInfo And UNPROTECTED_DACL_SECURITY_INFORMATION) <> 0) Then
+  Result := Result + ' UnprotectedDaclt';
+If ((AInfo And UNPROTECTED_SACL_SECURITY_INFORMATION) <> 0) Then
+  Result := Result + ' UnprotectedSacl';
+
+If Result <> '' Then
+  Delete(Result, 1, 1);
+end;
+
 Class Function TIRPRequest.Build(Var ARequest:REQUEST_IRP):TIRPRequest;
 begin
 Result := Nil;
@@ -555,6 +596,28 @@ begin
 Case AColumnType Of
   rlmctArg1 : Result := 'Length';
   rlmctArg2 : Result := 'Information class';
+  Else Result := Inherited GetColumnName(AColumnType);
+  end;
+end;
+
+(** TQuerySecurityRequest **)
+
+Function TQuerySecurityRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
+begin
+Result := True;
+Case AColumnType Of
+  rlmctArg2: AResult := Format('%u', [FArgs.QuerySecurity.Length]);
+  rlmctArg3,
+  rlmctArg4: Result := False
+  Else Result := Inherited GetColumnValue(AColumnType, AResult);
+  end;
+end;
+
+Function TQuerySecurityRequest.GetColumnName(AColumnType:ERequestListModelColumnType):WideString;
+begin
+Case AColumnType Of
+  rlmctArg1 : Result := 'Security information';
+  rlmctArg2 : Result := 'Length';
   Else Result := Inherited GetColumnName(AColumnType);
   end;
 end;
