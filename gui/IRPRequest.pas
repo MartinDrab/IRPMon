@@ -63,6 +63,12 @@ Type
       Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
     end;
 
+  TFileSystemControlRequest = Class (TIRPRequest)
+    Public
+      Function GetColumnName(AColumnType:ERequestListModelColumnType):WideString; Override;
+      Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
+    end;
+
   TReadWriteRequest = Class (TIRPRequest)
     Public
       Function GetColumnName(AColumnType:ERequestListModelColumnType):WideString; Override;
@@ -363,7 +369,7 @@ Case ARequest.MajorFunction Of
   5, 6   : Result := TQuerySetRequest.Create(ARequest);
   10, 11 : Result := TQuerySetVolumeRequest.Create(ARequest);
   12 : ;     // DirectoryControl
-  13 : ;     // FsControl
+  13 : Result := TFileSystemControlRequest.Create(ARequest);
   14, 15 : Result := TDeviceControlRequest.Create(ARequest);
   22 : begin
     Case ARequest.MinorFunction Of
@@ -418,10 +424,10 @@ Function TDeviceControlRequest.GetColumnValue(AColumnType:ERequestListModelColum
 begin
 Result := True;
 Case AColumnType Of
-  rlmctArg1: AResult := Format('O: %u (0x%p)', [FArgs.DeviceControl.OutputBufferLength, Pointer(Args.DeviceControl.OutputBufferLength)]);
-  rlmctArg2: AResult := Format('I: %u (0x%p)', [FArgs.DeviceControl.InputBufferLength, Pointer(Args.DeviceControl.InputBufferLength)]);
+  rlmctArg1: AResult := Format('%u', [FArgs.DeviceControl.OutputBufferLength]);
+  rlmctArg2: AResult := Format('%u', [FArgs.DeviceControl.InputBufferLength]);
   rlmctArg3: AResult := IOCTLToString(FArgs.DeviceControl.IoControlCode);
-  rlmctArg4: Result := False;
+  rlmctArg4: AResult := Format('0x%p', [FArgs.DeviceControl.Type3InputBuffer]);
   Else Result := Inherited GetColumnValue(AColumnType, AResult);
   end;
 end;
@@ -432,6 +438,31 @@ Case AColumnType Of
   rlmctArg1 : Result := 'Output length';
   rlmctArg2 : Result := 'Input length';
   rlmctArg3 : Result := 'IOCTL';
+  rlmctArg4 : Result := 'Type3 input';
+  Else Result := Inherited GetColumnName(AColumnType);
+  end;
+end;
+
+(** TFileSystemControlRequest **)
+
+Function TFileSystemControlRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
+begin
+Result := True;
+Case AColumnType Of
+  rlmctArg1: AResult := Format('%u', [FArgs.DeviceControl.OutputBufferLength]);
+  rlmctArg2: AResult := Format('%u', [FArgs.DeviceControl.InputBufferLength]);
+  rlmctArg3: AResult := IOCTLToString(FArgs.DeviceControl.IoControlCode);
+  rlmctArg4: AResult := Format('0x%p', [FArgs.DeviceControl.Type3InputBuffer]);
+  Else Result := Inherited GetColumnValue(AColumnType, AResult);
+  end;
+end;
+
+Function TFileSystemControlRequest.GetColumnName(AColumnType:ERequestListModelColumnType):WideString;
+begin
+Case AColumnType Of
+  rlmctArg1 : Result := 'Output length';
+  rlmctArg2 : Result := 'Input length';
+  rlmctArg3 : Result := 'FSCTL';
   rlmctArg4 : Result := 'Type3 input';
   Else Result := Inherited GetColumnName(AColumnType);
   end;

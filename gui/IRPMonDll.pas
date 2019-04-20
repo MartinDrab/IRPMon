@@ -81,6 +81,7 @@ Type
         Padding2 : Cardinal;
 {$ENDIF}
         IoControlCode : Cardinal;
+        Type3InputBuffer : Pointer;
         end; );
       5 : (VerifyVolume : Record
         NotUsed : Pointer;
