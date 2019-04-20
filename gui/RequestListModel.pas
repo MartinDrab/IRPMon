@@ -150,6 +150,8 @@ Type
 
     Function GetColumnName(AColumnType:ERequestListModelColumnType):WideString; Virtual;
     Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Virtual;
+    Function GetColumnValueRaw(AColumnType:ERequestListModelColumnType; Var AValue:Pointer; Var AValueSize:Cardinal):Boolean; Virtual;
+
     Procedure SaveToStream(AStream:TStream); Virtual;
     Procedure SaveToFile(AFileName:WideString); Virtual;
     Function AssignData(AData:Pointer; ASize:NativeUInt):Boolean;
@@ -383,6 +385,58 @@ end;
 Procedure TDriverRequest.SetFileObject(AObject:Pointer);
 begin
 FFileObject := AObject;
+end;
+
+Function TDriverRequest.GetColumnValueRaw(AColumnType:ERequestListModelColumnType; Var AValue:Pointer; Var AValueSize:Cardinal):Boolean;
+begin
+Result := True;
+Case AColumnType Of
+  rlmctId: begin
+    AValue := @FId;
+    AValueSIze := SizeOf(FId);
+    end;
+  rlmctTime: begin
+    AValue := @FTime;
+    AValueSIze := SizeOf(FTime);
+    end;
+  rlmctRequestType: begin
+    AValue := @FRequestType;
+    AValueSIze := SizeOf(FRequestType);
+    end;
+  rlmctDeviceObject: begin
+    AValue := @FDeviceObject;
+    AValueSIze := SizeOf(FDeviceObject);
+    end;
+  rlmctDeviceName: begin
+    AValue := PWideChar(FDeviceName);
+    AValueSize := 0;
+    end;
+  rlmctDriverObject: begin
+    AValue := @FDriverObject;
+    AValueSize := SizeOf(FDriverObject);
+    end;
+  rlmctDriverName: begin
+    AValue := PWideChar(FDriverName);
+    AValueSize := 0;
+    end;
+  rlmctResultValue: begin
+    AValue := @FResultValue;
+    AValueSIze := SizeOf(FTime);
+    end;
+  rlmctThreadId: begin
+    AValue := @FThreadId;
+    AValueSIze := SizeOf(FThreadId);
+    end;
+  rlmctProcessId: begin
+    AValue := @FProcessId;
+    AValueSIze := SizeOf(FProcessId);
+    end;
+  rlmctIRQL: begin
+    AValue := @FIrql;
+    AValueSIze := SizeOf(FIrql);
+    end;
+  Else Result := False;
+  end;
 end;
 
 Function TDriverRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
