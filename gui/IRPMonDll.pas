@@ -159,6 +159,22 @@ Type
         BufferSize : Cardinal;
         Buffer : Pointer;
         end; );
+      20 : (QueryDirectory : Record
+        Length : Cardinal;
+        FileName : Pointer;
+        FileInformationClass : Cardinal;
+{$IFNDEF WIN32}
+        Padding : Cardinal;
+{$ENDIF}
+        FlieIndex : Cardinal;
+        end; );
+      21 : (NotifyDirectory : Record
+        Length : Cardinal;
+{$IFNDEF WIN32}
+        Padding : Cardinal;
+{$ENDIF}
+        CompletionFilter : Cardinal;
+        end; );
     end;
 
   (** Enumerates all possible types of Fast I/O operations. *)
