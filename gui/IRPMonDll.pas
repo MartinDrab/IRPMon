@@ -175,6 +175,17 @@ Type
 {$ENDIF}
         CompletionFilter : Cardinal;
         end; );
+    22 : (QuerySecurity : Record
+        SecurityInformation : Cardinal;
+{$IFNDEF WIN32}
+        Padding : Cardinal;
+{$ENDIF}
+        Length : Cardinal;
+        end; );
+    23 : (SetSecurity : Record
+        SecurityInformation : Cardinal;
+        SecurityDescriptor : Pointer;
+        end; );
     end;
 
   (** Enumerates all possible types of Fast I/O operations. *)

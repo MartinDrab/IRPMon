@@ -48,7 +48,7 @@ VOID DebugAllocatorFree(PVOID Address);
 // #define MEMORY_LEAK_DETECTION
 #endif
 
-#define MEMORY_LEAK_DETECTION
+// #define MEMORY_LEAK_DETECTION
 #ifdef MEMORY_LEAK_DETECTION
 
 #define HeapMemoryAlloc(PoolType,NumberOfBytes)                DebugAllocatorAlloc(PoolType, NumberOfBytes, __FUNCTION__, __LINE__)
