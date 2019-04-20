@@ -75,6 +75,13 @@ Type
       Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
     end;
 
+  TQuerySetVolumeRequest = Class (TIRPRequest)
+    Public
+      Class Function InformationClassToString(AInfoClass:Cardinal):WideString;
+      Function GetColumnName(AColumnType:ERequestListModelColumnType):WideString; Override;
+      Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
+    end;
+
   TCloseCleanupRequest = Class (TIRPRequest)
     Public
       Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
@@ -354,7 +361,7 @@ Case ARequest.MajorFunction Of
   2, 18 : Result := TCloseCleanupRequest.Create(ARequest);
   3, 4   : Result := TReadWriteRequest.Create(ARequest);
   5, 6   : Result := TQuerySetRequest.Create(ARequest);
-  10, 11 : ; // QuerySetVolume
+  10, 11 : Result := TQuerySetVolumeRequest.Create(ARequest);
   12 : ;     // DirectoryControl
   13 : ;     // FsControl
   14, 15 : Result := TDeviceControlRequest.Create(ARequest);
@@ -470,6 +477,49 @@ Case AColumnType Of
 end;
 
 Function TQuerySetRequest.GetColumnName(AColumnType:ERequestListModelColumnType):WideString;
+begin
+Case AColumnType Of
+  rlmctArg1 : Result := 'Length';
+  rlmctArg2 : Result := 'Information class';
+  Else Result := Inherited GetColumnName(AColumnType);
+  end;
+end;
+
+(** TQuerySetVolumeRequest **)
+
+Class Function TQuerySetVolumeRequest.InformationClassToString(AInfoClass:Cardinal):WideString;
+begin
+Case AInfoClass Of
+  1 : Result := 'FileFsVolumeInformation';
+  2 : Result := 'FileFsLabelInformation';
+  3 : Result := 'FileFsSizeInformation';
+  4 : Result := 'FileFsDeviceInformation';
+  5 : Result := 'FileFsAttributeInformation';
+  6 : Result := 'FileFsControlInformation';
+  7 : Result := 'FileFsFullSizeInformation';
+  8 : Result := 'FileFsObjectIdInformation';
+  9 : Result := 'FileFsDriverPathInformation';
+  10 : Result := 'FileFsVolumeFlagsInformation';
+  11 : Result := 'FileFsSectorSizeInformation';
+  12 : Result := 'FileFsDataCopyInformation';
+  13 : Result := 'FileFsMetadataSizeInformation';
+  Else Result := Format('%u', [AInfoClass]);
+  end;
+end;
+
+Function TQuerySetVolumeRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
+begin
+Result := True;
+Case AColumnType Of
+  rlmctArg1: AResult := Format('%u', [FArgs.QuerySetInformation.Lenth]);
+  rlmctArg2: AResult := InformationClassToString(Args.QuerySetVolume.FileInformationClass);
+  rlmctArg3,
+  rlmctArg4: Result := False
+  Else Result := Inherited GetColumnValue(AColumnType, AResult);
+  end;
+end;
+
+Function TQuerySetVolumeRequest.GetColumnName(AColumnType:ERequestListModelColumnType):WideString;
 begin
 Case AColumnType Of
   rlmctArg1 : Result := 'Length';
