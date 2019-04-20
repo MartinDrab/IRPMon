@@ -77,6 +77,8 @@ Implementation
 Uses
   SysUtils;
 
+(** TRequestFilter **)
+
 Constructor TRequestFilter.Create(AName:WideString; ARequestType:ERequestType = ertUndefined);
 begin
 Inherited Create;
