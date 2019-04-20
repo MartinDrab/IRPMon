@@ -28,6 +28,7 @@ Type
   Public
     Constructor Create(Var ARequest:REQUEST_IRP); Reintroduce;
 
+    Function GetColumnValueRaw(AColumnType:ERequestListModelColumnType; Var AValue:Pointer; Var AValueSize:Cardinal):Boolean; Override;
     Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
     Class Function PowerStateTypeToString(AType:Cardinal):WideString;
     Class Function PowerStateToString(AType:Cardinal; AState:Cardinal):WideString;
@@ -169,6 +170,73 @@ FArgs := ARequest.Args;
 FRequestorProcessId := ARequest.RequestorProcessId;
 end;
 
+
+Function TIRPRequest.GetColumnValueRaw(AColumnType:ERequestListModelColumnType; Var AValue:Pointer; Var AValueSize:Cardinal):Boolean;
+begin
+Case AColumnType Of
+  rlmctSubType: begin
+    AValue := @FMajorFunction;
+    AValueSize := SizeOf(FMajorFunction);
+    end;
+  rlmctMinorFunction: begin
+    AValue := @FMinorFunction;
+    AValueSize := SizeOf(FMinorFunction);
+    end;
+  rlmctIRPAddress: begin
+    AValue := @FIRPAddress;
+    AValueSize := SizeOf(FIRPAddress);
+    end;
+  rlmctFileObject: begin
+    AValue := @FileObject;
+    AValueSize := SizeOf(FileObject);
+    end;
+  rlmctFileName: begin
+    AValue := PWideChar(FileName);
+    AValueSize := 0;
+    end;
+  rlmctIRPFlags: begin
+    AValue := @FIRPFlags;
+    AValueSize := SizeOf(FIRPFlags);
+    end;
+  rlmctArg1: begin
+    AValue := @FArgs.Other.Arg1;
+    AValueSize := SizeOf(FArgs.Other.Arg1);
+    end;
+  rlmctArg2: begin
+    AValue := @FArgs.Other.Arg2;
+    AValueSize := SizeOf(FArgs.Other.Arg2);
+    end;
+  rlmctArg3: begin
+    AValue := @FArgs.Other.Arg3;
+    AValueSize := SizeOf(FArgs.Other.Arg3);
+    end;
+  rlmctArg4: begin
+    AValue := @FArgs.Other.Arg4;
+    AValueSize := SizeOf(FArgs.Other.Arg4);
+    end;
+  rlmctPreviousMode: begin
+    AValue := @FPreviousMode;
+    AValueSize := SizeOf(FPreviousMode);
+    end;
+  rlmctRequestorMode: begin
+    AValue := @FRequestorMode;
+    AValueSize := SizeOf(FRequestorMode);
+    end;
+  rlmctIOSBStatusValue: begin
+    AValue := @FIOSBStatus;
+    AValueSize := SizeOf(FIOSBStatus);
+    end;
+  rlmctIOSBInformation: begin
+    AValue := @FIOSBInformation;
+    AValueSize := SizeOf(FIOSBInformation);
+    end;
+  rlmctRequestorPID: begin
+    AValue := @FRequestorProcessId;
+    AValueSize := SizeOf(FRequestorProcessId);
+    end;
+  Else Inherited GetColumnValueRaw(AColumnType, AValue, AValueSize);
+  end;
+end;
 
 Function TIRPRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
 begin
