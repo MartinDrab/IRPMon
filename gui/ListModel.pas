@@ -10,7 +10,7 @@ Uses
 {$IFDEF FPC}
   Windows,
 {$ENDIF}
-  Menus, ComCtrls, Generics.Collections;
+  Classes, Menus, ComCtrls, Generics.Collections;
 
 Type
   TListModelColumn = Class
@@ -37,6 +37,7 @@ Type
   Private
     FDisplayer : TListView;
     FColumns : TList<TListModelColumn>;
+    Function CSVEscape(AElement:WideString):WideString;
   Protected
     Procedure OnDataCallback(Sender:TObject; Item:TListItem);
     Function GetColumn(AItem:T; ATag:NativeUInt):WideString; Virtual; Abstract;
@@ -66,6 +67,7 @@ Type
     Procedure CreateColumnsMenu(AParent:TMenuItem);
 
     Procedure Clear; Virtual;
+    Procedure ToCSV(AStrings:TStrings);
 
     Property Displayer : TListView Read FDisplayer;
     Property Items [Index:Integer] : T Read _Item;
@@ -98,6 +100,22 @@ If Assigned(FDisplayer) Then
 
 FColumns.Free;
 Inherited Destroy;
+end;
+
+Function TListModel<T>.CSVEscape(AElement:WideString):WideString;
+Var
+  ch : WideChar;
+begin
+Result := '';
+For ch In AElement Do
+  begin
+  Case ch Of
+    '\',
+    '"' : Result := Result + '\';
+    end;
+
+  Result := Result + ch;
+  end;
 end;
 
 Function TListModel<T>.GetImageIndex(AItem:T):Integer;
@@ -200,7 +218,6 @@ If Assigned(FDisplayer) Then
   end;
 end;
 
-
 Procedure TListModel<T>.ColumnSetVisible(AIndex:Integer; AVisible:Boolean);
 begin
 FColumns.Items[AIndex].Visible := AVisible;
@@ -235,11 +252,13 @@ end;
 Procedure TListModel<T>.OnColumnNemuItemClick(Sender:TObject);
 Var
   M : TMenuItem;
+  c : TListModelColumn;
 begin
 M := (Sender As TMenuItem);
 M.Checked := Not M.Checked;
+c := TListModelColumn(M.Tag);
 ColumnUpdateBegin;
-ColumnSetVisible(M.MenuIndex, M.Checked);
+c.Visible := M.Checked;
 ColumnUpdateEnd;
 end;
 
@@ -298,6 +317,48 @@ If Assigned(FDisplayer) Then
 {$ELSE}
   FDisplayer.Invalidate;
 {$ENDIF}
+  end;
+end;
+
+Procedure TListModel<T>.ToCSV(AStrings:TStrings);
+Var
+  I : Integer;
+  item : T;
+  c : TListModelColumn;
+  line : WideString;
+  elem : WideString;
+begin
+line := '';
+For c In FColumns Do
+  begin
+  If Not c.Visible Then
+    Continue;
+
+  elem := c.Caption;
+  If line <> '' Then
+    line := line + ',';
+
+  line := line + Format('"%s"', [CSVEscape(elem)]);
+  end;
+
+AStrings.Add(line);
+For I := 0 To RowCount - 1 Do
+  begin
+  item := _Item(I);
+  line := '';
+  For c In FColumns Do
+    begin
+    If Not c.Visible Then
+      Continue;
+
+    elem := GetColumn(item, c.Tag);
+    If line <> '' Then
+      line := line + ',';
+
+    line := line + Format('"%s"', [CSVEscape(elem)]);
+    end;
+
+  AStrings.Add(line);
   end;
 end;
 
