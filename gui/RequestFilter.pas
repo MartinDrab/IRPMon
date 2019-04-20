@@ -50,12 +50,13 @@ Type
     FAction : EFilterAction;
   Protected
     Procedure SetEnable(AValue:Boolean);
+    Function AddNext(AFilter:TRequestFilter):Cardinal;
+    Procedure RemoveFromChain;
   Public
     Procedure GetPossibleValues(AValues:TDictionary<UInt64, WideString>); Virtual; Abstract;
 
     Function Match(ARequest:TDriverRequest; AChainStart:Boolean = True):TRequestFilter;
-    Function AddNext(AFilter:TRequestFilter):Cardinal;
-    Procedure RemoveFromChain;
+    Function SetAction(AAction:EFilterAction; AHighlightColor:Cardinal = 0; ANextFilter:TRequestFilter = Nil):Cardinal;
 
     Property Name : WideString Read FName;
     Property Field : ERequestListModelColumnType Read FField;
@@ -65,6 +66,7 @@ Type
     Property RequestType : ERequesttype Read FRequestType;
     Property Enabled : Boolean Read FEnabled Write SetEnable;
     Property Action : EFilterAction Read FAction;
+    Property HighlightColor : Cardinal Read FHighlightColor;
   end;
 
 
@@ -193,6 +195,28 @@ If (Assigned(FNextFilter)) Or (Assigned(FPreviousFilter)) Then
   FNextFilter := Nil;
   FPreviousFilter := Nil;
   end;
+end;
+
+
+Function TRequestFilter.SetAction(AAction:EFilterAction; AHighlightColor:Cardinal = 0; ANextFilter:TRequestFilter = Nil):Cardinal;
+begin
+Result := 0;
+If FAction <> AAction Then
+  begin
+  If AAction = ffaPassToFilter Then
+    begin
+    If Assigned(ANextFilter) Then
+      Result := AddNext(ANextFilter)
+    Else Result := 3;
+    end
+  Else begin
+    FAction := AAction;
+    If FAction = ffaHighlight Then
+      FHighlightColor := AHighlightColor;
+    end;
+  end
+Else If (FAction = ffaHighlight) Then
+  FHighlightColor := AHighlightColor;
 end;
 
 
