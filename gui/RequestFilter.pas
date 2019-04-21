@@ -27,6 +27,32 @@ Type
     rfoAlwaysTrue
   );
 
+  RequestFilterOperatorSet = Set Of ERequestFilterOperator;
+
+Const
+  RequestFilterIntegerOperators : RequestFilterOperatorSet = [
+    rfoEquals,
+    rfoNotEquals,
+    rfoLowerEquals,
+    rfoGreaterEquals,
+    rfoLower,
+    rfoGreater,
+    rfoAlwaysTrue
+  ];
+
+  RequestFilterStringOperators : RequestFilterOperatorSet = [
+    rfoEquals,
+    rfoNotEquals,
+    rfoContains,
+    rfoDoesNotContain,
+    rfoBegins,
+    rfoDoesNotBegin,
+    rfoEnds,
+    rfoDoesNotEnd,
+    rfoAlwaysTrue
+  ];
+
+Type
   EFilterAction = (
     ffaUndefined,
     ffaInclude,
@@ -55,10 +81,12 @@ Type
   Public
     Constructor Create(AName:WideString; ARequestType:ERequestType = ertUndefined); Reintroduce;
 
-    Procedure GetPossibleValues(AValues:TDictionary<UInt64, WideString>); Virtual; Abstract;
+    Procedure GetPossibleValues(ASources:TList<UInt64>; ATargets:TList<WideString>); Virtual; Abstract;
 
     Function Match(ARequest:TDriverRequest; AChainStart:Boolean = True):TRequestFilter;
     Function SetAction(AAction:EFilterAction; AHighlightColor:Cardinal = 0; ANextFilter:TRequestFilter = Nil):Cardinal;
+    Function SetCondition(AColumn:ERequestListModelColumnType; AOperator:ERequestFilterOperator; AValue:UInt64):Boolean; Overload;
+    Function SetCondition(AColumn:ERequestListModelColumnType; AOperator:ERequestFilterOperator; AValue:WideString):Boolean; Overload;
 
     Property Name : WideString Read FName Write FName;
     Property Field : ERequestListModelColumnType Read FField;
@@ -232,6 +260,42 @@ If FAction <> AAction Then
   end
 Else If (FAction = ffaHighlight) Then
   FHighlightColor := AHighlightColor;
+end;
+
+Function TRequestFilter.SetCondition(AColumn:ERequestListModelColumnType; AOperator:ERequestFilterOperator; AValue:UInt64):Boolean;
+begin
+Case RequestListModelColumnValueTypes[Ord(AColumn)] Of
+  rlmcvtInteger,
+  rlmcvtTime,
+  rlmcvtMajorFunction,
+  rlmcvtMinorFunction,
+  rlmcvtProcessorMode,
+  rlmcvtIRQL : begin
+    Result := (AOperator In RequestFilterIntegerOperators);
+    If Result Then
+      begin
+      FField := AColumn;
+      FOp := AOperator;
+      FIntValue := AValue;
+      end;
+    end;
+  Else Result := False;
+  end;
+end;
+
+Function TRequestFilter.SetCondition(AColumn:ERequestListModelColumnType; AOperator:ERequestFilterOperator; AValue:WideString):Boolean;
+begin
+Result := (RequestListModelColumnValueTypes[Ord(AColumn)] = rlmcvtString);
+If Result Then
+  begin
+  Result := (AOperator In RequestFilterStringOperators);
+  If Result Then
+    begin
+    FField := AColumn;
+    FOp := AOperator;
+    FStringValue := AValue;
+    end;
+  end;
 end;
 
 
