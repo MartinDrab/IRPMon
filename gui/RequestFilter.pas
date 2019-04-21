@@ -78,10 +78,11 @@ Type
     Procedure SetEnable(AValue:Boolean);
     Function AddNext(AFilter:TRequestFilter):Cardinal;
     Procedure RemoveFromChain;
+    Procedure AddMapping(ASources:TList<UInt64>; ATargets:TList<WideString>; AIntValue:UInt64; AStringValue:WideString);
   Public
     Constructor Create(AName:WideString; ARequestType:ERequestType = ertUndefined); Reintroduce;
 
-    Procedure GetPossibleValues(ASources:TList<UInt64>; ATargets:TList<WideString>); Virtual; Abstract;
+    Function GetPossibleValues(ASources:TList<UInt64>; ATargets:TList<WideString>; Var ABitmask:Boolean):Boolean; Virtual;
 
     Function Match(ARequest:TDriverRequest; AChainStart:Boolean = True):TRequestFilter;
     Function SetAction(AAction:EFilterAction; AHighlightColor:Cardinal = 0; ANextFilter:TRequestFilter = Nil):Cardinal;
@@ -295,6 +296,41 @@ If Result Then
     FOp := AOperator;
     FStringValue := AValue;
     end;
+  end;
+end;
+
+Procedure TRequestFilter.AddMapping(ASources:TList<UInt64>; ATargets:TList<WideString>; AIntValue:UInt64; AStringValue:WideString);
+begin
+ASources.Add(AIntValue);
+ATargets.Add(AStringValue);
+end;
+
+Function TRequestFIlter.GetPossibleValues(ASources:TList<UInt64>; ATargets:TList<WideString>; Var ABitmask:Boolean):Boolean;
+begin
+ABitmask := False;
+Result := True;
+Case RequestListModelColumnValueTypes[Ord(FField)] Of
+  rlmcvtProcessorMode : begin
+    AddMapping(ASources, ATargets, 0, 'KernelMode');
+    AddMapping(ASources, ATargets, 0, 'UserMode');
+    end;
+  rlmcvtIRQL : begin
+    AddMapping(ASources, ATargets, 0, 'Passive');
+    AddMapping(ASources, ATargets, 1, 'APC');
+    AddMapping(ASources, ATargets, 2, 'Dispatch');
+{$IFDEF WIN32}
+    AddMapping(ASources, ATargets, 27, 'Profile');
+    AddMapping(ASources, ATargets, 28, 'Clock');
+    AddMapping(ASources, ATargets, 29, 'IPI');
+    AddMapping(ASources, ATargets, 30, 'Power');
+    AddMapping(ASources, ATargets, 31, 'High');
+{$ELSE}
+    AddMapping(ASources, ATargets, 13, 'Clock');
+    AddMapping(ASources, ATargets, 14, 'Profile, IPI, Power');
+    AddMapping(ASources, ATargets, 15, 'High');
+{$ENDIF}
+    end;
+  Else Result := False;
   end;
 end;
 
