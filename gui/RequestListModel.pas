@@ -19,7 +19,8 @@ Type
     rlmcvtMajorFunction,
     rlmcvtMinorFunction,
     rlmcvtProcessorMode,
-    rlmcvtIRQL
+    rlmcvtIRQL,
+    rlmcvtRequestType
   );
 
   ERequestListModelColumnType = (
@@ -90,7 +91,7 @@ Const
   RequestListModelColumnValueTypes : Array [0..Ord(rlmctRequestorPID)] Of ERequestListModelColumnValueType = (
     rlmcvtInteger,
     rlmcvtTime,
-    rlmcvtInteger,
+    rlmcvtRequestType,
     rlmcvtInteger,
     rlmcvtString,
     rlmcvtInteger,

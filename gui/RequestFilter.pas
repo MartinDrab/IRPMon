@@ -144,6 +144,7 @@ If (FEnabled) And
       rlmcvtMajorFunction,
       rlmcvtMinorFunction,
       rlmcvtProcessorMode,
+      rlmcvtRequestType,
       rlmcvtIRQL : begin
         Move(d^, iValue, l);
         Case FOp Of
@@ -271,6 +272,7 @@ Case RequestListModelColumnValueTypes[Ord(AColumn)] Of
   rlmcvtMajorFunction,
   rlmcvtMinorFunction,
   rlmcvtProcessorMode,
+  rlmcvtRequestType,
   rlmcvtIRQL : begin
     Result := (AOperator In RequestFilterIntegerOperators);
     If Result Then
@@ -330,7 +332,21 @@ Case RequestListModelColumnValueTypes[Ord(FField)] Of
     AddMapping(ASources, ATargets, 15, 'High');
 {$ENDIF}
     end;
-  Else Result := False;
+  rlmcvtRequestType : begin
+    AddMapping(ASources, ATargets, Ord(ertIRP), 'IRP');
+    AddMapping(ASources, ATargets, Ord(ertIRPCompletion), 'IRPComp');
+    AddMapping(ASources, ATargets, Ord(ertAddDevice), 'AddDevice');
+    AddMapping(ASources, ATargets, Ord(ertDriverUnload), 'Unload');
+    AddMapping(ASources, ATargets, Ord(ertFastIo), 'FastIo');
+    AddMapping(ASources, ATargets, Ord(ertStartIo), 'StartIo');
+    AddMapping(ASources, ATargets, Ord(ertDriverDetected), 'DriverDetected');
+    AddMapping(ASources, ATargets, Ord(ertDeviceDetected), 'DeviceDetected');
+    AddMapping(ASources, ATargets, Ord(ertFileObjectNameAssigned), 'FONameAssigned');
+    AddMapping(ASources, ATargets, Ord(ertFileObjectNameDeleted), 'FONameDeleted');
+    end;
+  Else begin
+    Result := False;
+    end;
   end;
 end;
 
