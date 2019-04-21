@@ -339,6 +339,7 @@ Case RequestListModelColumnValueTypes[Ord(FField)] Of
 {$ENDIF}
     end;
   rlmcvtRequestType : begin
+    AddMapping(ASources, ATargets, Ord(ertUndefined), '<all>');
     AddMapping(ASources, ATargets, Ord(ertIRP), 'IRP');
     AddMapping(ASources, ATargets, Ord(ertIRPCompletion), 'IRPComp');
     AddMapping(ASources, ATargets, Ord(ertAddDevice), 'AddDevice');
@@ -350,9 +351,7 @@ Case RequestListModelColumnValueTypes[Ord(FField)] Of
     AddMapping(ASources, ATargets, Ord(ertFileObjectNameAssigned), 'FONameAssigned');
     AddMapping(ASources, ATargets, Ord(ertFileObjectNameDeleted), 'FONameDeleted');
     end;
-  Else begin
-    Result := False;
-    end;
+  Else Result := False;
   end;
 end;
 
