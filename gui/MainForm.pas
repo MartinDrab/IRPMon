@@ -226,6 +226,7 @@ FModel.
     ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctIOSBStatusConstant), Ord(rlmctIOSBStatusConstant), True).
     ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctIOSBInformation), Ord(rlmctIOSBInformation), False, 75).
     ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctSubType), Ord(rlmctSubType), False, 100).
+    ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctMinorFunction), Ord(rlmctMinorFunction), False, 100).
     ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctFileObject), Ord(rlmctFileObject), False, 75).
     ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctFileName), Ord(rlmctFileName), True).
     ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctIRPFlags), Ord(rlmctIRPFlags), False, 75).
