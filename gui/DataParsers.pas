@@ -4,7 +4,7 @@ Interface
 
 Uses
   Classes, Windows, Generics.Collections,
-  IRPMonDll, RequestListModel;
+  IRPMonDll, IRPMonRequest;
 
 Const
   DATA_PARSER_INIT_ROUTINE = 'DataParserInit';
@@ -51,7 +51,7 @@ Type
       Destructor Destroy; Override;
       Class Function CreateForLibrary(ALibraryName:WideString; Var AError:Cardinal):TDataParser;
 
-      Function Parse(ARequest:TDriverRequest; Var AHandled:ByteBool; ANames:TStrings; AValues:TStrings):Cardinal;
+      Function Parse(ARequest:TGeneralRequest; Var AHandled:ByteBool; ANames:TStrings; AValues:TStrings):Cardinal;
 
       Property Name : WideString Read FName;
       Property LibraryName : WideString Read FLibraryName;
@@ -67,7 +67,7 @@ Procedure DataPrasersLoad(ADirectory:WideString; AList:TObjectList<TDataParser>)
 Implementation
 
 Uses
-  SysUtils;
+  SysUtils, RequestListModel;
 
 Constructor TDataParser.Create(ALibraryHandle:THandle; ALibraryName:WideString; Var ARaw:IRPMON_DATA_PARSER);
 begin
@@ -91,7 +91,7 @@ If FLibraryHandle <> 0 Then
 Inherited Destroy;
 end;
 
-Function TDataParser.Parse(ARequest:TDriverRequest; Var AHandled:ByteBool; ANames:TStrings; AValues:TStrings):Cardinal;
+Function TDataParser.Parse(ARequest:TGeneralRequest; Var AHandled:ByteBool; ANames:TStrings; AValues:TStrings):Cardinal;
 Var
   I : Integer;
   _handled : ByteBool;
