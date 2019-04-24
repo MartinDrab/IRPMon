@@ -121,13 +121,15 @@ Const
 
 Type
   TDriverRequest = Class (TGeneralRequest)
+  Private
+    Procedure ProcessParsers(AParsers:TObjectList<TDataParser>; ALines:TStrings);
   Public
     Class Function GetBaseColumnName(AColumnType:ERequestListModelColumnType):WideString;
     Function GetColumnName(AColumnType:ERequestListModelColumnType):WideString; Virtual;
     Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Virtual;
     Function GetColumnValueRaw(AColumnType:ERequestListModelColumnType; Var AValue:Pointer; Var AValueSize:Cardinal):Boolean; Virtual;
-    Procedure SaveToStream(AStream:TStream); Virtual;
-    Procedure SaveToFile(AFileName:WideString); Virtual;
+    Procedure SaveToStream(AStream:TStream; AParsers:TObjectList<TDataParser>); Virtual;
+    Procedure SaveToFile(AFileName:WideString; AParsers:TObjectList<TDataParser>); Virtual;
   end;
 
   TDriverRequestComparer = Class (TComparer<TDriverRequest>)
@@ -180,6 +182,7 @@ Type
       FDriverMap : TDictionary<Pointer, WideString>;
       FDeviceMap : TDictionary<Pointer, WideString>;
       FFileMap : TDictionary<Pointer, WideString>;
+      FParsers : TObjectList<TDataParser>;
     Protected
       Function GetColumn(AItem:TDriverRequest; ATag:NativeUInt):WideString; Override;
       Procedure FreeItem(AItem:TDriverRequest); Override;
@@ -196,6 +199,8 @@ Type
       Function Update:Cardinal; Override;
       Procedure SaveToStream(AStream:TStream);
       Procedure SaveToFile(AFileName:WideString);
+
+      Property Parsers : TObjectList<TDataParser> Read FParsers;
     end;
 
 Implementation
@@ -217,7 +222,41 @@ end;
 
 (** TDriverRequest **)
 
-Procedure TDriverRequest.SaveToStream(AStream: TStream);
+Procedure TDriverRequest.ProcessParsers(AParsers:TObjectList<TDataParser>; ALines:TStrings);
+Var
+  I : Integer;
+  err : Cardinal;
+  _handled : ByteBool;
+  names : TStringList;
+  values : TStringList;
+  pd : TDataParser;
+begin
+names := TStringList.Create;
+values := TStringList.Create;
+For pd In AParsers Do
+  begin
+  err := pd.Parse(Self, _handled, names, values);
+  If (err = ERROR_SUCCESS) And (_handled) Then
+    begin
+    ALines.Add(Format('Data (%s)', [pd.Name]));
+    For I := 0 To values.Count - 1 Do
+      begin
+      If names.Count > 0 Then
+        ALines.Add(Format('  %s: %s', [names[I], values[I]]))
+      Else ALines.Add('  ' + values[I]);
+      end;
+
+    values.Clear;
+    names.Clear;
+    end;
+  end;
+
+values.Free;
+names.Free;
+end;
+
+
+Procedure TDriverRequest.SaveToStream(AStream: TStream; AParsers:TObjectList<TDataParser>);
 Var
   s : TStringList;
   value : WideString;
@@ -233,7 +272,7 @@ For ct := Low(ERequestListModelColumnType) To High(ERequestListModelColumnType) 
 If DataSize > 0 Then
   begin
   S.Add(Format('Data size = %d', [DataSize]));
-  S.Text := S.Text + BufferToHex(Data, DataSize);
+  ProcessParsers(AParsers, s);
   end;
 
 s.Add('');
@@ -241,13 +280,13 @@ s.SaveToStream(AStream);
 s.Free;
 end;
 
-Procedure TDriverRequest.SaveToFile(AFileName: WideString);
+Procedure TDriverRequest.SaveToFile(AFileName: WideString; AParsers:TObjectList<TDataParser>);
 Var
   F : TFileStream;
 begin
 F := TFileStream.Create(AFileName, fmCreate Or fmOpenWrite);
 Try
-  SaveToStream(F);
+  SaveToStream(F, AParsers);
 Finally
   F.Free;
   end;
@@ -575,7 +614,7 @@ begin
 For I := 0 To RowCount - 1 Do
   begin
   dr := _Item(I);
-  dr.SaveToStream(AStream);
+  dr.SaveToStream(AStream, FParsers);
   end;
 end;
 
