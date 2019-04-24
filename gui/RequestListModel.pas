@@ -200,7 +200,7 @@ Type
       Procedure SaveToStream(AStream:TStream);
       Procedure SaveToFile(AFileName:WideString);
 
-      Property Parsers : TObjectList<TDataParser> Read FParsers;
+      Property Parsers : TObjectList<TDataParser> Read FParsers Write FParsers;
     end;
 
 Implementation
@@ -231,28 +231,31 @@ Var
   values : TStringList;
   pd : TDataParser;
 begin
-names := TStringList.Create;
-values := TStringList.Create;
-For pd In AParsers Do
+If Assigned(AParsers) Then
   begin
-  err := pd.Parse(Self, _handled, names, values);
-  If (err = ERROR_SUCCESS) And (_handled) Then
+  names := TStringList.Create;
+  values := TStringList.Create;
+  For pd In AParsers Do
     begin
-    ALines.Add(Format('Data (%s)', [pd.Name]));
-    For I := 0 To values.Count - 1 Do
+    err := pd.Parse(Self, _handled, names, values);
+    If (err = ERROR_SUCCESS) And (_handled) Then
       begin
-      If names.Count > 0 Then
-        ALines.Add(Format('  %s: %s', [names[I], values[I]]))
-      Else ALines.Add('  ' + values[I]);
+      ALines.Add(Format('Data (%s)', [pd.Name]));
+      For I := 0 To values.Count - 1 Do
+        begin
+        If names.Count > 0 Then
+          ALines.Add(Format('  %s: %s', [names[I], values[I]]))
+        Else ALines.Add('  ' + values[I]);
+        end;
+
+      values.Clear;
+      names.Clear;
       end;
-
-    values.Clear;
-    names.Clear;
     end;
-  end;
 
-values.Free;
-names.Free;
+  values.Free;
+  names.Free;
+  end;
 end;
 
 

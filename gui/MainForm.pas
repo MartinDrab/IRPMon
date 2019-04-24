@@ -256,6 +256,7 @@ Else begin
 
 FParsers := TObjectList<TDataParser>.Create;
 DataPrasersLoad(ExtractFileDir(Application.ExeName), FParsers);
+FModel.Parsers := FParsers;
 ReadSettings;
 end;
 
