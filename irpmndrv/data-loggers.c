@@ -106,70 +106,97 @@ void IRPDataLogger(PIRP Irp, PIO_STACK_LOCATION IrpStack, BOOLEAN Completion, PD
 			}
 			break;
 		case IRP_MJ_DEVICE_CONTROL:
-		case IRP_MJ_INTERNAL_DEVICE_CONTROL: {
-			ULONG method = IrpStack->Parameters.DeviceIoControl.IoControlCode & 3;
-			switch (method) {
-				case METHOD_NEITHER:
-					if (!Completion) {
-						Result->Buffer = IrpStack->Parameters.DeviceIoControl.Type3InputBuffer;
-						Result->BufferSize = IrpStack->Parameters.DeviceIoControl.InputBufferLength;
-						if (reqMode == UserMode &&
-							Result->BufferSize > 0) {
-							__try {
-								ProbeForRead(Result->Buffer, Result->BufferSize, 1);
-							} __except (EXCEPTION_EXECUTE_HANDLER) {
-								DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, "DANGEROUS BUFFER: Irp=0x%p; IrpStack=0x%p; Buffer=0x%p; Size=%zu\n", Irp, IrpStack, Result->Buffer, Result->BufferSize);
-								__debugbreak();
-								Result->Buffer = NULL;
-								Result->BufferSize = 0;
-							}
-						}
+		case IRP_MJ_INTERNAL_DEVICE_CONTROL:
+		case IRP_MJ_FILE_SYSTEM_CONTROL: {
+			if (IrpStack->MajorFunction != IRP_MJ_FILE_SYSTEM_CONTROL ||
+				IrpStack->MinorFunction == IRP_MN_KERNEL_CALL ||
+				IrpStack->MinorFunction == IRP_MN_USER_FS_REQUEST) {
+				ULONG method = IrpStack->Parameters.DeviceIoControl.IoControlCode & 3;
 
-						if (reqMode == UserMode &&
-							IrpStack->Parameters.DeviceIoControl.OutputBufferLength > 0) {
-							__try {
-								ProbeForRead(Irp->UserBuffer, IrpStack->Parameters.DeviceIoControl.OutputBufferLength, 1);
-							} __except (EXCEPTION_EXECUTE_HANDLER) {
-								DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, "DANGEROUS BUFFER: Irp=0x%p; IrpStack=0x%p; Buffer=0x%p; Size=%zu\n", Irp, IrpStack, Irp->UserBuffer, IrpStack->Parameters.DeviceIoControl.OutputBufferLength);
-								__debugbreak();
-								Result->Buffer = NULL;
-								Result->BufferSize = 0;
-							}
-						}
-					} else {
-						Result->Buffer = Irp->UserBuffer;
-						Result->BufferSize = IrpStack->Parameters.DeviceIoControl.OutputBufferLength;
-					}
-					break;
-				case METHOD_IN_DIRECT:
-					if (!Completion) {
-						Result->BufferMdl = Irp->MdlAddress;
-						if (Irp->MdlAddress != NULL)
-							Result->Buffer = MmGetSystemAddressForMdlSafe(Irp->MdlAddress, NormalPagePriority);
-						else Result->Buffer = Irp->AssociatedIrp.SystemBuffer;
+				switch (method) {
+					case METHOD_NEITHER:
+						if (!Completion) {
+							Result->Buffer = IrpStack->Parameters.DeviceIoControl.Type3InputBuffer;
+							Result->BufferSize = IrpStack->Parameters.DeviceIoControl.InputBufferLength;
+							if (IrpStack->MajorFunction == IRP_MJ_DEVICE_CONTROL ||
+								(IrpStack->MajorFunction == IRP_MJ_FILE_SYSTEM_CONTROL && IrpStack->MinorFunction == IRP_MN_USER_FS_REQUEST)) {
+								if (reqMode == UserMode &&
+									Result->BufferSize > 0) {
+									__try {
+										ProbeForRead(Result->Buffer, Result->BufferSize, 1);
+									} __except (EXCEPTION_EXECUTE_HANDLER) {
+										DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, "DANGEROUS BUFFER: Irp=0x%p; IrpStack=0x%p; Buffer=0x%p; Size=%zu\n", Irp, IrpStack, Result->Buffer, Result->BufferSize);
+										__debugbreak();
+										Result->Buffer = NULL;
+										Result->BufferSize = 0;
+									}
+								}
 
-						Result->BufferSize = IrpStack->Parameters.DeviceIoControl.InputBufferLength;
-					}
-					break;
-				case METHOD_OUT_DIRECT:
-					if (Completion) {
-						Result->BufferMdl = Irp->MdlAddress;
-						if (Irp->MdlAddress != NULL)
-							Result->Buffer = MmGetSystemAddressForMdlSafe(Irp->MdlAddress, NormalPagePriority);
-						else Result->Buffer = Irp->AssociatedIrp.SystemBuffer;
-					
-						Result->BufferSize = Irp->IoStatus.Information;
-					} else {
+								if (reqMode == UserMode &&
+									IrpStack->Parameters.DeviceIoControl.OutputBufferLength > 0) {
+									__try {
+										ProbeForRead(Irp->UserBuffer, IrpStack->Parameters.DeviceIoControl.OutputBufferLength, 1);
+									} __except (EXCEPTION_EXECUTE_HANDLER) {
+										DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, "DANGEROUS BUFFER: Irp=0x%p; IrpStack=0x%p; Buffer=0x%p; Size=%zu\n", Irp, IrpStack, Irp->UserBuffer, IrpStack->Parameters.DeviceIoControl.OutputBufferLength);
+										__debugbreak();
+										Result->Buffer = NULL;
+										Result->BufferSize = 0;
+									}
+								}
+							}
+						} else {
+							Result->Buffer = Irp->UserBuffer;
+							Result->BufferSize = IrpStack->Parameters.DeviceIoControl.OutputBufferLength;
+						}
+						break;
+					case METHOD_IN_DIRECT:
+						if (!Completion) {
+							Result->BufferMdl = Irp->MdlAddress;
+							if (Irp->MdlAddress != NULL)
+								Result->Buffer = MmGetSystemAddressForMdlSafe(Irp->MdlAddress, NormalPagePriority);
+							else Result->Buffer = Irp->AssociatedIrp.SystemBuffer;
+
+							Result->BufferSize = IrpStack->Parameters.DeviceIoControl.InputBufferLength;
+						}
+						break;
+					case METHOD_OUT_DIRECT:
+						if (Completion) {
+							Result->BufferMdl = Irp->MdlAddress;
+							if (Irp->MdlAddress != NULL)
+								Result->Buffer = MmGetSystemAddressForMdlSafe(Irp->MdlAddress, NormalPagePriority);
+							else Result->Buffer = Irp->AssociatedIrp.SystemBuffer;
+
+							Result->BufferSize = Irp->IoStatus.Information;
+						} else {
+							Result->Buffer = Irp->AssociatedIrp.SystemBuffer;
+							Result->BufferSize = IrpStack->Parameters.DeviceIoControl.InputBufferLength;
+						}
+						break;
+					case METHOD_BUFFERED:
 						Result->Buffer = Irp->AssociatedIrp.SystemBuffer;
-						Result->BufferSize = IrpStack->Parameters.DeviceIoControl.InputBufferLength;
+						if (!Completion)
+							Result->BufferSize = IrpStack->Parameters.DeviceIoControl.InputBufferLength;
+						else Result->BufferSize = Irp->IoStatus.Information;
+						break;
+				}
+			} else {
+				if (!Completion) {
+					switch (IrpStack->MinorFunction) {
+						case IRP_MN_MOUNT_VOLUME:
+							Result->Buffer = IrpStack->Parameters.MountVolume.Vpb;
+							Result->BufferSize = sizeof(VPB);
+							break;
+						case IRP_MN_VERIFY_VOLUME:
+							Result->Buffer = IrpStack->Parameters.MountVolume.Vpb;
+							Result->BufferSize = sizeof(VPB);
+							break;
+						case IRP_MN_LOAD_FILE_SYSTEM:
+							break;
 					}
-					break;
-				case METHOD_BUFFERED:
-					Result->Buffer = Irp->AssociatedIrp.SystemBuffer;
-					if (!Completion)
-						Result->BufferSize = IrpStack->Parameters.DeviceIoControl.InputBufferLength;
-					else Result->BufferSize = Irp->IoStatus.Information;
-					break;
+
+					if (Result->Buffer == NULL)
+						Result->BufferSize = 0;
+				}
 			}
 			} break;
 		case IRP_MJ_QUERY_VOLUME_INFORMATION:
