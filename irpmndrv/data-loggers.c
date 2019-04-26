@@ -74,8 +74,10 @@ static SIZE_T _DeviceRelationSize(const DEVICE_RELATIONS *R)
 void IRPDataLogger(PIRP Irp, PIO_STACK_LOCATION IrpStack, BOOLEAN Completion, PDATA_LOGGER_RESULT Result)
 {
 	KPROCESSOR_MODE mode;
+	KPROCESSOR_MODE reqMode;
 	DEBUG_ENTER_FUNCTION("Irp=0x%p; IrpStack=0x%p; Completion=%u; Result=0x%p", Irp, IrpStack, Completion, Result);
 
+	reqMode = Irp->RequestorMode;
 	mode = ExGetPreviousMode();
 	memset(Result, 0, sizeof(DATA_LOGGER_RESULT));
 	switch (IrpStack->MajorFunction) {
@@ -106,12 +108,34 @@ void IRPDataLogger(PIRP Irp, PIO_STACK_LOCATION IrpStack, BOOLEAN Completion, PD
 		case IRP_MJ_DEVICE_CONTROL:
 		case IRP_MJ_INTERNAL_DEVICE_CONTROL: {
 			ULONG method = IrpStack->Parameters.DeviceIoControl.IoControlCode & 3;
-
 			switch (method) {
 				case METHOD_NEITHER:
 					if (!Completion) {
 						Result->Buffer = IrpStack->Parameters.DeviceIoControl.Type3InputBuffer;
 						Result->BufferSize = IrpStack->Parameters.DeviceIoControl.InputBufferLength;
+						if (reqMode == UserMode &&
+							Result->BufferSize > 0) {
+							__try {
+								ProbeForRead(Result->Buffer, Result->BufferSize, 1);
+							} __except (EXCEPTION_EXECUTE_HANDLER) {
+								DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, "DANGEROUS BUFFER: Irp=0x%p; IrpStack=0x%p; Buffer=0x%p; Size=%zu\n", Irp, IrpStack, Result->Buffer, Result->BufferSize);
+								__debugbreak();
+								Result->Buffer = NULL;
+								Result->BufferSize = 0;
+							}
+						}
+
+						if (reqMode == UserMode &&
+							IrpStack->Parameters.DeviceIoControl.OutputBufferLength > 0) {
+							__try {
+								ProbeForRead(Irp->UserBuffer, IrpStack->Parameters.DeviceIoControl.OutputBufferLength, 1);
+							} __except (EXCEPTION_EXECUTE_HANDLER) {
+								DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, "DANGEROUS BUFFER: Irp=0x%p; IrpStack=0x%p; Buffer=0x%p; Size=%zu\n", Irp, IrpStack, Irp->UserBuffer, IrpStack->Parameters.DeviceIoControl.OutputBufferLength);
+								__debugbreak();
+								Result->Buffer = NULL;
+								Result->BufferSize = 0;
+							}
+						}
 					} else {
 						Result->Buffer = Irp->UserBuffer;
 						Result->BufferSize = IrpStack->Parameters.DeviceIoControl.OutputBufferLength;
@@ -170,6 +194,15 @@ void IRPDataLogger(PIRP Irp, PIO_STACK_LOCATION IrpStack, BOOLEAN Completion, PD
 		case IRP_MJ_DIRECTORY_CONTROL:
 			Result->Buffer = Irp->UserBuffer;
 			Result->BufferSize = Irp->IoStatus.Information;
+			if (reqMode == UserMode &&
+				Result->BufferSize > 0) {
+				__try {
+					ProbeForRead(Result->Buffer, Result->BufferSize, 1);
+				} __except (EXCEPTION_EXECUTE_HANDLER) {
+					Result->Buffer = NULL;
+					Result->BufferSize = 0;
+				}
+			}
 			break;
 		case IRP_MJ_QUERY_EA:
 			if (Completion) {
@@ -221,6 +254,7 @@ void IRPDataLogger(PIRP Irp, PIO_STACK_LOCATION IrpStack, BOOLEAN Completion, PD
 			}
 		} break;
 		case IRP_MJ_QUERY_SECURITY: {
+			// Already probed by the kernel
 			if (Completion && NT_SUCCESS(Irp->IoStatus.Status)) {
 				Result->Buffer = Irp->UserBuffer;
 				Result->BufferSize = IrpStack->Parameters.QuerySecurity.Length;
@@ -230,6 +264,17 @@ void IRPDataLogger(PIRP Irp, PIO_STACK_LOCATION IrpStack, BOOLEAN Completion, PD
 			if (!Completion) {
 				Result->Buffer = Irp->UserBuffer;
 				Result->BufferSize = RtlLengthSecurityDescriptor(IrpStack->Parameters.SetSecurity.SecurityDescriptor);
+				if (reqMode == UserMode &&
+					Result->BufferSize > 0) {
+					__try {
+						ProbeForRead(Result->Buffer, Result->BufferSize, 1);
+					} __except (EXCEPTION_EXECUTE_HANDLER) {
+						DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, "DANGEROUS BUFFER: Irp=0x%p; IrpStack=0x%p; Buffer=0x%p; Size=%zu\n", Irp, IrpStack, Result->Buffer, Result->BufferSize);
+						__debugbreak();
+						Result->Buffer = NULL;
+						Result->BufferSize = 0;
+					}
+				}
 			}
 		} break;
 		default:
