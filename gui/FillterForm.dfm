@@ -3,7 +3,7 @@ object FilterFrm: TFilterFrm
   Top = 0
   Caption = 'Filters'
   ClientHeight = 271
-  ClientWidth = 473
+  ClientWidth = 549
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -29,21 +29,21 @@ object FilterFrm: TFilterFrm
     Caption = 'Column'
   end
   object Label3: TLabel
-    Left = 174
+    Left = 259
     Top = 13
     Width = 44
     Height = 13
     Caption = 'Operator'
   end
   object Label4: TLabel
-    Left = 261
+    Left = 346
     Top = 13
     Width = 26
     Height = 13
     Caption = 'Value'
   end
   object Label5: TLabel
-    Left = 348
+    Left = 468
     Top = 13
     Width = 30
     Height = 13
@@ -61,14 +61,14 @@ object FilterFrm: TFilterFrm
   object FilterColumnComboBox: TComboBox
     Left = 87
     Top = 32
-    Width = 81
+    Width = 166
     Height = 21
     Style = csDropDownList
     TabOrder = 1
     OnChange = FilterColumnComboBoxChange
   end
   object FilterOperatorComboBox: TComboBox
-    Left = 174
+    Left = 259
     Top = 32
     Width = 81
     Height = 21
@@ -76,15 +76,15 @@ object FilterFrm: TFilterFrm
     TabOrder = 2
   end
   object FilterValueComboBox: TComboBox
-    Left = 261
+    Left = 346
     Top = 32
-    Width = 81
+    Width = 116
     Height = 21
     Style = csDropDownList
     TabOrder = 3
   end
   object FilterActionComboBox: TComboBox
-    Left = 348
+    Left = 468
     Top = 32
     Width = 81
     Height = 21
@@ -101,7 +101,7 @@ object FilterFrm: TFilterFrm
       'Pass')
   end
   object HighlightColorColorBox: TColorBox
-    Left = 348
+    Left = 468
     Top = 59
     Width = 85
     Height = 22
@@ -110,7 +110,7 @@ object FilterFrm: TFilterFrm
     Visible = False
   end
   object NegateCheckBox: TCheckBox
-    Left = 174
+    Left = 259
     Top = 59
     Width = 73
     Height = 17
