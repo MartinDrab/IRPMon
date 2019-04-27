@@ -28,6 +28,7 @@ Type
   Public
     Constructor Create(Var ARequest:REQUEST_IRP); Overload;
 
+    Function GetColumnName(AColumnType:ERequestListModelColumnType):WideString; Override;
     Function GetColumnValueRaw(AColumnType:ERequestListModelColumnType; Var AValue:Pointer; Var AValueSize:Cardinal):Boolean; Override;
     Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
     Class Function PowerStateTypeToString(AType:Cardinal):WideString;
@@ -196,6 +197,15 @@ FArgs := ARequest.Args;
 FRequestorProcessId := ARequest.RequestorProcessId;
 end;
 
+
+Function TIRPRequest.GetColumnName(AColumnType:ERequestListModelColumnType):WideString;
+begin
+case AColumnType of
+  rlmctSubType: Result := 'Major function';
+  rlmctMinorFunction: Result := 'Minor function';
+  Else Result := Inherited GetColumnName(AColumnType);
+  end;
+end;
 
 Function TIRPRequest.GetColumnValueRaw(AColumnType:ERequestListModelColumnType; Var AValue:Pointer; Var AValueSize:Cardinal):Boolean;
 begin
