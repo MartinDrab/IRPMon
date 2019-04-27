@@ -177,13 +177,46 @@ end;
 
 Procedure TFilterFrm.FilterListViewDblClick(Sender: TObject);
 Var
+  I : Integer;
   f : TRequestFilter;
   L : TListItem;
 begin
 L := FilterListView.Selected;
 If Assigned(L) Then
   begin
+  f := FFilterList[L.Index];
+  FilterTypeComboBox.ItemIndex := Ord(f.RequestType);
+  FilterTypeComboBoxChange(FilterTypeComboBox);
+  FilterColumnComboBox.ItemIndex := FilterColumnComboBox.Items.IndexOf(f.ColumnName);
+  FilterColumnComboBoxChange(FilterColumnComboBox);
+  For I := 0 To FilterOperatorComboBox.Items.Count - 1 Do
+    begin
+    If ERequestFilterOperator(NativeUInt(FilterOperatorComboBox.Items.Objects[i])) = f.Op Then
+      begin
+      FilterOperatorComboBox.ItemIndex := I;
+      Break;
+      end;
+    end;
 
+  If FilterValueComboBox.Style <> csSimple Then
+    begin
+    For I := 0 To FilterValueComboBox.Items.Count - 1 Do
+      begin
+      If UInt64(FilterValueComboBox.Items.Objects[I]) = f.IntValue Then
+        begin
+        FilterValueComboBox.ItemIndex := I;
+        Break;
+        end;
+      end;
+    end
+  Else FilterValueComboBox.Text := f.StringValue;
+
+  FilterActionComboBox.ItemIndex := Ord(f.Action);
+  FilterActionComboBoxChange(FilterActionComboBox);
+  If f.Action = ffaHighlight Then
+    HighlightColorColorBox.Selected := f.HighlightColor;
+
+  NegateCheckBox.Checked := f.Negate;
   end;
 end;
 
