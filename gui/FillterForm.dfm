@@ -133,6 +133,7 @@ object FilterFrm: TFilterFrm
       Height = 25
       Caption = 'Add'
       TabOrder = 7
+      OnClick = AddButtonClick
     end
     object DeleteButton: TButton
       Left = 63
@@ -213,7 +214,9 @@ object FilterFrm: TFilterFrm
     ShowWorkAreas = True
     TabOrder = 2
     ViewStyle = vsReport
+    OnAdvancedCustomDrawItem = FilterListViewAdvancedCustomDrawItem
     OnData = FilterListViewData
+    OnDblClick = FilterListViewDblClick
     ExplicitTop = 113
   end
 end

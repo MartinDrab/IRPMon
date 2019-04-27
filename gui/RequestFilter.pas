@@ -78,6 +78,7 @@ Type
     FEnabled : Boolean;
     FAction : EFilterAction;
     FNegate : Boolean;
+    FColumnName : WideString;
   Protected
     Procedure SetEnable(AValue:Boolean);
     Function AddNext(AFilter:TRequestFilter):Cardinal;
@@ -106,6 +107,7 @@ Type
     Property Action : EFilterAction Read FAction;
     Property HighlightColor : Cardinal Read FHighlightColor;
     Property Negate : Boolean Read FNegate Write FNegate;
+    Property ColumnName : WideString Read FColumnName Write FColumnName;
   end;
 
   TIRPRequestFilter = Class (TRequestFilter)
@@ -291,6 +293,7 @@ Case RequestListModelColumnValueTypes[Ord(AColumn)] Of
       FField := AColumn;
       FOp := AOperator;
       FIntValue := AValue;
+      FstringValue := UIntToStr(AValue);
       end;
     end;
   Else Result := False;
@@ -299,15 +302,36 @@ end;
 
 Function TRequestFilter.SetCondition(AColumn:ERequestListModelColumnType; AOperator:ERequestFilterOperator; AValue:WideString):Boolean;
 begin
-Result := (RequestListModelColumnValueTypes[Ord(AColumn)] = rlmcvtString);
-If Result Then
-  begin
-  Result := (AOperator In RequestFilterStringOperators);
-  If Result Then
-    begin
-    FField := AColumn;
-    FOp := AOperator;
-    FStringValue := AValue;
+Result := False;
+Case RequestListModelColumnValueTypes[Ord(AColumn)] Of
+  rlmcvtInteger,
+  rlmcvtTime,
+  rlmcvtMajorFunction,
+  rlmcvtMinorFunction,
+  rlmcvtProcessorMode,
+  rlmcvtRequestType,
+  rlmcvtIRQL : begin
+    Result := (AOperator In RequestFilterIntegerOperators);
+    If Result Then
+      begin
+      Try
+        FIntValue := StrToInt64(AValue);
+        FstringValue := AValue;
+        FField := AColumn;
+        FOp := AOperator;
+      Except
+        Result := False;
+        end;
+      end;
+    end;
+  rlmcvtString : begin
+    Result := (AOperator In RequestFilterStringOperators);
+    If Result Then
+      begin
+      FField := AColumn;
+      FOp := AOperator;
+      FStringValue := AValue;
+      end;
     end;
   end;
 end;
