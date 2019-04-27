@@ -360,14 +360,46 @@ Case AColumnType Of
     AResult := DateTimeToStr(SystemTimeToDateTime(s));
     end;
   rlmctRequestType: AResult := RequestTypeToString(FRequestType);
-  rlmctDeviceObject: AResult := Format('0x%p', [FDeviceObject]);
-  rlmctDeviceName: AResult := FDeviceName;
-  rlmctDriverObject: AResult := Format('0x%p', [FDriverObject]);
-  rlmctDriverName: AResult := FDriverName;
-  rlmctFileObject : AResult := Format('0x%p', [FFileObject]);
-  rlmctFileName: AResult := FFileName;
-  rlmctResultValue: AResult := RequestResultToString(FResultValue, FResultType);
-  rlmctResultConstant: AResult := RequestResultToString(FResultValue, FResultType, True);
+  rlmctDeviceObject: begin
+    Result := Self.ClassType <> TDriverRequest;
+    If Result Then
+      AResult := Format('0x%p', [FDeviceObject]);
+    end;
+  rlmctDeviceName: begin
+    Result := Self.ClassType <> TDriverRequest;
+    If Result Then
+      AResult := FDeviceName;
+    end;
+  rlmctDriverObject: begin
+    Result := Self.ClassType <> TDriverRequest;
+    If Result Then
+      AResult := Format('0x%p', [FDriverObject]);
+    end;
+  rlmctDriverName: begin
+    Result := Self.ClassType <> TDriverRequest;
+    If Result Then
+      AResult := FDriverName;
+    end;
+  rlmctFileObject : begin
+    Result := Self.ClassType <> TDriverRequest;
+    If Result Then
+      AResult := Format('0x%p', [FFileObject]);
+    end;
+  rlmctFileName: begin
+    Result := Self.ClassType <> TDriverRequest;
+    If Result Then
+      AResult := FFileName;
+    end;
+  rlmctResultValue: begin
+    Result := Self.ClassType <> TDriverRequest;
+    If Result Then
+      AResult := RequestResultToString(FResultValue, FResultType);
+    end;
+  rlmctResultConstant: begin
+    Result := Self.ClassType <> TDriverRequest;
+    If Result Then
+      AResult := RequestResultToString(FResultValue, FResultType, True);
+    end;
   rlmctProcessId : AResult := Format('%u', [FProcessId]);
   rlmctThreadId :  AResult := Format('%u', [FThreadId]);
   rlmctIRQL : AResult := IRQLToString(FIRQL);
