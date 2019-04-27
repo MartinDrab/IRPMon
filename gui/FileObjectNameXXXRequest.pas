@@ -13,14 +13,14 @@ Uses
 Type
   TFileObjectNameAssignedRequest = Class (TDriverRequest)
     Public
-      Constructor Create(Var ARequest:REQUEST_FILE_OBJECT_NAME_ASSIGNED); Reintroduce;
+      Constructor Create(Var ARequest:REQUEST_FILE_OBJECT_NAME_ASSIGNED); Overload;
       Function GetColumnValueRaw(AColumnType:ERequestListModelColumnType; Var AValue:Pointer; Var AValueSize:Cardinal):Boolean; Override;
       Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
     end;
 
   TFileObjectNameDeletedRequest = Class (TDriverRequest)
     Public
-      Constructor Create(Var ARequest:REQUEST_FILE_OBJECT_NAME_DELETED); Reintroduce;
+      Constructor Create(Var ARequest:REQUEST_FILE_OBJECT_NAME_DELETED); Overload;
       Function GetColumnValueRaw(AColumnType:ERequestListModelColumnType; Var AValue:Pointer; Var AValueSize:Cardinal):Boolean; Override;
       Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
     end;

@@ -16,7 +16,7 @@ Type
       FDriverObject : Pointer;
       FDriverName : WideString;
     Public
-      Constructor Create(Var ARequest:REQUEST_DRIVER_DETECTED); Reintroduce;
+      Constructor Create(Var ARequest:REQUEST_DRIVER_DETECTED); Overload;
       Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
 
       Property DriverObject : Pointer Read FDriverObject;
@@ -29,7 +29,7 @@ Type
       FDeviceObject : Pointer;
       FDeviceName : WideString;
     Public
-      Constructor Create(Var ARequest:REQUEST_DEVICE_DETECTED); Reintroduce;
+      Constructor Create(Var ARequest:REQUEST_DEVICE_DETECTED); Overload;
       Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
 
       Property DriverObject : Pointer Read FDriverObject;

@@ -89,6 +89,8 @@ Type
     Function SetCondition(AColumn:ERequestListModelColumnType; AOperator:ERequestFilterOperator; AValue:UInt64):Boolean; Overload;
     Function SetCondition(AColumn:ERequestListModelColumnType; AOperator:ERequestFilterOperator; AValue:WideString):Boolean; Overload;
 
+    Class Function NewInstance(ARequestType:ERequestType):TRequestFilter;
+
     Property Name : WideString Read FName Write FName;
     Property Field : ERequestListModelColumnType Read FField;
     Property Op : ERequestFilterOperator Read FOp;
@@ -352,6 +354,24 @@ Case RequestListModelColumnValueTypes[Ord(FField)] Of
     AddMapping(ASources, ATargets, Ord(ertFileObjectNameDeleted), 'FONameDeleted');
     end;
   Else Result := False;
+  end;
+end;
+
+Class Function TRequestFilter.NewInstance(ARequestType:ERequestType):TRequestFilter;
+begin
+Result := Nil;
+Case ARequestType Of
+  ertUndefined: Result := TRequestFilter.Create('', ARequestType);
+  ertIRP: Result := TIRPRequestFilter.Create('');
+  ertIRPCompletion: ;
+  ertAddDevice: ;
+  ertDriverUnload: ;
+  ertFastIo: ;
+  ertStartIo: ;
+  ertDriverDetected: ;
+  ertDeviceDetected: ;
+  ertFileObjectNameAssigned: ;
+  ertFileObjectNameDeleted: ;
   end;
 end;
 

@@ -38,7 +38,7 @@ Type
     Procedure SetFileName(AName:WideString);
     Procedure SetFileObject(AObject:Pointer);
   Public
-    Constructor Create(Var ARequest:REQUEST_HEADER); Reintroduce;
+    Constructor Create(Var ARequest:REQUEST_HEADER); Overload;
     Destructor Destroy; Override;
 
     Function AssignData(AData:Pointer; ASize:NativeUInt):Boolean;

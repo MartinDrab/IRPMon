@@ -1000,6 +1000,10 @@ object MainFrm: TMainFrm
         Caption = 'Details...'
         OnClick = RequestDetailsMenuItemClick
       end
+      object FiltersMenuItem: TMenuItem
+        Caption = 'Filters...'
+        OnClick = FiltersMenuItemClick
+      end
     end
     object DriverMenuItem: TMenuItem
       Caption = 'Driver'

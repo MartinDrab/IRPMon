@@ -18,7 +18,7 @@ Type
     FArg3 : Pointer;
     FArg4 : Pointer;
   Public
-    Constructor Create(Var ARequest:REQUEST_FASTIO); Reintroduce;
+    Constructor Create(Var ARequest:REQUEST_FASTIO); Overload;
 
     Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
     Class Function FastIoTypeToString(AFastIoType:EFastIoOperationType):WideString;

@@ -51,6 +51,7 @@ Type
     Documentation1: TMenuItem;
     DataParsersTabSheet: TTabSheet;
     DataParsersListView: TListView;
+    FiltersMenuItem: TMenuItem;
     Procedure ClearMenuItemClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure CaptureEventsMenuItemClick(Sender: TObject);
@@ -68,6 +69,7 @@ Type
     procedure Documentation1Click(Sender: TObject);
     procedure DataParsersListViewData(Sender: TObject; Item: TListItem);
     procedure DataParsersTabSheetShow(Sender: TObject);
+    procedure FiltersMenuItemClick(Sender: TObject);
   Private
 {$IFDEF FPC}
     FAppEvents: TApplicationProperties;
@@ -108,7 +110,7 @@ Uses
   ListModel, HookProgressForm,
   Utils, TreeForm, RequestDetailsForm, AboutForm,
   ClassWatchAdd, ClassWatch, DriverNameWatchAddForm,
-  WatchedDriverNames;
+  WatchedDriverNames, FillterForm;
 
 
 
@@ -166,6 +168,15 @@ end;
 Procedure TMainFrm.ExitMenuItemClick(Sender: TObject);
 begin
 Close;
+end;
+
+procedure TMainFrm.FiltersMenuItemClick(Sender: TObject);
+begin
+With TFilterFrm.Create(Application) Do
+  begin
+  ShowModal;
+  Free;
+  end;
 end;
 
 Procedure TMainFrm.FormClose(Sender: TObject; var Action: TCloseAction);

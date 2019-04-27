@@ -26,7 +26,7 @@ Type
     FIOSBInformation : NativeUInt;
     FRequestorProcessId : NativeUInt;
   Public
-    Constructor Create(Var ARequest:REQUEST_IRP); Reintroduce;
+    Constructor Create(Var ARequest:REQUEST_IRP); Overload;
 
     Function GetColumnValueRaw(AColumnType:ERequestListModelColumnType; Var AValue:Pointer; Var AValueSize:Cardinal):Boolean; Override;
     Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;

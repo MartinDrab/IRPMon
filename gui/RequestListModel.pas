@@ -143,13 +143,13 @@ Type
 
   TDriverUnloadRequest = Class (TDriverRequest)
   Public
-    Constructor Create(Var ARequest:REQUEST_UNLOAD); Reintroduce;
+    Constructor Create(Var ARequest:REQUEST_UNLOAD); Overload;
     Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
   end;
 
   TAddDeviceRequest = Class (TDriverRequest)
   Public
-    Constructor Create(Var ARequest:REQUEST_ADDDEVICE); Reintroduce;
+    Constructor Create(Var ARequest:REQUEST_ADDDEVICE); Overload;
   end;
 
 
@@ -161,7 +161,7 @@ Type
     FProcessId : THandle;
     FThreadId : THandle;
   Public
-    Constructor Create(Var ARequest:REQUEST_IRP_COMPLETION); Reintroduce;
+    Constructor Create(Var ARequest:REQUEST_IRP_COMPLETION); Overload;
 
     Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
     Property Address : Pointer Read FIRPAddress;
@@ -173,7 +173,7 @@ Type
 
   TStartIoRequest = Class (TDriverRequest)
   Public
-    Constructor Create(Var ARequest:REQUEST_STARTIO); Reintroduce;
+    Constructor Create(Var ARequest:REQUEST_STARTIO); Overload;
   end;
 
   TRequestListModel = Class (TListModel<TDriverRequest>)
