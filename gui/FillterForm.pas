@@ -30,6 +30,7 @@ Type
     Label4: TLabel;
     Label5: TLabel;
     HighlightColorColorBox: TColorBox;
+    NegateCheckBox: TCheckBox;
     Procedure FormCreate(Sender: TObject);
     procedure FilterTypeComboBoxChange(Sender: TObject);
     procedure FilterColumnComboBoxChange(Sender: TObject);

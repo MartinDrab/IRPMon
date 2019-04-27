@@ -109,4 +109,12 @@ object FilterFrm: TFilterFrm
     TabOrder = 5
     Visible = False
   end
+  object NegateCheckBox: TCheckBox
+    Left = 174
+    Top = 59
+    Width = 73
+    Height = 17
+    Caption = 'Negate'
+    TabOrder = 6
+  end
 end

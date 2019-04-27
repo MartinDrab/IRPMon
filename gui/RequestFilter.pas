@@ -13,17 +13,13 @@ Uses
 Type
   ERequestFilterOperator = (
     rfoEquals,
-    rfoNotEquals,
     rfoLowerEquals,
     rfoGreaterEquals,
     rfoLower,
     rfoGreater,
     rfoContains,
-    rfoDoesNotContain,
     rfoBegins,
-    rfoDoesNotBegin,
     rfoEnds,
-    rfoDoesNotEnd,
     rfoAlwaysTrue
   );
 
@@ -32,23 +28,18 @@ Type
 Const
   RequestFilterOperatorNames : Array [0..Ord(rfoAlwaysTrue)] Of WideString = (
     '==',
-    '!=',
     '<=',
     '>=',
     '<',
     '>',
     'contains',
-    'constains not',
     'begins',
-    'begins not',
     'ends',
-    'ends not',
     'true'
   );
 
   RequestFilterIntegerOperators : RequestFilterOperatorSet = [
     rfoEquals,
-    rfoNotEquals,
     rfoLowerEquals,
     rfoGreaterEquals,
     rfoLower,
@@ -58,13 +49,9 @@ Const
 
   RequestFilterStringOperators : RequestFilterOperatorSet = [
     rfoEquals,
-    rfoNotEquals,
     rfoContains,
-    rfoDoesNotContain,
     rfoBegins,
-    rfoDoesNotBegin,
     rfoEnds,
-    rfoDoesNotEnd,
     rfoAlwaysTrue
   ];
 
@@ -90,6 +77,7 @@ Type
     FRequestType : ERequestType;
     FEnabled : Boolean;
     FAction : EFilterAction;
+    FNegate : Boolean;
   Protected
     Procedure SetEnable(AValue:Boolean);
     Function AddNext(AFilter:TRequestFilter):Cardinal;
@@ -117,6 +105,7 @@ Type
     Property Enabled : Boolean Read FEnabled Write SetEnable;
     Property Action : EFilterAction Read FAction;
     Property HighlightColor : Cardinal Read FHighlightColor;
+    Property Negate : Boolean Read FNegate Write FNegate;
   end;
 
   TIRPRequestFilter = Class (TRequestFilter)
@@ -174,7 +163,6 @@ If (FEnabled) And
         Move(d^, iValue, l);
         Case FOp Of
           rfoEquals: ret := (iValue = FIntValue);
-          rfoNotEquals: ret := (iValue <> FIntValue);
           rfoLowerEquals: ret := (iValue <= FIntValue);
           rfoGreaterEquals: ret := (iValue >= FIntValue);
           rfoLower: ret := (iValue < FIntValue);
@@ -186,21 +174,20 @@ If (FEnabled) And
         sValue := WideCharToString(d);
         Case FOp Of
           rfoEquals: ret := (WideCompareText(sValue, FStringValue) = 0);
-          rfoNotEquals: ret := (WideCompareText(sValue, FStringValue) <> 0);
           rfoLowerEquals: ret := (WideCompareText(sValue, FStringValue) <= 0);
           rfoGreaterEquals: ret := (WideCompareText(sValue, FStringValue) >= 0);
           rfoLower: ret := (WideCompareText(sValue, FStringValue) < 0);
           rfoGreater: ret := (WideCompareText(sValue, FStringValue) > 0);
           rfoContains: ret := (Pos(sValue, FStringValue) > 0);
-          rfoDoesNotContain: ret := (Pos(sValue, FStringValue) <= 0);
           rfoBegins: ret := (Pos(sValue, FStringValue) = 1);
-          rfoDoesNotBegin: ret := Pos(sValue, FStringValue) <> 1;
           rfoEnds: ret := (Pos(sValue, FStringValue) = Length(FStringValue) - Length(sValue) + 1);
-          rfoDoesNotEnd: ret := (Pos(sValue, FStringValue) <> Length(FStringValue) - Length(sValue) + 1);
           rfoAlwaysTrue: ret := True;
           end;
         end;
       end;
+
+    If FNegate Then
+      ret := Not FNegate;
 
     If ret Then
       begin
