@@ -37,6 +37,8 @@ Type
     CloseButton: TButton;
     OkButton: TButton;
     FilterListView: TListView;
+    AddButton: TButton;
+    DeleteButton: TButton;
     Procedure FormCreate(Sender: TObject);
     procedure FilterTypeComboBoxChange(Sender: TObject);
     procedure FilterColumnComboBoxChange(Sender: TObject);
@@ -45,10 +47,12 @@ Type
     procedure OkButtonClick(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FilterListViewData(Sender: TObject; Item: TListItem);
+    procedure DeleteButtonClick(Sender: TObject);
   Private
     FFilterList : TObjectList<TRequestFilter>;
     FCBs : Array [0..Ord(fctMax)-1] of TComboBox;
     Procedure EnableCombobox(AType:EFilterComboboxType; AEnable:Boolean);
+    Procedure RefreshListView;
   end;
 
 
@@ -234,6 +238,18 @@ begin
 Close;
 end;
 
+Procedure TFilterFrm.DeleteButtonClick(Sender: TObject);
+Var
+  L : TListItem;
+begin
+L := FilterListView.Selected;
+If Assigned(L) Then
+  begin
+  FFilterList.Delete(L.Index);
+  RefreshListView;
+  end;
+end;
+
 Procedure TFilterFrm.EnableCombobox(AType:EFilterComboboxType; AEnable:Boolean);
 Var
   c : TComboBox;
@@ -246,4 +262,13 @@ Case c.Enabled Of
   end;
 end;
 
+Procedure TFilterFrm.RefreshListView;
+begin
+FilterListView.Items.Count := FFilterList.Count;
+FilterListView.Invalidate;
+end;
+
+
+
 End.
+

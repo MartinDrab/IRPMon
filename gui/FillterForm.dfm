@@ -126,6 +126,23 @@ object FilterFrm: TFilterFrm
         'Highlight'
         'Pass')
     end
+    object AddButton: TButton
+      Left = 0
+      Top = 72
+      Width = 57
+      Height = 25
+      Caption = 'Add'
+      TabOrder = 7
+    end
+    object DeleteButton: TButton
+      Left = 63
+      Top = 72
+      Width = 57
+      Height = 25
+      Caption = 'Delete'
+      TabOrder = 8
+      OnClick = DeleteButtonClick
+    end
   end
   object LowerPanel: TPanel
     Left = 0
@@ -197,7 +214,6 @@ object FilterFrm: TFilterFrm
     TabOrder = 2
     ViewStyle = vsReport
     OnData = FilterListViewData
-    ExplicitLeft = 32
-    ExplicitWidth = 517
+    ExplicitTop = 113
   end
 end
