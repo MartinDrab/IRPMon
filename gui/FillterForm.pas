@@ -19,22 +19,28 @@ Type
   );
 
   TFilterFrm = Class (TForm)
+    UpperPanel: TPanel;
     FilterTypeComboBox: TComboBox;
     FilterColumnComboBox: TComboBox;
     FilterOperatorComboBox: TComboBox;
+    NegateCheckBox: TCheckBox;
     FilterValueComboBox: TComboBox;
-    FilterActionComboBox: TComboBox;
     Label1: TLabel;
     Label2: TLabel;
     Label3: TLabel;
-    Label4: TLabel;
-    Label5: TLabel;
     HighlightColorColorBox: TColorBox;
-    NegateCheckBox: TCheckBox;
+    FilterActionComboBox: TComboBox;
+    Label5: TLabel;
+    Label4: TLabel;
+    LowerPanel: TPanel;
+    CloseButton: TButton;
+    OkButton: TButton;
     Procedure FormCreate(Sender: TObject);
     procedure FilterTypeComboBoxChange(Sender: TObject);
     procedure FilterColumnComboBoxChange(Sender: TObject);
     procedure FilterActionComboBoxChange(Sender: TObject);
+    procedure CloseButtonClick(Sender: TObject);
+    procedure OkButtonClick(Sender: TObject);
   Private
     FRequest : TDriverRequest;
     FFilter : TRequestFilter;
@@ -186,6 +192,16 @@ For I := Low(ERequestType) To High(ERequestType) Do
 
 ts.Free;
 ss.Free;
+end;
+
+Procedure TFilterFrm.OkButtonClick(Sender: TObject);
+begin
+Close;
+end;
+
+Procedure TFilterFrm.CloseButtonClick(Sender: TObject);
+begin
+Close;
 end;
 
 Procedure TFilterFrm.EnableCombobox(AType:EFilterComboboxType; AEnable:Boolean);
