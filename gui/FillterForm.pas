@@ -42,8 +42,6 @@ Type
     procedure CloseButtonClick(Sender: TObject);
     procedure OkButtonClick(Sender: TObject);
   Private
-    FRequest : TDriverRequest;
-    FFilter : TRequestFilter;
     FCBs : Array [0..Ord(fctMax)-1] of TComboBox;
     Procedure EnableCombobox(AType:EFilterComboboxType; AEnable:Boolean);
   end;
@@ -176,9 +174,10 @@ EnableComboBox(fctValue, False);
 
 ss := TList<UInt64>.Create;
 ts := TList<WideString>.Create;
-FFilter := TRequestFilter.NewInstance(ertUndefined);
-FFilter.SetCondition(rlmctRequestType, rfoAlwaysTrue, 0);
-FFilter.GetPossibleValues(ss, ts, bm);
+tmp := TRequestFilter.NewInstance(ertUndefined);
+tmp.SetCondition(rlmctRequestType, rfoAlwaysTrue, 0);
+tmp.GetPossibleValues(ss, ts, bm);
+tmp.Free;
 For I := Low(ERequestType) To High(ERequestType) Do
   begin
   tmp := TRequestFilter.NewInstance(I);
