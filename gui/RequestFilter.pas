@@ -30,6 +30,22 @@ Type
   RequestFilterOperatorSet = Set Of ERequestFilterOperator;
 
 Const
+  RequestFilterOperatorNames : Array [0..Ord(rfoAlwaysTrue)] Of WideString = (
+    '==',
+    '!=',
+    '<=',
+    '>=',
+    '<',
+    '>',
+    'contains',
+    'constains not',
+    'begins',
+    'begins not',
+    'ends',
+    'ends not',
+    'true'
+  );
+
   RequestFilterIntegerOperators : RequestFilterOperatorSet = [
     rfoEquals,
     rfoNotEquals,
@@ -83,6 +99,7 @@ Type
     Constructor Create(AName:WideString; ARequestType:ERequestType = ertUndefined); Reintroduce;
 
     Function GetPossibleValues(ASources:TList<UInt64>; ATargets:TList<WideString>; Var ABitmask:Boolean):Boolean; Virtual;
+    Function SupportedOperators:RequestFilterOperatorSet; Virtual;
 
     Function Match(ARequest:TDriverRequest; AChainStart:Boolean = True):TRequestFilter;
     Function SetAction(AAction:EFilterAction; AHighlightColor:Cardinal = 0; ANextFilter:TRequestFilter = Nil):Cardinal;
@@ -195,7 +212,6 @@ If (FEnabled) And
   end;
 end;
 
-
 Procedure TRequestFilter.SetEnable(AValue:Boolean);
 Var
   tmp : TRequestFilter;
@@ -306,6 +322,21 @@ If Result Then
     FOp := AOperator;
     FStringValue := AValue;
     end;
+  end;
+end;
+
+Function TRequestFilter.SupportedOperators:RequestFilterOperatorSet;
+begin
+Case RequestListModelColumnValueTypes[Ord(FField)] Of
+  rlmcvtInteger,
+  rlmcvtTime,
+  rlmcvtMajorFunction,
+  rlmcvtMinorFunction,
+  rlmcvtProcessorMode,
+  rlmcvtIRQL,
+  rlmcvtRequestType : Result := RequestFilterIntegerOperators;
+  rlmcvtString : Result := RequestFilterStringOperators;
+  Else Result := [rfoAlwaysTrue];
   end;
 end;
 

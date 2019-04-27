@@ -58,6 +58,8 @@ Var
   ss : TList<UInt64>;
   st : TList<WideString>;
   bm : Boolean;
+  ops : RequestFilterOperatorSet;
+  op : ERequestFilterOperator;
 begin
 c := (Sender As TComboBox);
 EnableComboBox(fctOperator, c.ItemIndex <> -1);
@@ -68,7 +70,9 @@ If FilterOperatorComboBox.Enabled Then
   ct := ERequestListModelColumnType(FilterColumnComboBox.Items.Objects[FilterColumnComboBox.ItemIndex]);
   FilterValueComboBox.Clear;
   tmp := TRequestFilter.NewInstance(rt);
-  tmp.SetCondition(ct, rfoAlwaysTrue, 0);
+  If Not tmp.SetCondition(ct, rfoAlwaysTrue, 0) Then
+    tmp.SetCondition(ct, rfoAlwaysTrue, '');
+
   ss := TList<UInt64>.Create;
   st := TList<WideString>.Create;
   If tmp.GetPossibleValues(ss, st, bm) Then
@@ -78,6 +82,11 @@ If FilterOperatorComboBox.Enabled Then
       FilterValueComboBox.AddItem(st[I], Pointer(ss[I]));
     end
   Else FilterValueComboBox.Style := csSimple;
+
+  FilterOperatorComboBox.Clear;
+  ops := tmp.SupportedOperators;
+  For op In ops Do
+    FilterOperatorComboBox.AddItem(RequestFilterOperatorNames[Ord(op)], Pointer(Ord(op)));
 
   st.Free;
   ss.Free;
