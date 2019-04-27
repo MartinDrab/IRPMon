@@ -89,6 +89,24 @@ object FilterFrm: TFilterFrm
     Width = 81
     Height = 21
     Style = csDropDownList
+    ItemIndex = 0
     TabOrder = 4
+    Text = 'None'
+    OnChange = FilterActionComboBoxChange
+    Items.Strings = (
+      'None'
+      'Include'
+      'Exclude'
+      'Highlight'
+      'Pass')
+  end
+  object HighlightColorColorBox: TColorBox
+    Left = 348
+    Top = 59
+    Width = 85
+    Height = 22
+    Enabled = False
+    TabOrder = 5
+    Visible = False
   end
 end

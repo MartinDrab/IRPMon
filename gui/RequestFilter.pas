@@ -72,7 +72,7 @@ Type
   EFilterAction = (
     ffaUndefined,
     ffaInclude,
-    ffaNoExclude,
+    ffaExclude,
     ffaHighlight,
     ffaPassToFilter
   );

@@ -6,7 +6,7 @@ Uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
   System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls,
-  Generics.Collections, RequestFilter, RequestListModel;
+  Generics.Collections, RequestFilter, RequestListModel, Vcl.ExtCtrls;
 
 Type
   EFilterComboboxType = (
@@ -29,9 +29,11 @@ Type
     Label3: TLabel;
     Label4: TLabel;
     Label5: TLabel;
+    HighlightColorColorBox: TColorBox;
     Procedure FormCreate(Sender: TObject);
     procedure FilterTypeComboBoxChange(Sender: TObject);
     procedure FilterColumnComboBoxChange(Sender: TObject);
+    procedure FilterActionComboBoxChange(Sender: TObject);
   Private
     FRequest : TDriverRequest;
     FFilter : TRequestFilter;
@@ -47,6 +49,17 @@ Implementation
 Uses
   IRPMonDll, IRPRequest, FastIoRequest,
   FileObjectNameXxxRequest, XXXDetectedRequests;
+
+Procedure TFilterFrm.FilterActionComboBoxChange(Sender: TObject);
+Var
+  fa : EFilterAction;
+  c : TComboBox;
+begin
+c := (Sender As TComboBox);
+fa := EFilterAction(c.ItemIndex);
+HighlightColorColorBox.Visible := (fa = ffaHighlight);
+HighlightColorColorBox.Enabled := (fa = ffaHighlight);
+end;
 
 Procedure TFilterFrm.FilterColumnComboBoxChange(Sender: TObject);
 Var
@@ -153,7 +166,6 @@ FCBs[Ord(fctAction)] := FilterActionComboBox;
 EnableComboBox(fctColumn, False);
 EnableComboBox(fctOperator, False);
 EnableComboBox(fctValue, False);
-EnableComboBox(fctAction, False);
 
 ss := TList<UInt64>.Create;
 ts := TList<WideString>.Create;
