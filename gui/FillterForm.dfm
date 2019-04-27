@@ -11,6 +11,7 @@ object FilterFrm: TFilterFrm
   Font.Name = 'Tahoma'
   Font.Style = []
   OldCreateOrder = False
+  OnClose = FormClose
   OnCreate = FormCreate
   PixelsPerInch = 96
   TextHeight = 13
@@ -21,7 +22,7 @@ object FilterFrm: TFilterFrm
     Height = 111
     Align = alTop
     TabOrder = 0
-    ExplicitTop = 160
+    ExplicitTop = -6
     object Label1: TLabel
       Left = 0
       Top = 13
@@ -154,5 +155,49 @@ object FilterFrm: TFilterFrm
       TabOrder = 1
       OnClick = OkButtonClick
     end
+  end
+  object FilterListView: TListView
+    Left = 0
+    Top = 111
+    Width = 549
+    Height = 171
+    Align = alClient
+    Checkboxes = True
+    Columns = <
+      item
+        Caption = '#'
+      end
+      item
+        Caption = 'Type'
+        Width = 75
+      end
+      item
+        AutoSize = True
+        Caption = 'Column'
+      end
+      item
+        Caption = 'Operator'
+        Width = 75
+      end
+      item
+        Caption = 'Negate'
+      end
+      item
+        AutoSize = True
+        Caption = 'Value'
+      end
+      item
+        Caption = 'Action'
+        Width = 75
+      end>
+    OwnerData = True
+    ReadOnly = True
+    RowSelect = True
+    ShowWorkAreas = True
+    TabOrder = 2
+    ViewStyle = vsReport
+    OnData = FilterListViewData
+    ExplicitLeft = 32
+    ExplicitWidth = 517
   end
 end

@@ -6,7 +6,8 @@ Uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
   System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls,
-  Generics.Collections, RequestFilter, RequestListModel, Vcl.ExtCtrls;
+  Generics.Collections, RequestFilter, RequestListModel, Vcl.ExtCtrls,
+  Vcl.ComCtrls;
 
 Type
   EFilterComboboxType = (
@@ -35,13 +36,17 @@ Type
     LowerPanel: TPanel;
     CloseButton: TButton;
     OkButton: TButton;
+    FilterListView: TListView;
     Procedure FormCreate(Sender: TObject);
     procedure FilterTypeComboBoxChange(Sender: TObject);
     procedure FilterColumnComboBoxChange(Sender: TObject);
     procedure FilterActionComboBoxChange(Sender: TObject);
     procedure CloseButtonClick(Sender: TObject);
     procedure OkButtonClick(Sender: TObject);
+    procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure FilterListViewData(Sender: TObject; Item: TListItem);
   Private
+    FFilterList : TObjectList<TRequestFilter>;
     FCBs : Array [0..Ord(fctMax)-1] of TComboBox;
     Procedure EnableCombobox(AType:EFilterComboboxType; AEnable:Boolean);
   end;
@@ -112,6 +117,26 @@ If FilterOperatorComboBox.Enabled Then
   end;
 end;
 
+Procedure TFilterFrm.FilterListViewData(Sender: TObject; Item: TListItem);
+Var
+  f : TRequestFilter;
+begin
+With Item  Do
+  begin
+  f := FFilterList[Index];
+  Caption := f.Name;
+  SubItems.Add(FilterTypeComboBox.Items[Ord(f.RequestType)]);
+  SubItems.Add(RequestListModelColumnNames[Ord(f.Field)]);
+  SubItems.Add(RequestFilterOperatorNames[Ord(f.Op)]);
+  If f.Negate Then
+    SubItems.Add('Yes')
+  Else SubItems.Add('No');
+
+  SubItems.Add(f.StringValue);
+  SubItems.Add(FilterActionComboBox.Items[Ord(f.Action)]);
+  end;
+end;
+
 Procedure TFilterFrm.FilterTypeComboBoxChange(Sender: TObject);
 Var
   c : TComboBox;
@@ -154,6 +179,11 @@ If FilterColumnComboBox.Enabled Then
   end;
 end;
 
+Procedure TFilterFrm.FormClose(Sender: TObject; var Action: TCloseAction);
+begin
+FFilterList.Free;
+end;
+
 Procedure TFilterFrm.FormCreate(Sender: TObject);
 Var
   bm : Boolean;
@@ -163,6 +193,7 @@ Var
   tmp : TRequestFilter;
   I : ERequestType;
 begin
+FFilterList := TObjectList<TRequestFilter>.Create;
 FCBs[Ord(fctType)] := FilterTypeComboBox;
 FCBs[Ord(fctColumn)] := FilterColumnComboBox;
 FCBs[Ord(fctOperator)] := FilterOperatorComboBox;
