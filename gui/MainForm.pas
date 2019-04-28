@@ -9,7 +9,7 @@ Interface
 Uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics,
   Controls, Forms, Dialogs, ComCtrls, Menus,
-  Generics.Collections,
+  Generics.Collections, RequestFilter,
   IRPMonDll, RequestListModel, ExtCtrls,
   HookObjects, RequestThread, DataParsers
 {$IFNDEF FPC}
@@ -83,6 +83,7 @@ Type
     FRequestTHread : TRequestThread;
     FRequestMsgCode : Cardinal;
     FParsers : TObjectList<TDataParser>;
+    FFilters : TObjectList<TRequestFilter>;
     Procedure EnumerateHooks;
     Procedure EnumerateClassWatches;
     Procedure EnumerateDriverNameWatches;
@@ -170,11 +171,20 @@ begin
 Close;
 end;
 
-procedure TMainFrm.FiltersMenuItemClick(Sender: TObject);
+Procedure TMainFrm.FiltersMenuItemClick(Sender: TObject);
+Var
+  rf : TRequestFilter;
 begin
-With TFilterFrm.Create(Application) Do
+With TFilterFrm.Create(Application, FFilters) Do
   begin
   ShowModal;
+  If Not Cancelled Then
+    begin
+    FFilters.Clear;
+    For rf In FilterList Do
+      FFilters.Add(rf);
+    end;
+
   Free;
   end;
 end;
@@ -196,10 +206,13 @@ With THookProgressFrm.Create(Application, taskList) Do
   ShowModal;
   Free;
   end;
+
+FFilters.Free;
 end;
 
 Procedure TMainFrm.FormCreate(Sender: TObject);
 begin
+FFilters := TObjectList<TRequestFilter>.Create;
 RequestListView.DoubleBuffered := True;
 {$IFNDEF FPC}
 FAppEvents := TApplicationEvents.Create(Self);

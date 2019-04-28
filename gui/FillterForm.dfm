@@ -11,6 +11,7 @@ object FilterFrm: TFilterFrm
   Font.Name = 'Tahoma'
   Font.Style = []
   OldCreateOrder = False
+  OnClose = FormClose
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   PixelsPerInch = 96
@@ -22,7 +23,6 @@ object FilterFrm: TFilterFrm
     Height = 111
     Align = alTop
     TabOrder = 0
-    ExplicitTop = -6
     object Label1: TLabel
       Left = 0
       Top = 13
@@ -162,9 +162,6 @@ object FilterFrm: TFilterFrm
     Height = 49
     Align = alBottom
     TabOrder = 1
-    ExplicitLeft = 80
-    ExplicitTop = 176
-    ExplicitWidth = 113
     object CloseButton: TButton
       Left = 480
       Top = 8
@@ -224,10 +221,8 @@ object FilterFrm: TFilterFrm
     TabOrder = 2
     ViewStyle = vsReport
     OnAdvancedCustomDrawItem = FilterListViewAdvancedCustomDrawItem
-    OnData = FilterListViewData
     OnDblClick = FilterListViewDblClick
     OnDeletion = FilterListViewDeletion
     OnItemChecked = FilterListViewItemChecked
-    ExplicitTop = 113
   end
 end

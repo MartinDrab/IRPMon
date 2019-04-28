@@ -89,7 +89,7 @@ Type
 
     Function GetPossibleValues(ASources:TList<UInt64>; ATargets:TList<WideString>; Var ABitmask:Boolean):Boolean; Virtual;
     Function SupportedOperators:RequestFilterOperatorSet; Virtual;
-
+    Function Copy:TRequestFilter;
     Function Match(ARequest:TDriverRequest; AChainStart:Boolean = True):TRequestFilter;
     Function SetAction(AAction:EFilterAction; AHighlightColor:Cardinal = 0; ANextFilter:TRequestFilter = Nil):Cardinal;
     Function SetCondition(AColumn:ERequestListModelColumnType; AOperator:ERequestFilterOperator; AValue:UInt64):Boolean; Overload;
@@ -414,6 +414,24 @@ Case ARequestType Of
   ertDeviceDetected: ;
   ertFileObjectNameAssigned: ;
   ertFileObjectNameDeleted: ;
+  end;
+end;
+
+Function TRequestFilter.Copy:TRequestFilter;
+begin
+Result := NewInstance(FRequestType);
+If Assigned(Result) Then
+  begin
+  Result.FName := FName;
+  Result.FHighlightColor := FHighlightColor;
+  Result.FField := FField;
+  Result.FOp := FOp;
+  Result.FStringValue := FStringValue;
+  Result.FIntValue := FIntValue;
+  Result.FEnabled := FEnabled;
+  Result.FAction := FAction;
+  Result.FNegate := FNegate;
+  Result.FColumnName := FColumnName;
   end;
 end;
 

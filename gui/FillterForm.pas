@@ -56,11 +56,18 @@ Type
     procedure FilterListViewDeletion(Sender: TObject; Item: TListItem);
     procedure FilterListViewItemChecked(Sender: TObject; Item: TListItem);
     procedure FormDestroy(Sender: TObject);
+    procedure FormClose(Sender: TObject; var Action: TCloseAction);
   Private
     FFilterList : TObjectList<TRequestFilter>;
     FCBs : Array [0..Ord(fctMax)-1] of TComboBox;
+    FCancelled : Boolean;
     Procedure EnableCombobox(AType:EFilterComboboxType; AEnable:Boolean);
     Procedure RefreshListView;
+  Public
+    Constructor Create(AOwner:TApplication; AFilterList:TObjectList<TRequestFilter>); Reintroduce;
+
+    Property FilterList : TObjectList<TRequestFilter> Read FFilterList;
+    Property Cancelled : Boolean Read FCancelled;
   end;
 
 
@@ -71,6 +78,17 @@ Implementation
 Uses
   IRPMonDll, IRPRequest, FastIoRequest, Utils,
   FileObjectNameXxxRequest, XXXDetectedRequests;
+
+Constructor TFilterFrm.Create(AOwner:TApplication; AFilterList:TObjectList<TRequestFilter>);
+Var
+  rf : TRequestFilter;
+begin
+FFilterList := TObjectList<TRequestFilter>.Create;
+For rf In AFilterList Do
+  FFilterList.Add(rf.Copy);
+
+Inherited Create(Application);
+end;
 
 Procedure TFilterFrm.FilterActionComboBoxChange(Sender: TObject);
 Var
@@ -291,16 +309,21 @@ If FilterColumnComboBox.Enabled Then
   end;
 end;
 
+Procedure TFilterFrm.FormClose(Sender: TObject; var Action: TCloseAction);
+begin
+FilterListView.OnDeletion := Nil;
+end;
+
 Procedure TFilterFrm.FormCreate(Sender: TObject);
 Var
   bm : Boolean;
   index : Integer;
   ss : TList<UInt64>;
+  rf : TRequestFilter;
   ts : TList<WideString>;
   tmp : TRequestFilter;
   I : ERequestType;
 begin
-FFilterList := TObjectList<TRequestFilter>.Create;
 FCBs[Ord(fctType)] := FilterTypeComboBox;
 FCBs[Ord(fctColumn)] := FilterColumnComboBox;
 FCBs[Ord(fctOperator)] := FilterOperatorComboBox;
@@ -329,6 +352,14 @@ For I := Low(ERequestType) To High(ERequestType) Do
 
 ts.Free;
 ss.Free;
+FCancelled := True;
+If Not FilterListView.OwnerData Then
+  begin
+  For rf In FFilterList Do
+    FilterListViewData(FilterListView, FilterListView.Items.Add);
+  end;
+
+RefreshListView;
 end;
 
 Procedure TFilterFrm.FormDestroy(Sender: TObject);
@@ -338,6 +369,8 @@ end;
 
 Procedure TFilterFrm.OkButtonClick(Sender: TObject);
 begin
+FFilterList.OwnsObjects := False;
+FCancelled := False;
 Close;
 end;
 
