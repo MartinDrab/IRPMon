@@ -317,12 +317,14 @@ end;
 
 Procedure TFilterFrm.FormCreate(Sender: TObject);
 Var
+  L : TListItem;
   bm : Boolean;
   index : Integer;
   ss : TList<UInt64>;
   rf : TRequestFilter;
   ts : TList<WideString>;
   tmp : TRequestFilter;
+  tmpEnabled : Boolean;
   I : ERequestType;
 begin
 FCBs[Ord(fctType)] := FilterTypeComboBox;
@@ -357,7 +359,13 @@ FCancelled := True;
 If Not FilterListView.OwnerData Then
   begin
   For rf In FFilterList Do
-    FilterListViewData(FilterListView, FilterListView.Items.Add);
+    begin
+    tmpEnabled := rf.Enabled;
+    L := FilterListView.Items.Add;
+    FilterListViewData(FilterListView, L);
+    rf.Enabled := tmpEnabled;
+    L.Checked := rf.Enabled;
+    end;
   end;
 
 RefreshListView;
@@ -378,6 +386,7 @@ end;
 Procedure TFilterFrm.AddButtonClick(Sender: TObject);
 Var
   I : Integer;
+  L : TListItem;
   rt : ERequestType;
   ct : ERequestListModelColumnType;
   op : ERequestFilterOperator;
@@ -437,14 +446,15 @@ Try
   err := f.SetAction(fa, hc);
   If err <> 0 Then
     begin
-
+    ErrorMessage(IntToStr(err));
     Exit;
     end;
 
-  f.Enabled := EnabledCheckBox.Checked;
   FFilterList.Add(f);
+  L := FilterListVIew.Items.Add;
+  f.Enabled := EnabledCheckBox.Checked;
   If Not FilterListView.OwnerData Then
-    FilterListViewData(FilterListView, FilterListView.Items.Add);
+    FilterListViewData(FilterListView, L);
 
   RefreshListView;
   f := Nil;
