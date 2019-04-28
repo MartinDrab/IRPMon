@@ -62,7 +62,6 @@ Type
     FCBs : Array [0..Ord(fctMax)-1] of TComboBox;
     FCancelled : Boolean;
     Procedure EnableCombobox(AType:EFilterComboboxType; AEnable:Boolean);
-    Procedure RefreshListView;
   Public
     Constructor Create(AOwner:TApplication; AFilterList:TObjectList<TRequestFilter>); Reintroduce;
 
@@ -356,19 +355,15 @@ For I := Low(ERequestType) To High(ERequestType) Do
 ts.Free;
 ss.Free;
 FCancelled := True;
-If Not FilterListView.OwnerData Then
+For rf In FFilterList Do
   begin
-  For rf In FFilterList Do
-    begin
-    tmpEnabled := rf.Enabled;
-    L := FilterListView.Items.Add;
-    FilterListViewData(FilterListView, L);
-    rf.Enabled := tmpEnabled;
-    L.Checked := rf.Enabled;
-    end;
+  tmpEnabled := rf.Enabled;
+  L := FilterListView.Items.Add;
+  FilterListViewData(FilterListView, L);
+  rf.Enabled := tmpEnabled;
+  L.Checked := rf.Enabled;
   end;
 
-RefreshListView;
 end;
 
 Procedure TFilterFrm.FormDestroy(Sender: TObject);
@@ -453,10 +448,7 @@ Try
   FFilterList.Add(f);
   L := FilterListVIew.Items.Add;
   f.Enabled := EnabledCheckBox.Checked;
-  If Not FilterListView.OwnerData Then
-    FilterListViewData(FilterListView, L);
-
-  RefreshListView;
+  FilterListViewData(FilterListView, L);
   f := Nil;
 Finally
   If Assigned(f) Then
@@ -475,10 +467,7 @@ Var
 begin
 L := FilterListView.Selected;
 If Assigned(L) Then
-  begin
   L.Delete;
-  RefreshListView;
-  end;
 end;
 
 Procedure TFilterFrm.EnableCombobox(AType:EFilterComboboxType; AEnable:Boolean);
@@ -492,16 +481,6 @@ Case c.Enabled Of
   True : c.Color := clWindow;
   end;
 end;
-
-Procedure TFilterFrm.RefreshListView;
-begin
-If FilterListView.OwnerData Then
-  begin
-  FilterListView.Items.Count := FFilterList.Count;
-  FilterListView.Invalidate;
-  end;
-end;
-
 
 
 End.
