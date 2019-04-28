@@ -713,6 +713,7 @@ Var
   rf : TRequestFilter;
   matchingRF : TRequestFilter;
 begin
+ARequest.Highlight := False;
 AStore := (FFilters.Count = 0);
 For rf In FFilters Do
   begin
