@@ -79,6 +79,7 @@ Type
     FAction : EFilterAction;
     FNegate : Boolean;
     FColumnName : WideString;
+    FRequestPrototype : TDriverRequest;
   Protected
     Procedure SetEnable(AValue:Boolean);
     Function AddNext(AFilter:TRequestFilter):Cardinal;
@@ -86,6 +87,7 @@ Type
     Procedure AddMapping(ASources:TList<UInt64>; ATargets:TList<WideString>; AIntValue:UInt64; AStringValue:WideString);
   Public
     Constructor Create(AName:WideString; ARequestType:ERequestType = ertUndefined); Reintroduce;
+    Destructor Destroy; Override;
 
     Function GetPossibleValues(ASources:TList<UInt64>; ATargets:TList<WideString>; Var ABitmask:Boolean):Boolean; Virtual;
     Function SupportedOperators:RequestFilterOperatorSet; Virtual;
@@ -107,7 +109,7 @@ Type
     Property Action : EFilterAction Read FAction;
     Property HighlightColor : Cardinal Read FHighlightColor;
     Property Negate : Boolean Read FNegate Write FNegate;
-    Property ColumnName : WideString Read FColumnName Write FColumnName;
+    Property ColumnName : WideString Read FColumnName;
   end;
 
   TIRPRequestFilter = Class (TRequestFilter)
@@ -120,7 +122,8 @@ Type
 Implementation
 
 Uses
-  SysUtils;
+  SysUtils, IRPRequest, FastIoRequest, FileObjectNameXXXRequest,
+  XXXDetectedRequests;
 
 (** TRequestFilter **)
 
@@ -133,6 +136,27 @@ FOp := rfoAlwaysTrue;
 FAction := ffaInclude;
 FNextFilter := Nil;
 FPreviousFilter := Nil;
+Case FRequestType Of
+  ertUndefined: FRequestPrototype := TDriverRequest.Create;
+  ertIRP: FRequestPrototype := TIRPRequest.Create;
+  ertIRPCompletion: FRequestPrototype := TIRPCompleteRequest.Create;
+  ertAddDevice: FRequestPrototype := TAddDeviceRequest.Create;
+  ertDriverUnload: FRequestPrototype := TDriverUnloadRequest.Create;
+  ertFastIo: FRequestPrototype := TFastIoRequest.Create;
+  ertStartIo: FRequestPrototype := TStartIoRequest.Create;
+  ertDriverDetected: FRequestPrototype := TDriverDetectedRequest.Create;
+  ertDeviceDetected: FRequestPrototype := TDeviceDetectedRequest.Create;
+  ertFileObjectNameAssigned: FRequestPrototype := TFileObjectNameAssignedRequest.Create;
+  ertFileObjectNameDeleted: FRequestPrototype := TFileObjectNameDeletedRequest.Create;
+  end;
+end;
+
+Destructor TRequestFilter.Destroy;
+begin
+If Assigned(FRequestPrototype) Then
+  FRequestPrototype.Free;
+
+Inherited Destroy;
 end;
 
 Function TRequestFilter.Match(ARequest:TDriverRequest; AChainStart:Boolean = True):TRequestFilter;
@@ -298,6 +322,9 @@ Case RequestListModelColumnValueTypes[Ord(AColumn)] Of
     end;
   Else Result := False;
   end;
+
+If Result Then
+  FColumnName := FRequestPrototype.GetColumnName(AColumn);
 end;
 
 Function TRequestFilter.SetCondition(AColumn:ERequestListModelColumnType; AOperator:ERequestFilterOperator; AValue:WideString):Boolean;
@@ -334,6 +361,9 @@ Case RequestListModelColumnValueTypes[Ord(AColumn)] Of
       end;
     end;
   end;
+
+If Result Then
+  FColumnName := FRequestPrototype.GetColumnName(AColumn);
 end;
 
 Function TRequestFilter.SupportedOperators:RequestFilterOperatorSet;

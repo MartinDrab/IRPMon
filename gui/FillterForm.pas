@@ -239,6 +239,7 @@ If Assigned(L) Then
     HighlightColorColorBox.Selected := f.HighlightColor;
 
   NegateCheckBox.Checked := f.Negate;
+  EnabledCheckBox.Checked := f.Enabled;
   end;
 end;
 
@@ -426,7 +427,6 @@ Try
     Exit;
 
   f.Name := IntToStr(FilterListView.Items.Count + 1);
-  f.ColumnName := FilterColumnComboBox.Items[FilterColumnComboBox.ItemIndex];
   If Not f.SetCondition(ct, op, v) Then
     begin
     ErrorMessage('Unable to set filter condition, bad value of the constant');

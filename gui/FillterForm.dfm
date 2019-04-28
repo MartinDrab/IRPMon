@@ -215,8 +215,11 @@ object FilterFrm: TFilterFrm
         Caption = 'Action'
         Width = 75
       end>
+    DoubleBuffered = True
+    HideSelection = False
     ReadOnly = True
     RowSelect = True
+    ParentDoubleBuffered = False
     ShowWorkAreas = True
     TabOrder = 2
     ViewStyle = vsReport
@@ -224,5 +227,6 @@ object FilterFrm: TFilterFrm
     OnDblClick = FilterListViewDblClick
     OnDeletion = FilterListViewDeletion
     OnItemChecked = FilterListViewItemChecked
+    ExplicitTop = 113
   end
 end
