@@ -39,6 +39,8 @@ Type
     FColumns : TList<TListModelColumn>;
     Function CSVEscape(AElement:WideString):WideString;
   Protected
+    Procedure _OnAdvancedCustomDrawItemCallback(Sender: TCustomListView; Item: TListItem; State: TCustomDrawState; Stage: TCustomDrawStage; var DefaultDraw: Boolean);
+    Procedure OnAdvancedCustomDrawItemCallback(Sender: TCustomListView; Item: TListItem; State: TCustomDrawState; Stage: TCustomDrawStage; var DefaultDraw: Boolean); Virtual; Abstract;
     Procedure OnDataCallback(Sender:TObject; Item:TListItem);
     Function GetColumn(AItem:T; ATag:NativeUInt):WideString; Virtual; Abstract;
     Function GetImageIndex(AItem:T):Integer; Virtual;
@@ -161,6 +163,7 @@ begin
 FDisplayer := AObject;
 FDisplayer.ViewStyle := vsReport;
 FDisplayer.OnData := OnDataCallback;
+FDisplayer.OnAdvancedCustomDrawItem := _OnAdvancedCustomDrawItemCallback;
 FDisplayer.OwnerData := True;
 FDisplayer.Items.Count := 0;
 RefreshColumns;
@@ -360,6 +363,11 @@ For I := 0 To RowCount - 1 Do
 
   AStrings.Add(line);
   end;
+end;
+
+Procedure TListModel<T>._OnAdvancedCustomDrawItemCallback(Sender: TCustomListView; Item: TListItem; State: TCustomDrawState; Stage: TCustomDrawStage; var DefaultDraw: Boolean);
+begin
+OnAdvancedCustomDrawItemCallback(Sender, Item, State, Stage, DefaultDraw);
 end;
 
 (*** TListModelColumn ***)

@@ -8,7 +8,8 @@ Interface
 
 Uses
   Windows, Classes, Generics.Collections, Generics.Defaults,
-  IRPMonDll, ListModel, IRPMonRequest, DataParsers;
+  IRPMonDll, ListModel, IRPMonRequest, DataParsers, ComCtrls,
+  Graphics;
 
 
 Type
@@ -192,6 +193,7 @@ Type
       FParsers : TObjectList<TDataParser>;
       FOnRequestProcessed : TRequestListModelOnRequestProcessed;
     Protected
+      Procedure OnAdvancedCustomDrawItemCallback(Sender: TCustomListView; Item: TListItem; State: TCustomDrawState; Stage: TCustomDrawStage; var DefaultDraw: Boolean); Override;
       Function GetColumn(AItem:TDriverRequest; ATag:NativeUInt):WideString; Override;
       Procedure FreeItem(AItem:TDriverRequest); Override;
       Function _Item(AIndex:Integer):TDriverRequest; Override;
@@ -690,6 +692,33 @@ FRequests.Sort(c);
 c.Free;
 If Assigned(FDisplayer) Then
   FDisplayer.Invalidate;
+end;
+
+Procedure TRequestListModel.OnAdvancedCustomDrawItemCallback(Sender: TCustomListView; Item: TListItem; State: TCustomDrawState; Stage: TCustomDrawStage; var DefaultDraw: Boolean);
+Var
+  dr : TDriverRequest;
+begin
+dr := FRequests[Item.Index];
+With Sender.Canvas Do
+  begin
+  If Item.Selected Then
+    begin
+    Brush.Color := clHighLight;
+    Font.Color := clHighLightText;
+    Font.Style := [fsBold];
+    end
+  Else If dr.Highlight Then
+    begin
+    Brush.Color := dr.HighlightColor;
+    If (dr.HighlightColor >= $800000) Or
+       (dr.HighlightColor >= $008000) Or
+       (dr.HighlightColor >= $000080) Then
+       Font.Color := ClBlack
+    Else Font.Color := ClWhite;
+    end;
+  end;
+
+DefaultDraw := True;
 end;
 
 
