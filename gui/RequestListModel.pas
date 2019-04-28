@@ -122,6 +122,8 @@ Const
 Type
   TDriverRequest = Class (TGeneralRequest)
   Private
+    FHighlight : Boolean;
+    FHighlightColor : Cardinal;
     Procedure ProcessParsers(AParsers:TObjectList<TDataParser>; ALines:TStrings);
   Public
     Class Function GetBaseColumnName(AColumnType:ERequestListModelColumnType):WideString;
@@ -130,6 +132,9 @@ Type
     Function GetColumnValueRaw(AColumnType:ERequestListModelColumnType; Var AValue:Pointer; Var AValueSize:Cardinal):Boolean; Virtual;
     Procedure SaveToStream(AStream:TStream; AParsers:TObjectList<TDataParser>); Virtual;
     Procedure SaveToFile(AFileName:WideString; AParsers:TObjectList<TDataParser>); Virtual;
+
+    Property Highlight : Boolean Read FHighlight Write FHighlight;
+    Property HighlightColor : Cardinal Read FHighlightColor Write FHighlightColor;
   end;
 
   TDriverRequestComparer = Class (TComparer<TDriverRequest>)
@@ -176,6 +181,8 @@ Type
     Constructor Create(Var ARequest:REQUEST_STARTIO); Overload;
   end;
 
+  TRequestListModelOnRequestProcessed = Procedure (ARequest:TDriverRequest; Var AStore:Boolean) Of Object;
+
   TRequestListModel = Class (TListModel<TDriverRequest>)
     Private
       FRequests : TList<TDriverRequest>;
@@ -183,6 +190,7 @@ Type
       FDeviceMap : TDictionary<Pointer, WideString>;
       FFileMap : TDictionary<Pointer, WideString>;
       FParsers : TObjectList<TDataParser>;
+      FOnRequestProcessed : TRequestListModelOnRequestProcessed;
     Protected
       Function GetColumn(AItem:TDriverRequest; ATag:NativeUInt):WideString; Override;
       Procedure FreeItem(AItem:TDriverRequest); Override;
@@ -201,6 +209,7 @@ Type
       Procedure SaveToFile(AFileName:WideString);
 
       Property Parsers : TObjectList<TDataParser> Read FParsers Write FParsers;
+      Property OnRequestProcessed : TRequestListModelOnRequestProcessed Read FOnRequestProcessed Write FOnRequestProcessed;
     end;
 
 Implementation
@@ -508,6 +517,7 @@ end;
 
 Function TRequestListModel.Update:Cardinal;
 Var
+  keepRequest : Boolean;
   ur : PREQUEST_GENERAL;
   dr : TDriverRequest;
   deviceName : WideString;
@@ -564,7 +574,13 @@ If Assigned(UpdateRequest) Then
     If FFileMap.TryGetValue(dr.FileObject, fileName) Then
       dr.SetFileName(fileName);
 
-    FRequests.Add(dr);
+    keepRequest := True;
+    If Assigned(FOnRequestProcessed) Then
+      FOnRequestProcessed(dr, keepRequest);
+
+    If keepRequest Then
+      FRequests.Add(dr)
+    Else dr.Free;
     end;
 
   UpdateRequest := Nil;

@@ -93,6 +93,7 @@ Type
     Procedure IrpMonAppEventsException(Sender: TObject; E: Exception);
     Procedure WriteSettings;
     Procedure ReadSettings;
+    Procedure OnRequestProcessed(ARequest:TDriverRequest; Var AStore:Boolean);
   Public
     ServiceTask : TDriverTaskObject;
     TaskList : TTaskOperationList;
@@ -231,6 +232,7 @@ FHookedDrivers := TDictionary<Pointer, TDriverHookObject>.Create;
 FHookedDevices := TDictionary<Pointer, TDeviceHookObject>.Create;
 FHookedDeviceDriverMap := TDictionary<Pointer, Pointer>.Create;
 FModel := TRequestListModel.Create;
+FModel.OnRequestProcessed := OnRequestProcessed;
 FModel.ColumnUpdateBegin;
 FModel.
     ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctId), Ord(rlmctId), False, 60).
@@ -700,6 +702,29 @@ Finally
   iniFile.Free;
   End;
 end;
+
+Procedure TMainFrm.OnRequestProcessed(ARequest:TDriverRequest; Var AStore:Boolean);
+Var
+  matchResult : Cardinal;
+  rf : TRequestFilter;
+  matchingRF : TRequestFilter;
+begin
+AStore := (FFilters.Count = 0);
+For rf In FFilters Do
+  begin
+  matchingRF := rf.Match(ARequest);
+  If Assigned(matchingRF) Then
+    begin
+    AStore := (matchingRF.Action In [ffaInclude, ffaHighlight]);
+    ARequest.Highlight := (matchingRF.Action = ffaHighlight);
+    If ARequest.Highlight Then
+      ARequest.HighlightColor := matchingRF.HighlightColor;
+
+    Break;
+    end;
+  end;
+end;
+
 
 
 End.
