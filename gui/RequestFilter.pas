@@ -405,15 +405,7 @@ Result := Nil;
 Case ARequestType Of
   ertUndefined: Result := TRequestFilter.Create('', ARequestType);
   ertIRP: Result := TIRPRequestFilter.Create('');
-  ertIRPCompletion: ;
-  ertAddDevice: ;
-  ertDriverUnload: ;
-  ertFastIo: ;
-  ertStartIo: ;
-  ertDriverDetected: ;
-  ertDeviceDetected: ;
-  ertFileObjectNameAssigned: ;
-  ertFileObjectNameDeleted: ;
+  Else Result := TRequestFilter.Create('', ARequestType);
   end;
 end;
 
