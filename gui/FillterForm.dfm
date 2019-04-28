@@ -11,8 +11,8 @@ object FilterFrm: TFilterFrm
   Font.Name = 'Tahoma'
   Font.Style = []
   OldCreateOrder = False
-  OnClose = FormClose
   OnCreate = FormCreate
+  OnDestroy = FormDestroy
   PixelsPerInch = 96
   TextHeight = 13
   object UpperPanel: TPanel
@@ -144,6 +144,16 @@ object FilterFrm: TFilterFrm
       TabOrder = 8
       OnClick = DeleteButtonClick
     end
+    object EnabledCheckBox: TCheckBox
+      Left = 139
+      Top = 59
+      Width = 73
+      Height = 17
+      Caption = 'Enabled'
+      Checked = True
+      State = cbChecked
+      TabOrder = 9
+    end
   end
   object LowerPanel: TPanel
     Left = 0
@@ -208,7 +218,6 @@ object FilterFrm: TFilterFrm
         Caption = 'Action'
         Width = 75
       end>
-    OwnerData = True
     ReadOnly = True
     RowSelect = True
     ShowWorkAreas = True
@@ -217,6 +226,8 @@ object FilterFrm: TFilterFrm
     OnAdvancedCustomDrawItem = FilterListViewAdvancedCustomDrawItem
     OnData = FilterListViewData
     OnDblClick = FilterListViewDblClick
+    OnDeletion = FilterListViewDeletion
+    OnItemChecked = FilterListViewItemChecked
     ExplicitTop = 113
   end
 end

@@ -39,13 +39,13 @@ Type
     FilterListView: TListView;
     AddButton: TButton;
     DeleteButton: TButton;
+    EnabledCheckBox: TCheckBox;
     Procedure FormCreate(Sender: TObject);
     procedure FilterTypeComboBoxChange(Sender: TObject);
     procedure FilterColumnComboBoxChange(Sender: TObject);
     procedure FilterActionComboBoxChange(Sender: TObject);
     procedure CloseButtonClick(Sender: TObject);
     procedure OkButtonClick(Sender: TObject);
-    procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FilterListViewData(Sender: TObject; Item: TListItem);
     procedure DeleteButtonClick(Sender: TObject);
     procedure AddButtonClick(Sender: TObject);
@@ -53,6 +53,9 @@ Type
       Item: TListItem; State: TCustomDrawState; Stage: TCustomDrawStage;
       var DefaultDraw: Boolean);
     procedure FilterListViewDblClick(Sender: TObject);
+    procedure FilterListViewDeletion(Sender: TObject; Item: TListItem);
+    procedure FilterListViewItemChecked(Sender: TObject; Item: TListItem);
+    procedure FormDestroy(Sender: TObject);
   Private
     FFilterList : TObjectList<TRequestFilter>;
     FCBs : Array [0..Ord(fctMax)-1] of TComboBox;
@@ -172,6 +175,7 @@ With Item  Do
 
   SubItems.Add(f.StringValue);
   SubItems.Add(FilterActionComboBox.Items[Ord(f.Action)]);
+  Checked := f.Enabled;
   end;
 end;
 
@@ -220,6 +224,31 @@ If Assigned(L) Then
   end;
 end;
 
+Procedure TFilterFrm.FilterListViewDeletion(Sender: TObject; Item: TListItem);
+begin
+FFilterList.Delete(Item.Index);
+end;
+
+Procedure TFilterFrm.FilterListViewItemChecked(Sender: TObject;
+  Item: TListItem);
+Var
+  I : Integer;
+  f : TRequestFilter;
+begin
+f := FFilterList[Item.Index];
+f.Enabled := Item.Checked;
+If f.Action = ffaPassToFilter Then
+  begin
+  For I := 0 To FilterListVIew.Items.Count - 1 Do
+    begin
+    If I = Item.Index Then
+      Continue;
+
+    FilterListView.Items[I].Checked := FFilterList[I].Enabled;
+    end;
+  end;
+end;
+
 Procedure TFilterFrm.FilterTypeComboBoxChange(Sender: TObject);
 Var
   c : TComboBox;
@@ -262,11 +291,6 @@ If FilterColumnComboBox.Enabled Then
   end;
 end;
 
-Procedure TFilterFrm.FormClose(Sender: TObject; var Action: TCloseAction);
-begin
-FFilterList.Free;
-end;
-
 Procedure TFilterFrm.FormCreate(Sender: TObject);
 Var
   bm : Boolean;
@@ -305,6 +329,11 @@ For I := Low(ERequestType) To High(ERequestType) Do
 
 ts.Free;
 ss.Free;
+end;
+
+Procedure TFilterFrm.FormDestroy(Sender: TObject);
+begin
+FFilterList.Free;
 end;
 
 Procedure TFilterFrm.OkButtonClick(Sender: TObject);
@@ -379,8 +408,11 @@ Try
     Exit;
     end;
 
-  f.Enabled := True;
+  f.Enabled := EnabledCheckBox.Checked;
   FFilterList.Add(f);
+  If Not FilterListView.OwnerData Then
+    FilterListViewData(FilterListView, FilterListView.Items.Add);
+
   RefreshListView;
   f := Nil;
 Finally
@@ -401,7 +433,7 @@ begin
 L := FilterListView.Selected;
 If Assigned(L) Then
   begin
-  FFilterList.Delete(L.Index);
+  L.Delete;
   RefreshListView;
   end;
 end;
@@ -420,8 +452,11 @@ end;
 
 Procedure TFilterFrm.RefreshListView;
 begin
-FilterListView.Items.Count := FFilterList.Count;
-FilterListView.Invalidate;
+If FilterListView.OwnerData Then
+  begin
+  FilterListView.Items.Count := FFilterList.Count;
+  FilterListView.Invalidate;
+  end;
 end;
 
 
