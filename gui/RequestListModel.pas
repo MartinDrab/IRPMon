@@ -209,6 +209,7 @@ Type
       Function Update:Cardinal; Override;
       Procedure SaveToStream(AStream:TStream);
       Procedure SaveToFile(AFileName:WideString);
+      Procedure Reevaluate;
 
       Property Parsers : TObjectList<TDataParser> Read FParsers Write FParsers;
       Property OnRequestProcessed : TRequestListModelOnRequestProcessed Read FOnRequestProcessed Write FOnRequestProcessed;
@@ -719,6 +720,36 @@ With Sender.Canvas Do
   end;
 
 DefaultDraw := True;
+end;
+
+Procedure TRequestListModel.Reevaluate;
+Var
+  store : Boolean;
+  I : Integer;
+begin
+I := 0;
+While (I < FRequests.Count) Do
+  begin
+  If Assigned(FOnRequestProcessed) Then
+    begin
+    store := True;
+    FOnRequestProcessed(FRequests[I], store);
+    If Not store THen
+      begin
+      FRequests[I].Free;
+      FRequests.Delete(I);
+      Continue;
+      end;
+    end;
+
+  Inc(I);
+  end;
+
+If Assigned(FDisplayer) Then
+  begin
+  FDisplayer.Items.Count := FRequests.Count;
+  FDisplayer.Invalidate;
+  end;
 end;
 
 

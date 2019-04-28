@@ -184,6 +184,8 @@ With TFilterFrm.Create(Application, FFilters) Do
     FFilters.Clear;
     For rf In FilterList Do
       FFilters.Add(rf);
+
+    FModel.Reevaluate;
     end;
 
   Free;
