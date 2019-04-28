@@ -94,6 +94,7 @@ Type
     Procedure WriteSettings;
     Procedure ReadSettings;
     Procedure OnRequestProcessed(ARequest:TDriverRequest; Var AStore:Boolean);
+    Procedure CreateInitialFilters;
   Public
     ServiceTask : TDriverTaskObject;
     TaskList : TTaskOperationList;
@@ -285,6 +286,7 @@ Else begin
 FParsers := TObjectList<TDataParser>.Create;
 DataPrasersLoad(ExtractFileDir(Application.ExeName), FParsers);
 FModel.Parsers := FParsers;
+CreateInitialFilters;
 ReadSettings;
 end;
 
@@ -727,7 +729,24 @@ For rf In FFilters Do
   end;
 end;
 
+Procedure TMainFrm.CreateInitialFilters;
+Var
+  rf : TRequestFilter;
+begin
+rf := TRequestFilter.NewInstance(ertUndefined);
+rf.Name := '0';
+rf.SetAction(ffaHighlight, ClRed);
+rf.SetCondition(rlmctProcessId, rfoEquals, GetCurrentProcessId);
+rf.Enabled := True;
+FFilters.Add(rf);
 
+rf := TRequestFilter.NewInstance(ertUndefined);
+rf.Name := '1';
+rf.SetAction(ffaInclude);
+rf.SetCondition(rlmctRequestType, rfoAlwaysTrue, 0);
+rf.Enabled := True;
+FFilters.Add(rf);
+end;
 
 End.
 
