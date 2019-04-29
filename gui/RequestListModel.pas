@@ -134,6 +134,8 @@ Type
     Procedure SaveToStream(AStream:TStream; AParsers:TObjectList<TDataParser>; ABinary:Boolean = False); Virtual;
     Procedure SaveToFile(AFileName:WideString; AParsers:TObjectList<TDataParser>; ABinary:Boolean = False); Virtual;
 
+    Class Function CreatePrototype(AType:ERequestType):TDriverRequest;
+
     Property Highlight : Boolean Read FHighlight Write FHighlight;
     Property HighlightColor : Cardinal Read FHighlightColor Write FHighlightColor;
   end;
@@ -233,6 +235,23 @@ Result := Integer(Left.Id - Right.Id);
 end;
 
 (** TDriverRequest **)
+
+Class Function TDriverRequest.CreatePrototype(AType:ERequestType):TDriverRequest;
+begin
+Case AType Of
+  ertIRP: Result := TIRPRequest.Create;
+  ertIRPCompletion: Result := TIRPCompleteRequest.Create;
+  ertAddDevice: Result := TAddDeviceRequest.Create;
+  ertDriverUnload: Result := TDriverUnloadRequest.Create;
+  ertFastIo: Result := TFastIoRequest.Create;
+  ertStartIo: Result := TStartIoRequest.Create;
+  ertDriverDetected : Result := TDriverDetectedRequest.Create;
+  ertDeviceDetected : Result := TDeviceDetectedRequest.Create;
+  ertFileObjectNameAssigned : Result := TFileObjectNameAssignedRequest.Create;
+  ertFileObjectNameDeleted : Result := TFileObjectNameDeletedRequest.Create;
+  Else Result := TDriverRequest.Create;
+  end;
+end;
 
 Procedure TDriverRequest.ProcessParsers(AParsers:TObjectList<TDataParser>; ALines:TStrings);
 Var
