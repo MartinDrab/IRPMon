@@ -425,11 +425,13 @@ begin
 If LogSaveDialog.Execute Then
   begin
   fn := LogSaveDialog.FileName;
-  If LogSaveDialog.FilterIndex = 1 Then
-    fn := ChangeFIleExt(fn, '.log');
+  Case LogSaveDialog.FilterIndex Of
+    1 : fn := ChangeFIleExt(fn, '.log');
+    2 : fn := ChangeFIleExt(fn, '.bin');
+    end;
 
   FModel.Sort;
-  FModel.SaveToFile(fn);
+  FModel.SaveToFile(fn, LogSaveDialog.FilterIndex = 2);
   end;
 end;
 
