@@ -135,4 +135,32 @@ DWORD RequestEmulateDeviceDetected(void *DriverObject, void *DeviceObject, const
 	return ret;
 }
 
+
+DWORD RequestEmulateFileNameAssigned(void *FileObject, const wchar_t *FileName, PREQUEST_FILE_OBJECT_NAME_ASSIGNED *Request)
+{
+	DWORD ret = ERROR_GEN_FAILURE;
+	PREQUEST_FILE_OBJECT_NAME_ASSIGNED tmpRequest = NULL;
+	size_t fileNameLen = 0;
+
+	ret = S_OK;
+	if (FileName != NULL)
+		ret = StringCbLengthW(FileName, 65536, &fileNameLen);
+
+	if (ret == S_OK) {
+		tmpRequest = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(REQUEST_FILE_OBJECT_NAME_ASSIGNED) + fileNameLen);
+		if (tmpRequest != NULL) {
+			_RequestHeaderInit(&tmpRequest->Header, NULL, NULL, ertFileObjectNameAssigned);
+			tmpRequest->FileObject = FileObject;
+			tmpRequest->NameLength = fileNameLen;
+			memcpy(tmpRequest + 1, FileName, fileNameLen);;
+			*Request = tmpRequest;
+			ret = ERROR_SUCCESS;
+		}
+		else ret = GetLastError();
+	}
+
+	return ret;
+}
+
+
 #endif
