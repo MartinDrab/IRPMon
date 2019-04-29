@@ -110,4 +110,29 @@ DWORD RequestEmulateDriverDetected(void *DriverObject, const wchar_t *DriverName
 	return ret;
 }
 
+
+DWORD RequestEmulateDeviceDetected(void *DriverObject, void *DeviceObject, const wchar_t *DeviceName, PREQUEST_DEVICE_DETECTED *Request)
+{
+	DWORD ret = ERROR_GEN_FAILURE;
+	PREQUEST_DEVICE_DETECTED tmpRequest = NULL;
+	size_t deviceNameLen = 0;
+
+	ret = S_OK;
+	if (DeviceName != NULL)
+		ret = StringCbLengthW(DeviceName, 65536, &deviceNameLen);
+
+	if (ret == S_OK) {
+		tmpRequest = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(REQUEST_DEVICE_DETECTED) + deviceNameLen);
+		if (tmpRequest != NULL) {
+			_RequestHeaderInit(&tmpRequest->Header, DriverObject, DeviceObject, ertDeviceDetected);
+			tmpRequest->DeviceNameLength = deviceNameLen;
+			memcpy(tmpRequest + 1, DeviceName, deviceNameLen);;
+			*Request = tmpRequest;
+			ret = ERROR_SUCCESS;
+		} else ret = GetLastError();
+	}
+
+	return ret;
+}
+
 #endif
