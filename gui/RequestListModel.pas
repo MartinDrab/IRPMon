@@ -211,6 +211,8 @@ Type
       Function Update:Cardinal; Override;
       Procedure SaveToStream(AStream:TStream; ABinary:Boolean = False);
       Procedure SaveToFile(AFileName:WideString; ABinary:Boolean = False);
+      Procedure LoadFromStream(AStream:TStream);
+      Procedure LoadFromFile(AFileName:WideString);
       Procedure Reevaluate;
 
       Property Parsers : TObjectList<TDataParser> Read FParsers Write FParsers;
@@ -707,6 +709,41 @@ begin
 F := TFileStream.Create(AFileName, fmCreate Or fmOpenWrite);
 Try
   SaveToStream(F, ABinary);
+Finally
+  F.Free;
+  end;
+end;
+
+Procedure TRequestListModel.LoadFromStream(AStream:TStream);
+Var
+  reqSize : Cardinal;
+  rg : PREQUEST_GENERAL;
+  l : TList<PREQUEST_GENERAL>;
+begin
+l := TList<PREQUEST_GENERAL>.Create;
+While Not AStream.Position < AStream.Size Do
+  begin
+  AStream.Read(reqSize, SizeOf(reqSize));
+  rg := AllocMem(reqSize);
+  AStream.Read(rg^, reqSize);
+  l.Add(rg);
+  end;
+
+UpdateRequest := l;
+Update;
+For rg In l Do
+  FreeMem(rg);
+
+l.Free;
+end;
+
+Procedure TRequestListModel.LoadFromFile(AFileName:WideString);
+Var
+  F : TFileStream;
+begin
+F := TFileStream.Create(AFileName, fmOpenRead);
+Try
+  LoadFromStream(F);
 Finally
   F.Free;
   end;
