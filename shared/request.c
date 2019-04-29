@@ -163,4 +163,21 @@ DWORD RequestEmulateFileNameAssigned(void *FileObject, const wchar_t *FileName, 
 }
 
 
+DWORD RequestEmulateFileNameDeleted(void *FileObject, PREQUEST_FILE_OBJECT_NAME_DELETED *Request)
+{
+	DWORD ret = ERROR_GEN_FAILURE;
+	PREQUEST_FILE_OBJECT_NAME_DELETED tmpRequest = NULL;
+
+	tmpRequest = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(REQUEST_FILE_OBJECT_NAME_DELETED));
+	if (tmpRequest != NULL) {
+		_RequestHeaderInit(&tmpRequest->Header, NULL, NULL, ertFileObjectNameDeleted);
+		tmpRequest->FileObject = FileObject;
+		*Request = tmpRequest;
+		ret = ERROR_SUCCESS;
+	} else ret = GetLastError();
+
+	return ret;
+}
+
+
 #endif
