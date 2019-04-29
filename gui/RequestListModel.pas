@@ -131,8 +131,8 @@ Type
     Function GetColumnName(AColumnType:ERequestListModelColumnType):WideString; Virtual;
     Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Virtual;
     Function GetColumnValueRaw(AColumnType:ERequestListModelColumnType; Var AValue:Pointer; Var AValueSize:Cardinal):Boolean; Virtual;
-    Procedure SaveToStream(AStream:TStream; AParsers:TObjectList<TDataParser>); Virtual;
-    Procedure SaveToFile(AFileName:WideString; AParsers:TObjectList<TDataParser>); Virtual;
+    Procedure SaveToStream(AStream:TStream; AParsers:TObjectList<TDataParser>; ABinary:Boolean = False); Virtual;
+    Procedure SaveToFile(AFileName:WideString; AParsers:TObjectList<TDataParser>; ABinary:Boolean = False); Virtual;
 
     Property Highlight : Boolean Read FHighlight Write FHighlight;
     Property HighlightColor : Cardinal Read FHighlightColor Write FHighlightColor;
@@ -207,8 +207,8 @@ Type
       Procedure Clear; Override;
       Function RowCount : Cardinal; Override;
       Function Update:Cardinal; Override;
-      Procedure SaveToStream(AStream:TStream);
-      Procedure SaveToFile(AFileName:WideString);
+      Procedure SaveToStream(AStream:TStream; ABinary:Boolean = False);
+      Procedure SaveToFile(AFileName:WideString; ABinary:Boolean = False);
       Procedure Reevaluate;
 
       Property Parsers : TObjectList<TDataParser> Read FParsers Write FParsers;
@@ -271,37 +271,46 @@ If Assigned(AParsers) Then
 end;
 
 
-Procedure TDriverRequest.SaveToStream(AStream: TStream; AParsers:TObjectList<TDataParser>);
+Procedure TDriverRequest.SaveToStream(AStream: TStream; AParsers:TObjectList<TDataParser>; ABinary:Boolean = False);
 Var
+  reqSize : Cardinal;
   s : TStringList;
   value : WideString;
   ct : ERequestListModelColumnType;
 begin
-s := TStringList.Create;
-For ct := Low(ERequestListModelColumnType) To High(ERequestListModelColumnType) Do
+If Not ABinary Then
   begin
-  If GetColumnValue(ct, value) Then
-    s.Add(Format('%s = %s', [GetColumnName(ct), value]));
-  end;
+  s := TStringList.Create;
+  For ct := Low(ERequestListModelColumnType) To High(ERequestListModelColumnType) Do
+    begin
+    If GetColumnValue(ct, value) Then
+      s.Add(Format('%s = %s', [GetColumnName(ct), value]));
+    end;
 
-If DataSize > 0 Then
-  begin
-  S.Add(Format('Data size = %d', [DataSize]));
-  ProcessParsers(AParsers, s);
-  end;
+  If DataSize > 0 Then
+    begin
+    S.Add(Format('Data size = %d', [DataSize]));
+    ProcessParsers(AParsers, s);
+    end;
 
-s.Add('');
-s.SaveToStream(AStream);
-s.Free;
+  s.Add('');
+  s.SaveToStream(AStream);
+  s.Free;
+  end
+Else begin
+  reqSize := IRPMonDllGetRequestSize(FRaw);
+  AStream.Write(reqSize, SizeOf(reqSize));
+  AStream.Write(FRaw^, reqSize);
+  end;
 end;
 
-Procedure TDriverRequest.SaveToFile(AFileName: WideString; AParsers:TObjectList<TDataParser>);
+Procedure TDriverRequest.SaveToFile(AFileName: WideString; AParsers:TObjectList<TDataParser>; ABinary:Boolean = False);
 Var
   F : TFileStream;
 begin
 F := TFileStream.Create(AFileName, fmCreate Or fmOpenWrite);
 Try
-  SaveToStream(F, AParsers);
+  SaveToStream(F, AParsers, ABinary);
 Finally
   F.Free;
   end;
@@ -660,7 +669,7 @@ FRequests.Free;
 Inherited Destroy;
 end;
 
-Procedure TRequestListModel.SaveToStream(AStream:TStream);
+Procedure TRequestListModel.SaveToStream(AStream:TStream; ABinary:Boolean = False);
 Var
   I : Integer;
   dr : TDriverRequest;
@@ -668,17 +677,17 @@ begin
 For I := 0 To RowCount - 1 Do
   begin
   dr := _Item(I);
-  dr.SaveToStream(AStream, FParsers);
+  dr.SaveToStream(AStream, FParsers, ABinary);
   end;
 end;
 
-Procedure TRequestListModel.SaveToFile(AFileName:WideString);
+Procedure TRequestListModel.SaveToFile(AFileName:WideString; ABinary:Boolean = False);
 Var
   F : TFileStream;
 begin
 F := TFileStream.Create(AFileName, fmCreate Or fmOpenWrite);
 Try
-  SaveToStream(F);
+  SaveToStream(F, ABinary);
 Finally
   F.Free;
   end;
