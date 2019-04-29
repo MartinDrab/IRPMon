@@ -9,7 +9,9 @@
 
 
 size_t RequestGetSize(const REQUEST_HEADER *Header);
-
+#ifndef _KERNEL_MODE
+DWORD RequestEmulateDriverDetected(void *DriverObject, const wchar_t *DriverName, PREQUEST_DRIVER_DETECTED *Request);
+#endif
 
 
 #endif

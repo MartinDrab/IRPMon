@@ -3,10 +3,30 @@
 #include <ntifs.h>
 #else
 #include <windows.h>
+#include <strsafe.h>
 #endif
 #include "general-types.h"
 #include "request.h"
 
+
+#ifndef _KERNEL_MODE
+
+static void _RequestHeaderInit(PREQUEST_HEADER Header, void *DriverObject, void *DeviceObject, ERequesttype RequestType)
+{
+	RtlSecureZeroMemory(Header, sizeof(REQUEST_HEADER));
+	Header->Device = DeviceObject;
+	Header->Driver = DriverObject;
+	Header->Type = RequestType;
+	Header->ResultType = rrtUndefined;
+	Header->Result.Other = NULL;
+	Header->ProcessId = (HANDLE)GetCurrentProcessId();
+	Header->ThreadId = (HANDLE)GetCurrentThreadId();
+	Header->Irql = 0;
+
+	return;
+}
+
+#endif
 
 
 size_t RequestGetSize(const REQUEST_HEADER *Header)
@@ -63,3 +83,31 @@ size_t RequestGetSize(const REQUEST_HEADER *Header)
 
 	return ret;
 }
+
+#ifndef _KERNEL_MODE
+
+DWORD RequestEmulateDriverDetected(void *DriverObject, const wchar_t *DriverName, PREQUEST_DRIVER_DETECTED *Request)
+{
+	DWORD ret = ERROR_GEN_FAILURE;
+	PREQUEST_DRIVER_DETECTED tmpRequest = NULL;
+	size_t driverNameLen = 0;
+
+	ret = S_OK;
+	if (DriverName != NULL)
+		ret = StringCbLengthW(DriverName, 65536, &driverNameLen);
+
+	if (ret == S_OK) {
+		tmpRequest = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(REQUEST_DRIVER_DETECTED) + driverNameLen);
+		if (tmpRequest != NULL) {
+			_RequestHeaderInit(&tmpRequest->Header, DriverObject, NULL, ertDriverDetected);
+			tmpRequest->DriverNameLength = driverNameLen;
+			memcpy(tmpRequest + 1, DriverName, driverNameLen);;
+			*Request = tmpRequest;
+			ret = ERROR_SUCCESS;
+		} else ret = GetLastError();
+	}
+
+	return ret;
+}
+
+#endif
