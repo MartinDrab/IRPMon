@@ -208,6 +208,27 @@ IRPMONDLL_API VOID WINAPI IRPMonDllDriverNameWatchEnumFree(PDRIVER_NAME_WATCH_RE
 }
 
 
+IRPMONDLL_API DWORD WINAPI IRPMonDllRequestEmulateDriverDetected(void *DriverObject, const wchar_t *DriverName, PREQUEST_DRIVER_DETECTED *Request)
+{
+	return RequestEmulateDriverDetected(DriverObject, DriverName, Request);
+}
+
+IRPMONDLL_API DWORD WINAPI IRPMonDllRequestEmulateDeviceDetected(void *DriverObject, void *DeviceObject, const wchar_t *DeviceName, PREQUEST_DEVICE_DETECTED *Request)
+{
+	return RequestEmulateDeviceDetected(DriverObject, DeviceObject, DeviceName, Request);
+}
+
+IRPMONDLL_API DWORD WINAPI IRPMonDllRequestEmulateFileNameAssigned(void *FileObject, const wchar_t *FileName, PREQUEST_FILE_OBJECT_NAME_ASSIGNED *Request)
+{
+	return RequestEmulateFileNameAssigned(FileObject, FileName, Request);
+}
+
+IRPMONDLL_API DWORD WINAPI IRPMonDllRequestEmulateFileNameDeleted(void *FileObject, PREQUEST_FILE_OBJECT_NAME_DELETED *Request)
+{
+	return RequestEmulateFileNameDeleted(FileObject, Request);
+}
+
+
 /************************************************************************/
 /*                          INITIALIZATION AND FINALIZATION             */
 /************************************************************************/
