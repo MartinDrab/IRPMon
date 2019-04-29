@@ -228,6 +228,14 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllRequestEmulateFileNameDeleted(void *FileObje
 	return RequestEmulateFileNameDeleted(FileObject, Request);
 }
 
+IRPMONDLL_API void WINAPI IRPMonDllRequestEmulatedFree(PREQUEST_HEADER Header)
+{
+	RequestEmulatedFree(Header);
+
+	return;
+}
+
+
 
 /************************************************************************/
 /*                          INITIALIZATION AND FINALIZATION             */

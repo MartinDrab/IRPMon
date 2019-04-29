@@ -180,4 +180,12 @@ DWORD RequestEmulateFileNameDeleted(void *FileObject, PREQUEST_FILE_OBJECT_NAME_
 }
 
 
+void RequestEmulatedFree(PREQUEST_HEADER Header)
+{
+	HeapFree(GetProcessHeap(), 0, Header);
+
+	return;
+}
+
+
 #endif

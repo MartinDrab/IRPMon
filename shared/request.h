@@ -14,6 +14,7 @@ DWORD RequestEmulateDriverDetected(void *DriverObject, const wchar_t *DriverName
 DWORD RequestEmulateDeviceDetected(void *DriverObject, void *DeviceObject, const wchar_t *DeviceName, PREQUEST_DEVICE_DETECTED *Request);
 DWORD RequestEmulateFileNameAssigned(void *FileObject, const wchar_t *FileName, PREQUEST_FILE_OBJECT_NAME_ASSIGNED *Request);
 DWORD RequestEmulateFileNameDeleted(void *FileObject, PREQUEST_FILE_OBJECT_NAME_DELETED *Request);
+void RequestEmulatedFree(PREQUEST_HEADER Header);
 #endif
 
 
