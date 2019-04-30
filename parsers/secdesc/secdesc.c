@@ -156,43 +156,23 @@ static DWORD _PrintACL(PNV_PAIR Pair, const wchar_t *Name, const ACL *Acl)
 				switch (aceHeader->AceType) {
 				case ACCESS_ALLOWED_ACE_TYPE:
 					aaa = CONTAINING_RECORD(aceHeader, ACCESS_ALLOWED_ACE, Header);
-					if (ConvertSidToStringSidW((PSID)&aaa->SidStart, &stringSid)) {
-						_AddNameFormat(Pair, L"    Mask", L"0x%x", aaa->Mask);
-						_AddNameValue(Pair, L"    SID", stringSid);
-						LocalFree(stringSid);
-					}
+					ret = _PrintSid(Pair, L"SID", &aaa->SidStart);
 					break;
 				case ACCESS_DENIED_ACE_TYPE:
 					ada = CONTAINING_RECORD(aceHeader, ACCESS_DENIED_ACE, Header);
-					if (ConvertSidToStringSidW((PSID)&ada->SidStart, &stringSid)) {
-						_AddNameFormat(Pair, L"    Mask", L"0x%x", ada->Mask);
-						_AddNameValue(Pair, L"    SID", stringSid);
-						LocalFree(stringSid);
-					}
+					ret = _PrintSid(Pair, L"SID", &ada->SidStart);
 					break;
 				case SYSTEM_AUDIT_ACE_TYPE:
 					saua = CONTAINING_RECORD(aceHeader, SYSTEM_AUDIT_ACE, Header);
-					if (ConvertSidToStringSidW((PSID)&saua->SidStart, &stringSid)) {
-						_AddNameFormat(Pair, L"    Mask", L"0x%x", saua->Mask);
-						_AddNameValue(Pair, L"    SID", stringSid);
-						LocalFree(stringSid);
-					}
+					ret = _PrintSid(Pair, L"SID", &saua->SidStart);
 					break;
 				case SYSTEM_ALARM_ACE_TYPE:
 					sala = CONTAINING_RECORD(aceHeader, SYSTEM_ALARM_ACE, Header);
-					if (ConvertSidToStringSidW((PSID)&sala->SidStart, &stringSid)) {
-						_AddNameFormat(Pair, L"    Mask", L"0x%x", sala->Mask);
-						_AddNameValue(Pair, L"    SID", stringSid);
-						LocalFree(stringSid);
-					}
+					ret = _PrintSid(Pair, L"SID", &sala->SidStart);
 					break;
 				case SYSTEM_MANDATORY_LABEL_ACE_TYPE:
 					smla = CONTAINING_RECORD(aceHeader, SYSTEM_MANDATORY_LABEL_ACE, Header);
-					if (ConvertSidToStringSidW((PSID)&smla->SidStart, &stringSid)) {
-						_AddNameFormat(Pair, L"    Mask", L"0x%x", smla->Mask);
-						_AddNameValue(Pair, L"    SID", stringSid);
-						LocalFree(stringSid);
-					}
+					ret = _PrintSid(Pair, L"SID", &smla->SidStart);
 					break;
 				}
 			}
