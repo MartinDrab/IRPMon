@@ -247,7 +247,11 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 
 	if (ret == ERROR_SUCCESS) {
 		if (IsValidSecurityDescriptor(data)) {
-			if (GetSecurityDescriptorOwner(data, &binarySid, &defaulted))
+			ret = _AddNameFormat(&p, L"Revision", L"%u", data->Revision);
+			if (ret == ERROR_SUCCESS)
+				ret = _AddNameFormat(&p, L"Control", L"%u", data->Control);
+
+			if (ret == ERROR_SUCCESS && GetSecurityDescriptorOwner(data, &binarySid, &defaulted))
 				ret = _PrintSid(&p, L"Owner", FALSE, binarySid);
 			
 			if (ret == ERROR_SUCCESS && GetSecurityDescriptorGroup(data, &binarySid, &defaulted))
