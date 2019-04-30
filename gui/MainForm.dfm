@@ -960,6 +960,10 @@ object MainFrm: TMainFrm
       object N1: TMenuItem
         Caption = '-'
       end
+      object OpenMenuItem: TMenuItem
+        Caption = 'Open...'
+        OnClick = OpenMenuItemClick
+      end
       object SaveMenuItem: TMenuItem
         Caption = 'Save...'
         OnClick = SaveMenuItemClick
@@ -1034,6 +1038,11 @@ object MainFrm: TMainFrm
   object LogSaveDialog: TSaveDialog
     Filter = 'Text log files [*.log]|*.log|Binary log files [*.bin]|*.bin'
     Left = 160
+    Top = 88
+  end
+  object LogOpenDialog: TOpenDialog
+    Filter = 'Binary log files [*.bin]|*.bin|All files [*.*]|*.*'
+    Left = 192
     Top = 88
   end
 end
