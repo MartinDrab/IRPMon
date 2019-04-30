@@ -191,9 +191,11 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 
 	if (ret == ERROR_SUCCESS) {
 		if (IsValidSecurityDescriptor(data)) {
-			if (GetSecurityDescriptorDacl(data, &present, &acl, &defaulted) && present) {
+			if (GetSecurityDescriptorDacl(data, &present, &acl, &defaulted) && present)
 				ret = _PrintACL(&p, acl);
-			}
+
+			if (ret == ERROR_SUCCESS && GetSecurityDescriptorSacl(data, &present, &acl, &defaulted) && present)
+				ret = _PrintACL(&p, acl);
 		}
 	} else if (ret == ERROR_NOT_SUPPORTED) {
 		*Handled = FALSE;
