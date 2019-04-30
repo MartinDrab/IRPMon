@@ -82,8 +82,27 @@ static DWORD _AddNameFormat(PNV_PAIR Pair, const wchar_t *Name, const wchar_t *F
 
 static DWORD _PrintSid(PNV_PAIR Pair, const wchar_t *Name, PSID Sid)
 {
+	SID_NAME_USE sidType;
 	DWORD ret = ERROR_GEN_FAILURE;
 	wchar_t *stringSid = NULL;
+	wchar_t accountName[MAX_PATH];
+	wchar_t domainName[MAX_PATH];
+	DWORD accountNameLen = sizeof(accountName) / sizeof(accountName[0]);
+	DWORD domainNameLen = sizeof(domainName) / sizeof(domainName[0]);
+	wchar_t *sidTypeNames[] = {
+		L"Undefined",
+		L"User",
+		L"Group",
+		L"Domain",
+		L"Alias",
+		L"Well-known group",
+		L"Deleted account",
+		L"Invalid",
+		L"Unknown",
+		L"Computer",
+		L"Mandatory label",
+	};
+	const wchar_t *sidTypeName = NULL;
 
 	ret = _AddNameValue(Pair, Name, L"");
 	if (ret == ERROR_SUCCESS) {
@@ -91,6 +110,22 @@ static DWORD _PrintSid(PNV_PAIR Pair, const wchar_t *Name, PSID Sid)
 			ret = _AddNameValue(Pair, Name, stringSid);
 			LocalFree(stringSid);
 		}
+	}
+
+	if (LookupAccountSidW(NULL, Sid, accountName, &accountNameLen, domainName, &domainNameLen, &sidType)) {
+		sidTypeName = sidTypeNames[0];
+		if (sidType <= SidTypeLabel)
+			sidTypeName = sidTypeNames[sidType];
+
+		ret = _AddNameValue(Pair, L"Name", accountName);
+		if (ret == ERROR_SUCCESS)
+			ret = _AddNameValue(Pair, L"Domain", domainName);
+
+		if (ret == ERROR_SUCCESS)
+			ret = _AddNameValue(Pair, L"Type", sidTypeName);
+		
+		if (ret == ERROR_SUCCESS)
+			ret = _AddNameFormat(Pair, L"Type value", L"%u", sidType);
 	}
 
 	return ret;
