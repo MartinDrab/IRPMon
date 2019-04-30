@@ -162,32 +162,41 @@ static DWORD _PrintACL(PNV_PAIR Pair, const wchar_t *Name, const ACL *Acl)
 	else ret = _AddNameValue(Pair, Name, L"");
 
 	if (ret == ERROR_SUCCESS) {
-		for (DWORD i = 0; i < Acl->AceCount; ++i) {
-			if (GetAce(Acl, i, (PVOID *)&aceHeader)) {
-				_AddNameFormat(Pair, L"  ACE", L"%u", i);
-				_AddNameFormat(Pair, L"    Flags", L"0x%x", aceHeader->AceFlags);
-				_AddNameFormat(Pair, L"    Type", L"%u", aceHeader->AceType);
-				switch (aceHeader->AceType) {
-				case ACCESS_ALLOWED_ACE_TYPE:
-					aaa = CONTAINING_RECORD(aceHeader, ACCESS_ALLOWED_ACE, Header);
-					ret = _PrintSid(Pair, L"SID", TRUE, &aaa->SidStart);
-					break;
-				case ACCESS_DENIED_ACE_TYPE:
-					ada = CONTAINING_RECORD(aceHeader, ACCESS_DENIED_ACE, Header);
-					ret = _PrintSid(Pair, L"SID", TRUE, &ada->SidStart);
-					break;
-				case SYSTEM_AUDIT_ACE_TYPE:
-					saua = CONTAINING_RECORD(aceHeader, SYSTEM_AUDIT_ACE, Header);
-					ret = _PrintSid(Pair, L"SID", TRUE, &saua->SidStart);
-					break;
-				case SYSTEM_ALARM_ACE_TYPE:
-					sala = CONTAINING_RECORD(aceHeader, SYSTEM_ALARM_ACE, Header);
-					ret = _PrintSid(Pair, L"SID", TRUE, &sala->SidStart);
-					break;
-				case SYSTEM_MANDATORY_LABEL_ACE_TYPE:
-					smla = CONTAINING_RECORD(aceHeader, SYSTEM_MANDATORY_LABEL_ACE, Header);
-					ret = _PrintSid(Pair, L"SID", TRUE, &smla->SidStart);
-					break;
+		ret = _AddNameFormat(Pair, L"  Revision", L"%u", Acl->AclRevision);
+		if (ret == ERROR_SUCCESS)
+			ret = _AddNameFormat(Pair, L"  Size", L"%u", Acl->AclSize);
+		
+		if (ret == ERROR_SUCCESS)
+			ret = _AddNameFormat(Pair, L"  ACE count", L"%u", Acl->AceCount);
+		
+		if (ret == ERROR_SUCCESS) {
+			for (DWORD i = 0; i < Acl->AceCount; ++i) {
+				if (GetAce(Acl, i, (PVOID *)&aceHeader)) {
+					_AddNameFormat(Pair, L"  ACE", L"%u", i);
+					_AddNameFormat(Pair, L"    Flags", L"0x%x", aceHeader->AceFlags);
+					_AddNameFormat(Pair, L"    Type", L"%u", aceHeader->AceType);
+					switch (aceHeader->AceType) {
+					case ACCESS_ALLOWED_ACE_TYPE:
+						aaa = CONTAINING_RECORD(aceHeader, ACCESS_ALLOWED_ACE, Header);
+						ret = _PrintSid(Pair, L"SID", TRUE, &aaa->SidStart);
+						break;
+					case ACCESS_DENIED_ACE_TYPE:
+						ada = CONTAINING_RECORD(aceHeader, ACCESS_DENIED_ACE, Header);
+						ret = _PrintSid(Pair, L"SID", TRUE, &ada->SidStart);
+						break;
+					case SYSTEM_AUDIT_ACE_TYPE:
+						saua = CONTAINING_RECORD(aceHeader, SYSTEM_AUDIT_ACE, Header);
+						ret = _PrintSid(Pair, L"SID", TRUE, &saua->SidStart);
+						break;
+					case SYSTEM_ALARM_ACE_TYPE:
+						sala = CONTAINING_RECORD(aceHeader, SYSTEM_ALARM_ACE, Header);
+						ret = _PrintSid(Pair, L"SID", TRUE, &sala->SidStart);
+						break;
+					case SYSTEM_MANDATORY_LABEL_ACE_TYPE:
+						smla = CONTAINING_RECORD(aceHeader, SYSTEM_MANDATORY_LABEL_ACE, Header);
+						ret = _PrintSid(Pair, L"SID", TRUE, &smla->SidStart);
+						break;
+					}
 				}
 			}
 		}
