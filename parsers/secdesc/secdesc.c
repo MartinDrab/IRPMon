@@ -262,6 +262,20 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 
 			if (ret == ERROR_SUCCESS && GetSecurityDescriptorSacl(data, &present, &acl, &defaulted) && present)
 				ret = _PrintACL(&p, L"SACL", acl);
+		} else ret = ERROR_INVALID_PARAMETER;
+
+		if (ret == ERROR_SUCCESS) {
+			*Names = p.Names;
+			*Values = p.Values;
+			*RowCount = p.Count;
+			*Handled = TRUE;
+		}
+
+		if (ret != ERROR_SUCCESS) {
+			for (size_t i = 0; i < p.Count; ++i)
+				HeapFree(GetProcessHeap(), 0, p.Names[i]);
+
+			HeapFree(GetProcessHeap(), 0, p.Names);
 		}
 	} else if (ret == ERROR_NOT_SUPPORTED) {
 		*Handled = FALSE;
