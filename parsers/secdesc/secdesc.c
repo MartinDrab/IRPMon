@@ -80,6 +80,23 @@ static DWORD _AddNameFormat(PNV_PAIR Pair, const wchar_t *Name, const wchar_t *F
 }
 
 
+static DWORD _PrintSid(PNV_PAIR Pair, const wchar_t *Name, PSID Sid)
+{
+	DWORD ret = ERROR_GEN_FAILURE;
+	wchar_t *stringSid = NULL;
+
+	ret = _AddNameValue(Pair, Name, L"");
+	if (ret == ERROR_SUCCESS) {
+		if (ConvertSidToStringSid(Sid, &stringSid)) {
+			ret = _AddNameValue(Pair, Name, stringSid);
+			LocalFree(stringSid);
+		}
+	}
+
+	return ret;
+}
+
+
 static DWORD _PrintACL(PNV_PAIR Pair, const wchar_t *Name, const ACL *Acl)
 {
 	DWORD ret = ERROR_GEN_FAILURE;
@@ -163,7 +180,6 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 	BOOL present = FALSE;
 	BOOL defaulted = FALSE;
 	PACL acl = NULL;
-	wchar_t *stringSid = NULL;
 	PSID binarySid = NULL;
 
 	ret = ERROR_NOT_SUPPORTED;
@@ -193,19 +209,11 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 
 	if (ret == ERROR_SUCCESS) {
 		if (IsValidSecurityDescriptor(data)) {
-			if (GetSecurityDescriptorOwner(data, &binarySid, &defaulted)) {
-				if (ConvertSidToStringSidW(binarySid, &stringSid)) {
-					ret = _AddNameValue(&p, L"Owner", stringSid);
-					LocalFree(stringSid);
-				}
-			}
+			if (GetSecurityDescriptorOwner(data, &binarySid, &defaulted))
+				ret = _PrintSid(&p, L"Owner", binarySid);
 			
-			if (ret == ERROR_SUCCESS && GetSecurityDescriptorGroup(data, &binarySid, &defaulted)) {
-				if (ConvertSidToStringSidW(binarySid, &stringSid)) {
-					ret = _AddNameValue(&p, L"Group", stringSid);
-					LocalFree(stringSid);
-				}
-			}
+			if (ret == ERROR_SUCCESS && GetSecurityDescriptorGroup(data, &binarySid, &defaulted))
+				ret = _PrintSid(&p, L"Group", binarySid);
 
 			if (ret == ERROR_SUCCESS && GetSecurityDescriptorDacl(data, &present, &acl, &defaulted) && present)
 				ret = _PrintACL(&p, L"DACL", acl);
