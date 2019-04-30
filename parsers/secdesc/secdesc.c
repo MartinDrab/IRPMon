@@ -80,6 +80,77 @@ static DWORD _AddNameFormat(PNV_PAIR Pair, const wchar_t *Name, const wchar_t *F
 }
 
 
+static DWORD _PrintACL(PNV_PAIR Pair, const ACL *Acl)
+{
+	DWORD ret = ERROR_GEN_FAILURE;
+	const ACCESS_ALLOWED_ACE *aaa = NULL;
+	const ACCESS_DENIED_ACE *ada = NULL;
+	const SYSTEM_AUDIT_ACE *saua = NULL;
+	const SYSTEM_ALARM_ACE *sala = NULL;
+	const SYSTEM_MANDATORY_LABEL_ACE *smla = NULL;
+	const ACE_HEADER *aceHeader = NULL;
+	wchar_t *stringSid = NULL;
+
+	if (Acl == NULL)
+		ret = _AddNameValue(Pair, L"DACL", L"null");
+	else ret = _AddNameValue(Pair, L"DACL", L"");
+
+	if (ret == ERROR_SUCCESS) {
+		for (DWORD i = 0; i < Acl->AceCount; ++i) {
+			if (GetAce(Acl, i, (PVOID *)&aceHeader)) {
+				_AddNameFormat(Pair, L"  ACE", L"%u", i);
+				_AddNameFormat(Pair, L"    Flags", L"0x%x", aceHeader->AceFlags);
+				_AddNameFormat(Pair, L"    Type", L"%u", aceHeader->AceType);
+				switch (aceHeader->AceType) {
+				case ACCESS_ALLOWED_ACE_TYPE:
+					aaa = CONTAINING_RECORD(aceHeader, ACCESS_ALLOWED_ACE, Header);
+					if (ConvertSidToStringSidW((PSID)&aaa->SidStart, &stringSid)) {
+						_AddNameFormat(Pair, L"    Mask", L"0x%x", aaa->Mask);
+						_AddNameValue(Pair, L"    SID", stringSid);
+						LocalFree(stringSid);
+					}
+					break;
+				case ACCESS_DENIED_ACE_TYPE:
+					ada = CONTAINING_RECORD(aceHeader, ACCESS_DENIED_ACE, Header);
+					if (ConvertSidToStringSidW((PSID)&ada->SidStart, &stringSid)) {
+						_AddNameFormat(Pair, L"    Mask", L"0x%x", ada->Mask);
+						_AddNameValue(Pair, L"    SID", stringSid);
+						LocalFree(stringSid);
+					}
+					break;
+				case SYSTEM_AUDIT_ACE_TYPE:
+					saua = CONTAINING_RECORD(aceHeader, SYSTEM_AUDIT_ACE, Header);
+					if (ConvertSidToStringSidW((PSID)&saua->SidStart, &stringSid)) {
+						_AddNameFormat(Pair, L"    Mask", L"0x%x", saua->Mask);
+						_AddNameValue(Pair, L"    SID", stringSid);
+						LocalFree(stringSid);
+					}
+					break;
+				case SYSTEM_ALARM_ACE_TYPE:
+					sala = CONTAINING_RECORD(aceHeader, SYSTEM_ALARM_ACE, Header);
+					if (ConvertSidToStringSidW((PSID)&sala->SidStart, &stringSid)) {
+						_AddNameFormat(Pair, L"    Mask", L"0x%x", sala->Mask);
+						_AddNameValue(Pair, L"    SID", stringSid);
+						LocalFree(stringSid);
+					}
+					break;
+				case SYSTEM_MANDATORY_LABEL_ACE_TYPE:
+					smla = CONTAINING_RECORD(aceHeader, SYSTEM_MANDATORY_LABEL_ACE, Header);
+					if (ConvertSidToStringSidW((PSID)&smla->SidStart, &stringSid)) {
+						_AddNameFormat(Pair, L"    Mask", L"0x%x", smla->Mask);
+						_AddNameValue(Pair, L"    SID", stringSid);
+						LocalFree(stringSid);
+					}
+					break;
+				}
+			}
+		}
+	}
+
+	return ret;
+}
+
+
 static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST_EXTRA_INFO *ExtraInfo, PBOOLEAN Handled, wchar_t ***Names, wchar_t ***Values, size_t *RowCount)
 {
 	NV_PAIR p;
@@ -92,13 +163,6 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 	BOOL present = FALSE;
 	BOOL defaulted = FALSE;
 	PACL acl = NULL;
-	const ACCESS_ALLOWED_ACE *aaa = NULL;
-	const ACCESS_DENIED_ACE *ada = NULL;
-	const SYSTEM_AUDIT_ACE *saua = NULL;
-	const SYSTEM_ALARM_ACE *sala = NULL;
-	const SYSTEM_MANDATORY_LABEL_ACE *smla = NULL;
-	const ACE_HEADER *aceHeader = NULL;
-	wchar_t *stringSid = NULL;
 
 	ret = ERROR_NOT_SUPPORTED;
 	RtlSecureZeroMemory(&p, sizeof(p));
@@ -128,61 +192,7 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 	if (ret == ERROR_SUCCESS) {
 		if (IsValidSecurityDescriptor(data)) {
 			if (GetSecurityDescriptorDacl(data, &present, &acl, &defaulted) && present) {
-				if (acl == NULL)
-					ret = _AddNameValue(&p, L"DACL", L"null");
-				else ret = _AddNameValue(&p, L"DACL", L"");
-			
-				if (ret == ERROR_SUCCESS) {
-					for (DWORD i = 0; i < acl->AceCount; ++i) {
-						if (GetAce(acl, i, (PVOID *)&aceHeader)) {
-							_AddNameFormat(&p, L"  ACE", L"%u", i);
-							_AddNameFormat(&p, L"    Flags", L"0x%x", aceHeader->AceFlags);
-							_AddNameFormat(&p, L"    Type", L"%u", aceHeader->AceType);
-							switch (aceHeader->AceType) {
-								case ACCESS_ALLOWED_ACE_TYPE:
-									aaa = CONTAINING_RECORD(aceHeader, ACCESS_ALLOWED_ACE, Header);
-									if (ConvertSidToStringSidW((PSID)&aaa->SidStart, &stringSid)) {
-										_AddNameFormat(&p, L"    Mask", "0x%x", aaa->Mask);
-										_AddNameValue(&p, L"    SID", stringSid);
-										LocalFree(stringSid);
-									}
-									break;
-								case ACCESS_DENIED_ACE_TYPE:
-									ada = CONTAINING_RECORD(aceHeader, ACCESS_DENIED_ACE, Header);
-									if (ConvertSidToStringSidW((PSID)&ada->SidStart, &stringSid)) {
-										_AddNameFormat(&p, L"    Mask", L"0x%x", ada->Mask);
-										_AddNameValue(&p, L"    SID", stringSid);
-										LocalFree(stringSid);
-									}
-									break;
-								case SYSTEM_AUDIT_ACE_TYPE:
-									saua = CONTAINING_RECORD(aceHeader, SYSTEM_AUDIT_ACE, Header);
-									if (ConvertSidToStringSidW((PSID)&saua->SidStart, &stringSid)) {
-										_AddNameFormat(&p, L"    Mask", L"0x%x", saua->Mask);
-										_AddNameValue(&p, L"    SID", stringSid);
-										LocalFree(stringSid);
-									}
-									break;
-								case SYSTEM_ALARM_ACE_TYPE:
-									sala = CONTAINING_RECORD(aceHeader, SYSTEM_ALARM_ACE, Header);
-									if (ConvertSidToStringSidW((PSID)&sala->SidStart, &stringSid)) {
-										_AddNameFormat(&p, L"    Mask", L"0x%x", sala->Mask);
-										_AddNameValue(&p, L"    SID", stringSid);
-										LocalFree(stringSid);
-									}
-									break;
-								case SYSTEM_MANDATORY_LABEL_ACE_TYPE:
-									smla = CONTAINING_RECORD(aceHeader, SYSTEM_MANDATORY_LABEL_ACE, Header);
-									if (ConvertSidToStringSidW((PSID)&smla->SidStart, &stringSid)) {
-										_AddNameFormat(&p, L"    Mask", L"0x%x", smla->Mask);
-										_AddNameValue(&p, L"    SID", stringSid);
-										LocalFree(stringSid);
-									}
-									break;
-							}
-						}
-					}
-				}
+				ret = _PrintACL(&p, acl);
 			}
 		}
 	} else if (ret == ERROR_NOT_SUPPORTED) {
