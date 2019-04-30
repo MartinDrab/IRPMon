@@ -80,7 +80,7 @@ static DWORD _AddNameFormat(PNV_PAIR Pair, const wchar_t *Name, const wchar_t *F
 }
 
 
-static DWORD _PrintACL(PNV_PAIR Pair, const ACL *Acl)
+static DWORD _PrintACL(PNV_PAIR Pair, const wchar_t *Name, const ACL *Acl)
 {
 	DWORD ret = ERROR_GEN_FAILURE;
 	const ACCESS_ALLOWED_ACE *aaa = NULL;
@@ -92,8 +92,8 @@ static DWORD _PrintACL(PNV_PAIR Pair, const ACL *Acl)
 	wchar_t *stringSid = NULL;
 
 	if (Acl == NULL)
-		ret = _AddNameValue(Pair, L"DACL", L"null");
-	else ret = _AddNameValue(Pair, L"DACL", L"");
+		ret = _AddNameValue(Pair, Name, L"null");
+	else ret = _AddNameValue(Pair, Name, L"");
 
 	if (ret == ERROR_SUCCESS) {
 		for (DWORD i = 0; i < Acl->AceCount; ++i) {
@@ -163,6 +163,8 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 	BOOL present = FALSE;
 	BOOL defaulted = FALSE;
 	PACL acl = NULL;
+	wchar_t *stringSid = NULL;
+	PSID binarySid = NULL;
 
 	ret = ERROR_NOT_SUPPORTED;
 	RtlSecureZeroMemory(&p, sizeof(p));
@@ -191,11 +193,25 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 
 	if (ret == ERROR_SUCCESS) {
 		if (IsValidSecurityDescriptor(data)) {
-			if (GetSecurityDescriptorDacl(data, &present, &acl, &defaulted) && present)
-				ret = _PrintACL(&p, acl);
+			if (GetSecurityDescriptorOwner(data, &binarySid, &defaulted)) {
+				if (ConvertSidToStringSidW(binarySid, &stringSid)) {
+					ret = _AddNameValue(&p, L"Owner", stringSid);
+					LocalFree(stringSid);
+				}
+			}
+			
+			if (ret == ERROR_SUCCESS && GetSecurityDescriptorGroup(data, &binarySid, &defaulted)) {
+				if (ConvertSidToStringSidW(binarySid, &stringSid)) {
+					ret = _AddNameValue(&p, L"Group", stringSid);
+					LocalFree(stringSid);
+				}
+			}
+
+			if (ret == ERROR_SUCCESS && GetSecurityDescriptorDacl(data, &present, &acl, &defaulted) && present)
+				ret = _PrintACL(&p, L"DACL", acl);
 
 			if (ret == ERROR_SUCCESS && GetSecurityDescriptorSacl(data, &present, &acl, &defaulted) && present)
-				ret = _PrintACL(&p, acl);
+				ret = _PrintACL(&p, L"SACL", acl);
 		}
 	} else if (ret == ERROR_NOT_SUPPORTED) {
 		*Handled = FALSE;
