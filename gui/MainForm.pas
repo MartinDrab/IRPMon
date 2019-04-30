@@ -627,7 +627,7 @@ If LogOpenDialog.Execute Then
   If LogOpenDialog.FilterIndex = 1 Then
     fn := ChangeFileExt(fn, '.bin');
 
-
+  FModel.LoadFromFile(fn);
   end;
 end;
 
