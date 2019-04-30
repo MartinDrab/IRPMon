@@ -80,7 +80,7 @@ static DWORD _AddNameFormat(PNV_PAIR Pair, const wchar_t *Name, const wchar_t *F
 }
 
 
-static DWORD _PrintSid(PNV_PAIR Pair, const wchar_t *Name, PSID Sid)
+static DWORD _PrintSid(PNV_PAIR Pair, const wchar_t *Name, BOOLEAN InAce, PSID Sid)
 {
 	SID_NAME_USE sidType;
 	DWORD ret = ERROR_GEN_FAILURE;
@@ -103,11 +103,25 @@ static DWORD _PrintSid(PNV_PAIR Pair, const wchar_t *Name, PSID Sid)
 		L"Mandatory label",
 	};
 	const wchar_t *sidTypeName = NULL;
+	const wchar_t *sidNameConst = L"      Raw";
+	const wchar_t *accNameConst = L"      Name";
+	const wchar_t *domNameConst = L"      Domain";
+	const wchar_t *typNameConst = L"      Type";
+	const wchar_t *tp2NameConst = L"      Type value";
 
-	ret = _AddNameValue(Pair, Name, L"");
+
+	if (!InAce) {
+		sidNameConst += 4;
+		accNameConst += 4;
+		domNameConst += 4;
+		typNameConst += 4;
+		tp2NameConst += 4;
+		ret = _AddNameValue(Pair, Name, L"");
+	} else ret = _AddNameValue(Pair, L"    SID", L"");
+
 	if (ret == ERROR_SUCCESS) {
 		if (ConvertSidToStringSid(Sid, &stringSid)) {
-			ret = _AddNameValue(Pair, Name, stringSid);
+			ret = _AddNameValue(Pair, sidNameConst, stringSid);
 			LocalFree(stringSid);
 		}
 	}
@@ -117,15 +131,15 @@ static DWORD _PrintSid(PNV_PAIR Pair, const wchar_t *Name, PSID Sid)
 		if (sidType <= SidTypeLabel)
 			sidTypeName = sidTypeNames[sidType];
 
-		ret = _AddNameValue(Pair, L"Name", accountName);
+		ret = _AddNameValue(Pair, accNameConst, accountName);
 		if (ret == ERROR_SUCCESS)
-			ret = _AddNameValue(Pair, L"Domain", domainName);
+			ret = _AddNameValue(Pair, domNameConst, domainName);
 
 		if (ret == ERROR_SUCCESS)
-			ret = _AddNameValue(Pair, L"Type", sidTypeName);
+			ret = _AddNameValue(Pair, typNameConst, sidTypeName);
 		
 		if (ret == ERROR_SUCCESS)
-			ret = _AddNameFormat(Pair, L"Type value", L"%u", sidType);
+			ret = _AddNameFormat(Pair, tp2NameConst, L"%u", sidType);
 	}
 
 	return ret;
@@ -156,23 +170,23 @@ static DWORD _PrintACL(PNV_PAIR Pair, const wchar_t *Name, const ACL *Acl)
 				switch (aceHeader->AceType) {
 				case ACCESS_ALLOWED_ACE_TYPE:
 					aaa = CONTAINING_RECORD(aceHeader, ACCESS_ALLOWED_ACE, Header);
-					ret = _PrintSid(Pair, L"SID", &aaa->SidStart);
+					ret = _PrintSid(Pair, L"SID", TRUE, &aaa->SidStart);
 					break;
 				case ACCESS_DENIED_ACE_TYPE:
 					ada = CONTAINING_RECORD(aceHeader, ACCESS_DENIED_ACE, Header);
-					ret = _PrintSid(Pair, L"SID", &ada->SidStart);
+					ret = _PrintSid(Pair, L"SID", TRUE, &ada->SidStart);
 					break;
 				case SYSTEM_AUDIT_ACE_TYPE:
 					saua = CONTAINING_RECORD(aceHeader, SYSTEM_AUDIT_ACE, Header);
-					ret = _PrintSid(Pair, L"SID", &saua->SidStart);
+					ret = _PrintSid(Pair, L"SID", TRUE, &saua->SidStart);
 					break;
 				case SYSTEM_ALARM_ACE_TYPE:
 					sala = CONTAINING_RECORD(aceHeader, SYSTEM_ALARM_ACE, Header);
-					ret = _PrintSid(Pair, L"SID", &sala->SidStart);
+					ret = _PrintSid(Pair, L"SID", TRUE, &sala->SidStart);
 					break;
 				case SYSTEM_MANDATORY_LABEL_ACE_TYPE:
 					smla = CONTAINING_RECORD(aceHeader, SYSTEM_MANDATORY_LABEL_ACE, Header);
-					ret = _PrintSid(Pair, L"SID", &smla->SidStart);
+					ret = _PrintSid(Pair, L"SID", TRUE, &smla->SidStart);
 					break;
 				}
 			}
@@ -225,10 +239,10 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 	if (ret == ERROR_SUCCESS) {
 		if (IsValidSecurityDescriptor(data)) {
 			if (GetSecurityDescriptorOwner(data, &binarySid, &defaulted))
-				ret = _PrintSid(&p, L"Owner", binarySid);
+				ret = _PrintSid(&p, L"Owner", FALSE, binarySid);
 			
 			if (ret == ERROR_SUCCESS && GetSecurityDescriptorGroup(data, &binarySid, &defaulted))
-				ret = _PrintSid(&p, L"Group", binarySid);
+				ret = _PrintSid(&p, L"Group", FALSE, binarySid);
 
 			if (ret == ERROR_SUCCESS && GetSecurityDescriptorDacl(data, &present, &acl, &defaulted) && present)
 				ret = _PrintACL(&p, L"DACL", acl);
