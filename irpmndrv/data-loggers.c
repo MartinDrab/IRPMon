@@ -305,19 +305,8 @@ void IRPDataLogger(PIRP Irp, PIO_STACK_LOCATION IrpStack, BOOLEAN Completion, PD
 		} break;
 		case IRP_MJ_SET_SECURITY: {
 			if (!Completion) {
-				Result->Buffer = Irp->UserBuffer;
+				Result->Buffer = IrpStack->Parameters.SetSecurity.SecurityDescriptor;
 				Result->BufferSize = RtlLengthSecurityDescriptor(IrpStack->Parameters.SetSecurity.SecurityDescriptor);
-				if (reqMode == UserMode &&
-					Result->BufferSize > 0) {
-					__try {
-						ProbeForRead(Result->Buffer, Result->BufferSize, 1);
-					} __except (EXCEPTION_EXECUTE_HANDLER) {
-						DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, "DANGEROUS BUFFER: Irp=0x%p; IrpStack=0x%p; Buffer=0x%p; Size=%zu\n", Irp, IrpStack, Result->Buffer, Result->BufferSize);
-						__debugbreak();
-						Result->Buffer = NULL;
-						Result->BufferSize = 0;
-					}
-				}
 			}
 		} break;
 		default:
