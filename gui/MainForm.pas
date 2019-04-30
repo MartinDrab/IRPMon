@@ -52,6 +52,8 @@ Type
     DataParsersTabSheet: TTabSheet;
     DataParsersListView: TListView;
     FiltersMenuItem: TMenuItem;
+    LogOpenDialog: TOpenDialog;
+    OpenMenuItem: TMenuItem;
     Procedure ClearMenuItemClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure CaptureEventsMenuItemClick(Sender: TObject);
@@ -70,6 +72,7 @@ Type
     procedure DataParsersListViewData(Sender: TObject; Item: TListItem);
     procedure DataParsersTabSheetShow(Sender: TObject);
     procedure FiltersMenuItemClick(Sender: TObject);
+    procedure OpenMenuItemClick(Sender: TObject);
   Private
 {$IFDEF FPC}
     FAppEvents: TApplicationProperties;
@@ -612,6 +615,20 @@ If err = ERROR_SUCCESS Then
     end;
   end
 Else WinErrorMessage('Failed to unregister the watched driver name', err);
+end;
+
+Procedure TMainFrm.OpenMenuItemClick(Sender: TObject);
+Var
+  fn : WideString;
+begin
+If LogOpenDialog.Execute Then
+  begin
+  fn := LogOpenDialog.FileName;
+  If LogOpenDialog.FilterIndex = 1 Then
+    fn := ChangeFileExt(fn, '.bin');
+
+
+  end;
 end;
 
 Procedure TMainFrm.EnumerateDriverNameWatches;

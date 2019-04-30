@@ -66,11 +66,15 @@ static DWORD _AddNameFormat(PNV_PAIR Pair, const wchar_t *Name, const wchar_t *F
 {
 	wchar_t buf[1024];
 	DWORD ret = ERROR_GEN_FAILURE;
+	va_list args;
 
+	va_start(args, Format);
 	RtlSecureZeroMemory(buf, sizeof(buf));
-	ret = StringCbPrintfW(buf, sizeof(buf) / sizeof(buf[0]), Format, __VA_ARGS__);
+	ret = StringCbVPrintf(buf, sizeof(buf) / sizeof(buf[0]), Format, args);
 	if (ret == S_OK)
 		ret = _AddNameValue(Pair, Name, buf);
+
+	va_end(args);
 
 	return ret;
 }
@@ -131,9 +135,9 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 				if (ret == ERROR_SUCCESS) {
 					for (DWORD i = 0; i < acl->AceCount; ++i) {
 						if (GetAce(acl, i, (PVOID *)&aceHeader)) {
-							_AddNameFormat(&p, L"  ACE", "%u", i);
-							_AddNameFormat(&p, L"    Flags", "0x%x", aceHeader->AceFlags);
-							_AddNameFormat(&p, L"    Type", "%u", aceHeader->AceType);
+							_AddNameFormat(&p, L"  ACE", L"%u", i);
+							_AddNameFormat(&p, L"    Flags", L"0x%x", aceHeader->AceFlags);
+							_AddNameFormat(&p, L"    Type", L"%u", aceHeader->AceType);
 							switch (aceHeader->AceType) {
 								case ACCESS_ALLOWED_ACE_TYPE:
 									aaa = CONTAINING_RECORD(aceHeader, ACCESS_ALLOWED_ACE, Header);
@@ -146,7 +150,7 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 								case ACCESS_DENIED_ACE_TYPE:
 									ada = CONTAINING_RECORD(aceHeader, ACCESS_DENIED_ACE, Header);
 									if (ConvertSidToStringSidW((PSID)&ada->SidStart, &stringSid)) {
-										_AddNameFormat(&p, L"    Mask", "0x%x", ada->Mask);
+										_AddNameFormat(&p, L"    Mask", L"0x%x", ada->Mask);
 										_AddNameValue(&p, L"    SID", stringSid);
 										LocalFree(stringSid);
 									}
@@ -154,7 +158,7 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 								case SYSTEM_AUDIT_ACE_TYPE:
 									saua = CONTAINING_RECORD(aceHeader, SYSTEM_AUDIT_ACE, Header);
 									if (ConvertSidToStringSidW((PSID)&saua->SidStart, &stringSid)) {
-										_AddNameFormat(&p, L"    Mask", "0x%x", saua->Mask);
+										_AddNameFormat(&p, L"    Mask", L"0x%x", saua->Mask);
 										_AddNameValue(&p, L"    SID", stringSid);
 										LocalFree(stringSid);
 									}
@@ -162,7 +166,7 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 								case SYSTEM_ALARM_ACE_TYPE:
 									sala = CONTAINING_RECORD(aceHeader, SYSTEM_ALARM_ACE, Header);
 									if (ConvertSidToStringSidW((PSID)&sala->SidStart, &stringSid)) {
-										_AddNameFormat(&p, L"    Mask", "0x%x", sala->Mask);
+										_AddNameFormat(&p, L"    Mask", L"0x%x", sala->Mask);
 										_AddNameValue(&p, L"    SID", stringSid);
 										LocalFree(stringSid);
 									}
@@ -170,7 +174,7 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 								case SYSTEM_MANDATORY_LABEL_ACE_TYPE:
 									smla = CONTAINING_RECORD(aceHeader, SYSTEM_MANDATORY_LABEL_ACE, Header);
 									if (ConvertSidToStringSidW((PSID)&smla->SidStart, &stringSid)) {
-										_AddNameFormat(&p, L"    Mask", "0x%x", smla->Mask);
+										_AddNameFormat(&p, L"    Mask", L"0x%x", smla->Mask);
 										_AddNameValue(&p, L"    SID", stringSid);
 										LocalFree(stringSid);
 									}
