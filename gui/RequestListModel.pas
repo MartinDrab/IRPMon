@@ -320,7 +320,10 @@ If Not ABinary Then
   For ct := Low(ERequestListModelColumnType) To High(ERequestListModelColumnType) Do
     begin
     If GetColumnValue(ct, value) Then
-      s.Add(Format('%s = %s', [GetColumnName(ct), value]));
+      begin
+      If value <> '' Then
+        s.Add(Format('%s = %s', [GetColumnName(ct), value]));
+      end;
     end;
 
   If DataSize > 0 Then
