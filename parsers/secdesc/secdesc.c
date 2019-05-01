@@ -146,6 +146,15 @@ static DWORD _PrintSid(PNV_PAIR Pair, const wchar_t *Name, BOOLEAN InAce, PSID S
 }
 
 
+static DWORD _PrintMask(PNV_PAIR Pair, DWORD Mask)
+{
+	DWORD ret = ERROR_GEN_FAILURE;
+
+	ret = _AddNameFormat(Pair, L"    Mask", L"0x%x", Mask);
+
+	return ret;
+}
+
 static DWORD _PrintACL(PNV_PAIR Pair, const wchar_t *Name, const ACL *Acl)
 {
 	DWORD ret = ERROR_GEN_FAILURE;
@@ -177,22 +186,32 @@ static DWORD _PrintACL(PNV_PAIR Pair, const wchar_t *Name, const ACL *Acl)
 						case ACCESS_ALLOWED_ACE_TYPE:
 							aaa = CONTAINING_RECORD(aceHeader, ACCESS_ALLOWED_ACE, Header);
 							ret = _PrintSid(Pair, L"SID", TRUE, &aaa->SidStart);
+							if (ret == ERROR_SUCCESS)
+								ret = _PrintMask(Pair, aaa->Mask);
 							break;
 						case ACCESS_DENIED_ACE_TYPE:
 							ada = CONTAINING_RECORD(aceHeader, ACCESS_DENIED_ACE, Header);
 							ret = _PrintSid(Pair, L"SID", TRUE, &ada->SidStart);
+							if (ret == ERROR_SUCCESS)
+								ret = _PrintMask(Pair, ada->Mask);
 							break;
 						case SYSTEM_AUDIT_ACE_TYPE:
 							saua = CONTAINING_RECORD(aceHeader, SYSTEM_AUDIT_ACE, Header);
 							ret = _PrintSid(Pair, L"SID", TRUE, &saua->SidStart);
+							if (ret == ERROR_SUCCESS)
+								ret = _PrintMask(Pair, saua->Mask);
 							break;
 						case SYSTEM_ALARM_ACE_TYPE:
 							sala = CONTAINING_RECORD(aceHeader, SYSTEM_ALARM_ACE, Header);
 							ret = _PrintSid(Pair, L"SID", TRUE, &sala->SidStart);
+							if (ret == ERROR_SUCCESS)
+								ret = _PrintMask(Pair, sala->Mask);
 							break;
 						case SYSTEM_MANDATORY_LABEL_ACE_TYPE:
 							smla = CONTAINING_RECORD(aceHeader, SYSTEM_MANDATORY_LABEL_ACE, Header);
 							ret = _PrintSid(Pair, L"SID", TRUE, &smla->SidStart);
+							if (ret == ERROR_SUCCESS)
+								ret = _PrintMask(Pair, smla->Mask);
 							break;
 						}
 					}
