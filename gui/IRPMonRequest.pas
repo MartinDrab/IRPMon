@@ -14,6 +14,7 @@ Uses
 Type
   TGeneralRequest = Class
   Private
+    FDataBufferAllocated : Boolean;
   Protected
     FId : Cardinal;
     FDriverName : WideString;
@@ -44,7 +45,7 @@ Type
     Constructor Create(Var ARequest:REQUEST_HEADER); Overload;
     Destructor Destroy; Override;
 
-    Function AssignData(AData:Pointer; ASize:NativeUInt):Boolean;
+    Function AssignData(AData:Pointer; ASize:NativeUInt; AWithinRequest:Boolean = True):Boolean;
 
     Class Function IOCTLToString(AControlCode:Cardinal):WideString;
     Class Function RequestTypeToString(ARequestType:ERequestType):WideString;
@@ -118,28 +119,36 @@ begin
 If Assigned(FRaw) Then
   FreeMem(FRaw);
 
-If Assigned(FData) Then
+If FDataBufferAllocated Then
   FreeMem(FData);
 
 Inherited Destroy;
 end;
 
-Function TGeneralRequest.AssignData(AData:Pointer; ASize:NativeUInt):Boolean;
+Function TGeneralRequest.AssignData(AData:Pointer; ASize:NativeUInt; AWithinRequest:Boolean = True):Boolean;
 begin
 Result := True;
 FDataPresent := True;
 If ASize > 0 Then
   begin
-  Result := Not Assigned(FData);
-  If Result Then
+  If Not AWithinRequest Then
     begin
-    FData := AllocMem(ASize);
-    Result := Assigned(FData);
+    Result := Not Assigned(FData);
     If Result Then
       begin
-      Move(AData^, FData^, ASize);
-      FDataSize := ASize;
+      FData := AllocMem(ASize);
+      Result := Assigned(FData);
+      If Result Then
+        begin
+        Move(AData^, FData^, ASize);
+        FDataSize := ASize;
+        FDataBufferAllocated := True;
+        end;
       end;
+    end
+  Else begin
+    FDataSize := ASize;
+    FData := PByte(FRaw) + FRawSize - FDataSize;
     end;
   end;
 end;
