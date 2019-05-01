@@ -324,10 +324,7 @@ If Not ABinary Then
     end;
 
   If DataSize > 0 Then
-    begin
-    S.Add(Format('Data size = %d', [DataSize]));
     ProcessParsers(AParsers, s);
-    end;
 
   s.Add('');
   s.SaveToStream(AStream);
