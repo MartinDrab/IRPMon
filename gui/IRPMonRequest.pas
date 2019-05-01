@@ -33,6 +33,9 @@ Type
     FData : Pointer;
     FRaw : PREQUEST_HEADER;
     FRawSize : Cardinal;
+    FEmulated : Boolean;
+    FDataPresent : Boolean;
+    FDataStripped : Boolean;
     Procedure SetDriverName(AName:WideString);
     Procedure SetDeviceName(AName:WideString);
     Procedure SetFileName(AName:WideString);
@@ -70,6 +73,9 @@ Type
     Property Data : Pointer Read FData;
     Property Raw : PREQUEST_HEADER Read FRaw;
     Property RawSize : Cardinal Read FRawSize;
+    Property Emulated : Boolean Read FEmulated;
+    Property DataPresent : Boolean Read FDataPresent;
+    Property DataStripped : Boolean Read FDataStripped;
   end;
 
 implementation
@@ -103,6 +109,8 @@ If Not Assigned(FRaw) THen
   Raise Exception.Create('Not enough memory');
 
 CopyMemory(FRaw, @ARequest, FRawSize);
+FEmulated := (ARequest.Flags And REQUEST_FLAG_EMULATED) <> 0;
+FDataStripped := (ARequest.Flags And REQUEST_FLAG_DATA_STRIPPED) <> 0;
 end;
 
 Destructor TGeneralRequest.Destroy;
@@ -119,6 +127,7 @@ end;
 Function TGeneralRequest.AssignData(AData:Pointer; ASize:NativeUInt):Boolean;
 begin
 Result := True;
+FDataPresent := True;
 If ASize > 0 Then
   begin
   Result := Not Assigned(FData);

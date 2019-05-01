@@ -52,13 +52,17 @@ Type
     rlmctIOSBStatusValue,
     rlmctIOSBStatusConstant,
     rlmctIOSBInformation,
-    rlmctRequestorPID);
+    rlmctRequestorPID,
+    rlmctEmulated,
+    rlmctDataAssociated,
+    rlmctDataStripped,
+    rlmctDataSize);
   PERequestListModelColumnType = ^ERequestListModelColumnType;
 
   RequestListModelColumnSet = Set Of ERequestListModelColumnType;
 
 Const
-  RequestListModelColumnNames : Array [0..Ord(rlmctRequestorPID)] Of String = (
+  RequestListModelColumnNames : Array [0..Ord(rlmctDataSize)] Of String = (
     'ID',
     'Time',
     'Type',
@@ -86,10 +90,14 @@ Const
     'IOSB.Status value',
     'IOSB.Status constant',
     'IOSB.Information',
-    'Requestor PID'
+    'Requestor PID',
+    'Emulated',
+    'Associated data',
+    'Data stripped',
+    'Data size'
   );
 
-  RequestListModelColumnValueTypes : Array [0..Ord(rlmctRequestorPID)] Of ERequestListModelColumnValueType = (
+  RequestListModelColumnValueTypes : Array [0..Ord(rlmctDataSize)] Of ERequestListModelColumnValueType = (
     rlmcvtInteger,
     rlmcvtTime,
     rlmcvtRequestType,
@@ -116,6 +124,10 @@ Const
     rlmcvtProcessorMode,
     rlmcvtInteger,
     rlmcvtString,
+    rlmcvtInteger,
+    rlmcvtInteger,
+    rlmcvtInteger,
+    rlmcvtInteger,
     rlmcvtInteger,
     rlmcvtInteger
   );
@@ -388,6 +400,22 @@ Case AColumnType Of
     AValue := @FIrql;
     AValueSIze := SizeOf(FIrql);
     end;
+  rlmctDataAssociated : begin
+    AValue := @FDataPresent;
+    AValueSize := SizeOf(FDataPresent);
+    end;
+  rlmctDataStripped : begin
+    AValue := @FDataStripped;
+    AValueSize := SizeOf(FDataStripped);
+    end;
+  rlmctEmulated : begin
+    AValue := @FEmulated;
+    AValueSize := SizeOf(FEmulated);
+    end;
+  rlmctDataSize : begin
+    AValue := @FDataSize;
+    AValueSize := SizeOf(FDataSize);
+    end
   Else Result := False;
   end;
 end;
@@ -448,6 +476,10 @@ Case AColumnType Of
   rlmctProcessId : AResult := Format('%u', [FProcessId]);
   rlmctThreadId :  AResult := Format('%u', [FThreadId]);
   rlmctIRQL : AResult := IRQLToString(FIRQL);
+  rlmctEmulated : AResult := BoolToStr(FEmulated);
+  rlmctDataAssociated : AResult := BoolToStr(FDataPresent);
+  rlmctDataStripped : AResult := BoolToStr(FDataStripped);
+  rlmctDataSize : AResult := Format('%d', [FDataSize]);
   Else Result := False;
   end;
 end;
