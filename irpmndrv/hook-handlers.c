@@ -1220,6 +1220,7 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 	PFILE_OBJECT createFileObject = NULL;
 	PIRP_COMPLETION_CONTEXT compContext = NULL;
 	PREQUEST_IRP request = NULL;
+	ULONG fnAssignedId = 0;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
@@ -1229,6 +1230,13 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 	driverRecord = DriverHookRecordGet(Deviceobject->DriverObject);
 	if (driverRecord != NULL) {
 		deviceRecord = DriverHookRecordGetDevice(driverRecord, Deviceobject);
+		isCreate = (irpStack->MajorFunction == IRP_MJ_CREATE);
+		if (isCreate) {
+			createFileObject = irpStack->FileObject;
+			if (createFileObject != NULL)
+				fnAssignedId = RequestIdReserve();
+		}
+
 		if (_CatchRequest(driverRecord, deviceRecord, Deviceobject)) {
 			if (deviceRecord == NULL || deviceRecord->IRPMonitorSettings[irpStack->MajorFunction]) {
 				if (driverRecord->MonitorIRP) {
@@ -1278,10 +1286,6 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 				}
 			}
 		}
-
-		isCreate = (irpStack->MajorFunction == IRP_MJ_CREATE);
-		if (isCreate)
-			createFileObject = irpStack->FileObject;
 		
 		isCleanup = (irpStack->MajorFunction == IRP_MJ_CLEANUP);
 		if (isCleanup && KeGetCurrentIrql() < DISPATCH_LEVEL) {
