@@ -173,6 +173,7 @@ Var
   l : Cardinal;
   iValue : UInt64;
   sValue : WideString;
+  stringConstant : WideString;
 begin
 Result := Nil;
 If (FEnabled) And
@@ -204,16 +205,13 @@ If (FEnabled) And
           end;
         end;
       rlmcvtString : begin
-        sValue := WideCharToString(d);
+        sValue := WideUpperCase(WideCharToString(d));
+        stringConstant := WideUpperCase(FStringValue);
         Case FOp Of
-          rfoEquals: ret := (WideCompareText(sValue, FStringValue) = 0);
-          rfoLowerEquals: ret := (WideCompareText(sValue, FStringValue) <= 0);
-          rfoGreaterEquals: ret := (WideCompareText(sValue, FStringValue) >= 0);
-          rfoLower: ret := (WideCompareText(sValue, FStringValue) < 0);
-          rfoGreater: ret := (WideCompareText(sValue, FStringValue) > 0);
-          rfoContains: ret := (Pos(sValue, FStringValue) > 0);
-          rfoBegins: ret := (Pos(sValue, FStringValue) = 1);
-          rfoEnds: ret := (Pos(sValue, FStringValue) = Length(FStringValue) - Length(sValue) + 1);
+          rfoEquals: ret := (WideCompareText(sValue, stringConstant) = 0);
+          rfoContains: ret := (Pos(stringConstant, sValue) > 0);
+          rfoBegins: ret := (Pos(stringConstant, sValue) = 1);
+          rfoEnds: ret := (Pos(stringConstant, sValue) = Length(sValue) - Length(stringConstant) + 1);
           rfoAlwaysTrue: ret := True;
           end;
         end;
