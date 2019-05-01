@@ -318,6 +318,11 @@ Type
   ERequestResultType = _ERequestResultType;
   PERequestResultType = ^ERequestResultType;
 
+Const
+  REQUEST_FLAG_EMULATED         = $1;
+  REQUEST_FLAG_DATA_STRIPPED    = $2;
+
+Type
   (** Header, containing information common for all request types. *)
   _REQUEST_HEADER = Record
 	  Nothing1 : Pointer;
@@ -337,6 +342,7 @@ Type
 	  Driver : Pointer;
     ProcessId : THandle;
     ThreadId : THandle;
+    Flags : Word;
     Irql : Byte;
 	  (** Result of the request servicing. The type of this field
 	    differs depending the type of the request.

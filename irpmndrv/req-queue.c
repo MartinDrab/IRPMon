@@ -135,6 +135,7 @@ VOID RequestQueueInsert(PREQUEST_HEADER Header)
 
 VOID RequestHeaderInit(PREQUEST_HEADER Header, PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT DeviceObject, ERequesttype RequestType)
 {
+	RtlSecureZeroMemory(Header, sizeof(REQUEST_HEADER));
 	InitializeListHead(&Header->Entry);
 	KeQuerySystemTime(&Header->Time);
 	Header->Id = InterlockedIncrement(&_lastRequestId);

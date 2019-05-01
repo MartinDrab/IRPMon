@@ -14,6 +14,7 @@ typedef struct _DATA_LOGGER_RESULT {
 	void *Buffer;
 	SIZE_T BufferSize;
 	PMDL BufferMdl;
+	BOOLEAN Stripped;
 } DATA_LOGGER_RESULT, *PDATA_LOGGER_RESULT;
 
 

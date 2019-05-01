@@ -313,8 +313,10 @@ void IRPDataLogger(PIRP Irp, PIO_STACK_LOCATION IrpStack, BOOLEAN Completion, PD
 			break;
 	}
 
-	if (_stripLargeData && Result->BufferSize > _threshold)
+	if (_stripLargeData && Result->BufferSize > _threshold) {
 		Result->BufferSize = _threshold;
+		Result->Stripped = TRUE;
+	}
 
 	DEBUG_EXIT_FUNCTION("void, *Buffer=0x%p, *BufferSize=%Iu, *BfferMdl=0x%p", Result->Buffer, Result->BufferSize, Result->BufferMdl);
 	return;

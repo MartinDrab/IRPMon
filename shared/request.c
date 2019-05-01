@@ -14,6 +14,7 @@
 static void _RequestHeaderInit(PREQUEST_HEADER Header, void *DriverObject, void *DeviceObject, ERequesttype RequestType)
 {
 	RtlSecureZeroMemory(Header, sizeof(REQUEST_HEADER));
+	Header->Flags |= REQUEST_FLAG_EMULATED;
 	Header->Device = DeviceObject;
 	Header->Driver = DriverObject;
 	Header->Type = RequestType;

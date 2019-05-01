@@ -75,6 +75,9 @@ typedef enum _ERequestResultType {
 	rrtBOOLEAN,
 } ERequestResultType, *PERequstResultType;
 
+#define REQUEST_FLAG_EMULATED			0x1
+#define REQUEST_FLAG_DATA_STRIPPED		0x2
+
 /** Header, containing information common for all request types. */
 typedef struct _REQUEST_HEADER {
 	LIST_ENTRY Entry;
@@ -93,6 +96,8 @@ typedef struct _REQUEST_HEADER {
 	PVOID Driver;
 	HANDLE ProcessId;
 	HANDLE ThreadId;
+	/** Various flags related to the request. */
+	USHORT Flags;
 	UCHAR Irql;
 	/** Result of the request servicing. The type of this field
 	    differs depending the type of the request. 

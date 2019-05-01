@@ -1046,6 +1046,9 @@ VOID HookHandlerStartIoDispatch(PDEVICE_OBJECT DeviceObject, PIRP Irp)
 				request->FileObject = IrpStack->FileObject;
 				request->Status = STATUS_UNSUCCESSFUL;
 				request->Information = 0;
+				if (loggedData.Stripped)
+					request->Header.Flags |= REQUEST_FLAG_DATA_STRIPPED;
+				
 				if (loggedData.Buffer != NULL && loggedData.BufferSize > 0) {
 					request->DataSize = loggedData.BufferSize;
 					__try {
@@ -1122,6 +1125,9 @@ static NTSTATUS _HookHandlerIRPCompletion(PDEVICE_OBJECT DeviceObject, PIRP Irp,
 		memcpy(completionRequest->Arguments, &cc->StackLocation.Parameters.Others, sizeof(completionRequest->Arguments));
 		completionRequest->MajorFunction = cc->StackLocation.MajorFunction;
 		completionRequest->MinorFunction = cc->StackLocation.MinorFunction;
+		if (loggedData.Stripped)
+			completionRequest->Header.Flags |= REQUEST_FLAG_DATA_STRIPPED;
+
 		cc->CompRequest = completionRequest;
 		if (loggedData.BufferSize > 0 && loggedData.Buffer != NULL) {
 			completionRequest->DataSize = loggedData.BufferSize;
@@ -1251,6 +1257,9 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 						request->IOSBStatus = Irp->IoStatus.Status;
 						request->IOSBInformation = Irp->IoStatus.Information;
 						request->RequestorProcessId = IoGetRequestorProcessId(Irp);
+						if (loggedData.Stripped)
+							request->Header.Flags |= REQUEST_FLAG_DATA_STRIPPED;
+						
 						if (loggedData.BufferSize > 0 && loggedData.Buffer != NULL) {
 							request->DataSize = loggedData.BufferSize;
 							__try {
