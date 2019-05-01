@@ -209,6 +209,7 @@ end;
 
 Function TIRPRequest.GetColumnValueRaw(AColumnType:ERequestListModelColumnType; Var AValue:Pointer; Var AValueSize:Cardinal):Boolean;
 begin
+Result := True;
 Case AColumnType Of
   rlmctSubType: begin
     AValue := @FMajorFunction;
