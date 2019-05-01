@@ -166,17 +166,20 @@ Type
     FIRPAddress : Pointer;
     FIOSBStatus : Cardinal;
     FIOSBInformation : NativeUInt;
-    FProcessId : THandle;
-    FThreadId : THandle;
+    FMajorFunction : Cardinal;
+    FMinorFunction : Cardinal;
   Public
     Constructor Create(Var ARequest:REQUEST_IRP_COMPLETION); Overload;
 
+    Function GetColumnName(AColumnType:ERequestListModelColumnType):WideString; Override;
+    Function GetColumnValueRaw(AColumnType:ERequestListModelColumnType; Var AValue:Pointer; Var AValueSize:Cardinal):Boolean; Override;
     Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
+
     Property Address : Pointer Read FIRPAddress;
     Property IOSBStatus : Cardinal Read FIOSBStatus;
     Property IOSBInformation : NativeUInt Read FIOSBInformation;
-    Property ProcessId : THandle Read FProcessId;
-    Property ThreadId : THandle Read FThreadId;
+    Property MajorFunction : Cardinal Read FMajorFunction;
+    Property MinorFunction : Cardinal Read FMinorFunction;
   end;
 
   TStartIoRequest = Class (TDriverRequest)
@@ -500,12 +503,43 @@ AssignData(d, ARequest.DataSize);
 FIRPAddress := ARequest.IRPAddress;
 FIOSBStatus := ARequest.CompletionStatus;
 FIOSBInformation := ARequest.CompletionInformation;
+FMajorFunction := ARequest.MajorFunction;
+FMinorFunction := ARequest.MinorFunction;
+SetFileObject(ARequest.FileObject);
+end;
+
+Function TIRPCompleteRequest.GetColumnName(AColumnType:ERequestListModelColumnType):WideString;
+begin
+Result := '';
+Case AColumnType Of
+  rlmctSubType : Result := 'Major function';
+  rlmctMinorFunction : Result := 'Minor function';
+  Else Result := Inherited GetColumnName(AColumnType);
+  end;
+end;
+
+Function TIRPCompleteRequest.GetColumnValueRaw(AColumnType:ERequestListModelColumnType; Var AValue:Pointer; Var AValueSize:Cardinal):Boolean;
+begin
+Result := True;
+Case AColumnType Of
+  rlmctSubType : begin
+    AValue := @FMajorFunction;
+    AValueSize := SizeOf(FMajorFunction);
+    end;
+  rlmctMinorFunction : begin
+    AValue := @FMinorFunction;
+    AValueSize := SizeOf(FMinorFunction);
+    end;
+  Else Result := Inherited GetColumnValueRaw(AColumnType, AValue, AValueSize);
+  end;
 end;
 
 Function TIRPCompleteRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
 begin
 Result := True;
 Case AColumnType Of
+  rlmctSubType : AResult := MajorFunctionToString(FMajorFunction);
+  rlmctMinorFunction : AResult := MinorFunctionToString(FMajorFunction, FMinorFunction);
   rlmctIRPAddress: AResult := Format('0x%p', [FIRPAddress]);
   rlmctIOSBStatusValue : AResult := Format('0x%x', [FIOSBStatus]);
   rlmctIOSBStatusConstant : AResult := Format('%s', [NTSTATUSToString(FIOSBStatus)]);
