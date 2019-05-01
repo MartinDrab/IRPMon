@@ -476,9 +476,9 @@ Case AColumnType Of
   rlmctProcessId : AResult := Format('%u', [FProcessId]);
   rlmctThreadId :  AResult := Format('%u', [FThreadId]);
   rlmctIRQL : AResult := IRQLToString(FIRQL);
-  rlmctEmulated : AResult := BoolToStr(FEmulated);
-  rlmctDataAssociated : AResult := BoolToStr(FDataPresent);
-  rlmctDataStripped : AResult := BoolToStr(FDataStripped);
+  rlmctEmulated : AResult := BoolToStr(FEmulated, True);
+  rlmctDataAssociated : AResult := BoolToStr(FDataPresent, True);
+  rlmctDataStripped : AResult := BoolToStr(FDataStripped, True);
   rlmctDataSize : AResult := Format('%d', [FDataSize]);
   Else Result := False;
   end;
