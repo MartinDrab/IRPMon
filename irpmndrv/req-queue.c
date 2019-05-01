@@ -141,10 +141,18 @@ ULONG RequestIdReserve(void)
 
 VOID RequestHeaderInit(PREQUEST_HEADER Header, PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT DeviceObject, ERequesttype RequestType)
 {
+	RequestHeaderInitNoId(Header, DriverObject, DeviceObject, RequestType);
+	Header->Id = RequestIdReserve();
+
+	return;
+}
+
+
+VOID RequestHeaderInitNoId(PREQUEST_HEADER Header, PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT DeviceObject, ERequesttype RequestType)
+{
 	RtlSecureZeroMemory(Header, sizeof(REQUEST_HEADER));
 	InitializeListHead(&Header->Entry);
 	KeQuerySystemTime(&Header->Time);
-	Header->Id = RequestIdReserve();
 	Header->Device = DeviceObject;
 	Header->Driver = DriverObject;
 	Header->Type = RequestType;
