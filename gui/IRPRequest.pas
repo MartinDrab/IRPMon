@@ -38,6 +38,8 @@ Type
     Class Function DeviceTextTypeToString(AType:DEVICE_TEXT_TYPE):WideString;
     Class Function DeviceRelationTypeToString(AType:DEVICE_RELATION_TYPE):WideString;
     Class Function SecurityInformationToString(AInfo:Cardinal):WideString;
+    Class Function CreateOptionsToString(AOptions:Cardinal):WideString;
+    Class Function ShareAccessToString(AAccess:Cardinal):WideString;
     Class Function Build(Var ARequest:REQUEST_IRP):TIRPRequest;
 
     Property Args : TIRPArguments Read FArgs;
@@ -56,6 +58,12 @@ Type
 
   TZeroArgIRPRequest = Class (TIRPRequest)
     Public
+      Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
+    end;
+
+  TCreateRequest = Class (TIRPRequest)
+    Public
+      Function GetColumnName(AColumnType:ERequestListModelColumnType):WideString; Override;
       Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
     end;
 
@@ -418,10 +426,90 @@ If Result <> '' Then
   Delete(Result, 1, 1);
 end;
 
+Class Function TIRPRequest.CreateOptionsToString(AOptions:Cardinal):WideString;
+Var
+  disp : Cardinal;
+  opt : Cardinal;
+begin
+Result := '';
+opt := (AOptions And $FFFFFF);
+disp := (AOptions Shr 24);
+Case disp Of
+  FILE_SUPERSEDE : Result := 'Supersede';
+  FILE_CREATE : Result := 'Supersede';
+  FILE_OPEN : Result := 'Supersede';
+  FILE_OPEN_IF : Result := 'Supersede';
+  FILE_OVERWRITE : Result := 'Supersede';
+  FILE_OVERWRITE_IF : Result := 'Supersede';
+  end;
+
+If ((opt And FILE_DIRECTORY_FILE) <> 0) THen
+  Result := Result + ' Directory';
+If ((opt And FILE_WRITE_THROUGH) <> 0) THen
+  Result := Result + ' WriteThrough';
+If ((opt And FILE_SEQUENTIAL_ONLY) <> 0) THen
+  Result := Result + ' Sequential';
+If ((opt And FILE_NO_INTERMEDIATE_BUFFERING) <> 0) THen
+  Result := Result + ' NoBuffering';
+If ((opt And FILE_SYNCHRONOUS_IO_ALERT) <> 0) THen
+  Result := Result + ' SynchronousAlert';
+If ((opt And FILE_SYNCHRONOUS_IO_NONALERT) <> 0) THen
+  Result := Result + ' SynchronousNoAlert';
+If ((opt And FILE_NON_DIRECTORY_FILE) <> 0) THen
+  Result := Result + ' NonDirectory';
+If ((opt And FILE_CREATE_TREE_CONNECTION) <> 0) THen
+  Result := Result + ' TreeConnection';
+If ((opt And FILE_COMPLETE_IF_OPLOCKED) <> 0) THen
+  Result := Result + ' CompleteOplocked';
+If ((opt And FILE_NO_EA_KNOWLEDGE) <> 0) THen
+  Result := Result + ' NoEAKnowledge';
+If ((opt And FILE_OPEN_REMOTE_INSTANCE) <> 0) THen
+  Result := Result + ' RemoteInstance';
+If ((opt And FILE_RANDOM_ACCESS) <> 0) THen
+  Result := Result + ' RandomAccess';
+If ((opt And FILE_DELETE_ON_CLOSE) <> 0) THen
+  Result := Result + ' DeleteOnClose';
+If ((opt And FILE_OPEN_BY_FILE_ID) <> 0) THen
+  Result := Result + ' FileId';
+If ((opt And FILE_OPEN_FOR_BACKUP_INTENT) <> 0) THen
+  Result := Result + ' Backup';
+If ((opt And FILE_NO_COMPRESSION) <> 0) THen
+  Result := Result + ' NoCompression';
+If ((opt And FILE_OPEN_REQUIRING_OPLOCK) <> 0) THen
+  Result := Result + ' RequireOplock';
+If ((opt And FILE_DISALLOW_EXCLUSIVE) <> 0) THen
+  Result := Result + ' DisallowExclusive';
+If ((opt And FILE_SESSION_AWARE) <> 0) THen
+  Result := Result + ' SessionAware';
+If ((opt And FILE_RESERVE_OPFILTER) <> 0) THen
+  Result := Result + ' ReserveOpFilter';
+If ((opt And FILE_OPEN_REPARSE_POINT) <> 0) THen
+  Result := Result + ' ReparsePoint';
+If ((opt And FILE_OPEN_NO_RECALL) <> 0) THen
+  Result := Result + ' NoRecall';
+If ((opt And FILE_OPEN_FOR_FREE_SPACE_QUERY) <> 0) THen
+  Result := Result + ' FreeSpaceQuery';
+end;
+
+Class Function TIRPRequest.ShareAccessToString(AAccess:Cardinal):WideString;
+begin
+Result := '';
+If ((AAccess And FILE_SHARE_READ) <> 0) Then
+  Result := Result + ' Read';
+If ((AAccess And FILE_SHARE_WRITE) <> 0) Then
+  Result := Result + ' Write';
+If ((AAccess And FILE_SHARE_DELETE) <> 0) Then
+  Result := Result + ' Delete';
+
+If Result <> '' Then
+  Delete(Result, 1, 1);
+end;
+
 Class Function TIRPRequest.Build(Var ARequest:REQUEST_IRP):TIRPRequest;
 begin
 Result := Nil;
 Case ARequest.MajorFunction Of
+  0 : Result := TCreateRequest.Create(ARequest);
   2, 18 : Result := TCloseCleanupRequest.Create(ARequest);
   3, 4   : Result := TReadWriteRequest.Create(ARequest);
   5, 6   : Result := TQuerySetRequest.Create(ARequest);
@@ -478,6 +566,28 @@ Case AColumnType Of
   end;
 end;
 
+(** TCreateRequest **)
+
+Function TCreateRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
+begin
+Result := True;
+Case AColumnType Of
+  rlmctArg1: AResult := Format('0x%p', [FArgs.Create.SecurityContext]);
+  Else Result := Inherited GetColumnValue(AColumnType, AResult);
+  end;
+end;
+
+Function TCreateRequest.GetColumnName(AColumnType:ERequestListModelColumnType):WideString;
+begin
+Case AColumnType Of
+  rlmctArg1 : Result := 'Security context';
+  rlmctArg2 : Result := 'Options';
+  rlmctArg3 : Result := 'Access and attributes';
+  rlmctArg4 : Result := 'EA length';
+  Else Result := Inherited GetColumnName(AColumnType);
+  end;
+end;
+
 (** TDeviceControlRequest **)
 
 Function TDeviceControlRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
@@ -485,9 +595,9 @@ begin
 Result := True;
 Case AColumnType Of
   rlmctArg1: AResult := Format('%u', [FArgs.DeviceControl.OutputBufferLength]);
-  rlmctArg2: AResult := Format('%u', [FArgs.DeviceControl.InputBufferLength]);
-  rlmctArg3: AResult := IOCTLToString(FArgs.DeviceControl.IoControlCode);
-  rlmctArg4: AResult := Format('0x%p', [FArgs.DeviceControl.Type3InputBuffer]);
+  rlmctArg2: AResult := CreateOptionsToString(FArgs.Create.Options);
+  rlmctArg3: AResult := ShareAccessToString(FArgs.Create.ShareAccess);
+  rlmctArg4: AResult := Format('%u', [FArgs.Create.EaLength]);
   Else Result := Inherited GetColumnValue(AColumnType, AResult);
   end;
 end;

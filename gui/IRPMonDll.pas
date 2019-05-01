@@ -13,6 +13,38 @@ Uses
   Windows;
 
 Const
+  FILE_SUPERSEDE                 = $00000000;
+  FILE_OPEN                      = $00000001;
+  FILE_CREATE                    = $00000002;
+  FILE_OPEN_IF                   = $00000003;
+  FILE_OVERWRITE                 = $00000004;
+  FILE_OVERWRITE_IF              = $00000005;
+
+  FILE_DIRECTORY_FILE                     = $00000001;
+  FILE_WRITE_THROUGH                      = $00000002;
+  FILE_SEQUENTIAL_ONLY                    = $00000004;
+  FILE_NO_INTERMEDIATE_BUFFERING          = $00000008;
+  FILE_SYNCHRONOUS_IO_ALERT               = $00000010;
+  FILE_SYNCHRONOUS_IO_NONALERT            = $00000020;
+  FILE_NON_DIRECTORY_FILE                 = $00000040;
+  FILE_CREATE_TREE_CONNECTION             = $00000080;
+  FILE_COMPLETE_IF_OPLOCKED               = $00000100;
+  FILE_NO_EA_KNOWLEDGE                    = $00000200;
+  FILE_OPEN_REMOTE_INSTANCE               = $00000400;
+  FILE_RANDOM_ACCESS                      = $00000800;
+  FILE_DELETE_ON_CLOSE                    = $00001000;
+  FILE_OPEN_BY_FILE_ID                    = $00002000;
+  FILE_OPEN_FOR_BACKUP_INTENT             = $00004000;
+  FILE_NO_COMPRESSION                     = $00008000;
+  FILE_OPEN_REQUIRING_OPLOCK              = $00010000;
+  FILE_DISALLOW_EXCLUSIVE                 = $00020000;
+  FILE_SESSION_AWARE                      = $00040000;
+  FILE_RESERVE_OPFILTER                   = $00100000;
+  FILE_OPEN_REPARSE_POINT                 = $00200000;
+  FILE_OPEN_NO_RECALL                     = $00400000;
+  FILE_OPEN_FOR_FREE_SPACE_QUERY          = $00800000;
+
+
   LABEL_SECURITY_INFORMATION                 = $00000010;
   ATTRIBUTE_SECURITY_INFORMATION             = $00000020;
   SCOPE_SECURITY_INFORMATION                 = $00000040;
@@ -199,6 +231,19 @@ Type
         SecurityInformation : Cardinal;
         SecurityDescriptor : Pointer;
         end; );
+    24 : (Create : Record
+        SecurityContext : Pointer;
+        Options : Cardinal;
+{$IFNDEF WIN32}
+        Padding : Cardinal;
+{$ENDIF}
+        FileAttributes : Word;
+        ShareAccess : Word;
+{$IFNDEF WIN32}
+        Padding2 : Cardinal;
+{$ENDIF}
+        EaLength : Cardinal;
+        end);
     end;
 
   (** Enumerates all possible types of Fast I/O operations. *)
