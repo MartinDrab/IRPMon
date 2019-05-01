@@ -119,6 +119,13 @@ Type
     Function GetPossibleValues(ASources:TList<UInt64>; ATargets:TList<WideString>; Var ABitmask:Boolean):Boolean; Override;
   end;
 
+  TIRPCompletionRequestFilter = Class (TRequestFilter)
+  Public
+    Constructor Create(AName:WideString); Reintroduce;
+
+    Function GetPossibleValues(ASources:TList<UInt64>; ATargets:TList<WideString>; Var ABitmask:Boolean):Boolean; Override;
+  end;
+
 Implementation
 
 Uses
@@ -435,6 +442,7 @@ Result := Nil;
 Case ARequestType Of
   ertUndefined: Result := TRequestFilter.Create('', ARequestType);
   ertIRP: Result := TIRPRequestFilter.Create('');
+  ertIRPCompletion : Result := TIRPCompletionRequestFilter.Create('');
   Else Result := TRequestFilter.Create('', ARequestType);
   end;
 end;
@@ -465,6 +473,53 @@ Inherited Create(AName, ertIRP);
 end;
 
 Function TIRPRequestFilter.GetPossibleValues(ASources:TList<UInt64>; ATargets:TList<WideString>; Var ABitmask:Boolean):Boolean;
+begin
+ABitmask := False;
+Result := True;
+Case RequestListModelColumnValueTypes[Ord(FField)] Of
+  rlmcvtMajorFunction : begin
+    AddMapping(ASources, ATargets, 0, 'Create');
+    AddMapping(ASources, ATargets, 1, 'CreateNamedPipe');
+    AddMapping(ASources, ATargets, 2, 'Close');
+    AddMapping(ASources, ATargets, 3, 'Read');
+    AddMapping(ASources, ATargets, 4, 'Write');
+    AddMapping(ASources, ATargets, 5, 'Query');
+    AddMapping(ASources, ATargets, 6, 'Set');
+    AddMapping(ASources, ATargets, 7, 'QueryEA');
+    AddMapping(ASources, ATargets, 8, 'SetEA');
+    AddMapping(ASources, ATargets, 9, 'Flush');
+    AddMapping(ASources, ATargets, 10, 'QueryVolume');
+    AddMapping(ASources, ATargets, 11, 'SetVolume');
+    AddMapping(ASources, ATargets, 12, 'DirectoryControl');
+    AddMapping(ASources, ATargets, 13, 'FSControl');
+    AddMapping(ASources, ATargets, 14, 'DeviceControl');
+    AddMapping(ASources, ATargets, 15, 'InternalDeviceControl');
+    AddMapping(ASources, ATargets, 16, 'Shutdown');
+    AddMapping(ASources, ATargets, 17, 'Lock');
+    AddMapping(ASources, ATargets, 18, 'Cleanup');
+    AddMapping(ASources, ATargets, 19, 'CreateMailslot');
+    AddMapping(ASources, ATargets, 20, 'QuerySecurity');
+    AddMapping(ASources, ATargets, 21, 'SetSecurity');
+    AddMapping(ASources, ATargets, 22, 'Power');
+    AddMapping(ASources, ATargets, 23, 'SystemControl');
+    AddMapping(ASources, ATargets, 24, 'DeviceChange');
+    AddMapping(ASources, ATargets, 25, 'QueryQuota');
+    AddMapping(ASources, ATargets, 26, 'SetQuota');
+    AddMapping(ASources, ATargets, 27, 'PnP');
+    end;
+  Else Result := Inherited GetPossibleValues(ASources, ATargets, ABitmask);
+  end;
+end;
+
+
+(** TIRPCompletionRequestFilter **)
+
+Constructor TIRPCompletionRequestFilter.Create(AName:WideString);
+begin
+Inherited Create(AName, ertIRPCompletion);
+end;
+
+Function TIRPCompletionRequestFilter.GetPossibleValues(ASources:TList<UInt64>; ATargets:TList<WideString>; Var ABitmask:Boolean):Boolean;
 begin
 ABitmask := False;
 Result := True;
