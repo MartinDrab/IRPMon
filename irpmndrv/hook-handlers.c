@@ -1233,7 +1233,7 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 		isCreate = (irpStack->MajorFunction == IRP_MJ_CREATE);
 		if (isCreate) {
 			createFileObject = irpStack->FileObject;
-			if (createFileObject != NULL)
+			if (createFileObject != NULL && KeGetCurrentIrql() < DISPATCH_LEVEL)
 				fnAssignedId = RequestIdReserve();
 		}
 
@@ -1326,7 +1326,8 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 					ar = HeapMemoryAllocNonPaged(sizeof(REQUEST_FILE_OBJECT_NAME_ASSIGNED) + uFileName.Length);
 					if (ar != NULL) {
 						memset(ar, 0, sizeof(REQUEST_FILE_OBJECT_NAME_ASSIGNED) + uFileName.Length);
-						RequestHeaderInit(&ar->Header, Deviceobject->DriverObject, Deviceobject, ertFileObjectNameAssigned);
+						RequestHeaderInitNoId(&ar->Header, Deviceobject->DriverObject, Deviceobject, ertFileObjectNameAssigned);
+						ar->Header.Id = fnAssignedId;
 						RequestHeaderSetResult(ar->Header, NTSTATUS, STATUS_SUCCESS);
 						ar->FileObject = createFileObject;
 						ar->NameLength = uFileName.Length;
