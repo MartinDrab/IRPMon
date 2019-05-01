@@ -587,7 +587,7 @@ Var
   d : Pointer;
 begin
 Inherited Create(ARequest.Header);
-d := PByte(@ARequest) + aRequest.DataSize;
+d := PByte(@ARequest) + SizeOf(aRequest);
 AssignData(d, ARequest.DataSize);
 end;
 
