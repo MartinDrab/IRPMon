@@ -721,7 +721,7 @@ Var
   l : TList<PREQUEST_GENERAL>;
 begin
 l := TList<PREQUEST_GENERAL>.Create;
-While Not AStream.Position < AStream.Size Do
+While AStream.Position < AStream.Size Do
   begin
   AStream.Read(reqSize, SizeOf(reqSize));
   rg := AllocMem(reqSize);
