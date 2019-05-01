@@ -128,9 +128,9 @@ end;
 Function TGeneralRequest.AssignData(AData:Pointer; ASize:NativeUInt; AWithinRequest:Boolean = True):Boolean;
 begin
 Result := True;
-FDataPresent := True;
 If ASize > 0 Then
   begin
+  FDataPresent := True;
   If Not AWithinRequest Then
     begin
     Result := Not Assigned(FData);
