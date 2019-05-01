@@ -573,6 +573,9 @@ begin
 Result := True;
 Case AColumnType Of
   rlmctArg1: AResult := Format('0x%p', [FArgs.Create.SecurityContext]);
+  rlmctArg2: AResult := CreateOptionsToString(FArgs.Create.Options);
+  rlmctArg3: AResult := ShareAccessToString(FArgs.Create.ShareAccess);
+  rlmctArg4: AResult := Format('%u', [FArgs.Create.EaLength]);
   Else Result := Inherited GetColumnValue(AColumnType, AResult);
   end;
 end;
@@ -595,9 +598,9 @@ begin
 Result := True;
 Case AColumnType Of
   rlmctArg1: AResult := Format('%u', [FArgs.DeviceControl.OutputBufferLength]);
-  rlmctArg2: AResult := CreateOptionsToString(FArgs.Create.Options);
-  rlmctArg3: AResult := ShareAccessToString(FArgs.Create.ShareAccess);
-  rlmctArg4: AResult := Format('%u', [FArgs.Create.EaLength]);
+  rlmctArg2: AResult := Format('%u', [FArgs.DeviceControl.InputBufferLength]);
+  rlmctArg3: AResult := IOCTLToString(FArgs.DeviceControl.IoControlCode);
+  rlmctArg4: AResult := Format('0x%p', [FArgs.DeviceControl.Type3InputBuffer]);
   Else Result := Inherited GetColumnValue(AColumnType, AResult);
   end;
 end;
