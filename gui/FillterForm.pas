@@ -415,6 +415,12 @@ Try
   ct := ERequestListModelColumnType(FilterColumnComboBox.Items.Objects[FilterColumnComboBox.ItemIndex]);
   op := ERequestFilterOperator(FilterOperatorComboBox.Items.Objects[FilterOperatorComboBox.ItemIndex]);
   fa := EFilterAction(FilterActionComboBox.ItemIndex);
+  If fa = ffaPassToFilter Then
+    begin
+    ErrorMessage('Passing decision to other filters is not supported right now');
+    Exit;
+    end;
+
   hc := HighlightColorColorBox.Selected;
   v := FilterValueComboBox.Text;
   For I := 0 To FilterValueComboBox.Items.Count - 1 Do

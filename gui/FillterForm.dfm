@@ -227,6 +227,5 @@ object FilterFrm: TFilterFrm
     OnDblClick = FilterListViewDblClick
     OnDeletion = FilterListViewDeletion
     OnItemChecked = FilterListViewItemChecked
-    ExplicitTop = 113
   end
 end
