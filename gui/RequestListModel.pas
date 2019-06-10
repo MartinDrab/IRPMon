@@ -822,8 +822,8 @@ begin
 c := TDriverRequestComparer.Create;
 FRequests.Sort(c);
 c.Free;
-If Assigned(FDisplayer) Then
-  FDisplayer.Invalidate;
+If Assigned(Displayer) Then
+  Displayer.Invalidate;
 end;
 
 Procedure TRequestListModel.OnAdvancedCustomDrawItemCallback(Sender: TCustomListView; Item: TListItem; State: TCustomDrawState; Stage: TCustomDrawStage; var DefaultDraw: Boolean);
@@ -876,10 +876,10 @@ While (I < FRequests.Count) Do
   Inc(I);
   end;
 
-If Assigned(FDisplayer) Then
+If Assigned(Displayer) Then
   begin
-  FDisplayer.Items.Count := FRequests.Count;
-  FDisplayer.Invalidate;
+  Displayer.Items.Count := FRequests.Count;
+  Displayer.Invalidate;
   end;
 end;
 
