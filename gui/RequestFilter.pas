@@ -160,6 +160,7 @@ end;
 
 Destructor TRequestFilter.Destroy;
 begin
+RemoveFromChain;
 If Assigned(FRequestPrototype) Then
   FRequestPrototype.Free;
 
