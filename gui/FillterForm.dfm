@@ -154,6 +154,15 @@ object FilterFrm: TFilterFrm
       State = cbChecked
       TabOrder = 9
     end
+    object NextFilterComboBox: TComboBox
+      Left = 464
+      Top = 84
+      Width = 85
+      Height = 21
+      Style = csDropDownList
+      TabOrder = 10
+      Visible = False
+    end
   end
   object LowerPanel: TPanel
     Left = 0

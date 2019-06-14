@@ -40,6 +40,7 @@ Type
     AddButton: TButton;
     DeleteButton: TButton;
     EnabledCheckBox: TCheckBox;
+    NextFilterComboBox: TComboBox;
     Procedure FormCreate(Sender: TObject);
     procedure FilterTypeComboBoxChange(Sender: TObject);
     procedure FilterColumnComboBoxChange(Sender: TObject);
@@ -62,6 +63,7 @@ Type
     FCBs : Array [0..Ord(fctMax)-1] of TComboBox;
     FCancelled : Boolean;
     Procedure EnableCombobox(AType:EFilterComboboxType; AEnable:Boolean);
+    Procedure ShowNextFilters;
   Public
     Constructor Create(AOwner:TApplication; AFilterList:TObjectList<TRequestFilter>); Reintroduce;
 
@@ -89,6 +91,45 @@ For rf In AFilterList Do
 Inherited Create(Application);
 end;
 
+Procedure TFilterFrm.ShowNextFilters;
+Var
+  L : TListItem;
+  rf : TRequestFilter;
+  selectedIndex : Integer;
+  currentRF : TRequestFilter;
+  selectedRF : TRequestFilter;
+begin
+selectedIndex := -1;
+selectedRF := Nil;
+If NextFilterComboBox.ItemIndex <> -1 Then
+  selectedRF := NextFilterComboBox.Items.Objects[NextFilterComboBox.ItemIndex] As TRequestFilter;
+
+NextFilterComboBox.Clear;
+If NextFilterComboBox.Visible Then
+  begin
+  currentRF := Nil;
+  L := FilterListView.Selected;
+  If Assigned(L) Then
+    currentRF := FFilterList[L.Index];
+
+  For rf In FFilterList Do
+    begin
+    If (Assigned(currentRF)) And (rf.Name = currentRF.Name) Then
+      Continue;
+
+    If rf.HasPredecessor Then
+      Continue;
+
+    If (Assigned(selectedRF)) And (selectedRF.Name = rf.Name) Then
+      selectedIndex := NextFilterComboBox.Items.Count;
+
+    NextFilterComboBox.Items.AddObject(rf.Name, rf);
+    end;
+
+  NextFilterComboBox.ItemIndex := selectedIndex;
+  end;
+end;
+
 Procedure TFilterFrm.FilterActionComboBoxChange(Sender: TObject);
 Var
   fa : EFilterAction;
@@ -98,6 +139,9 @@ c := (Sender As TComboBox);
 fa := EFilterAction(c.ItemIndex);
 HighlightColorColorBox.Visible := (fa = ffaHighlight);
 HighlightColorColorBox.Enabled := (fa = ffaHighlight);
+NextFilterComboBox.Visible := (fa = ffaPassToFilter);
+NextFilterComboBox.Enabled := (fa = ffaPassToFilter);
+ShowNextFilters;
 end;
 
 Procedure TFilterFrm.FilterColumnComboBoxChange(Sender: TObject);
