@@ -434,8 +434,10 @@ Var
   fa : EFilterAction;
   hc : TColor;
   err : Cardinal;
+  passTarget : TRequestFilter;
 begin
 f := Nil;
+passTarget := Nil;
 Try
   If FilterTypeComboBox.ItemIndex = -1 Then
     begin
@@ -459,10 +461,15 @@ Try
   ct := ERequestListModelColumnType(FilterColumnComboBox.Items.Objects[FilterColumnComboBox.ItemIndex]);
   op := ERequestFilterOperator(FilterOperatorComboBox.Items.Objects[FilterOperatorComboBox.ItemIndex]);
   fa := EFilterAction(FilterActionComboBox.ItemIndex);
-  If fa = ffaPassToFilter Then
+  If (fa = ffaPassToFilter) Then
     begin
-    ErrorMessage('Passing decision to other filters is not supported right now');
-    Exit;
+    If (NextFilterComboBox.ItemIndex = -1) Then
+      begin
+      ErrorMessage('Target of the pass-to-filter action not selected');
+      Exit;
+      end;
+
+    passTarget := NextFilterComboBox.Items.Objects[NextFilterComboBox.ItemIndex] As TRequestFilter;
     end;
 
   hc := HighlightColorColorBox.Selected;
@@ -488,7 +495,7 @@ Try
     end;
 
   f.Negate := NegateCheckBox.Checked;
-  err := f.SetAction(fa, hc);
+  err := f.SetAction(fa, hc, passTarget);
   If err <> 0 Then
     begin
     ErrorMessage(IntToStr(err));
