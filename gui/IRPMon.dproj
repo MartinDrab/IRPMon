@@ -5,7 +5,7 @@
         <FrameworkType>VCL</FrameworkType>
         <MainSource>IRPMon.dpr</MainSource>
         <Base>True</Base>
-        <Config Condition="'$(Config)'==''">Release</Config>
+        <Config Condition="'$(Config)'==''">Debug</Config>
         <Platform Condition="'$(Platform)'==''">Win64</Platform>
         <TargetedPlatforms>3</TargetedPlatforms>
         <AppType>Application</AppType>
@@ -115,6 +115,8 @@
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <BT_BuildType>Debug</BT_BuildType>
+        <Debugger_CWD>..\bin\x64\$(Config)</Debugger_CWD>
+        <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2)'!=''">
         <DCC_LocalDebugSymbols>false</DCC_LocalDebugSymbols>
@@ -129,6 +131,7 @@
         <VerInfo_Keys>CompanyName=Martin Drab;FileDescription=The IRPMon GUI Application;FileVersion=0.8.0.0;InternalName=IRPMon.exe;LegalCopyright=CopyRight (c) Martin Drab 2017;LegalTrademarks=;OriginalFilename=IRPMon.exe;ProductName=IRPMon;ProductVersion=0.8.0.0;Comments=This is released as a freeware;ProgramID=com.embarcadero.$(MSBuildProjectName)</VerInfo_Keys>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <VerInfo_Locale>1033</VerInfo_Locale>
+        <BT_BuildType>Debug</BT_BuildType>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_Win64)'!=''">
         <DCC_ExeOutput>..\bin\x64\$(Config)</DCC_ExeOutput>
@@ -140,6 +143,7 @@
         <VerInfo_Locale>1033</VerInfo_Locale>
         <VerInfo_Release>100</VerInfo_Release>
         <VerInfo_Keys>CompanyName=Martin Dráb;FileDescription=IRP Monitor GUI Application;FileVersion=0.5.100.100;InternalName=IRPMon.exe;LegalCopyright=Copyright (c) Martin Dráb, 2015-2016;LegalTrademarks=;OriginalFilename=IRPMon.exe;ProductName=IRP Monitor;ProductVersion=0.5.0.0;Comments=;ProgramID=com.embarcadero.$(MSBuildProjectName)</VerInfo_Keys>
+        <BT_BuildType>Debug</BT_BuildType>
     </PropertyGroup>
     <ItemGroup>
         <DelphiCompile Include="$(MainSource)">
@@ -239,6 +243,10 @@
                 <Source>
                     <Source Name="MainSource">IRPMon.dpr</Source>
                 </Source>
+                <Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dcloffice2k260.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
+                    <Excluded_Packages Name="$(BDSBIN)\dclofficexp260.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
+                </Excluded_Packages>
             </Delphi.Personality>
             <Deployment Version="3"/>
             <Platforms>
