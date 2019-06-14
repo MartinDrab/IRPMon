@@ -6,11 +6,17 @@ Unit Utils;
 
 Interface
 
+Uses
+  Graphics;
+
 Procedure ErrorMessage(AMsg:WideString);
 Procedure WarningMessage(AMsg:WideString);
 Procedure InformationMessage(AMsg:WideString);
 Procedure WinErrorMessage(AMsg:WideString; ACode:Cardinal);
 Function BufferToHex(ABuffer:Pointer; ASize:NativeUInt):WideString;
+Procedure ColorToComponents(AColor:TColor; Var AR,AG,AB:Cardinal);
+Function ColorLuminance(AColor:TColor):Cardinal;
+Function ColorLuminanceHeur(AColor:TColor):Cardinal;
 
 Implementation
 
@@ -85,5 +91,46 @@ l.Free;
 end;
 
 
+Procedure ColorToComponents(AColor:TColor; Var AR,AG,AB:Cardinal);
+begin
+AR := (AColor And $0000FF);
+AG := (AColor Shr 8) ANd $FF;
+AB := (AColor Shr 16) And $FF;
+end;
+
+Function ColorLuminance(AColor:TColor):Cardinal;
+Const
+  weights : Array [0..2] Of Double = (
+    0.2126,
+    0.7152,
+    0.0722
+  );
+Var
+  cd : Double;
+  I : Integer;
+  components : Array [0..2] Of Cardinal;
+begin
+Result := 0;
+ColorToComponents(AColor, components[0], components[1], components[2]);
+For I := Low(components) To High(components) Do
+  begin
+  cd := components[I] / 255.0;
+  If (cd <= 0.03928) Then
+    cd := cd /12.92
+  Else cd := Exp(ln((cd + 0.055) / 1.055)*2.4);
+
+  Inc(Result, Trunc(weights[I]*cd*10000.0));
+  end;
+end;
+
+Function ColorLuminanceHeur(AColor:TColor):Cardinal;
+Var
+  r, g, b : Cardinal;
+begin
+ColorToComponents(AColor, r, g, b);
+Result := (r*2990 + g*5870 + b*1140) Div 1000;
+end;
+
 
 End.
+

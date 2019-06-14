@@ -842,9 +842,7 @@ With Sender.Canvas Do
   Else If dr.Highlight Then
     begin
     Brush.Color := dr.HighlightColor;
-    If (dr.HighlightColor >= $800000) Or
-       (dr.HighlightColor >= $008000) Or
-       (dr.HighlightColor >= $000080) Then
+    If Utils.ColorLuminanceHeur(dr.HighlightColor) >= 1490 Then
        Font.Color := ClBlack
     Else Font.Color := ClWhite;
     end;

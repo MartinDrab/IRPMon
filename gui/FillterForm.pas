@@ -212,9 +212,7 @@ With FilterListView.Canvas Do
       Font.Style := [fsBold];
 
     Brush.Color := f.HighlightColor;
-    If (f.HighlightColor >= $800000) Or
-       (f.HighlightColor >= $008000) Or
-       (f.HighlightColor >= $000080) Then
+    If ColorLuminanceHeur(f.HighlightColor) >= 1490 Then
        Font.Color := ClBlack
     Else Font.Color := ClWhite;
     end;
