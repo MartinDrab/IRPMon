@@ -96,6 +96,7 @@ Type
     Function SetAction(AAction:EFilterAction; AHighlightColor:Cardinal = 0; ANextFilter:TRequestFilter = Nil):Cardinal;
     Function SetCondition(AColumn:ERequestListModelColumnType; AOperator:ERequestFilterOperator; AValue:UInt64):Boolean; Overload;
     Function SetCondition(AColumn:ERequestListModelColumnType; AOperator:ERequestFilterOperator; AValue:WideString):Boolean; Overload;
+    Function HasPredecessor:Boolean;
 
     Class Function NewInstance(ARequestType:ERequestType):TRequestFilter;
 
@@ -165,6 +166,11 @@ If Assigned(FRequestPrototype) Then
   FRequestPrototype.Free;
 
 Inherited Destroy;
+end;
+
+Function TRequestFilter.HasPredecessor:Boolean;
+begin
+Result := Assigned(FPreviousFilter);
 end;
 
 Function TRequestFilter.Match(ARequest:TDriverRequest; AChainStart:Boolean = True):TRequestFilter;
