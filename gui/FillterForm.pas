@@ -207,6 +207,10 @@ With FilterListView.Canvas Do
     end
   Else If f.Action = ffaHighlight Then
     begin
+    Font.Style := [];
+    If Not f.HasPredecessor Then
+      Font.Style := [fsBold];
+
     Brush.Color := f.HighlightColor;
     If (f.HighlightColor >= $800000) Or
        (f.HighlightColor >= $008000) Or
