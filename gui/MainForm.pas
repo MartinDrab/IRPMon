@@ -743,11 +743,9 @@ For rf In FFilters Do
   matchingRF := rf.Match(ARequest);
   If Assigned(matchingRF) Then
     begin
-    AStore := (matchingRF.Action In [ffaInclude, ffaHighlight]);
-    ARequest.Highlight := (matchingRF.Action = ffaHighlight);
-    If ARequest.Highlight Then
-      ARequest.HighlightColor := matchingRF.HighlightColor;
-
+    AStore := (matchingRF.Action = ffaInclude);
+    ARequest.Highlight := (matchingRF.HighlightColor <> $FFFFFF);
+    ARequest.HighlightColor := matchingRF.HighlightColor;
     Break;
     end;
   end;
@@ -759,7 +757,7 @@ Var
 begin
 rf := TRequestFilter.NewInstance(ertUndefined);
 rf.Name := '0';
-rf.SetAction(ffaHighlight, ClRed);
+rf.SetAction(ffaInclude, ClRed);
 rf.SetCondition(rlmctProcessId, rfoEquals, GetCurrentProcessId);
 rf.Enabled := True;
 FFilters.Add(rf);

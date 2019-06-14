@@ -60,7 +60,6 @@ Type
     ffaUndefined,
     ffaInclude,
     ffaExclude,
-    ffaHighlight,
     ffaPassToFilter
   );
 
@@ -93,7 +92,7 @@ Type
     Function SupportedOperators:RequestFilterOperatorSet; Virtual;
     Function Copy:TRequestFilter;
     Function Match(ARequest:TDriverRequest; AChainStart:Boolean = True):TRequestFilter;
-    Function SetAction(AAction:EFilterAction; AHighlightColor:Cardinal = 0; ANextFilter:TRequestFilter = Nil):Cardinal;
+    Function SetAction(AAction:EFilterAction; AHighlightColor:Cardinal = $FFFFFF; ANextFilter:TRequestFilter = Nil):Cardinal;
     Function SetCondition(AColumn:ERequestListModelColumnType; AOperator:ERequestFilterOperator; AValue:UInt64):Boolean; Overload;
     Function SetCondition(AColumn:ERequestListModelColumnType; AOperator:ERequestFilterOperator; AValue:WideString):Boolean; Overload;
     Function HasPredecessor:Boolean;
@@ -144,6 +143,7 @@ FOp := rfoAlwaysTrue;
 FAction := ffaInclude;
 FNextFilter := Nil;
 FPreviousFilter := Nil;
+FHighlightColor := $FFFFFF;
 Case FRequestType Of
   ertUndefined: FRequestPrototype := TDriverRequest.Create;
   ertIRP: FRequestPrototype := TIRPRequest.Create;
@@ -292,7 +292,7 @@ If (Assigned(FNextFilter)) Or (Assigned(FPreviousFilter)) Then
 end;
 
 
-Function TRequestFilter.SetAction(AAction:EFilterAction; AHighlightColor:Cardinal = 0; ANextFilter:TRequestFilter = Nil):Cardinal;
+Function TRequestFilter.SetAction(AAction:EFilterAction; AHighlightColor:Cardinal = $FFFFFF; ANextFilter:TRequestFilter = Nil):Cardinal;
 begin
 Result := 0;
 If FAction <> AAction Then
@@ -305,12 +305,10 @@ If FAction <> AAction Then
     end
   Else begin
     FAction := AAction;
-    If FAction = ffaHighlight Then
-      FHighlightColor := AHighlightColor;
+    FHighlightColor := AHighlightColor;
     end;
   end
-Else If (FAction = ffaHighlight) Then
-  FHighlightColor := AHighlightColor;
+Else FHighlightColor := AHighlightColor;
 end;
 
 Function TRequestFilter.SetCondition(AColumn:ERequestListModelColumnType; AOperator:ERequestFilterOperator; AValue:UInt64):Boolean;

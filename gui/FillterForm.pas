@@ -137,8 +137,6 @@ Var
 begin
 c := (Sender As TComboBox);
 fa := EFilterAction(c.ItemIndex);
-HighlightColorColorBox.Visible := (fa = ffaHighlight);
-HighlightColorColorBox.Enabled := (fa = ffaHighlight);
 NextFilterComboBox.Visible := (fa = ffaPassToFilter);
 NextFilterComboBox.Enabled := (fa = ffaPassToFilter);
 ShowNextFilters;
@@ -205,8 +203,7 @@ With FilterListView.Canvas Do
     Font.Color := clHighLightText;
     Font.Style := [fsBold];
     end
-  Else If f.Action = ffaHighlight Then
-    begin
+  Else begin
     Font.Style := [];
     If Not f.HasPredecessor Then
       Font.Style := [fsBold];
@@ -280,9 +277,7 @@ If Assigned(L) Then
 
   FilterActionComboBox.ItemIndex := Ord(f.Action);
   FilterActionComboBoxChange(FilterActionComboBox);
-  If f.Action = ffaHighlight Then
-    HighlightColorColorBox.Selected := f.HighlightColor;
-
+  HighlightColorColorBox.Selected := f.HighlightColor;
   NegateCheckBox.Checked := f.Negate;
   EnabledCheckBox.Checked := f.Enabled;
   end;
