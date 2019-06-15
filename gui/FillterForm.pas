@@ -144,9 +144,9 @@ L := FilterListView.Selected;
 If Assigned(L) Then
   begin
   If Sender = UpButton Then
-    index2 := L.Index + 1
+    index2 := L.Index - 1
   Else If Sender = DownButton Then
-    index2 := L.Index - 1;
+    index2 := L.Index + 1;
 
   FFilterList.Exchange(L.Index, index2);
   FilterListViewData(FilterListView, L);
