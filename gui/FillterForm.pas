@@ -484,7 +484,13 @@ Try
   If Not Assigned(f) Then
     Exit;
 
-  f.Name := IntToStr(FilterListView.Items.Count + 1);
+  f.Name :=
+    FilterTypeComboBox.Text + '-' +
+    FilterColumnComboBox.Text + '-' +
+    FilterOperatorComboBox.Text + '-' +
+    FilterValueComboBox.Text + '-' +
+    FilterActionComboBox.Text;
+
   If Not f.SetCondition(ct, op, v) Then
     begin
     ErrorMessage('Unable to set filter condition, bad value of the constant');
