@@ -141,7 +141,7 @@ object FilterFrm: TFilterFrm
       OnClick = DeleteButtonClick
     end
     object EnabledCheckBox: TCheckBox
-      Left = 139
+      Left = 346
       Top = 59
       Width = 73
       Height = 17
@@ -158,6 +158,24 @@ object FilterFrm: TFilterFrm
       Style = csDropDownList
       TabOrder = 10
       Visible = False
+    end
+    object UpButton: TButton
+      Left = 126
+      Top = 72
+      Width = 57
+      Height = 25
+      Caption = 'Up'
+      TabOrder = 11
+      OnClick = UpDownButtonClick
+    end
+    object DownButton: TButton
+      Left = 189
+      Top = 72
+      Width = 57
+      Height = 25
+      Caption = 'Down'
+      TabOrder = 12
+      OnClick = UpDownButtonClick
     end
   end
   object LowerPanel: TPanel

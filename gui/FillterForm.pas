@@ -41,6 +41,8 @@ Type
     DeleteButton: TButton;
     EnabledCheckBox: TCheckBox;
     NextFilterComboBox: TComboBox;
+    UpButton: TButton;
+    DownButton: TButton;
     Procedure FormCreate(Sender: TObject);
     procedure FilterTypeComboBoxChange(Sender: TObject);
     procedure FilterColumnComboBoxChange(Sender: TObject);
@@ -58,6 +60,7 @@ Type
     procedure FilterListViewItemChecked(Sender: TObject; Item: TListItem);
     procedure FormDestroy(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure UpDownButtonClick(Sender: TObject);
   Private
     FFilterList : TObjectList<TRequestFilter>;
     FCBs : Array [0..Ord(fctMax)-1] of TComboBox;
@@ -127,6 +130,26 @@ If NextFilterComboBox.Visible Then
     end;
 
   NextFilterComboBox.ItemIndex := selectedIndex;
+  end;
+end;
+
+Procedure TFilterFrm.UpDownButtonClick(Sender: TObject);
+Var
+  L : TListItem;
+  index2 : Integer;
+begin
+L := FilterListView.Selected;
+If Assigned(L) Then
+  begin
+  If Sender = UpButton Then
+    index2 := L.Index + 1
+  Else If Sender = DownButton Then
+    index2 := L.Index - 1;
+
+  FFilterList.Exchange(L.Index, index2);
+  FilterListViewData(FilterListView, L);
+  FilterListViewData(FilterListView, FilterListView.Items[index2]);
+  FilterListView.Selected := FilterListView.Items[index2];
   end;
 end;
 
@@ -226,6 +249,7 @@ With Item  Do
   begin
   f := FFilterList[Index];
   Caption := f.Name;
+  SubItems.Clear;
   SubItems.Add(FilterTypeComboBox.Items[Ord(f.RequestType)]);
   SubItems.Add(f.ColumnName);
   SubItems.Add(RequestFilterOperatorNames[Ord(f.Op)]);
