@@ -213,7 +213,8 @@ object FilterFrm: TFilterFrm
     Checkboxes = True
     Columns = <
       item
-        Caption = '#'
+        AutoSize = True
+        Caption = 'Name'
       end
       item
         Caption = 'Type'
@@ -249,6 +250,9 @@ object FilterFrm: TFilterFrm
     OnAdvancedCustomDrawItem = FilterListViewAdvancedCustomDrawItem
     OnDblClick = FilterListViewDblClick
     OnDeletion = FilterListViewDeletion
+    OnSelectItem = FilterListViewSelectItem
     OnItemChecked = FilterListViewItemChecked
+    ExplicitLeft = 40
+    ExplicitWidth = 509
   end
 end

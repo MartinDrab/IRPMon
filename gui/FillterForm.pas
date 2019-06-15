@@ -61,6 +61,8 @@ Type
     procedure FormDestroy(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure UpDownButtonClick(Sender: TObject);
+    procedure FilterListViewSelectItem(Sender: TObject; Item: TListItem;
+      Selected: Boolean);
   Private
     FFilterList : TObjectList<TRequestFilter>;
     FCBs : Array [0..Ord(fctMax)-1] of TComboBox;
@@ -332,6 +334,14 @@ If f.Action = ffaPassToFilter Then
   end;
 end;
 
+Procedure TFilterFrm.FilterListViewSelectItem(Sender: TObject; Item: TListItem;
+  Selected: Boolean);
+begin
+DeleteButton.Enabled := (Assigned(Item)) And (Selected);
+UpButton.Enabled := ((Assigned(Item)) And (Selected) And (Item.Index > 0));
+DownButton.Enabled := ((Assigned(Item)) And (Selected) And (Item.Index < FilterListView.Items.Count - 1));
+end;
+
 Procedure TFilterFrm.FilterTypeComboBoxChange(Sender: TObject);
 Var
   c : TComboBox;
@@ -429,6 +439,7 @@ For rf In FFilterList Do
   L.Checked := rf.Enabled;
   end;
 
+FilterListViewSelectItem(FilterListView, Nil, False);
 end;
 
 Procedure TFilterFrm.FormDestroy(Sender: TObject);
