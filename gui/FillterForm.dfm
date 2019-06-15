@@ -105,6 +105,7 @@ object FilterFrm: TFilterFrm
       Top = 57
       Width = 85
       Height = 22
+      Selected = clWhite
       TabOrder = 5
     end
     object FilterActionComboBox: TComboBox
