@@ -7,7 +7,7 @@ Unit RequestFilter;
 Interface
 
 Uses
-  Generics.Collections,
+  Generics.Collections, INIFiles,
   RequestListModel, IRPMonDll;
 
 Type
@@ -97,7 +97,11 @@ Type
     Function SetCondition(AColumn:ERequestListModelColumnType; AOperator:ERequestFilterOperator; AValue:WideString):Boolean; Overload;
     Function HasPredecessor:Boolean;
 
-    Class Function NewInstance(ARequestType:ERequestType):TRequestFilter;
+    Function Save(AFile:TIniFile):Boolean;
+
+    Class Function NewInstance(ARequestType:ERequestType):TRequestFilter; Overload;
+    Class Function LoadList(AFile:TIniFile; AList:TList<TRequestFilter>):Boolean;
+    Class Function SaveList(AFile:TIniFIle; AList:TList<TRequestFilter>):Boolean;
 
     Property Name : WideString Read FName Write FName;
     Property Field : ERequestListModelColumnType Read FField;
@@ -129,7 +133,7 @@ Type
 Implementation
 
 Uses
-  SysUtils, IRPRequest, FastIoRequest, FileObjectNameXXXRequest,
+  Classes, SysUtils, IRPRequest, FastIoRequest, FileObjectNameXXXRequest,
   XXXDetectedRequests;
 
 (** TRequestFilter **)
@@ -166,6 +170,97 @@ If Assigned(FRequestPrototype) Then
   FRequestPrototype.Free;
 
 Inherited Destroy;
+end;
+
+Function TRequestFilter.Save(AFile:TIniFile):Boolean;
+begin
+Try
+  AFile.WriteInteger(FName, 'RequestType', Ord(FRequestType));
+  AFile.WriteInteger(FName, 'Column', Ord(FField));
+  AFile.WriteInteger(FName, 'Operator', Ord(FOp));
+  AFile.WriteString(FName, 'Value', FStringValue);
+  AFile.WriteInteger(FName, 'Action', Ord(FAction));
+  AFile.WriteBool(FName, 'Enabled', FEnabled);
+  AFIle.WriteBool(FName, 'Negate', FNegate);
+  AFile.WriteInteger(FName, 'Color', FHighlightCOlor);
+  If Assigned(FNextFilter) Then
+    AFile.WriteString(FName, 'Next', FNextFilter.Name);
+
+  Result := True;
+Finally
+  Result := False;
+  end;
+end;
+
+Class Function TRequestFilter.LoadList(AFile:TIniFile; AList:TList<TRequestFilter>):Boolean;
+Var
+  names : TStringList;
+  rf : TRequestFilter;
+  tmp : TRequestFilter;
+  nextF : TRequestFilter;
+
+  _name : WideString;
+  _enabled : Boolean;
+  _negate : Boolean;
+  _type : ERequestType;
+  _column : ERequestListModelColumnType;
+  _op : ERequestFilterOperator;
+  _value : WideString;
+  _action : EFilterAction;
+  _color : Cardinal;
+  _next : WideString;
+begin
+Result := True;
+names := TStringList.Create;
+AFile.ReadSections(names);
+For _name In names Do
+  begin
+  Try
+    _type := ERequestType(AFile.ReadInteger(_name, 'RequestType', -1));
+    _column := ERequestListModelColumnType(AFile.ReadInteger(_name, 'Column', -1));
+    _op := ERequestFilterOperator(AFile.ReadInteger(_name, 'Operator', -1));
+    _value := AFile.ReadString(_name, 'Value', '');
+    _action := EFilterAction(AFile.ReadInteger(_name, 'Action', -1));
+    _enabled := AFile.ReadBool(_name, 'Enabled', True);
+    _negate := AFIle.ReadBool(_name, 'Negate', False);
+    _color := AFile.ReadInteger(_name, 'Color', $FFFFFF);
+    _next := AFile.ReadString(_name, 'Next', '');
+    rf := TRequestFilter.NewInstance(_type);
+    rf.Name := _name;
+    rf.Enabled := _enabled;
+    rf.Negate := _negate;
+    rf.SetCondition(_column, _op, _value);
+    nextF := Nil;
+    For tmp In AList Do
+      begin
+      If tmp.Name = _next Then
+        begin
+        nextF := tmp;
+        Break;
+        end;
+      end;
+
+    rf.SetAction(_action, _color, nextF);
+    AList.Add(rf);
+  Except
+    Result := False;
+    end;
+  end;
+
+names.Free;
+end;
+
+Class Function TRequestFilter.SaveList(AFile:TIniFIle; AList:TList<TRequestFilter>):Boolean;
+Var
+  rf : TRequestFilter;
+begin
+Result := True;
+For rf  In AList Do
+  begin
+  Result := rf.Save(AFile);
+  If Not Result Then
+    Break;
+  end;
 end;
 
 Function TRequestFilter.HasPredecessor:Boolean;
@@ -467,6 +562,7 @@ If Assigned(Result) Then
   Result.FColumnName := FColumnName;
   end;
 end;
+
 
 (** TIRPRequestFilter **)
 
