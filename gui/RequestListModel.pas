@@ -203,6 +203,8 @@ Type
 
   TRequestListModel = Class (TListModel<TDriverRequest>)
     Private
+      FFilterDisplayOnly : Boolean;
+      FAllRequests : TList<TDriverRequest>;
       FRequests : TList<TDriverRequest>;
       FDriverMap : TDictionary<Pointer, WideString>;
       FDeviceMap : TDictionary<Pointer, WideString>;
@@ -230,6 +232,7 @@ Type
       Procedure LoadFromFile(AFileName:WideString);
       Procedure Reevaluate;
 
+      Property FilterDisplayOnly : Boolean Read FFilterDisplayOnly Write FFilterDisplayOnly;
       Property Parsers : TObjectList<TDataParser> Read FParsers Write FParsers;
       Property OnRequestProcessed : TRequestListModelOnRequestProcessed Read FOnRequestProcessed Write FOnRequestProcessed;
     end;
@@ -677,9 +680,13 @@ If Assigned(UpdateRequest) Then
     If Assigned(FOnRequestProcessed) Then
       FOnRequestProcessed(dr, keepRequest);
 
+    If FFilterDisplayOnly Then
+      FAllRequests.Add(dr);
+
     If keepRequest Then
       FRequests.Add(dr)
-    Else dr.Free;
+    Else If Not FFilterDisplayOnly Then
+      dr.Free;
     end;
 
   UpdateRequest := Nil;
@@ -732,6 +739,7 @@ For dr In FRequests Do
   dr.Free;
 
 FRequests.Clear;
+FAllRequests.Clear;
 end;
 
 
@@ -740,6 +748,7 @@ begin
 Inherited Create(Nil);
 UpdateRequest := Nil;
 FRequests := TList<TDriverRequest>.Create;
+FAllRequests := TList<TDriverRequest>.Create;
 FDriverMap := TDictionary<Pointer, WideString>.Create;
 FDeviceMap := TDictionary<Pointer, WideString>.Create;
 FFileMap := TDictionary<Pointer, WideString>.Create;
@@ -752,6 +761,7 @@ FFileMap.Free;
 FDriverMap.Free;
 FDeviceMap.Free;
 Clear;
+FAllRequests.Free;
 FRequests.Free;
 Inherited Destroy;
 end;
@@ -855,23 +865,39 @@ Procedure TRequestListModel.Reevaluate;
 Var
   store : Boolean;
   I : Integer;
+  dr : TDriverRequest;
 begin
-I := 0;
-While (I < FRequests.Count) Do
+If Not FFilterDisplayOnly Then
   begin
-  If Assigned(FOnRequestProcessed) Then
+  I := 0;
+  While (I < FRequests.Count) Do
+    begin
+    If Assigned(FOnRequestProcessed) Then
+      begin
+      store := True;
+      FOnRequestProcessed(FRequests[I], store);
+      If Not store THen
+        begin
+        FRequests[I].Free;
+        FRequests.Delete(I);
+        Continue;
+        end;
+      end;
+
+    Inc(I);
+    end;
+  end
+Else begin
+  FRequests.Clear;
+  For dr In FAllRequests Do
     begin
     store := True;
-    FOnRequestProcessed(FRequests[I], store);
-    If Not store THen
-      begin
-      FRequests[I].Free;
-      FRequests.Delete(I);
-      Continue;
-      end;
-    end;
+    If Assigned(FOnRequestProcessed) Then
+      FOnRequestProcessed(dr, store);
 
-  Inc(I);
+    If store Then
+      FRequests.Add(dr);
+    end;
   end;
 
 If Assigned(Displayer) Then
