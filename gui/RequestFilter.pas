@@ -97,11 +97,10 @@ Type
     Function SetCondition(AColumn:ERequestListModelColumnType; AOperator:ERequestFilterOperator; AValue:WideString):Boolean; Overload;
     Function HasPredecessor:Boolean;
 
-    Function Save(AFile:TIniFile):Boolean;
-
     Class Function NewInstance(ARequestType:ERequestType):TRequestFilter; Overload;
     Class Function LoadList(AFile:TIniFile; AList:TList<TRequestFilter>):Boolean;
     Class Function SaveList(AFile:TIniFIle; AList:TList<TRequestFilter>):Boolean;
+    Function Save(AFile:TIniFile):Boolean;
 
     Property Name : WideString Read FName Write FName;
     Property Field : ERequestListModelColumnType Read FField;
@@ -252,9 +251,17 @@ end;
 
 Class Function TRequestFilter.SaveList(AFile:TIniFIle; AList:TList<TRequestFilter>):Boolean;
 Var
+  section : WideString;
+  names : TStringList;
   rf : TRequestFilter;
 begin
 Result := True;
+names := TStringList.Create;
+AFIle.ReadSections(names);
+For section In names Do
+  AFile.EraseSection(section);
+
+names.Free;
 For rf  In AList Do
   begin
   Result := rf.Save(AFile);
