@@ -97,7 +97,6 @@ Type
     Procedure WriteSettings;
     Procedure ReadSettings;
     Procedure OnRequestProcessed(ARequest:TDriverRequest; Var AStore:Boolean);
-    Procedure CreateInitialFilters;
   Public
     ServiceTask : TDriverTaskObject;
     TaskList : TTaskOperationList;
@@ -218,8 +217,21 @@ FFilters.Free;
 end;
 
 Procedure TMainFrm.FormCreate(Sender: TObject);
+Var
+  fileName : WideString;
+  iniFile : TIniFile;
 begin
 FFilters := TObjectList<TRequestFilter>.Create;
+fileName := ExtractFilePath(Application.ExeName) + 'filters.ini';
+iniFile := Nil;
+Try
+  iniFile := TIniFile.Create(fileName);
+  If Not TRequestFilter.LoadList(iniFile, FFilters) Then
+    FFilters.Clear;
+Finally
+  iniFile.Free;
+  end;
+
 RequestListView.DoubleBuffered := True;
 {$IFNDEF FPC}
 FAppEvents := TApplicationEvents.Create(Self);
@@ -293,7 +305,6 @@ Else begin
 FParsers := TObjectList<TDataParser>.Create;
 DataPrasersLoad(ExtractFileDir(Application.ExeName), FParsers);
 FModel.Parsers := FParsers;
-CreateInitialFilters;
 ReadSettings;
 end;
 
@@ -751,24 +762,6 @@ For rf In FFilters Do
   end;
 end;
 
-Procedure TMainFrm.CreateInitialFilters;
-Var
-  rf : TRequestFilter;
-begin
-rf := TRequestFilter.NewInstance(ertUndefined);
-rf.Name := '0';
-rf.SetAction(ffaInclude, ClRed);
-rf.SetCondition(rlmctProcessId, rfoEquals, GetCurrentProcessId);
-rf.Enabled := True;
-FFilters.Add(rf);
-
-rf := TRequestFilter.NewInstance(ertUndefined);
-rf.Name := '1';
-rf.SetAction(ffaInclude);
-rf.SetCondition(rlmctRequestType, rfoAlwaysTrue, 0);
-rf.Enabled := True;
-FFilters.Add(rf);
-end;
 
 End.
 

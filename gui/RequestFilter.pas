@@ -187,7 +187,7 @@ Try
     AFile.WriteString(FName, 'Next', FNextFilter.Name);
 
   Result := True;
-Finally
+Except
   Result := False;
   end;
 end;
