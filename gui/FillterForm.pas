@@ -82,6 +82,7 @@ Implementation
 {$R *.DFM}
 
 Uses
+  IniFiles,
   IRPMonDll, IRPRequest, FastIoRequest, Utils,
   FileObjectNameXxxRequest, XXXDetectedRequests;
 
@@ -448,10 +449,20 @@ FFilterList.Free;
 end;
 
 Procedure TFilterFrm.OkButtonClick(Sender: TObject);
+Var
+  iniFile : TIniFile;
+  fileName : WideString;
 begin
-FFilterList.OwnsObjects := False;
-FCancelled := False;
-Close;
+fileName := ExtractFilePath(Application.ExeName) + 'filters.ini';
+iniFile := TIniFIle.Create(fileName);
+FCancelled := Not TRequestFilter.SaveList(iniFile, FFilterList);
+If Not FCancelled Then
+  begin
+  FFilterList.OwnsObjects := False;
+  Close;
+  end;
+
+iniFile.Free;
 end;
 
 Procedure TFilterFrm.AddButtonClick(Sender: TObject);

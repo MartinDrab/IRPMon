@@ -252,7 +252,5 @@ object FilterFrm: TFilterFrm
     OnDeletion = FilterListViewDeletion
     OnSelectItem = FilterListViewSelectItem
     OnItemChecked = FilterListViewItemChecked
-    ExplicitLeft = 40
-    ExplicitWidth = 509
   end
 end
