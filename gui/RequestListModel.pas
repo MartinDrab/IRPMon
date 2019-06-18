@@ -216,6 +216,7 @@ Type
       Function GetColumn(AItem:TDriverRequest; ATag:NativeUInt):WideString; Override;
       Procedure FreeItem(AItem:TDriverRequest); Override;
       Function _Item(AIndex:Integer):TDriverRequest; Override;
+      Procedure SetFilterDisplayOnly(AValue:Boolean);
     Public
       UpdateRequest : TList<PREQUEST_GENERAL>;
       Constructor Create; Reintroduce;
@@ -232,7 +233,7 @@ Type
       Procedure LoadFromFile(AFileName:WideString);
       Procedure Reevaluate;
 
-      Property FilterDisplayOnly : Boolean Read FFilterDisplayOnly Write FFilterDisplayOnly;
+      Property FilterDisplayOnly : Boolean Read FFilterDisplayOnly Write SetFilterDisplayOnly;
       Property Parsers : TObjectList<TDataParser> Read FParsers Write FParsers;
       Property OnRequestProcessed : TRequestListModelOnRequestProcessed Read FOnRequestProcessed Write FOnRequestProcessed;
     end;
@@ -610,6 +611,22 @@ end;
 Function TRequestListModel._Item(AIndex:Integer):TDriverRequest;
 begin
 Result := FRequests[AIndex];
+end;
+
+Procedure TRequestListModel.SetFilterDisplayOnly(AValue:Boolean);
+Var
+  dr : TDriverRequest;
+begin
+If FFilterDisplayOnly <> AValue Then
+  begin
+  FFilterDisplayOnly := AValue;
+  FAllRequests.Clear;
+  If FFilterDisplayOnly Then
+    begin
+    For dr In FRequests Do
+      FAllRequests.Add(dr);
+    end;
+  end;
 end;
 
 Function TRequestListModel.RowCount : Cardinal;
