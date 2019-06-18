@@ -900,10 +900,6 @@ object MainFrm: TMainFrm
       Caption = 'Data Parsers'
       ImageIndex = 1
       OnShow = DataParsersTabSheetShow
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object DataParsersListView: TListView
         Left = 0
         Top = 0
@@ -1008,9 +1004,16 @@ object MainFrm: TMainFrm
         Caption = 'Details...'
         OnClick = RequestDetailsMenuItemClick
       end
+      object N2: TMenuItem
+        Caption = '-'
+      end
       object FiltersMenuItem: TMenuItem
         Caption = 'Filters...'
         OnClick = FiltersMenuItemClick
+      end
+      object HideExcludedRequestsMenuItem: TMenuItem
+        Caption = 'Hide excluded requests'
+        OnClick = HideExcludedRequestsMenuItemClick
       end
     end
     object DriverMenuItem: TMenuItem

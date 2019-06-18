@@ -54,6 +54,8 @@ Type
     FiltersMenuItem: TMenuItem;
     LogOpenDialog: TOpenDialog;
     OpenMenuItem: TMenuItem;
+    N2: TMenuItem;
+    HideExcludedRequestsMenuItem: TMenuItem;
     Procedure ClearMenuItemClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure CaptureEventsMenuItemClick(Sender: TObject);
@@ -73,6 +75,7 @@ Type
     procedure DataParsersTabSheetShow(Sender: TObject);
     procedure FiltersMenuItemClick(Sender: TObject);
     procedure OpenMenuItemClick(Sender: TObject);
+    procedure HideExcludedRequestsMenuItemClick(Sender: TObject);
   Private
 {$IFDEF FPC}
     FAppEvents: TApplicationProperties;
@@ -306,6 +309,15 @@ FParsers := TObjectList<TDataParser>.Create;
 DataPrasersLoad(ExtractFileDir(Application.ExeName), FParsers);
 FModel.Parsers := FParsers;
 ReadSettings;
+end;
+
+Procedure TMainFrm.HideExcludedRequestsMenuItemClick(Sender: TObject);
+Var
+  M : TMenuItem;
+begin
+M := Sender As TMenuItem;
+M.Checked := Not M.Checked;
+FModel.FilterDisplayOnly := M.Checked;
 end;
 
 Procedure TMainFrm.IrpMonAppEventsException(Sender: TObject; E: Exception);
@@ -685,6 +697,7 @@ Try
   iniFIle.WriteBool('Driver', 'unload_on_exit', UnloadOnExitMenuItem.Checked);
   iniFIle.WriteBool('Driver', 'uninstall_on_exit', UninstallOnExitMenuItem.Checked);
   iniFile.WriteBool('General', 'CaptureEvents', CaptureEventsMenuItem.Checked);
+  iniFile.WriteBool('General', 'filter_display_only', HideExcludedRequestsMenuItem.Checked);
   For I := 0 To FModel.ColumnCount - 1 Do
     begin
     c := FModel.Columns[I];
@@ -721,6 +734,8 @@ Try
     Else CaptureEventsMenuItem.Checked := False;
     end;
 
+  FModel.FilterDisplayOnly := iniFile.ReadBool('General', 'filter_display_only', False);
+  HideExcludedRequestsMenuItem.Checked := FModel.FilterDisplayOnly;
   FModel.ColumnUpdateBegin;
   For I := 0 To FModel.ColumnCount - 1 Do
     begin
