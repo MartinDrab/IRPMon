@@ -27,6 +27,7 @@ To monitor a driver or device, the user has to right click on the corresponding 
 <ul>
 <li><b>Hooked.</b> </li>
 <li><b>New devices.</b> </li>
+<li>Data</li>
 <li><b>IRP.</b> </li>
 <li><b>IRP completion.</b> </li>
 <li><b>Fast I/O.</b> </li>
@@ -36,6 +37,9 @@ To monitor a driver or device, the user has to right click on the corresponding 
 </ul>
 <p>
 Some of the options (AddDevice, Unload, New devices) are specific to driver monitoring. When the user marks them for a device node, the change is propagated to the parent driver.
+</p>
+<p>
+An extra amount of data may be associated with certain types of requests. IRPMon is capable of collecting these data for some IRP reqeust types, such as Read, Write, DeviceIoControl and PnP. Because collection of such data may be potentially dangerous (i.e. may crash the system), IRPMon does not perform the collection by default. The user needs to check the Data menu item to enable the collection for particular driver or device.
 </p>
 <p>
 To monitor particular device, the user has to ensure that its driver is also being monitored. When the user checks the Hooked option for a device, the application attempts to propagate the change to device's driver.
