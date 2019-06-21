@@ -477,6 +477,8 @@ Var
   hc : TColor;
   err : Cardinal;
   passTarget : TRequestFilter;
+  nameExists : Boolean;
+  newName : WideString;
 begin
 f := Nil;
 passTarget := Nil;
@@ -525,17 +527,33 @@ Try
       end;
     end;
 
-  f := TRequestFilter.NewInstance(rt);
-  If Not Assigned(f) Then
-    Exit;
-
-  f.Name :=
+  newName :=
     FilterTypeComboBox.Text + '-' +
     FilterColumnComboBox.Text + '-' +
     FilterOperatorComboBox.Text + '-' +
     FilterValueComboBox.Text + '-' +
     FilterActionComboBox.Text;
 
+  nameExists := False;
+  For f In FFilterList Do
+    begin
+    nameExists := f.Name = newName;
+    If nameExists Then
+      Break;
+    end;
+
+  f := Nil;
+  If nameExists Then
+    begin
+    ErrorMessage('The filter is already present in the list');
+    Exit;
+    end;
+
+  f := TRequestFilter.NewInstance(rt);
+  If Not Assigned(f) Then
+    Exit;
+
+  f.Name := newName;
   If Not f.SetCondition(ct, op, v) Then
     begin
     ErrorMessage('Unable to set filter condition, bad value of the constant');
