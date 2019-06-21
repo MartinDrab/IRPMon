@@ -761,11 +761,21 @@ Var
   matchResult : Cardinal;
   rf : TRequestFilter;
   matchingRF : TRequestFilter;
+  allInclusive : Boolean;
+  allExclusive : Boolean;
 begin
+allInclusive := True;
+allExclusive := True;
 ARequest.Highlight := False;
 AStore := (FFilters.Count = 0);
 For rf In FFilters Do
   begin
+  If rf.Action = ffaInclude Then
+    allExclusive := False;
+
+  If rf.Action = ffaExclude Then
+    allInclusive := False;
+
   matchingRF := rf.Match(ARequest);
   If Assigned(matchingRF) Then
     begin
@@ -774,6 +784,15 @@ For rf In FFilters Do
     ARequest.HighlightColor := matchingRF.HighlightColor;
     Break;
     end;
+  end;
+
+If Not Assigned(matchingRF) Then
+  begin
+  If allInclusive Then
+    AStore := False;
+
+  If allExclusive Then
+    AStore := True;
   end;
 end;
 
