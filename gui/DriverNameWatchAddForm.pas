@@ -51,10 +51,10 @@ Procedure TDriverNameWatchAddFrm.FormCreate(Sender: TObject);
 begin
 FCancelled := True;
 MonitorSettingsCheckListBox.Checked[0] := True;
-MonitorSettingsCheckListBox.Checked[1] := True;
 MonitorSettingsCheckListBox.Checked[2] := True;
-MonitorSettingsCheckListBox.Checked[5] := True;
+MonitorSettingsCheckListBox.Checked[3] := True;
 MonitorSettingsCheckListBox.Checked[6] := True;
+MonitorSettingsCheckListBox.Checked[7] := True;
 end;
 
 Procedure TDriverNameWatchAddFrm.OkButtonClick(Sender: TObject);
@@ -63,12 +63,13 @@ If DriverNameEdit.Text <> '' Then
   begin
   FDriverName := DriverNameEdit.Text;
   FDriverSettings.MonitorNewDevices := MonitorSettingsCheckListBox.Checked[0];
-  FDriverSettings.MonitorIRP := MonitorSettingsCheckListBox.Checked[1];
-  FDriverSettings.MonitorIRPCompletion := MonitorSettingsCheckListBox.Checked[2];
-  FDriverSettings.MonitorFastIo := MonitorSettingsCheckListBox.Checked[3];
-  FDriverSettings.MonitorStartIo := MonitorSettingsCheckListBox.Checked[4];
-  FDriverSettings.MonitorAddDevice := MonitorSettingsCheckListBox.Checked[5];
-  FDriverSettings.MonitorUnload := MonitorSettingsCheckListBox.Checked[6];
+  FDriverSettings.MonitorData := MonitorSettingsCheckListBox.Checked[1];
+  FDriverSettings.MonitorIRP := MonitorSettingsCheckListBox.Checked[2];
+  FDriverSettings.MonitorIRPCompletion := MonitorSettingsCheckListBox.Checked[3];
+  FDriverSettings.MonitorFastIo := MonitorSettingsCheckListBox.Checked[4];
+  FDriverSettings.MonitorStartIo := MonitorSettingsCheckListBox.Checked[5];
+  FDriverSettings.MonitorAddDevice := MonitorSettingsCheckListBox.Checked[6];
+  FDriverSettings.MonitorUnload := MonitorSettingsCheckListBox.Checked[7];
   FillChar(FDriverSettings.IRPSettings, SizeOf(FDriverSettings.IRPSettings), Ord(True));
   FillChar(FDriverSettings.FastIoSettings, SizeOf(FDriverSettings.FastIoSettings), Ord(True));
   FCancelled := False;
@@ -80,3 +81,4 @@ end;
 
 
 End.
+

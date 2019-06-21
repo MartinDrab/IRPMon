@@ -908,6 +908,7 @@ object DriverNameWatchAddFrm: TDriverNameWatchAddFrm
       ItemHeight = 13
       Items.Strings = (
         'New devices'
+        'Data'
         'IRP'
         'IRP completion'
         'Fast I/O'
