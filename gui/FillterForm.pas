@@ -537,10 +537,10 @@ Try
   If Assigned(f) Then
     begin
     ErrorMessage('The filter is already present in the list');
+    f := Nil;
     Exit;
     end;
 
-  f := Nil;
   f := TRequestFilter.NewInstance(rt);
   If Not Assigned(f) Then
     Exit;
