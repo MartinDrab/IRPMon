@@ -477,7 +477,6 @@ Var
   hc : TColor;
   err : Cardinal;
   passTarget : TRequestFilter;
-  nameExists : Boolean;
   newName : WideString;
 begin
 f := Nil;
@@ -534,21 +533,14 @@ Try
     FilterValueComboBox.Text + '-' +
     FilterActionComboBox.Text;
 
-  nameExists := False;
-  For f In FFilterList Do
-    begin
-    nameExists := f.Name = newName;
-    If nameExists Then
-      Break;
-    end;
-
-  f := Nil;
-  If nameExists Then
+  f := TRequestFilter.GetByName(newName, FFilterList);
+  If Assigned(f) Then
     begin
     ErrorMessage('The filter is already present in the list');
     Exit;
     end;
 
+  f := Nil;
   f := TRequestFilter.NewInstance(rt);
   If Not Assigned(f) Then
     Exit;
