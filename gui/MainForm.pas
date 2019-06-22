@@ -202,6 +202,7 @@ Procedure TMainFrm.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
 FAppEvents.Free;
 WriteSettings;
+DataParsersListView.Items.Count := 0;
 FParsers.Free;
 taskList.Add(hooLibraryFinalize, serviceTask);
 If UnloadOnExitMenuItem.Checked Then
