@@ -100,6 +100,7 @@ Type
     Class Function NewInstance(ARequestType:ERequestType):TRequestFilter; Overload;
     Class Function LoadList(AFile:TIniFile; AList:TList<TRequestFilter>):Boolean;
     Class Function SaveList(AFile:TIniFIle; AList:TList<TRequestFilter>):Boolean;
+    Class Function GetByName(AName:WideString; AList:TList<TRequestFilter>):TRequestFilter;
     Function Save(AFile:TIniFile):Boolean;
 
     Property Name : WideString Read FName Write FName;
@@ -279,6 +280,21 @@ For rf  In AList Do
   Result := rf.Save(AFile);
   If Not Result Then
     Break;
+  end;
+end;
+
+Class Function TRequestFilter.GetByName(AName:WideString; AList:TList<TRequestFilter>):TRequestFilter;
+Var
+  tmp : TRequestFilter;
+begin
+Result := Nil;
+For tmp In AList Do
+  begin
+  If tmp.Name = AName Then
+    begin
+    Result := tmp;
+    Break;
+    end;
   end;
 end;
 
