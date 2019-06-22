@@ -209,7 +209,6 @@ Var
   _action : EFilterAction;
   _color : Cardinal;
   _next : WideString;
-  nameExists : Boolean;
 begin
 Result := True;
 names := TStringList.Create;
@@ -226,16 +225,9 @@ For _name In names Do
     _negate := AFIle.ReadBool(_name, 'Negate', False);
     _color := AFile.ReadInteger(_name, 'Color', $FFFFFF);
     _next := AFile.ReadString(_name, 'Next', '');
-    nameExists := False;
-    For rf In AList Do
-      begin
-      nameExists := (rf.Name = _name);
-      If nameExists Then
-        Break;
-      end;
-
-    If nameExists Then
-      continue;
+    rf := GetByName(_name, AList);
+    If Assigned(rf) Then
+      Continue;
 
     rf := TRequestFilter.NewInstance(_type);
     rf.Name := _name;
