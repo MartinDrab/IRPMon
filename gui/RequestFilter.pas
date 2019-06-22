@@ -198,7 +198,7 @@ Var
   rf : TRequestFilter;
   tmp : TRequestFilter;
   nextF : TRequestFilter;
-
+  I : Integer;
   _name : WideString;
   _enabled : Boolean;
   _negate : Boolean;
@@ -209,8 +209,10 @@ Var
   _action : EFilterAction;
   _color : Cardinal;
   _next : WideString;
+  nextNames : TStringList;
 begin
 Result := True;
+nextNames := TStringList.Create;
 names := TStringList.Create;
 AFile.ReadSections(names);
 For _name In names Do
@@ -234,24 +236,31 @@ For _name In names Do
     rf.Enabled := _enabled;
     rf.Negate := _negate;
     rf.SetCondition(_column, _op, _value);
-    nextF := Nil;
-    For tmp In AList Do
-      begin
-      If tmp.Name = _next Then
-        begin
-        nextF := tmp;
-        Break;
-        end;
-      end;
-
-    rf.SetAction(_action, _color, nextF);
+    rf.SetAction(_action, _color);
     AList.Add(rf);
+    nextNames.Add(_next);
   Except
     Result := False;
     end;
   end;
 
 names.Free;
+If Result Then
+  begin
+  For I := 0 To AList.Count - 1 Do
+    begin
+    _next := nextNames[I];
+    If _next <> '' Then
+      begin
+      rf := AList[I];
+      tmp := GetByName(_next, AList);
+      If (Assigned(tmp)) And (rf.Action = ffaPassToFilter) THen
+        rf.SetAction(rf.Action, rf.HighlightColor, tmp)
+      end;
+    end;
+  end;
+
+nextNames.Free;
 end;
 
 Class Function TRequestFilter.SaveList(AFile:TIniFIle; AList:TList<TRequestFilter>):Boolean;
