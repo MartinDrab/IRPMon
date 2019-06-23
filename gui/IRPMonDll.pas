@@ -521,9 +521,7 @@ Type
 	  ProcessId : THandle;
 	  ParentId : THandle;
 	  CreatorId : THandle;
-	  ImageNameOffset : UInt32;
 	  ImageNameLength : UInt32;
-	  CommandLineOffset : UInt32;
 	  CommandLineLength : UInt32;
     end;
   REQUEST_PROCESS_CREATED = _REQUEST_PROCESS_CREATED;

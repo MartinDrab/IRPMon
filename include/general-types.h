@@ -271,9 +271,7 @@ typedef struct _REQUEST_PROCESS_CREATED {
 	HANDLE ProcessId;
 	HANDLE ParentId;
 	HANDLE CreatorId;
-	ULONG ImageNameOffset;
 	ULONG ImageNameLength;
-	ULONG CommandLineOffset;
 	ULONG CommandLineLength;
 } REQUEST_PROCESS_CREATED, *PREQUEST_PROCESS_CREATED;
 

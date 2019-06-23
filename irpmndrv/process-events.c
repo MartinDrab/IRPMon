@@ -24,6 +24,8 @@ static PSSETCREATEPROCESSNOTIFYROUTINEEX *_PsSetCreateProcessNotifyROutineEx = N
 
 static NTSTATUS _ProcessCreateEventAlloc(HANDLE ProcessId, const PS_CREATE_NOTIFY_INFO *NotifyInfo, PREQUEST_PROCESS_CREATED *Record)
 {
+	size_t cmdLineOffset = 0;
+	size_t imageNameOffset = 0;
 	size_t cmdLineSize = 0;
 	size_t imageNameSize = 0;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
@@ -43,14 +45,14 @@ static NTSTATUS _ProcessCreateEventAlloc(HANDLE ProcessId, const PS_CREATE_NOTIF
 		tmpRecord->ParentId = NotifyInfo->ParentProcessId;
 		tmpRecord->CreatorId = PsGetCurrentProcessId();
 		tmpRecord->ImageNameLength = imageNameSize;
-		tmpRecord->ImageNameOffset = sizeof(REQUEST_PROCESS_CREATED);
+		imageNameOffset = sizeof(REQUEST_PROCESS_CREATED);
 		tmpRecord->CommandLineLength = cmdLineSize;
-		tmpRecord->CommandLineOffset = tmpRecord->ImageNameOffset + tmpRecord->ImageNameLength;
+		cmdLineOffset = imageNameOffset + tmpRecord->ImageNameLength;
 		if (imageNameSize > 0)
-			memcpy((unsigned char *)tmpRecord + tmpRecord->ImageNameOffset, NotifyInfo->ImageFileName->Buffer, tmpRecord->ImageNameLength);
+			memcpy((unsigned char *)tmpRecord + imageNameOffset, NotifyInfo->ImageFileName->Buffer, tmpRecord->ImageNameLength);
 		
 		if (cmdLineSize > 0)
-			memcpy((unsigned char *)tmpRecord + tmpRecord->CommandLineOffset, NotifyInfo->CommandLine->Buffer, tmpRecord->CommandLineLength);
+			memcpy((unsigned char *)tmpRecord + cmdLineOffset, NotifyInfo->CommandLine->Buffer, tmpRecord->CommandLineLength);
 		
 		*Record = tmpRecord;
 		status = STATUS_SUCCESS;
