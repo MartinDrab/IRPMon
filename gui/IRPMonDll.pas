@@ -302,7 +302,9 @@ Type
     (** An IRP_MJ_CREATE has just been performed on a file object **)
     ertFileObjectNameAssigned,
     (** Last handle to a file object has been closed (IRP_MJ_CLEANUP) **)
-    ertFileObjectNameDeleted
+    ertFileObjectNameDeleted,
+    ertProcessCreated,
+    ertProcessExitted
   );
   ERequesttype = _ERequestType;
   PERequesttype = ^ERequesttype;
@@ -514,6 +516,27 @@ Type
   REQUEST_FILE_OBJECT_NAME_DELETED = _REQUEST_FILE_OBJECT_NAME_DELETED;
   PREQUEST_FILE_OBJECT_NAME_DELETED = ^REQUEST_FILE_OBJECT_NAME_DELETED;
 
+  _REQUEST_PROCESS_CREATED = Record
+	  Header : REQUEST_HEADER;
+	  ProcessId : THandle;
+	  ParentId : THandle;
+	  CreatorId : THandle;
+	  ImageNameOffset : UInt32;
+	  ImageNameLength : UInt32;
+	  CommandLineOffset : UInt32;
+	  CommandLineLength : UInt32;
+    end;
+  REQUEST_PROCESS_CREATED = _REQUEST_PROCESS_CREATED;
+  PREQUEST_PROCESS_CREATED = ^REQUEST_PROCESS_CREATED;
+
+  _REQUEST_PROCESS_EXITTED = Record
+	  Header : REQUEST_HEADER;
+	  ProcessId : THandle;
+    end;
+  REQUEST_PROCESS_EXITTED = _REQUEST_PROCESS_EXITTED;
+  PREQUEST_PROCESS_EXITTED = ^REQUEST_PROCESS_EXITTED;
+
+
   _REQUEST_GENERAL = Record
     Case ERequestType Of
       ertUndefined : ( Header : REQUEST_HEADER);
@@ -527,6 +550,8 @@ Type
       ertDeviceDetected : (DeviceDetected : REQUEST_DEVICE_DETECTED);
       ertFileObjectNameAssigned : (FileObjectNameAssigned : REQUEST_FILE_OBJECT_NAME_ASSIGNED);
       ertFileObjectNameDeleted : (FileObjectNameDeleted : REQUEST_FILE_OBJECT_NAME_DELETED);
+      ertProcessCreated : (ProcessCreated : REQUEST_PROCESS_CREATED);
+      ertProcessExitted : (ProcessExitted : REQUEST_PROCESS_EXITTED)
     end;
   REQUEST_GENERAL = _REQUEST_GENERAL;
   PREQUEST_GENERAL = ^REQUEST_GENERAL;
