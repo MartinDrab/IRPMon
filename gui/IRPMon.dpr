@@ -35,7 +35,8 @@ uses
   FastIoRequest in 'FastIoRequest.pas',
   DataParsers in 'DataParsers.pas',
   FileObjectNameXXXRequest in 'FileObjectNameXXXRequest.pas',
-  FillterForm in 'FillterForm.pas' {FilterFrm};
+  FillterForm in 'FillterForm.pas' {FilterFrm},
+  ProcessXXXRequests in 'ProcessXXXRequests.pas';
 
 {$R *.res}
 
@@ -96,7 +97,7 @@ If IsWow64Process(GetCurrentProcess, wow64) Then
           end;
 
         Application.CreateForm(TMainFrm, MainFrm);
-        MainFrm.TaskList := taskList;
+  MainFrm.TaskList := taskList;
         MainFrm.ServiceTask := serviceTask;
         Application.Run;
         IRPMonDllFinalize;

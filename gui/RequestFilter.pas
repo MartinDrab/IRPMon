@@ -565,6 +565,8 @@ Case RequestListModelColumnValueTypes[Ord(FField)] Of
     AddMapping(ASources, ATargets, Ord(ertDeviceDetected), 'DeviceDetected');
     AddMapping(ASources, ATargets, Ord(ertFileObjectNameAssigned), 'FONameAssigned');
     AddMapping(ASources, ATargets, Ord(ertFileObjectNameDeleted), 'FONameDeleted');
+    AddMapping(ASources, ATargets, Ord(ertProcessCreated), 'ProcessCreate');
+    AddMapping(ASources, ATargets, Ord(ertProcessExitted), 'ProcessExit');
     end;
   Else Result := False;
   end;

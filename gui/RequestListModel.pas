@@ -242,7 +242,8 @@ Implementation
 
 Uses
   SysUtils, NameTables, IRPRequest, FastIoRequest,
-  XXXDetectedRequests, FileObjectNameXXXRequest, Utils;
+  XXXDetectedRequests, FileObjectNameXXXRequest,
+  ProcessXXXRequests, Utils;
 
 (** TDriverRequestComparer **)
 
@@ -270,6 +271,8 @@ Case AType Of
   ertDeviceDetected : Result := TDeviceDetectedRequest.Create;
   ertFileObjectNameAssigned : Result := TFileObjectNameAssignedRequest.Create;
   ertFileObjectNameDeleted : Result := TFileObjectNameDeletedRequest.Create;
+  ertProcessCreated : Result := TProcessCreatedRequest.Create;
+  ertProcessExitted : Result := TProcessExittedRequest.Create;
   Else Result := TDriverRequest.Create;
   end;
 end;
@@ -680,7 +683,13 @@ If Assigned(UpdateRequest) Then
         dr := TFileObjectNameDeletedRequest.Create(ur.FileObjectNameDeleted);
         If FFileMap.ContainsKey(dr.FileObject) Then
           FFileMap.Remove(dr.FileObject);
-        end
+        end;
+      ertProcessCreated : begin
+        dr := TProcessCreatedRequest.Create(ur.ProcessCreated);
+        end;
+      ertProcessExitted : begin
+        dr := TProcessExittedRequest.Create(ur.ProcessExitted);
+        end;
       Else dr := TDriverRequest.Create(ur.Header);
       end;
 

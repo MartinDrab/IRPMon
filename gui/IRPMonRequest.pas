@@ -342,6 +342,8 @@ Case ARequestType Of
   ertDeviceDetected : Result := 'DeviceDetected';
   ertFileObjectNameAssigned : Result := 'FONameAssigned';
   ertFileObjectNameDeleted : Result := 'FONameDeleted';
+  ertProcessCreated : Result := 'ProcessCreate';
+  ertProcessExitted : Result := 'ProcessExit';
   Else Result := Format('<unknown> (%u)', [Ord(ARequestType)]);
   end;
 end;
