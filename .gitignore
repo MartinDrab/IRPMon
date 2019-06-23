@@ -9,4 +9,5 @@ tmp/
 
 /gui/IRPMon.dproj.local
 /gui/IRPMon.identcache
+/gui/IRPMon.stat
 *.user
