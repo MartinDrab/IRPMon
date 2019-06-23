@@ -735,7 +735,6 @@ Implementation
 Const
   LibraryName = 'irpmondll.dll';
 
-{$IFNDEF WIN32}
 
 Function IRPMonDllDriverHooksEnumerate(Var AHookedDrivers:PHOOKED_DRIVER_UMINFO; Var ACount:Cardinal):Cardinal; StdCall; External LibraryName;
 Procedure IRPMonDllDriverHooksFree(AHookedDrivers:PHOOKED_DRIVER_UMINFO; ACount:Cardinal); StdCall; External LibraryName;
@@ -779,52 +778,6 @@ Function IRPMonDllInitialized:LongBool; StdCall; External LibraryName;
 Function IRPMonDllInitialize:Cardinal; StdCall; External LibraryName;
 Procedure IRPMonDllFinalize; StdCall; External LibraryName;
 
-{$ELSE}
-
-Function IRPMonDllDriverHooksEnumerate(Var AHookedDrivers:PHOOKED_DRIVER_UMINFO; Var ACount:Cardinal):Cardinal; StdCall; External LibraryName name '_IRPMonDllDriverHooksEnumerate@8';
-Procedure IRPMonDllDriverHooksFree(AHookedDrivers:PHOOKED_DRIVER_UMINFO; ACount:Cardinal); StdCall; External LibraryName name '_IRPMonDllDriverHooksFree@8';
-
-Function IRPMonDllHookDriver(ADriverName:PWideChar; Var AMonitorSettings:DRIVER_MONITOR_SETTINGS; Var ADriverHandle:THandle; Var AObjectId:Pointer):Cardinal; StdCall; External LibraryName name '_IRPMonDllHookDriver@16';
-Function IRPMonDllDriverStartMonitoring(ADriverhandle:THandle):Cardinal; StdCall; External LibraryName name '_IRPMonDllDriverStartMonitoring@4';
-Function IRPMonDllDriverStopMonitoring(ADriverhandle:THandle):Cardinal; StdCall; External LibraryName name '_IRPMonDllDriverStopMonitoring@4';
-Function IRPMonDllDriverSetInfo(ADriverHandle:THandle; Var ASettings:DRIVER_MONITOR_SETTINGS):Cardinal; StdCall; External LibraryName name '_IRPMonDllDriverSetInfo@8';
-Function IRPMonDllUnhookDriver(ADriverHandle:THandle):Cardinal; StdCall; External LibraryName name '_IRPMonDllUnhookDriver@4';
-Function IRPMonDllHookDeviceByName(ADeviceName:PWideChar; Var AHookHandle:THandle; Var AObjectId:Pointer):Cardinal; StdCall; External LibraryName name '_IRPMonDllHookDeviceByName@12';
-Function IRPMonDllHookDeviceByAddress(ADeviceObject:Pointer; Var AHookHandle:THandle; Var AObjectId:Pointer):Cardinal; StdCall; External LibraryName name '_IRPMonDllHookDeviceByAddress@12';
-Function IRPMonDllUnhookDevice(AHookHandle:THandle):Cardinal; StdCall; External LibraryName name '_IRPMonDllUnhookDevice@4';
-Function IRPMonDllHookedDeviceGetInfo(AHandle:THandle; AIRPSettings:PByte; AFastIOSettings:PByte; Var AMonitoringEnabled:ByteBool):Cardinal; StdCall; External LibraryName name '_IRPMonDllHookedDeviceGetInfo@16';
-Function IRPMonDllHookedDeviceSetInfo(AHandle:THandle; AIRPSettings:PByte; AFastIOSettings:PByte; AMonitoringEnabled:ByteBool):Cardinal; StdCall; External LibraryName name '_IRPMonDllHookedDeviceSetInfo@16';
-Function IRPMonDllHookedDriverGetInfo(AHandle:THandle; Var ASettings:DRIVER_MONITOR_SETTINGS; Var AMonitoringEnabled:ByteBool):Cardinal; StdCall; External LibraryName name '_IRPMonDllHookedDriverGetInfo@12';
-
-Function IRPMonDllSnapshotRetrieve(Var ADriverInfo:PPIRPMON_DRIVER_INFO; Var ACount:Cardinal):Cardinal; StdCall; External LibraryName name '_IRPMonDllSnapshotRetrieve@8';
-Procedure IRPMonDllSnapshotFree(ADriverInfo:PPIRPMON_DRIVER_INFO; ACount:Cardinal); StdCall; External LibraryName name '_IRPMonDllSnapshotFree@8';
-
-Function IRPMonDllConnect(ASemaphore:THandle):Cardinal; StdCall; External LibraryName name '_IRPMonDllConnect@4';
-Function IRPMonDllDisconnect:Cardinal; StdCall; External LibraryName name '_IRPMonDllDisconnect@0';
-Function IRPMonDllGetRequest(ARequest:PREQUEST_HEADER; ASize:Cardinal):Cardinal; StdCall; External LibraryName name '_IRPMonDllGetRequest@8';
-Function IRPMonDllGetRequestSize(ARequest:PREQUEST_HEADER):Cardinal; StdCall; External LibraryName name '_IRPMonDllGetRequestSize@4';
-
-Function IRPMonDllOpenHookedDriver(AObjectId:Pointer; Var AHandle:THandle):Cardinal; StdCall; External LibraryName name '_IRPMonDllOpenHookedDriver@8';
-Function IRPMonDllCloseHookedDriverHandle(AHandle:THandle):Cardinal; StdCall; External LibraryName name '_IRPMonDllCloseHookedDriverHandle@4';
-Function IRPMonDllOpenHookedDevice(AObjectId:Pointer; Var AHandle:THandle):Cardinal; StdCall; External LibraryName name '_IRPMonDllOpenHookedDevice@8';
-Function IRPMonDllCloseHookedDeviceHandle(AHandle:THandle):Cardinal; StdCall; External LibraryName name '_IRPMonDllCloseHookedDeviceHandle@4';
-
-
-Function IRPMonDllClassWatchRegister(AClassGuid:PWideChar; AUpperFilter:ByteBool; ABeginning:ByteBool):Cardinal; StdCall; External LibraryName name '_IRPMonDllClassWatchRegister@12';
-Function IRPMonDllClassWatchUnregister(AClassGuid:PWideChar; AUpperFilter:ByteBool; ABeginning:ByteBool):Cardinal; StdCall; External LibraryName name '_IRPMonDllClassWatchUnregister@12';
-Function IRPMonDllClassWatchEnum(Var AArray:PCLASS_WATCH_RECORD; Var ACount:Cardinal):Cardinal; StdCall; External LibraryName name '_IRPMonDllClassWatchEnum@8';
-Procedure IRPMonDllClassWatchEnumFree(AArray:PCLASS_WATCH_RECORD; ACount:Cardinal); StdCall; External LibraryName name '_IRPMonDllClassWatchEnumFree@8';
-
-Function IRPMonDllDriverNameWatchRegister(ADriverName:PWideChar; Var AMonitorSettings:DRIVER_MONITOR_SETTINGS):Cardinal; StdCall; External LibraryName name '_IRPMonDllDriverNameWatchRegister@8';
-Function IRPMonDllDriverNameWatchUnregister(ADriverName:PWideChar):Cardinal; StdCall; External LibraryName name '_IRPMonDllDriverNameWatchUnregister@4';
-Function IRPMonDllDriverNameWatchEnum(Var AArray:PDRIVER_NAME_WATCH_RECORD; Var ACount:Cardinal):Cardinal; StdCall; External LibraryName name '_IRPMonDllDriverNameWatchEnum@8';
-Procedure IRPMonDllDriverNameWatchEnumFree(AArray:PDRIVER_NAME_WATCH_RECORD; ACount:Cardinal); StdCall; External LibraryName name '_IRPMonDllDriverNameWatchEnumFree@8';
-
-Function IRPMonDllInitialized:LongBool; StdCall; External LibraryName name '_IRPMonDllInitialized@0';
-Function IRPMonDllInitialize:Cardinal; StdCall; External LibraryName name '_IRPMonDllInitialize@0';
-Procedure IRPMonDllFinalize; StdCall; External LibraryName name '_IRPMonDllFinalize@0';
-
-{$ENDIF}
 
 End.
 
