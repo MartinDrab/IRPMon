@@ -228,6 +228,16 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllRequestEmulateFileNameDeleted(void *FileObje
 	return RequestEmulateFileNameDeleted(FileObject, Request);
 }
 
+IRPMONDLL_API DWORD WINAPI IRPMonDllRequestEmulateProcessCreated(HANDLE ProcessId, HANDLE ParentId, const wchar_t *ImageName, const wchar_t *CommandLine, PREQUEST_PROCESS_CREATED *Request)
+{
+	return RequestEmulateProcessCreated(ProcessId, ParentId, ImageName, CommandLine, Request);
+}
+
+IRPMONDLL_API DWORD WINAPI IRPMonDllRequestEmulateProcessExitted(HANDLE ProcessId, PREQUEST_PROCESS_EXITTED *Request)
+{
+	return RequestEmulateProcessExitted(ProcessId, Request);
+}
+
 IRPMONDLL_API void WINAPI IRPMonDllRequestEmulatedFree(PREQUEST_HEADER Header)
 {
 	RequestEmulatedFree(Header);
