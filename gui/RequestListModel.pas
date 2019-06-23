@@ -46,6 +46,7 @@ Type
     rlmctArg4,
     rlmctThreadId,
     rlmctProcessId,
+    rlmctProcessName,
     rlmctIRQL,
     rlmctPreviousMode,
     rlmctRequestorMode,
@@ -84,6 +85,7 @@ Const
     'Argument4',
     'Thread ID',
     'Process ID',
+    'Process name',
     'IRQL',
     'Previous mode',
     'Requestor mode',
@@ -119,6 +121,7 @@ Const
     rlmcvtInteger,
     rlmcvtInteger,
     rlmcvtInteger,
+    rlmcvtString,
     rlmcvtIRQL,
     rlmcvtProcessorMode,
     rlmcvtProcessorMode,
@@ -405,6 +408,10 @@ Case AColumnType Of
     AValue := @FProcessId;
     AValueSIze := SizeOf(FProcessId);
     end;
+  rlmctProcessName : begin
+    AValue := PWideChar(FProcessName);
+    AValueSize := 0;
+    end;
   rlmctIRQL: begin
     AValue := @FIrql;
     AValueSIze := SizeOf(FIrql);
@@ -484,6 +491,7 @@ Case AColumnType Of
     end;
   rlmctProcessId : AResult := Format('%u', [FProcessId]);
   rlmctThreadId :  AResult := Format('%u', [FThreadId]);
+  rlmctProcessName : AResult := FProcessName;
   rlmctIRQL : AResult := IRQLToString(FIRQL);
   rlmctEmulated : AResult := BoolToStr(FEmulated, True);
   rlmctDataAssociated : AResult := BoolToStr(FDataPresent, True);

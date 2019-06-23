@@ -261,6 +261,7 @@ FModel.
     ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctTime), Ord(rlmctTime)).
     ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctThreadId), Ord(rlmctThreadId), False, 75).
     ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctProcessId), Ord(rlmctProcessId), False, 75).
+    ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctProcessName), Ord(rlmctProcessName)).
     ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctIRQL), Ord(rlmctIRQL)).
     ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctRequestType), Ord(rlmctRequestType)).
     ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctDeviceObject), Ord(rlmctDeviceObject)).
