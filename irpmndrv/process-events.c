@@ -44,9 +44,9 @@ static NTSTATUS _ProcessCreateEventAlloc(HANDLE ProcessId, const PS_CREATE_NOTIF
 		tmpRecord->ProcessId = ProcessId;
 		tmpRecord->ParentId = NotifyInfo->ParentProcessId;
 		tmpRecord->CreatorId = PsGetCurrentProcessId();
-		tmpRecord->ImageNameLength = imageNameSize;
+		tmpRecord->ImageNameLength = (ULONG)imageNameSize;
 		imageNameOffset = sizeof(REQUEST_PROCESS_CREATED);
-		tmpRecord->CommandLineLength = cmdLineSize;
+		tmpRecord->CommandLineLength = (ULONG)cmdLineSize;
 		cmdLineOffset = imageNameOffset + tmpRecord->ImageNameLength;
 		if (imageNameSize > 0)
 			memcpy((unsigned char *)tmpRecord + imageNameOffset, NotifyInfo->ImageFileName->Buffer, tmpRecord->ImageNameLength);
