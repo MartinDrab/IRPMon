@@ -7,10 +7,19 @@
 #include "process-events.h"
 
 
+
+/************************************************************************/
+/*                      GLOBAL VARIABLES                                */
+/************************************************************************/
+
+typedef NTSTATUS (PSSETCREATEPROCESSNOTIFYROUTINEEX)(PCREATE_PROCESS_NOTIFY_ROUTINE_EX NotifyRoutine, BOOLEAN Remove);
+
+static PSSETCREATEPROCESSNOTIFYROUTINEEX *_PsSetCreateProcessNotifyROutineEx = NULL;
+
+
 /************************************************************************/
 /*              HELPER FUNCTIONS                                        */
 /************************************************************************/
-
 
 
 static NTSTATUS _ProcessCreateEventAlloc(HANDLE ProcessId, const PS_CREATE_NOTIFY_INFO *NotifyInfo, PREQUEST_PROCESS_CREATED *Record)
@@ -102,10 +111,22 @@ static void _ProcessNotifyEx(PEPROCESS Process, HANDLE ProcessId, PPS_CREATE_NOT
 
 NTSTATUS ProcessEventsModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context)
 {
+	UNICODE_STRING uRoutineName;
+	OSVERSIONINFOW vi;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"; Context=0x%p", DriverObject, RegistryPath, Context);
 
-	status = PsSetCreateProcessNotifyRoutineEx(_ProcessNotifyEx, FALSE);
+	vi.dwOSVersionInfoSize = sizeof(vi);
+	status = RtlGetVersion(&vi);
+	if (NT_SUCCESS(status)) {
+		if (vi.dwBuildNumber >= 6001) {
+			RtlInitUnicodeString(&uRoutineName, L"PsSetCreateProcessNotifyRoutineEx");
+			_PsSetCreateProcessNotifyROutineEx = (PSSETCREATEPROCESSNOTIFYROUTINEEX *)MmGetSystemRoutineAddress(&uRoutineName);
+			if (_PsSetCreateProcessNotifyROutineEx != NULL)
+				status = _PsSetCreateProcessNotifyROutineEx(_ProcessNotifyEx, FALSE);
+			else status = STATUS_NOT_FOUND;
+		}
+	}
 
 	DEBUG_EXIT_FUNCTION("0x%x", status);
 	return status;
@@ -116,7 +137,8 @@ VOID ProcessEventsModuleFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING Regis
 {
 	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"; Context=0x%p", DriverObject, RegistryPath, Context);
 
-	PsSetCreateProcessNotifyRoutineEx(_ProcessNotifyEx, TRUE);
+	if (_PsSetCreateProcessNotifyROutineEx != NULL)
+		_PsSetCreateProcessNotifyROutineEx(_ProcessNotifyEx, TRUE);
 
 	DEBUG_EXIT_FUNCTION_VOID();
 	return;
