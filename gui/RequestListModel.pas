@@ -209,6 +209,7 @@ Type
       FDriverMap : TDictionary<Pointer, WideString>;
       FDeviceMap : TDictionary<Pointer, WideString>;
       FFileMap : TDictionary<Pointer, WideString>;
+      FProcessMap : TDictionary<Cardinal, WideString>;
       FParsers : TObjectList<TDataParser>;
       FOnRequestProcessed : TRequestListModelOnRequestProcessed;
     Protected
@@ -645,6 +646,7 @@ Var
   deviceName : WideString;
   driverName : WideString;
   fileName : WideString;
+  processName : WideString;
 begin
 Result := ERROR_SUCCESS;
 If Assigned(UpdateRequest) Then
@@ -686,6 +688,10 @@ If Assigned(UpdateRequest) Then
         end;
       ertProcessCreated : begin
         dr := TProcessCreatedRequest.Create(ur.ProcessCreated);
+        If FProcessMap.ContainsKey(Cardinal(dr.DriverObject)) Then
+          FProcessMap.Remove(Cardinal(dr.DriverObject));
+
+        FProcessMap.Add(Cardinal(dr.DriverObject), dr.DriverName);
         end;
       ertProcessExitted : begin
         dr := TProcessExittedRequest.Create(ur.ProcessExitted);
@@ -701,6 +707,9 @@ If Assigned(UpdateRequest) Then
 
     If FFileMap.TryGetValue(dr.FileObject, fileName) Then
       dr.SetFileName(fileName);
+
+    If FProcessMap.TryGetValue(dr.ProcessId, processName) Then
+      dr.SetProcessName(processName);
 
     keepRequest := True;
     If Assigned(FOnRequestProcessed) Then
@@ -778,11 +787,13 @@ FAllRequests := TList<TDriverRequest>.Create;
 FDriverMap := TDictionary<Pointer, WideString>.Create;
 FDeviceMap := TDictionary<Pointer, WideString>.Create;
 FFileMap := TDictionary<Pointer, WideString>.Create;
+FProcessMap := TDictionary<Cardinal, WideString>.Create;
 RefreshMaps;
 end;
 
 Destructor TRequestListModel.Destroy;
 begin
+FProcessMap.Free;
 FFileMap.Free;
 FDriverMap.Free;
 FDeviceMap.Free;

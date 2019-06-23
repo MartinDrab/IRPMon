@@ -20,6 +20,7 @@ Type
     FDriverName : WideString;
     FDeviceName : WideString;
     FFileName : WideString;
+    FProcessName : WideString;
     FDriverObject : Pointer;
     FDeviceObject : Pointer;
     FFileObject : Pointer;
@@ -40,6 +41,7 @@ Type
     Procedure SetDriverName(AName:WideString);
     Procedure SetDeviceName(AName:WideString);
     Procedure SetFileName(AName:WideString);
+    Procedure SetProcessName(AName:WideString);
     Procedure SetFileObject(AObject:Pointer);
   Public
     Constructor Create(Var ARequest:REQUEST_HEADER); Overload;
@@ -77,6 +79,7 @@ Type
     Property Emulated : Boolean Read FEmulated;
     Property DataPresent : Boolean Read FDataPresent;
     Property DataStripped : Boolean Read FDataStripped;
+    Property ProcessName : WideString Read FProcessName;
   end;
 
 implementation
@@ -166,6 +169,11 @@ end;
 Procedure TGeneralRequest.SetFileName(AName:WideString);
 begin
 FFileName := AName;
+end;
+
+Procedure TGeneralRequest.SetProcessName(AName:WideString);
+begin
+FProcessName := AName;
 end;
 
 Procedure TGeneralRequest.SetFileObject(AObject:Pointer);
