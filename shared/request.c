@@ -40,6 +40,7 @@ size_t RequestGetSize(const REQUEST_HEADER *Header)
 	const REQUEST_DEVICE_DETECTED *der = CONTAINING_RECORD(Header, REQUEST_DEVICE_DETECTED, Header);
 	const REQUEST_FILE_OBJECT_NAME_ASSIGNED *ar = NULL;
 	const REQUEST_FILE_OBJECT_NAME_DELETED *dr = NULL;
+	const REQUEST_PROCESS_CREATED *pcr = CONTAINING_RECORD(Header, REQUEST_PROCESS_CREATED, Header);
 
 	switch (Header->Type) {
 		case ertIRP:
@@ -79,6 +80,12 @@ size_t RequestGetSize(const REQUEST_HEADER *Header)
 		case ertFileObjectNameDeleted:
 			dr = CONTAINING_RECORD(Header, REQUEST_FILE_OBJECT_NAME_DELETED, Header);
 			ret = sizeof(REQUEST_FILE_OBJECT_NAME_DELETED);
+			break;
+		case ertProcessCreated:
+			ret = sizeof(REQUEST_PROCESS_CREATED) + pcr->ImageNameLength + pcr->CommandLineLength;
+			break;
+		case ertProcessExitted:
+			ret = sizeof(REQUEST_PROCESS_EXITTED);
 			break;
 	}
 

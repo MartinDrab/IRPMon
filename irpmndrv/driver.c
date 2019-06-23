@@ -11,6 +11,7 @@
 #include "req-queue.h"
 #include "um-services.h"
 #include "pnp-driver-watch.h"
+#include "process-events.h"
 #include "req-queue.h"
 #include "regman.h"
 #include "driver.h"
@@ -355,6 +356,7 @@ static DRIVER_MODULE_ENTRY_PARAMETERS _moduleEntries[] = {
 	{HookModuleInit, HookModuleFinit, NULL},
 	{HookHandlerModuleInit, HookHandlerModuleFinit, NULL},
 	{UMServicesModuleInit, UMServicesModuleFinit, NULL},
+	{ProcessEventsModuleInit, ProcessEventsModuleFinit, NULL},
 	{RegManInit, RegManFinit, NULL },
 	{PWDModuleInit, PWDModuleFinit, NULL},
 	{DriverInit, DriverFinit, NULL},

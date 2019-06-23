@@ -153,6 +153,7 @@
     <ClCompile Include="hook.c" />
     <ClCompile Include="modules.c" />
     <ClCompile Include="pnp-driver-watch.c" />
+    <ClCompile Include="process-events.c" />
     <ClCompile Include="req-queue.c" />
     <ClCompile Include="um-services.c" />
   </ItemGroup>
@@ -178,6 +179,7 @@
     <ClInclude Include="modules.h" />
     <ClInclude Include="pnp-driver-watch.h" />
     <ClInclude Include="preprocessor.h" />
+    <ClInclude Include="process-events.h" />
     <ClInclude Include="req-queue.h" />
     <ClInclude Include="um-services.h" />
   </ItemGroup>

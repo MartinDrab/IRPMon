@@ -1,0 +1,123 @@
+
+#include <ntifs.h>
+#include "general-types.h"
+#include "preprocessor.h"
+#include "allocator.h"
+#include "req-queue.h"
+#include "process-events.h"
+
+
+/************************************************************************/
+/*              HELPER FUNCTIONS                                        */
+/************************************************************************/
+
+
+
+static NTSTATUS _ProcessCreateEventAlloc(HANDLE ProcessId, const PS_CREATE_NOTIFY_INFO *NotifyInfo, PREQUEST_PROCESS_CREATED *Record)
+{
+	size_t cmdLineSize = 0;
+	size_t imageNameSize = 0;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	PREQUEST_PROCESS_CREATED tmpRecord = NULL;
+	DEBUG_ENTER_FUNCTION("ProcessId=0x%p; NotifyInfo=0x%p; Record=0x%p", ProcessId, NotifyInfo, Record);
+
+	if (NotifyInfo->ImageFileName != NULL)
+		imageNameSize = NotifyInfo->ImageFileName->Length;
+
+	if (NotifyInfo->CommandLine != NULL)
+		cmdLineSize = NotifyInfo->CommandLine->Length;
+
+	tmpRecord = HeapMemoryAllocNonPaged(sizeof(REQUEST_PROCESS_CREATED) + imageNameSize + cmdLineSize);
+	if (tmpRecord != NULL) {
+		RequestHeaderInit(&tmpRecord->Header, NULL, NULL, ertProcessCreated);
+		tmpRecord->ProcessId = ProcessId;
+		tmpRecord->ParentId = NotifyInfo->ParentProcessId;
+		tmpRecord->CreatorId = PsGetCurrentProcessId();
+		tmpRecord->ImageNameLength = imageNameSize;
+		tmpRecord->ImageNameOffset = sizeof(REQUEST_PROCESS_CREATED);
+		tmpRecord->CommandLineLength = cmdLineSize;
+		tmpRecord->CommandLineOffset = tmpRecord->ImageNameOffset + tmpRecord->ImageNameLength;
+		if (imageNameSize > 0)
+			memcpy((unsigned char *)tmpRecord + tmpRecord->ImageNameOffset, NotifyInfo->ImageFileName->Buffer, tmpRecord->ImageNameLength);
+		
+		if (cmdLineSize > 0)
+			memcpy((unsigned char *)tmpRecord + tmpRecord->CommandLineOffset, NotifyInfo->CommandLine->Buffer, tmpRecord->CommandLineLength);
+		
+		*Record = tmpRecord;
+		status = STATUS_SUCCESS;
+	} else status = STATUS_INSUFFICIENT_RESOURCES;
+
+	DEBUG_EXIT_FUNCTION("0x%x, *Record=0x%p", status, *Record);
+	return status;
+}
+
+
+static NTSTATUS _ProcessExittedEventAlloc(HANDLE ProcessId, PREQUEST_PROCESS_EXITTED *Record)
+{
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	PREQUEST_PROCESS_EXITTED tmpRecord = NULL;
+	DEBUG_ENTER_FUNCTION("ProcessId=0x%p; Record=0x%p", ProcessId, Record);
+
+	tmpRecord = HeapMemoryAllocNonPaged(sizeof(REQUEST_PROCESS_EXITTED));
+	if (tmpRecord != NULL) {
+		RequestHeaderInit(&tmpRecord->Header, NULL, NULL, ertProcessExitted);
+		tmpRecord->ProcessId = ProcessId;
+		*Record = tmpRecord;
+		status = STATUS_SUCCESS;
+	} else status = STATUS_INSUFFICIENT_RESOURCES;
+
+	DEBUG_EXIT_FUNCTION("0x%x, *Record=0x%p", status, *Record);
+	return status;
+}
+
+
+static void _ProcessNotifyEx(PEPROCESS Process, HANDLE ProcessId, PPS_CREATE_NOTIFY_INFO CreateInfo)
+{
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	PREQUEST_PROCESS_CREATED createRecord = NULL;
+	PREQUEST_PROCESS_EXITTED exitRecord = NULL;
+	DEBUG_ENTER_FUNCTION("Process=0x%p; ProcessId=0x%p; CreateInfo=0x%p", Process, ProcessId, CreateInfo);
+
+	if (CreateInfo != NULL) {
+		status = _ProcessCreateEventAlloc(ProcessId, CreateInfo, &createRecord);
+		if (NT_SUCCESS(status)) {
+			RequestQueueInsert(&createRecord->Header);
+			CreateInfo->CreationStatus = STATUS_SUCCESS;
+		}
+	} else {
+		status = _ProcessExittedEventAlloc(ProcessId, &exitRecord);
+		if (NT_SUCCESS(status))
+			RequestQueueInsert(&exitRecord->Header);
+	}
+
+
+	DEBUG_EXIT_FUNCTION_VOID();
+	return;
+}
+
+
+/************************************************************************/
+/*                   INITIALIZATION AND FINALIZATION                    */
+/************************************************************************/
+
+NTSTATUS ProcessEventsModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context)
+{
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"; Context=0x%p", DriverObject, RegistryPath, Context);
+
+	status = PsSetCreateProcessNotifyRoutineEx(_ProcessNotifyEx, FALSE);
+
+	DEBUG_EXIT_FUNCTION("0x%x", status);
+	return status;
+}
+
+
+VOID ProcessEventsModuleFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context)
+{
+	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"; Context=0x%p", DriverObject, RegistryPath, Context);
+
+	PsSetCreateProcessNotifyRoutineEx(_ProcessNotifyEx, TRUE);
+
+	DEBUG_EXIT_FUNCTION_VOID();
+	return;
+}

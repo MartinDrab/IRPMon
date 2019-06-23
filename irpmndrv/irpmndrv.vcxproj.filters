@@ -63,6 +63,9 @@
     <ClCompile Include="..\shared\request.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="process-events.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="driver.h">
@@ -132,6 +135,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\shared\request.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="process-events.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
