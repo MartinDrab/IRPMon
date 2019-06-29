@@ -16,7 +16,7 @@ static VOID _ValueRecordDestroy(_In_ PREGMAN_VALUE_RECORD Record)
 	DEBUG_ENTER_FUNCTION("Record=0x%p", Record);
 
 	if (Record->DataSize > 0)
-		ExFreePoolWithTag(Record->Data, 0);
+		ExFreePoolWithTag(Record->Data, REGMAN_POOL_TAG);
 
 	ExDeleteResourceLite(&Record->CallbackLock);
 	ExDeleteResourceLite(&Record->Lock);
@@ -89,7 +89,7 @@ static NTSTATUS _ValueRecordCallbackSetInvoke(_In_ PREGMAN_VALUE_RECORD Record, 
 	info.ValueRecord = Record;
 	info.CurrentDataSize = *DataSize;
 	info.CurrentType = *Type;
-	info.CurrentData = ExAllocatePoolWithTag(PagedPool, info.CurrentDataSize, 0);
+	info.CurrentData = ExAllocatePoolWithTag(PagedPool, info.CurrentDataSize, REGMAN_POOL_TAG);
 	if (info.CurrentData != NULL) {
 		status = STATUS_SUCCESS;
 		memcpy(info.CurrentData, *Data, info.CurrentDataSize);
@@ -108,7 +108,7 @@ static NTSTATUS _ValueRecordCallbackSetInvoke(_In_ PREGMAN_VALUE_RECORD Record, 
 		KeLeaveCriticalRegion();
 		if (NT_SUCCESS(status)) {
 			if (*Data != NULL)
-				ExFreePoolWithTag(*Data, 0);
+				ExFreePoolWithTag(*Data, REGMAN_POOL_TAG);
 
 			*Data = info.CurrentData;
 			*DataSize = info.CurrentDataSize;
@@ -116,7 +116,7 @@ static NTSTATUS _ValueRecordCallbackSetInvoke(_In_ PREGMAN_VALUE_RECORD Record, 
 		}
 
 		if (!NT_SUCCESS(status) && info.CurrentData != NULL)
-			ExFreePoolWithTag(info.CurrentData, 0);
+			ExFreePoolWithTag(info.CurrentData, REGMAN_POOL_TAG);
 	} else status = STATUS_INSUFFICIENT_RESOURCES;
 
 	DEBUG_EXIT_FUNCTION("0x%x, *Data=0x%p, *DataSize=%u, *Type=%u", status, *Data, *DataSize, *Type);
@@ -160,7 +160,7 @@ NTSTATUS ValueRecordAlloc(_In_opt_ PUNICODE_STRING Name, _In_ ULONG Type, _In_op
 				tmpRecord->DataSize = DataLength;
 				tmpRecord->Data = NULL;
 				if (tmpRecord->DataSize > 0) {
-					tmpRecord->Data = ExAllocatePoolWithTag(PagedPool, tmpRecord->DataSize, 0);
+					tmpRecord->Data = ExAllocatePoolWithTag(PagedPool, tmpRecord->DataSize, REGMAN_POOL_TAG);
 					if (tmpRecord->Data != NULL) {
 						__try {
 							memcpy(tmpRecord->Data, Data, tmpRecord->DataSize);
@@ -169,7 +169,7 @@ NTSTATUS ValueRecordAlloc(_In_opt_ PUNICODE_STRING Name, _In_ ULONG Type, _In_op
 						}
 
 						if (!NT_SUCCESS(status))
-							ExFreePoolWithTag(tmpRecord->Data, 0);
+							ExFreePoolWithTag(tmpRecord->Data, REGMAN_POOL_TAG);
 					} else status = STATUS_INSUFFICIENT_RESOURCES;
 				}
 
@@ -265,7 +265,7 @@ NTSTATUS ValueRecordCallbackQueryInvoke(_In_ PREGMAN_VALUE_RECORD Record, _Inout
 	info.ValueRecord = Record;
 	info.CurrentDataSize = Record->DataSize;
 	info.CurrentType = Record->Type;
-	info.CurrentData = ExAllocatePoolWithTag(PagedPool, info.CurrentDataSize, 0);
+	info.CurrentData = ExAllocatePoolWithTag(PagedPool, info.CurrentDataSize, REGMAN_POOL_TAG);
 	if (info.CurrentData != NULL) {
 		status = STATUS_SUCCESS;
 		memcpy(info.CurrentData, Record->Data, info.CurrentDataSize);
@@ -285,7 +285,7 @@ NTSTATUS ValueRecordCallbackQueryInvoke(_In_ PREGMAN_VALUE_RECORD Record, _Inout
 		if (NT_SUCCESS(status)) {
 			if (Data != NULL)
 				*Data = info.CurrentData;
-			else ExFreePoolWithTag(info.CurrentData, 0);
+			else ExFreePoolWithTag(info.CurrentData, REGMAN_POOL_TAG);
 
 			if (DataSize != NULL)
 				*DataSize = info.CurrentDataSize;
@@ -295,7 +295,7 @@ NTSTATUS ValueRecordCallbackQueryInvoke(_In_ PREGMAN_VALUE_RECORD Record, _Inout
 		}
 
 		if (!NT_SUCCESS(status) && info.CurrentData != NULL)
-			ExFreePoolWithTag(info.CurrentData, 0);
+			ExFreePoolWithTag(info.CurrentData, REGMAN_POOL_TAG);
 	} else status = STATUS_INSUFFICIENT_RESOURCES;
 
 	DEBUG_EXIT_FUNCTION("0x%x", status);
@@ -481,7 +481,7 @@ NTSTATUS ValueRecordOnQueryValue(_In_ PREGMAN_VALUE_RECORD Value, _Inout_ PREG_Q
 			}
 
 			if (valueData != NULL)
-				ExFreePool(valueData);
+				ExFreePoolWithTag(valueData, REGMAN_POOL_TAG);
 		}
 
 		*Emulated = NT_SUCCESS(status);
@@ -528,7 +528,7 @@ NTSTATUS ValueRecordOnSetValue(_In_ PREGMAN_VALUE_RECORD Value, _In_ PREG_SET_VA
 	valueSize = Info->DataSize;
 	valueType = Info->Type;
 	if (valueSize > 0) {
-		valueData = ExAllocatePoolWithTag(PagedPool, valueSize, 0);
+		valueData = ExAllocatePoolWithTag(PagedPool, valueSize, REGMAN_POOL_TAG);
 		if (valueData != NULL) {
 			__try {
 				memcpy(valueData, Info->Data, valueSize);
@@ -537,7 +537,7 @@ NTSTATUS ValueRecordOnSetValue(_In_ PREGMAN_VALUE_RECORD Value, _In_ PREG_SET_VA
 			}
 		
 			if (!NT_SUCCESS(status))
-				ExFreePoolWithTag(valueData, 0);
+				ExFreePoolWithTag(valueData, REGMAN_POOL_TAG);
 		} else status = STATUS_INSUFFICIENT_RESOURCES;
 	}
 
@@ -555,7 +555,7 @@ NTSTATUS ValueRecordOnSetValue(_In_ PREGMAN_VALUE_RECORD Value, _In_ PREG_SET_VA
 					KeEnterCriticalRegion();
 					ExAcquireResourceExclusiveLite(&Value->Lock, TRUE);
 					if (Value->Data != NULL)
-						ExFreePoolWithTag(Value->Data, 0);
+						ExFreePoolWithTag(Value->Data, REGMAN_POOL_TAG);
 
 					Value->Data = valueData;
 					Value->DataSize = valueSize;
@@ -567,7 +567,7 @@ NTSTATUS ValueRecordOnSetValue(_In_ PREGMAN_VALUE_RECORD Value, _In_ PREG_SET_VA
 		}
 
 		if (!NT_SUCCESS(status) && valueData != NULL)
-			ExFreePoolWithTag(valueData, 0);
+			ExFreePoolWithTag(valueData, REGMAN_POOL_TAG);
 	}
 
 	DEBUG_EXIT_FUNCTION("0x%x, *Emulated=0x%p", status, *Emulated);
@@ -614,7 +614,7 @@ NTSTATUS ValueRecordOnPostOperation(PREG_POST_OPERATION_INFORMATION Info, PBOOLE
 				KeEnterCriticalRegion();
 				ExAcquireResourceExclusiveLite(&valueRecord->Lock, TRUE);
 				if (valueRecord->Data != NULL)
-					ExFreePoolWithTag(valueRecord->Data, 0);
+					ExFreePoolWithTag(valueRecord->Data, REGMAN_POOL_TAG);
 
 				valueRecord->Data = NULL;
 				valueRecord->DataSize = 0;

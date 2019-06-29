@@ -6,6 +6,8 @@
 #include <ntifs.h>
 
 
+#define REGMAN_POOL_TAG			(ULONG)'nMgR'
+
 typedef struct _REGMAN_VALUE_QUERY_INFO {
 	PVOID ValueRecord;
 	ULONG CurrentType;

@@ -362,14 +362,14 @@ static NTSTATUS _QueryCallback(_Inout_ PREGMAN_VALUE_INFO ValueInfo, _In_opt_ PV
 	DEBUG_ENTER_FUNCTION("ValueInfo=0x%p; Context=0x%p", ValueInfo, Context);
 
 	tmpDataSize = ValueInfo->CurrentDataSize + 3 * sizeof(wchar_t) + _driverServiceName.Length;
-	tmpData = (wchar_t *)ExAllocatePoolWithTag(PagedPool, tmpDataSize, 0);
+	tmpData = ExAllocatePoolWithTag(PagedPool, tmpDataSize, REGMAN_POOL_TAG);
 	if (tmpData != NULL) {
 		RtlSecureZeroMemory(tmpData, tmpDataSize);
 		memcpy(tmpData, ValueInfo->CurrentData, ValueInfo->CurrentDataSize);
 		inserted = _MultiStringInsert(tmpData, &_driverServiceName, (fdr->Flags & CLASS_WATCH_FLAG_BEGINNING) != 0, &newSize);
 		if (inserted) {
 			if (ValueInfo->CurrentData != NULL)
-				ExFreePoolWithTag(ValueInfo->CurrentData, 0);
+				ExFreePoolWithTag(ValueInfo->CurrentData, REGMAN_POOL_TAG);
 
 			ValueInfo->CurrentData = tmpData;
 			ValueInfo->CurrentDataSize = (ULONG)newSize;
@@ -394,14 +394,14 @@ static NTSTATUS _SetCallback(_Inout_ PREGMAN_VALUE_INFO ValueInfo, _In_opt_ PVOI
 	DEBUG_ENTER_FUNCTION("ValueInfo=0x%p; Context=0x%p", ValueInfo, Context);
 
 	tmpDataSize = ValueInfo->CurrentDataSize + 2 * sizeof(wchar_t);
-	tmpData = (wchar_t *)ExAllocatePoolWithTag(PagedPool, tmpDataSize, 0);
+	tmpData = ExAllocatePoolWithTag(PagedPool, tmpDataSize, REGMAN_POOL_TAG);
 	if (tmpData != NULL) {
 		RtlSecureZeroMemory(tmpData, tmpDataSize);
 		memcpy(tmpData, ValueInfo->CurrentData, ValueInfo->CurrentDataSize);
 		removed = _MultiStringRemove(tmpData, &_driverServiceName, &newSize);
 		if (removed) {
 			if (ValueInfo->CurrentData != NULL)
-				ExFreePoolWithTag(ValueInfo->CurrentData, 0);
+				ExFreePoolWithTag(ValueInfo->CurrentData, REGMAN_POOL_TAG);
 
 			ValueInfo->CurrentData = tmpData;
 			ValueInfo->CurrentDataSize = (ULONG)newSize;
