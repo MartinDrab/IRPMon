@@ -124,9 +124,13 @@ NTSTATUS ProcessEventsModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING Re
 		if (vi.dwBuildNumber >= 6001) {
 			RtlInitUnicodeString(&uRoutineName, L"PsSetCreateProcessNotifyRoutineEx");
 			_PsSetCreateProcessNotifyROutineEx = (PSSETCREATEPROCESSNOTIFYROUTINEEX *)MmGetSystemRoutineAddress(&uRoutineName);
-			if (_PsSetCreateProcessNotifyROutineEx != NULL)
+			if (_PsSetCreateProcessNotifyROutineEx != NULL) {
 				status = _PsSetCreateProcessNotifyROutineEx(_ProcessNotifyEx, FALSE);
-			else status = STATUS_NOT_FOUND;
+				if (status == STATUS_ACCESS_DENIED) {
+					_PsSetCreateProcessNotifyROutineEx = NULL;
+					status = STATUS_SUCCESS;
+				}
+			} else status = STATUS_NOT_FOUND;
 		}
 	}
 
