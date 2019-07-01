@@ -305,7 +305,7 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 			ret = _AddNameFormat(&p, L"D3 Latency", L"%u ms", devCaps->D3Latency);
 		
 		if (ret == ERROR_SUCCESS) {
-			for (size_t i = 0; sizeof(devCaps->DeviceState) / sizeof(devCaps->DeviceState[0]); ++i) {
+			for (size_t i = 0; i < sizeof(devCaps->DeviceState) / sizeof(devCaps->DeviceState[0]); ++i) {
 				ret = _AddDevicePowerStateValue(&p, L"  Device state", devCaps->DeviceState[i]);
 				if (ret != ERROR_SUCCESS)
 					break;
