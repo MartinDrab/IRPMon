@@ -4,7 +4,7 @@ object RequestDetailsFrm: TRequestDetailsFrm
   BorderIcons = [biSystemMenu]
   Caption = 'Request Details'
   ClientHeight = 322
-  ClientWidth = 483
+  ClientWidth = 560
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -874,14 +874,14 @@ object RequestDetailsFrm: TRequestDetailsFrm
   object LowerPanel: TPanel
     Left = 0
     Top = 281
-    Width = 483
+    Width = 560
     Height = 41
     Align = alBottom
     TabOrder = 0
-    ExplicitWidth = 279
+    ExplicitWidth = 483
     object OkButton: TButton
-      Left = 96
-      Top = 8
+      Left = 240
+      Top = 6
       Width = 65
       Height = 25
       Caption = 'Ok'
@@ -892,19 +892,19 @@ object RequestDetailsFrm: TRequestDetailsFrm
   object PageControl1: TPageControl
     Left = 0
     Top = 0
-    Width = 483
+    Width = 560
     Height = 281
     ActivePage = HeadersTabSheet
     Align = alClient
     TabOrder = 1
-    ExplicitWidth = 279
+    ExplicitWidth = 483
     object HeadersTabSheet: TTabSheet
       Caption = 'Headers'
-      ExplicitWidth = 271
+      ExplicitWidth = 475
       object NameValueListView: TListView
         Left = 0
         Top = 0
-        Width = 475
+        Width = 552
         Height = 253
         Align = alClient
         Columns = <
@@ -924,7 +924,7 @@ object RequestDetailsFrm: TRequestDetailsFrm
         ShowWorkAreas = True
         TabOrder = 0
         ViewStyle = vsReport
-        ExplicitWidth = 271
+        ExplicitWidth = 475
       end
     end
   end
