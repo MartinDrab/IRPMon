@@ -293,6 +293,17 @@ void IRPDataLogger(PIRP Irp, PIO_STACK_LOCATION IrpStack, BOOLEAN Completion, PD
 						Result->Buffer = (void *)Irp->IoStatus.Information;
 						Result->BufferSize = sizeof(PNP_BUS_INFORMATION);
 						break;
+					case IRP_MN_QUERY_INTERFACE:
+						Result->Buffer = IrpStack->Parameters.QueryInterface.Interface;
+						Result->BufferSize = IrpStack->Parameters.QueryInterface.Size;
+						break;
+				}
+			} else if (!Completion) {
+				switch (IrpStack->MinorFunction) {
+					case IRP_MN_QUERY_INTERFACE:
+						Result->Buffer = (void *)IrpStack->Parameters.QueryInterface.InterfaceType;
+						Result->BufferSize = sizeof(GUID);
+						break;
 				}
 			}
 		} break;
