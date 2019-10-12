@@ -35,10 +35,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\km-shared\allocator.c" />
-    <ClCompile Include="..\km-shared\multistring.c" />
-    <ClCompile Include="..\km-shared\string-ref-table.c" />
-    <ClCompile Include="..\km-shared\utils.c" />
     <ClCompile Include="key-record.c" />
     <ClCompile Include="registry-callback.c" />
     <ClCompile Include="regman.c" />
@@ -46,11 +42,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\regman.h" />
-    <ClInclude Include="..\km-shared\allocator.h" />
-    <ClInclude Include="..\km-shared\multistring.h" />
     <ClInclude Include="..\km-shared\preprocessor.h" />
-    <ClInclude Include="..\km-shared\string-ref-table.h" />
-    <ClInclude Include="..\km-shared\utils.h" />
     <ClInclude Include="key-record.h" />
     <ClInclude Include="registry-callback.h" />
     <ClInclude Include="value-record.h" />

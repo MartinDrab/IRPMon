@@ -19,42 +19,42 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{0517063E-35F2-48C6-AFAD-A427B1ADF49D}</ProjectGuid>
+    <ProjectGuid>{42B0C13C-CF65-4CC5-8BE9-15FC87E9604A}</ProjectGuid>
     <TemplateGuid>{dd38f7fc-d7bd-488b-9242-7d8754cde80d}</TemplateGuid>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <MinimumVisualStudioVersion>12.0</MinimumVisualStudioVersion>
     <Configuration>Debug</Configuration>
     <Platform Condition="'$(Platform)' == ''">Win32</Platform>
-    <RootNamespace>irpmndrv</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.15063.0</WindowsTargetPlatformVersion>
+    <RootNamespace>kbase</RootNamespace>
+    <WindowsTargetPlatformVersion>$(LatestTargetPlatformVersion)</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <TargetVersion>Windows7</TargetVersion>
+    <TargetVersion>Windows10</TargetVersion>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
-    <ConfigurationType>Driver</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <DriverType>WDM</DriverType>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <TargetVersion>Windows7</TargetVersion>
+    <TargetVersion>Windows10</TargetVersion>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
-    <ConfigurationType>Driver</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <DriverType>WDM</DriverType>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <TargetVersion>Windows7</TargetVersion>
+    <TargetVersion>Windows10</TargetVersion>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
-    <ConfigurationType>Driver</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <DriverType>WDM</DriverType>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <TargetVersion>Windows7</TargetVersion>
+    <TargetVersion>Windows10</TargetVersion>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
-    <ConfigurationType>Driver</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <DriverType>WDM</DriverType>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
@@ -63,10 +63,10 @@
   <ImportGroup Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="..\General.props" />
   </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="..\General.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -79,93 +79,90 @@
   <PropertyGroup />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
-    <TimeStampServer>http://time.certum.pl</TimeStampServer>
-    <DiagnosticMode>true</DiagnosticMode>
+    <TargetExt>.dll</TargetExt>
+    <OutDir>$(SolutionDir)lib\$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
-    <TimeStampServer>http://time.certum.pl</TimeStampServer>
-    <DiagnosticMode>true</DiagnosticMode>
+    <TargetExt>.dll</TargetExt>
+    <OutDir>$(SolutionDir)lib\$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
-    <TimeStampServer>http://time.certum.pl</TimeStampServer>
-    <DiagnosticMode>true</DiagnosticMode>
+    <TargetExt>.dll</TargetExt>
+    <OutDir>$(SolutionDir)lib\$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
-    <TimeStampServer>http://time.certum.pl</TimeStampServer>
-    <DiagnosticMode>true</DiagnosticMode>
+    <TargetExt>.dll</TargetExt>
+    <OutDir>$(SolutionDir)lib\$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <DriverSign>
-      <FileDigestAlgorithm>SHA256</FileDigestAlgorithm>
-    </DriverSign>
-    <Link>
-      <AdditionalDependencies>kbase.lib;fltmgr.lib;libregman.lib;%(AdditionalDependencies);$(KernelBufferOverflowLib);$(DDK_LIB_PATH)ntoskrnl.lib;$(DDK_LIB_PATH)hal.lib;$(DDK_LIB_PATH)wmilib.lib</AdditionalDependencies>
-    </Link>
     <ClCompile>
-      <SupportJustMyCode>false</SupportJustMyCode>
+      <PreprocessorDefinitions>KBASE_EXPORTS;_X86_=1;i386=1;STD_CALL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
+    <Link>
+      <EntryPointSymbol>DllInitialize</EntryPointSymbol>
+      <ModuleDefinitionFile>kbase.def</ModuleDefinitionFile>
+    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <DriverSign>
-      <FileDigestAlgorithm>SHA256</FileDigestAlgorithm>
-    </DriverSign>
+    <ClCompile>
+      <PreprocessorDefinitions>KBASE_EXPORTS;_X86_=1;i386=1;STD_CALL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
     <Link>
-      <AdditionalDependencies>kbase.lib;fltmgr.lib;libregman.lib;%(AdditionalDependencies);$(KernelBufferOverflowLib);$(DDK_LIB_PATH)ntoskrnl.lib;$(DDK_LIB_PATH)hal.lib;$(DDK_LIB_PATH)wmilib.lib</AdditionalDependencies>
+      <ModuleDefinitionFile>kbase.def</ModuleDefinitionFile>
+      <EntryPointSymbol>DllInitialize</EntryPointSymbol>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <DriverSign>
-      <FileDigestAlgorithm>SHA256</FileDigestAlgorithm>
-    </DriverSign>
-    <Link>
-      <AdditionalDependencies>kbase.lib;fltmgr.lib;libregman.lib;%(AdditionalDependencies);$(KernelBufferOverflowLib);$(DDK_LIB_PATH)ntoskrnl.lib;$(DDK_LIB_PATH)hal.lib;$(DDK_LIB_PATH)wmilib.lib</AdditionalDependencies>
-    </Link>
     <ClCompile>
-      <SupportJustMyCode>false</SupportJustMyCode>
+      <PreprocessorDefinitions>KBASE_EXPORTS;_WIN64;_AMD64_;AMD64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
+    <Link>
+      <EntryPointSymbol>DllInitialize</EntryPointSymbol>
+      <ModuleDefinitionFile>kbase.def</ModuleDefinitionFile>
+    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <DriverSign>
-      <FileDigestAlgorithm>SHA256</FileDigestAlgorithm>
-    </DriverSign>
+    <ClCompile>
+      <PreprocessorDefinitions>KBASE_EXPORTS;_WIN64;_AMD64_;AMD64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
     <Link>
-      <AdditionalDependencies>kbase.lib;fltmgr.lib;libregman.lib;%(AdditionalDependencies);$(KernelBufferOverflowLib);$(DDK_LIB_PATH)ntoskrnl.lib;$(DDK_LIB_PATH)hal.lib;$(DDK_LIB_PATH)wmilib.lib</AdditionalDependencies>
+      <ModuleDefinitionFile>kbase.def</ModuleDefinitionFile>
+      <EntryPointSymbol>DllInitialize</EntryPointSymbol>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <FilesToPackage Include="$(TargetPath)" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\shared\request.c" />
-    <ClCompile Include="data-loggers.c" />
-    <ClCompile Include="driver.c" />
-    <ClCompile Include="hook-handlers.c" />
-    <ClCompile Include="hook.c" />
-    <ClCompile Include="modules.c" />
-    <ClCompile Include="pnp-driver-watch.c" />
-    <ClCompile Include="process-events.c" />
-    <ClCompile Include="req-queue.c" />
-    <ClCompile Include="um-services.c" />
+    <ClCompile Include="..\km-shared\allocator.c" />
+    <ClCompile Include="..\km-shared\handle-table.c" />
+    <ClCompile Include="..\km-shared\hash_table.c" />
+    <ClCompile Include="..\km-shared\multistring.c" />
+    <ClCompile Include="..\km-shared\string-hash-table.c" />
+    <ClCompile Include="..\km-shared\string-ref-table.c" />
+    <ClCompile Include="..\km-shared\utils-dym-array.c" />
+    <ClCompile Include="..\km-shared\utils.c" />
+    <ClCompile Include="kbase.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\include\general-types.h" />
-    <ClInclude Include="..\include\ioctls.h" />
-    <ClInclude Include="..\include\kernel-shared.h" />
+    <ClInclude Include="..\km-shared\allocator.h" />
+    <ClInclude Include="..\km-shared\handle-table.h" />
+    <ClInclude Include="..\km-shared\hash_table.h" />
+    <ClInclude Include="..\km-shared\kbase-exports.h" />
+    <ClInclude Include="..\km-shared\multistring.h" />
     <ClInclude Include="..\km-shared\preprocessor.h" />
-    <ClInclude Include="..\shared\request.h" />
-    <ClInclude Include="data-loggers.h" />
-    <ClInclude Include="driver.h" />
-    <ClInclude Include="hook-handlers.h" />
-    <ClInclude Include="hook.h" />
-    <ClInclude Include="modules.h" />
-    <ClInclude Include="pnp-driver-watch.h" />
-    <ClInclude Include="preprocessor.h" />
-    <ClInclude Include="process-events.h" />
-    <ClInclude Include="req-queue.h" />
-    <ClInclude Include="um-services.h" />
+    <ClInclude Include="..\km-shared\string-hash-table.h" />
+    <ClInclude Include="..\km-shared\string-ref-table.h" />
+    <ClInclude Include="..\km-shared\utils-dym-array-types.h" />
+    <ClInclude Include="..\km-shared\utils-dym-array.h" />
+    <ClInclude Include="..\km-shared\utils.h" />
+    <ClInclude Include="kbase.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="kbase.def" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

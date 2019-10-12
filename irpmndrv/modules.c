@@ -278,12 +278,7 @@ NTSTATUS ModuleFrameworkInit(PDRIVER_OBJECT driverObject)
    ObReferenceObject(driverObject);
    _driverObject = driverObject;
    InitializeListHead(&_driverModuleList);
-   status =  DebugAllocatorModuleInit();
-   if (!NT_SUCCESS(status)) {
-      ObDereferenceObject(_driverObject);
-      _driverObject = NULL;
-   }
-
+ 
    DEBUG_EXIT_FUNCTION("0x%x", status);
    return status;
 }
@@ -302,7 +297,6 @@ VOID ModuleFrameworkFinit(VOID)
 
    _ModuleFrameworkDeleteAllModules();
    InitializeListHead(&_driverModuleList);
-   DebugAllocatorModuleFinit();
    ObDereferenceObject(_driverObject);
    _driverObject = NULL;
 

@@ -27,18 +27,6 @@
     <ClCompile Include="value-record.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\km-shared\allocator.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\km-shared\multistring.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\km-shared\string-ref-table.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\km-shared\utils.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="key-record.h">
@@ -53,19 +41,7 @@
     <ClInclude Include="..\include\regman.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\km-shared\allocator.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\km-shared\multistring.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\km-shared\preprocessor.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\km-shared\string-ref-table.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\km-shared\utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

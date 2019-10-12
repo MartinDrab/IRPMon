@@ -9,6 +9,7 @@
 #define __HASH_TABLE_H_
 
 #include <ntifs.h>
+#include "kbase-exports.h"
 
 
 /** Links hash table items stored in one bucket together. These structures
@@ -186,20 +187,34 @@ typedef struct {
 } HASH_TABLE_ITERATOR, *PHASH_TABLE_ITERATOR;
 
 
+KBASE_API
 NTSTATUS HashTableCreate(EHashTableType Type, IN ULONG32 Size, IN HASH_FUNCTION HashFunction, IN COMPARE_FUNCTION CompareFunction, IN FREE_ITEM_FUNCTION FreeFunction, OUT PHASH_TABLE *Table);
+KBASE_API
 VOID HashTableDestroy(IN PHASH_TABLE Table);
+KBASE_API
 VOID HashTableInsert(IN PHASH_TABLE Table, IN PHASH_ITEM Object, IN PVOID Key);
+KBASE_API
 PHASH_ITEM HashTableDelete(IN PHASH_TABLE Table, IN PVOID Key);
+KBASE_API
 PHASH_ITEM HashTableGet(IN PHASH_TABLE Table, IN PVOID Key);
+KBASE_API
 VOID HashTablePerform(PHASH_TABLE Table, HASH_ITEM_CALLBACK Callback, PVOID Context);
+KBASE_API
 VOID HashTablePerformWithFeedback(PHASH_TABLE Table, HASH_ITEM_CALLBACK_WITH_FEEDBACK *Callback, PVOID Context);
+KBASE_API
 VOID HashTableClear(PHASH_TABLE Table, BOOLEAN CallFreeFunction);
+KBASE_API
 ULONG HashTableGetItemCount(PHASH_TABLE Table);
 
+KBASE_API
 BOOLEAN HashTableGetFirst(PHASH_TABLE HashTable, PHASH_TABLE_ITERATOR Iterator);
+KBASE_API
 BOOLEAN HashTableGetNext(PHASH_TABLE_ITERATOR Iterator);
+KBASE_API
 VOID HashTableIteratorFinit(PHASH_TABLE_ITERATOR Iterator);
+KBASE_API
 PHASH_ITEM HashTableIteratorGetData(PHASH_TABLE_ITERATOR Iterator);
+
 
 
 #endif

@@ -1,0 +1,3 @@
+LIBRARY kbase
+EXPORTS
+	DllUnload		PRIVATE

@@ -13,84 +13,81 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Driver Files">
+      <UniqueIdentifier>{8E41214B-6785-4CFE-B992-037D68949A14}</UniqueIdentifier>
+      <Extensions>inf;inv;inx;mof;mc;</Extensions>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="driver.c">
+    <ClCompile Include="..\km-shared\allocator.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="hook.c">
+    <ClCompile Include="..\km-shared\handle-table.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="hook-handlers.c">
+    <ClCompile Include="..\km-shared\hash_table.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="modules.c">
+    <ClCompile Include="..\km-shared\multistring.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="pnp-driver-watch.c">
+    <ClCompile Include="..\km-shared\string-hash-table.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="req-queue.c">
+    <ClCompile Include="..\km-shared\string-ref-table.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="um-services.c">
+    <ClCompile Include="..\km-shared\utils.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="data-loggers.c">
+    <ClCompile Include="..\km-shared\utils-dym-array.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\shared\request.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="process-events.c">
+    <ClCompile Include="kbase.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="driver.h">
+    <ClInclude Include="..\km-shared\allocator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="hook.h">
+    <ClInclude Include="..\km-shared\handle-table.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="hook-handlers.h">
+    <ClInclude Include="..\km-shared\hash_table.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="modules.h">
+    <ClInclude Include="..\km-shared\kbase-exports.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="pnp-driver-watch.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="preprocessor.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="req-queue.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="um-services.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\general-types.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\ioctls.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\kernel-shared.h">
+    <ClInclude Include="..\km-shared\multistring.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\km-shared\preprocessor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="data-loggers.h">
+    <ClInclude Include="..\km-shared\string-hash-table.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\shared\request.h">
+    <ClInclude Include="..\km-shared\string-ref-table.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="process-events.h">
+    <ClInclude Include="..\km-shared\utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\km-shared\utils-dym-array.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\km-shared\utils-dym-array-types.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="kbase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="kbase.def">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
