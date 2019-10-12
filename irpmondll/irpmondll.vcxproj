@@ -97,7 +97,8 @@
       <ModuleDefinitionFile>irpmondll.def</ModuleDefinitionFile>
     </Link>
     <PostBuildEvent>
-      <Command>copy "$(SolutionDir)bin\$(Platform)\$(Configuration)\$(ProjectName).lib" "$(SolutionDir)lib\$(Platform)\$(Configuration)\$(ProjectName).lib"</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -115,7 +116,8 @@
       <ModuleDefinitionFile>irpmondll.def</ModuleDefinitionFile>
     </Link>
     <PostBuildEvent>
-      <Command>copy "$(SolutionDir)bin\$(Platform)\$(Configuration)\$(ProjectName).lib" "$(SolutionDir)lib\$(Platform)\$(Configuration)\$(ProjectName).lib"</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -137,7 +139,8 @@
       <ModuleDefinitionFile>irpmondll.def</ModuleDefinitionFile>
     </Link>
     <PostBuildEvent>
-      <Command>copy "$(SolutionDir)bin\$(Platform)\$(Configuration)\$(ProjectName).lib" "$(SolutionDir)lib\$(Platform)\$(Configuration)\$(ProjectName).lib"</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -159,7 +162,8 @@
       <ModuleDefinitionFile>irpmondll.def</ModuleDefinitionFile>
     </Link>
     <PostBuildEvent>
-      <Command>copy "$(SolutionDir)bin\$(Platform)\$(Configuration)\$(ProjectName).lib" "$(SolutionDir)lib\$(Platform)\$(Configuration)\$(ProjectName).lib"</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
