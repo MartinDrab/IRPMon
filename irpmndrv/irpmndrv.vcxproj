@@ -102,7 +102,7 @@
       <FileDigestAlgorithm>SHA256</FileDigestAlgorithm>
     </DriverSign>
     <Link>
-      <AdditionalDependencies>kbase.lib;fltmgr.lib;libregman.lib;%(AdditionalDependencies);$(KernelBufferOverflowLib);$(DDK_LIB_PATH)ntoskrnl.lib;$(DDK_LIB_PATH)hal.lib;$(DDK_LIB_PATH)wmilib.lib</AdditionalDependencies>
+      <AdditionalDependencies>kbase.lib;fltmgr.lib;regman.lib;%(AdditionalDependencies);$(KernelBufferOverflowLib);$(DDK_LIB_PATH)ntoskrnl.lib;$(DDK_LIB_PATH)hal.lib;$(DDK_LIB_PATH)wmilib.lib</AdditionalDependencies>
     </Link>
     <ClCompile>
       <SupportJustMyCode>false</SupportJustMyCode>
@@ -113,7 +113,7 @@
       <FileDigestAlgorithm>SHA256</FileDigestAlgorithm>
     </DriverSign>
     <Link>
-      <AdditionalDependencies>kbase.lib;fltmgr.lib;libregman.lib;%(AdditionalDependencies);$(KernelBufferOverflowLib);$(DDK_LIB_PATH)ntoskrnl.lib;$(DDK_LIB_PATH)hal.lib;$(DDK_LIB_PATH)wmilib.lib</AdditionalDependencies>
+      <AdditionalDependencies>kbase.lib;fltmgr.lib;regman.lib;%(AdditionalDependencies);$(KernelBufferOverflowLib);$(DDK_LIB_PATH)ntoskrnl.lib;$(DDK_LIB_PATH)hal.lib;$(DDK_LIB_PATH)wmilib.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -121,7 +121,7 @@
       <FileDigestAlgorithm>SHA256</FileDigestAlgorithm>
     </DriverSign>
     <Link>
-      <AdditionalDependencies>kbase.lib;fltmgr.lib;libregman.lib;%(AdditionalDependencies);$(KernelBufferOverflowLib);$(DDK_LIB_PATH)ntoskrnl.lib;$(DDK_LIB_PATH)hal.lib;$(DDK_LIB_PATH)wmilib.lib</AdditionalDependencies>
+      <AdditionalDependencies>kbase.lib;fltmgr.lib;regman.lib;%(AdditionalDependencies);$(KernelBufferOverflowLib);$(DDK_LIB_PATH)ntoskrnl.lib;$(DDK_LIB_PATH)hal.lib;$(DDK_LIB_PATH)wmilib.lib</AdditionalDependencies>
     </Link>
     <ClCompile>
       <SupportJustMyCode>false</SupportJustMyCode>
@@ -132,7 +132,7 @@
       <FileDigestAlgorithm>SHA256</FileDigestAlgorithm>
     </DriverSign>
     <Link>
-      <AdditionalDependencies>kbase.lib;fltmgr.lib;libregman.lib;%(AdditionalDependencies);$(KernelBufferOverflowLib);$(DDK_LIB_PATH)ntoskrnl.lib;$(DDK_LIB_PATH)hal.lib;$(DDK_LIB_PATH)wmilib.lib</AdditionalDependencies>
+      <AdditionalDependencies>kbase.lib;fltmgr.lib;regman.lib;%(AdditionalDependencies);$(KernelBufferOverflowLib);$(DDK_LIB_PATH)ntoskrnl.lib;$(DDK_LIB_PATH)hal.lib;$(DDK_LIB_PATH)wmilib.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

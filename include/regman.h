@@ -38,9 +38,6 @@ VOID RegManKeyValueDelete(_In_ HANDLE ValueHandle);
 NTSTATUS RegManValueCallbacksRegister(_In_ HANDLE ValueHandle, _In_ const REGMAN_CALLBACKS *Callbacks, _Out_ PHANDLE CallbackHandle);
 VOID RegManValueCallbackUnregiser(_In_ HANDLE CallbackHandle);
 
-NTSTATUS RegManInit(_In_ PDRIVER_OBJECT DriverObject, _In_ PUNICODE_STRING RegistryPath, PVOID Context);
-VOID RegManFinit(_In_ PDRIVER_OBJECT DriverObject, _In_opt_ PUNICODE_STRING RegistryPath, PVOID Context);
-
 
 
 #endif

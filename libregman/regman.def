@@ -1,0 +1,9 @@
+LIBRARY regman
+EXPORTS
+	DllUnload	PRIVATE
+	RegManKeyRegister
+	RegManKeyUnregister
+	RegManKeyValueAdd
+	RegManKeyValueDelete
+	RegManValueCallbacksRegister
+	RegManValueCallbackUnregiser

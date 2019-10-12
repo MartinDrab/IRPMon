@@ -357,7 +357,6 @@ static DRIVER_MODULE_ENTRY_PARAMETERS _moduleEntries[] = {
 	{HookHandlerModuleInit, HookHandlerModuleFinit, NULL},
 	{UMServicesModuleInit, UMServicesModuleFinit, NULL},
 	{ProcessEventsModuleInit, ProcessEventsModuleFinit, NULL},
-	{RegManInit, RegManFinit, NULL },
 	{PWDModuleInit, PWDModuleFinit, NULL},
 	{DriverInit, DriverFinit, NULL},
 };
