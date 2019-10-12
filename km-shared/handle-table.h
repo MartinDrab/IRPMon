@@ -3,7 +3,6 @@
 #define __CUSTOM_HANDLE_TABLE_H__
 
 #include <ntifs.h>
-#include "kbase-exports.h"
 #include "hash_table.h"
 
 
@@ -35,20 +34,13 @@ typedef struct _CHANDLE_TABLE_MAPPING {
 } CHANDLE_TABLE_MAPPING, *PCHANDLE_TABLE_MAPPING;
 
 
-KBASE_API
 NTSTATUS HandleTableCreate(EHashTableType HandleTableType, CHANDLE_TABLE_HANDLE_CREATED *HandleCreateProcedure, CHANDLE_TABLE_HANDLE_DELETED *HandleDeleteProcedure, CHANDLE_TABLE_HANDLE_TRANSLATED *HandleTranslateProcedure, PCHANDLE_TABLE *HandleTable);
-KBASE_API
 VOID HandleTableDestroy(PCHANDLE_TABLE HandleTable);
-KBASE_API
 VOID HandleTableClear(PCHANDLE_TABLE HandleTable);
 
-KBASE_API
 NTSTATUS HandleTableHandleCreate(PCHANDLE_TABLE HandleTable, PVOID Object, PHANDLE NewHandle);
-KBASE_API
 NTSTATUS HandleTableHandleClose(PCHANDLE_TABLE HandleTable, HANDLE Handle);
-KBASE_API
 NTSTATUS HandleTablehandleTranslate(PCHANDLE_TABLE HandleTable, HANDLE Handle, PVOID *Object);
-KBASE_API
 NTSTATUS HandleTableHandleDuplicate(PCHANDLE_TABLE HandleTable, HANDLE Handle, PHANDLE NewHandle);
 
 

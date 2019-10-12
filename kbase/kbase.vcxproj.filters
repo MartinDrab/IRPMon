@@ -57,9 +57,6 @@
     <ClInclude Include="..\km-shared\hash_table.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\km-shared\kbase-exports.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\km-shared\multistring.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -79,9 +76,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\km-shared\utils-dym-array-types.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="kbase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

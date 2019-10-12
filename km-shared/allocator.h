@@ -10,7 +10,6 @@
 #define __PNPMON_ALLOCATOR_H__
 
 #include <ntifs.h>
-#include "kbase-exports.h"
 
 
 /** Magic signature of block header, used to detect overrides. */
@@ -42,9 +41,7 @@ typedef struct {
 } DEBUG_BLOCK_FOOTER, *PDEBUG_BLOCK_FOOTER;
 
 
-KBASE_API
 PVOID DebugAllocatorAlloc(POOL_TYPE PoolType, SIZE_T NumberOfBytes, PCHAR Function, ULONG Line);
-KBASE_API
 VOID DebugAllocatorFree(PVOID Address);
 
 #ifdef _DEBUG
@@ -68,9 +65,7 @@ VOID DebugAllocatorFree(PVOID Address);
 #define HeapMemoryAllocNonPaged(NumberOfBytes)                 HeapMemoryAlloc(NonPagedPool, NumberOfBytes)
 
 
-KBASE_API
 NTSTATUS DebugAllocatorModuleInit(VOID);
-KBASE_API
 VOID DebugAllocatorModuleFinit(VOID);
 
 

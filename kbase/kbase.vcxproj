@@ -151,7 +151,6 @@
     <ClInclude Include="..\km-shared\allocator.h" />
     <ClInclude Include="..\km-shared\handle-table.h" />
     <ClInclude Include="..\km-shared\hash_table.h" />
-    <ClInclude Include="..\km-shared\kbase-exports.h" />
     <ClInclude Include="..\km-shared\multistring.h" />
     <ClInclude Include="..\km-shared\preprocessor.h" />
     <ClInclude Include="..\km-shared\string-hash-table.h" />
@@ -159,7 +158,6 @@
     <ClInclude Include="..\km-shared\utils-dym-array-types.h" />
     <ClInclude Include="..\km-shared\utils-dym-array.h" />
     <ClInclude Include="..\km-shared\utils.h" />
-    <ClInclude Include="kbase.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="kbase.def" />
