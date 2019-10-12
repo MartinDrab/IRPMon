@@ -87,7 +87,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="kbase.def">
-      <Filter>Source Files</Filter>
+      <Filter>Driver Files</Filter>
     </None>
   </ItemGroup>
 </Project>
