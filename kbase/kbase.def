@@ -1,5 +1,6 @@
 LIBRARY kbase
 EXPORTS
+	DllInitialize	PRIVATE
 	DllUnload		PRIVATE
 	DebugAllocatorAlloc
 	DebugAllocatorFree

@@ -102,8 +102,10 @@
       <PreprocessorDefinitions>KBASE_EXPORTS;_X86_=1;i386=1;STD_CALL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <EntryPointSymbol>DllInitialize</EntryPointSymbol>
+      <EntryPointSymbol>
+      </EntryPointSymbol>
       <ModuleDefinitionFile>kbase.def</ModuleDefinitionFile>
+      <NoEntryPoint>true</NoEntryPoint>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -112,7 +114,9 @@
     </ClCompile>
     <Link>
       <ModuleDefinitionFile>kbase.def</ModuleDefinitionFile>
-      <EntryPointSymbol>DllInitialize</EntryPointSymbol>
+      <EntryPointSymbol>
+      </EntryPointSymbol>
+      <NoEntryPoint>true</NoEntryPoint>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -120,8 +124,10 @@
       <PreprocessorDefinitions>KBASE_EXPORTS;_WIN64;_AMD64_;AMD64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <EntryPointSymbol>DllInitialize</EntryPointSymbol>
+      <EntryPointSymbol>
+      </EntryPointSymbol>
       <ModuleDefinitionFile>kbase.def</ModuleDefinitionFile>
+      <NoEntryPoint>true</NoEntryPoint>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -130,7 +136,9 @@
     </ClCompile>
     <Link>
       <ModuleDefinitionFile>kbase.def</ModuleDefinitionFile>
-      <EntryPointSymbol>DllInitialize</EntryPointSymbol>
+      <EntryPointSymbol>
+      </EntryPointSymbol>
+      <NoEntryPoint>true</NoEntryPoint>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

@@ -1,5 +1,6 @@
 LIBRARY regman
 EXPORTS
+	DllInitialize	PRIVATE
 	DllUnload	PRIVATE
 	RegManKeyRegister
 	RegManKeyUnregister
