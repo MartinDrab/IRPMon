@@ -57,6 +57,7 @@ static PDRIVER_OBJECT _driverObject = NULL;
 /*                       HELPER ROUTINES                                */
 /************************************************************************/
 
+
 /** Removes all modules from the list used for automated initialization and
  *  finalization.
  *
@@ -69,24 +70,25 @@ static PDRIVER_OBJECT _driverObject = NULL;
  */
 static VOID _ModuleFrameworkDeleteAllModules(VOID)
 {
-   PDRIVER_MODULE_ENTRY iteratedEntry = NULL;
-   DEBUG_ENTER_FUNCTION_NO_ARGS();
-   DEBUG_IRQL_LESS_OR_EQUAL(APC_LEVEL);
+	PDRIVER_MODULE_ENTRY iteratedEntry = NULL;
+	DEBUG_ENTER_FUNCTION_NO_ARGS();
+	DEBUG_IRQL_LESS_OR_EQUAL(APC_LEVEL);
 
-   iteratedEntry = CONTAINING_RECORD(_driverModuleList.Flink, DRIVER_MODULE_ENTRY, Entry);
-   while (&iteratedEntry->Entry != &_driverModuleList) {
-      PDRIVER_MODULE_ENTRY deletedEntry = iteratedEntry;
-      iteratedEntry = CONTAINING_RECORD(iteratedEntry->Entry.Flink, DRIVER_MODULE_ENTRY, Entry);
-      HeapMemoryFree(deletedEntry);
-   }
+	iteratedEntry = CONTAINING_RECORD(_driverModuleList.Flink, DRIVER_MODULE_ENTRY, Entry);
+	while (&iteratedEntry->Entry != &_driverModuleList) {
+		PDRIVER_MODULE_ENTRY deletedEntry = iteratedEntry;
+		iteratedEntry = CONTAINING_RECORD(iteratedEntry->Entry.Flink, DRIVER_MODULE_ENTRY, Entry);
+		HeapMemoryFree(deletedEntry);
+	}
 
-   DEBUG_EXIT_FUNCTION_VOID();
-   return;
+	DEBUG_EXIT_FUNCTION_VOID();
+	return;
 }
 
 /************************************************************************/
 /*                               PUBLIC ROUTINES                        */
 /************************************************************************/
+
 
 /** Inserts a module into the list of modules that are subject to automatic
  *  initialization and finalization.
@@ -108,24 +110,23 @@ static VOID _ModuleFrameworkDeleteAllModules(VOID)
  */
 NTSTATUS ModuleFrameworkAddModule(PDRIVER_MODULE_ENTRY_PARAMETERS moduleParams)
 {
-   PDRIVER_MODULE_ENTRY modEntry = NULL;
-   NTSTATUS status = STATUS_UNSUCCESSFUL;
-   DEBUG_ENTER_FUNCTION("ModuleParams=0x%p", moduleParams);
-   DEBUG_IRQL_LESS_OR_EQUAL(APC_LEVEL);
+	PDRIVER_MODULE_ENTRY modEntry = NULL;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION("ModuleParams=0x%p", moduleParams);
+	DEBUG_IRQL_LESS_OR_EQUAL(APC_LEVEL);
 
-   modEntry = (PDRIVER_MODULE_ENTRY)HeapMemoryAllocPaged(sizeof(DRIVER_MODULE_ENTRY));
-   if (modEntry != NULL) {
-      InitializeListHead(&modEntry->Entry);
-      RtlCopyMemory(&modEntry->Parameters, moduleParams, sizeof(DRIVER_MODULE_ENTRY_PARAMETERS));
-      InsertTailList(&_driverModuleList, &modEntry->Entry);
-      status = STATUS_SUCCESS;
-   } else {
-      status = STATUS_INSUFFICIENT_RESOURCES;
-   }
+	modEntry = HeapMemoryAllocPaged(sizeof(DRIVER_MODULE_ENTRY));
+	if (modEntry != NULL) {
+		InitializeListHead(&modEntry->Entry);
+		RtlCopyMemory(&modEntry->Parameters, moduleParams, sizeof(DRIVER_MODULE_ENTRY_PARAMETERS));
+		InsertTailList(&_driverModuleList, &modEntry->Entry);
+		status = STATUS_SUCCESS;
+	} else status = STATUS_INSUFFICIENT_RESOURCES;
 
-   DEBUG_EXIT_FUNCTION("0x%x", status);
-   return status;
+	DEBUG_EXIT_FUNCTION("0x%x", status);
+	return status;
 }
+
 
 /** Add a set of modules to the internal lsit, so they become subjects to automated
  *  initialization and finalization. 
@@ -152,23 +153,23 @@ NTSTATUS ModuleFrameworkAddModule(PDRIVER_MODULE_ENTRY_PARAMETERS moduleParams)
  */
 NTSTATUS ModuleFrameworkAddModules(DRIVER_MODULE_ENTRY_PARAMETERS moduleParams[], ULONG count)
 {
-   ULONG i = 0;
-   NTSTATUS status = STATUS_UNSUCCESSFUL;
-   DEBUG_ENTER_FUNCTION("ModuleParams=0x%p; Count=%u", moduleParams, count);
-   DEBUG_IRQL_LESS_OR_EQUAL(APC_LEVEL);
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION("ModuleParams=0x%p; Count=%u", moduleParams, count);
+	DEBUG_IRQL_LESS_OR_EQUAL(APC_LEVEL);
 
-   for (i = 0; i < count; ++i) {
-      status = ModuleFrameworkAddModule(&moduleParams[i]);
-      if (!NT_SUCCESS(status)) {
-         // TODO: We should remove only modules we added
-         _ModuleFrameworkDeleteAllModules();
-         break;
-      }
-   }
+	for (ULONG i = 0; i < count; ++i) {
+		status = ModuleFrameworkAddModule(&moduleParams[i]);
+		if (!NT_SUCCESS(status)) {
+			// TODO: We should remove only modules we added
+			_ModuleFrameworkDeleteAllModules();
+			break;
+		}
+	}
 
-   DEBUG_EXIT_FUNCTION("0x%x", status);
-   return status;
+	DEBUG_EXIT_FUNCTION("0x%x", status);
+	return status;
 }
+
 
 /** Performs automatic initialization of all registered modules.
  *
@@ -191,10 +192,10 @@ NTSTATUS ModuleFrameworkAddModules(DRIVER_MODULE_ENTRY_PARAMETERS moduleParams[]
  */
 NTSTATUS ModuleFrameworkInitializeModules(PUNICODE_STRING RegistryPath)
 {
-   PDRIVER_MODULE_ENTRY moduleEntry = NULL;
-   NTSTATUS status = STATUS_UNSUCCESSFUL;
-   DEBUG_ENTER_FUNCTION("RegistryPath=\"%wZ\"", RegistryPath);
-   DEBUG_IRQL_EQUAL(PASSIVE_LEVEL);
+	PDRIVER_MODULE_ENTRY moduleEntry = NULL;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION("RegistryPath=\"%wZ\"", RegistryPath);
+	DEBUG_IRQL_EQUAL(PASSIVE_LEVEL);
 
 	status = STATUS_SUCCESS;
 	moduleEntry = CONTAINING_RECORD(_driverModuleList.Flink, DRIVER_MODULE_ENTRY, Entry);
@@ -250,9 +251,11 @@ VOID ModuleFrameworkFinalizeModules(VOID)
 	return;
 }
 
+
 /************************************************************************/
 /*                         INITIALIYATION AND FINALIYATION              */
 /************************************************************************/
+
 
 /** Initializes the Module Framework.
  *
@@ -271,17 +274,19 @@ VOID ModuleFrameworkFinalizeModules(VOID)
  */
 NTSTATUS ModuleFrameworkInit(PDRIVER_OBJECT driverObject)
 {
-   NTSTATUS status = STATUS_UNSUCCESSFUL;
-   DEBUG_ENTER_FUNCTION("DriverObject=0x%p", driverObject);
-   DEBUG_IRQL_EQUAL(PASSIVE_LEVEL);
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION("DriverObject=0x%p", driverObject);
+	DEBUG_IRQL_EQUAL(PASSIVE_LEVEL);
 
-   ObReferenceObject(driverObject);
-   _driverObject = driverObject;
-   InitializeListHead(&_driverModuleList);
- 
-   DEBUG_EXIT_FUNCTION("0x%x", status);
-   return status;
+	ObReferenceObject(driverObject);
+	_driverObject = driverObject;
+	InitializeListHead(&_driverModuleList);
+	status = STATUS_SUCCESS;
+
+	DEBUG_EXIT_FUNCTION("0x%x", status);
+	return status;
 }
+
 
 /** Releases resources used by the Module Framework.
  *
@@ -292,14 +297,14 @@ NTSTATUS ModuleFrameworkInit(PDRIVER_OBJECT driverObject)
  */
 VOID ModuleFrameworkFinit(VOID)
 {
-   DEBUG_ENTER_FUNCTION_NO_ARGS();
-   DEBUG_IRQL_EQUAL(PASSIVE_LEVEL);
+	DEBUG_ENTER_FUNCTION_NO_ARGS();
+	DEBUG_IRQL_EQUAL(PASSIVE_LEVEL);
 
-   _ModuleFrameworkDeleteAllModules();
-   InitializeListHead(&_driverModuleList);
-   ObDereferenceObject(_driverObject);
-   _driverObject = NULL;
+	_ModuleFrameworkDeleteAllModules();
+	InitializeListHead(&_driverModuleList);
+	ObDereferenceObject(_driverObject);
+	_driverObject = NULL;
 
-   DEBUG_EXIT_FUNCTION_VOID();
-   return;
+	DEBUG_EXIT_FUNCTION_VOID();
+	return;
 }
