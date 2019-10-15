@@ -1,0 +1,6 @@
+LIBRARY pbase
+EXPORTS
+	PBaseAddNameValue
+	PBaseAddNameFormat
+	PBaseAddBooleanValue
+	PBaseFreeNameValue

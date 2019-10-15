@@ -3,6 +3,7 @@
 #include <windows.h>
 #include <strsafe.h>
 #include "general-types.h"
+#include "parser-base.h"
 #include "keyboard-parser.h"
 
 
@@ -24,95 +25,9 @@ typedef struct _KEYBOARD_INPUT_DATA {
 } KEYBOARD_INPUT_DATA, *PKEYBOARD_INPUT_DATA;
 
 
-typedef struct _NV_PAIR {
-	wchar_t **Names;
-	wchar_t **Values;
-	size_t Count;
-} NV_PAIR, *PNV_PAIR;
-
-
 
 static BOOLEAN _hideZeroValues = TRUE;
 
-
-static DWORD _AddNameValue(PNV_PAIR Pair, const wchar_t *Name, const wchar_t *Value)
-{
-	DWORD ret = ERROR_GEN_FAILURE;
-	wchar_t *tmpName = NULL;
-	wchar_t *tmpValue = NULL;
-	size_t nameLen = 0;
-	size_t valueLen = 0;
-	size_t totalLen = 0;
-	wchar_t **tmp = NULL;
-
-	ret = StringCbLengthW(Name, STRSAFE_MAX_CCH, &nameLen);
-	if (ret == S_OK) {
-		ret = StringCbLengthW(Value, STRSAFE_MAX_CCH, &valueLen);
-		if (ret == S_OK) {
-			totalLen = nameLen + 1 + valueLen;
-			tmpName = (wchar_t *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (totalLen + 1) * sizeof(wchar_t));
-			if (tmpName != NULL) {
-				tmpValue = tmpName + nameLen + 1;
-				CopyMemory(tmpName, Name, nameLen * sizeof(wchar_t));
-				CopyMemory(tmpValue, Value, valueLen * sizeof(wchar_t));
-				tmp = (wchar_t **)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 2 * (Pair->Count + 1) * sizeof(wchar_t *));
-				if (tmp != NULL) {
-					CopyMemory(tmp, Pair->Names, Pair->Count * sizeof(wchar_t *));
-					tmp[Pair->Count] = tmpName;
-					CopyMemory(tmp + Pair->Count + 1, Pair->Values, Pair->Count * sizeof(wchar_t *));
-					tmp[Pair->Count * 2 + 1] = tmpValue;
-					if (Pair->Count > 0)
-						HeapFree(GetProcessHeap(), 0, Pair->Names);
-
-					Pair->Names = tmp;
-					Pair->Values = tmp + Pair->Count + 1;
-					++Pair->Count;
-				}
-				else ret = GetLastError();
-
-				if (ret != ERROR_SUCCESS)
-					HeapFree(GetProcessHeap(), 0, tmpName);
-			}
-			else ret = GetLastError();
-		}
-	}
-
-	return ret;
-}
-
-
-static DWORD _AddNameFormat(PNV_PAIR Pair, const wchar_t *Name, const wchar_t *Format, ...)
-{
-	wchar_t buf[1024];
-	DWORD ret = ERROR_GEN_FAILURE;
-	va_list args;
-
-	va_start(args, Format);
-	RtlSecureZeroMemory(buf, sizeof(buf));
-	ret = StringCbVPrintf(buf, sizeof(buf) / sizeof(buf[0]), Format, args);
-	if (ret == S_OK)
-		ret = _AddNameValue(Pair, Name, buf);
-
-	va_end(args);
-
-	return ret;
-}
-
-
-static DWORD _AddBooleanValue(PNV_PAIR Pair, const wchar_t *Name, BOOLEAN Value)
-{
-	DWORD ret = ERROR_GEN_FAILURE;
-	const wchar_t *boolValues[] = { L"false", L"true" };
-
-	ret = ERROR_SUCCESS;
-	if (Value)
-		Value = TRUE;
-
-	if (!_hideZeroValues || Value)
-		ret = _AddNameValue(Pair, Name, boolValues[Value]);
-
-	return ret;
-}
 
 
 static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST_EXTRA_INFO *ExtraInfo, PBOOLEAN Handled, wchar_t ***Names, wchar_t ***Values, size_t *RowCount)
@@ -141,30 +56,33 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 	if (kbdInput != NULL) {
 		memset(&p, 0, sizeof(p));
 		for (size_t i = 0; i < inputCount; ++i) {
-			ret = _AddNameFormat(&p, L"Record ", L"%zu", i);
+			ret = PBaseAddNameFormat(&p, L"Record ", L"%zu", i);
 			if (ret == ERROR_SUCCESS)
-				ret = _AddNameFormat(&p, L"  Device", L"%u", kbdInput->UnitId);
+				ret = PBaseAddNameFormat(&p, L"  Device", L"%u", kbdInput->UnitId);
 
 			if (ret == ERROR_SUCCESS)
-				ret = _AddNameFormat(&p, L"  Scan code", L"%u", kbdInput->MakeCode);
+				ret = PBaseAddNameFormat(&p, L"  Scan code", L"%u", kbdInput->MakeCode);
+
+			if (ret == ERROR_SUCCESS && (!_hideZeroValues || kbdInput->Flags))
+				ret = PBaseAddNameFormat(&p, L"  Flags", L"0x%x", kbdInput->Flags);
 
 			if (ret == ERROR_SUCCESS)
-				ret = _AddBooleanValue(&p, L"  Pressed", (kbdInput->Flags & KEY_MAKE) != 0);
+				ret = PBaseAddBooleanValue(&p, L"  Pressed", (kbdInput->Flags & KEY_MAKE) != 0, _hideZeroValues);
 
 			if (ret == ERROR_SUCCESS)
-				ret = _AddBooleanValue(&p, L"  Release", (kbdInput->Flags & KEY_BREAK) != 0);
+				ret = PBaseAddBooleanValue(&p, L"  Release", (kbdInput->Flags & KEY_BREAK) != 0, _hideZeroValues);
 
 			if (ret == ERROR_SUCCESS)
-				ret = _AddBooleanValue(&p, L"  Extended #0", (kbdInput->Flags & KEY_E0) != 0);
+				ret = PBaseAddBooleanValue(&p, L"  Extended #0", (kbdInput->Flags & KEY_E0) != 0, _hideZeroValues);
 
 			if (ret == ERROR_SUCCESS)
-				ret = _AddBooleanValue(&p, L"  Extended #1", (kbdInput->Flags & KEY_E1) != 0);
+				ret = PBaseAddBooleanValue(&p, L"  Extended #1", (kbdInput->Flags & KEY_E1) != 0, _hideZeroValues);
 
 			if (ret == ERROR_SUCCESS && (!_hideZeroValues || kbdInput->ExtraInformation != 0))
-				ret = _AddNameFormat(&p, L"  Extra", L"0x%x (%u)", kbdInput->ExtraInformation, kbdInput->ExtraInformation);
+				ret = PBaseAddNameFormat(&p, L"  Extra", L"0x%x (%u)", kbdInput->ExtraInformation, kbdInput->ExtraInformation);
 
 			if (ret == ERROR_SUCCESS && (!_hideZeroValues || kbdInput->Reserved != 0))
-				ret = _AddNameFormat(&p, L"  Reserved", L"0x%x (%u)", kbdInput->Reserved, kbdInput->Reserved);
+				ret = PBaseAddNameFormat(&p, L"  Reserved", L"0x%x (%u)", kbdInput->Reserved, kbdInput->Reserved);
 
 			if (ret != ERROR_SUCCESS)
 				break;
@@ -198,10 +116,7 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 
 static void cdecl _FreeRoutine(wchar_t **Names, wchar_t **Values, size_t Count)
 {
-	for (size_t i = 0; i < Count; ++i)
-		HeapFree(GetProcessHeap(), 0, Names[i]);
-
-	HeapFree(GetProcessHeap(), 0, Names);
+	PBaseFreeNameValue(Names, Values, Count);
 
 	return;
 }
