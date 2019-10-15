@@ -4,6 +4,7 @@
 #include <strsafe.h>
 #include <initguid.h>
 #include "general-types.h"
+#include "parser-base.h"
 #include "pnp-interface.h"
 
 
@@ -106,78 +107,6 @@ static INTERFACE_TABLE_ENTRY _interfaceTable[] = {
 };
 
 
-
-typedef struct _NV_PAIR {
-	wchar_t **Names;
-	wchar_t **Values;
-	size_t Count;
-} NV_PAIR, *PNV_PAIR;
-
-
-static DWORD _AddNameValue(PNV_PAIR Pair, const wchar_t *Name, const wchar_t *Value)
-{
-	DWORD ret = ERROR_GEN_FAILURE;
-	wchar_t *tmpName = NULL;
-	wchar_t *tmpValue = NULL;
-	size_t nameLen = 0;
-	size_t valueLen = 0;
-	size_t totalLen = 0;
-	wchar_t **tmp = NULL;
-
-	ret = StringCbLengthW(Name, STRSAFE_MAX_CCH, &nameLen);
-	if (ret == S_OK) {
-		ret = StringCbLengthW(Value, STRSAFE_MAX_CCH, &valueLen);
-		if (ret == S_OK) {
-			totalLen = nameLen + 1 + valueLen;
-			tmpName = (wchar_t *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (totalLen + 1) * sizeof(wchar_t));
-			if (tmpName != NULL) {
-				tmpValue = tmpName + nameLen + 1;
-				CopyMemory(tmpName, Name, nameLen * sizeof(wchar_t));
-				CopyMemory(tmpValue, Value, valueLen * sizeof(wchar_t));
-				tmp = (wchar_t **)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 2 * (Pair->Count + 1) * sizeof(wchar_t *));
-				if (tmp != NULL) {
-					CopyMemory(tmp, Pair->Names, Pair->Count * sizeof(wchar_t *));
-					tmp[Pair->Count] = tmpName;
-					CopyMemory(tmp + Pair->Count + 1, Pair->Values, Pair->Count * sizeof(wchar_t *));
-					tmp[Pair->Count * 2 + 1] = tmpValue;
-					if (Pair->Count > 0)
-						HeapFree(GetProcessHeap(), 0, Pair->Names);
-
-					Pair->Names = tmp;
-					Pair->Values = tmp + Pair->Count + 1;
-					++Pair->Count;
-				}
-				else ret = GetLastError();
-
-				if (ret != ERROR_SUCCESS)
-					HeapFree(GetProcessHeap(), 0, tmpName);
-			}
-			else ret = GetLastError();
-		}
-	}
-
-	return ret;
-}
-
-
-static DWORD _AddNameFormat(PNV_PAIR Pair, const wchar_t *Name, const wchar_t *Format, ...)
-{
-	wchar_t buf[1024];
-	DWORD ret = ERROR_GEN_FAILURE;
-	va_list args;
-
-	va_start(args, Format);
-	RtlSecureZeroMemory(buf, sizeof(buf));
-	ret = StringCbVPrintf(buf, sizeof(buf) / sizeof(buf[0]), Format, args);
-	if (ret == S_OK)
-		ret = _AddNameValue(Pair, Name, buf);
-
-	va_end(args);
-
-	return ret;
-}
-
-
 static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST_EXTRA_INFO *ExtraInfo, PBOOLEAN Handled, wchar_t ***Names, wchar_t ***Values, size_t *RowCount)
 {
 	NV_PAIR p;
@@ -211,24 +140,24 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 	if (intfc != NULL || interfaceType != NULL) {
 		memset(&p, 0, sizeof(p));
 		if (intfc != NULL) {
-			ret = _AddNameFormat(&p, L"Size", L"%u", intfc->Size);
+			ret = PBaseAddNameFormat(&p, L"Size", L"%u", intfc->Size);
 			if (ret == ERROR_SUCCESS)
-				ret = _AddNameFormat(&p, L"Version", L"%u", intfc->Version);
+				ret = PBaseAddNameFormat(&p, L"Version", L"%u", intfc->Version);
 			
 			if (ret == ERROR_SUCCESS)
-				ret = _AddNameFormat(&p, L"Reference", L"0x%p", intfc->InterfaceReference);
+				ret = PBaseAddNameFormat(&p, L"Reference", L"0x%p", intfc->InterfaceReference);
 			
 			if (ret == ERROR_SUCCESS)
-				ret = _AddNameFormat(&p, L"Dereference", L"0x%p", intfc->InterfaceDereference);
+				ret = PBaseAddNameFormat(&p, L"Dereference", L"0x%p", intfc->InterfaceDereference);
 		} else {
 			memset(guidString, 0, sizeof(guidString));
 			StringFromGUID2(interfaceType, guidString, sizeof(guidString) / sizeof(guidString[0]));
-			ret = _AddNameValue(&p, L"Interface type", guidString);
+			ret = PBaseAddNameValue(&p, L"Interface type", guidString);
 			if (ret == ERROR_SUCCESS) {
 				entry = _interfaceTable;
 				for (size_t i = 0; i < sizeof(_interfaceTable) / sizeof(_interfaceTable[0]); ++i) {
 					if (memcmp(entry->InterfaceGuid, interfaceType, sizeof(GUID)) == 0) {
-						ret = _AddNameValue(&p, L"Interface name", entry->Name);
+						ret = PBaseAddNameValue(&p, L"Interface name", entry->Name);
 						break;
 					}
 
@@ -263,10 +192,7 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 
 static void cdecl _FreeRoutine(wchar_t **Names, wchar_t **Values, size_t Count)
 {
-	for (size_t i = 0; i < Count; ++i)
-		HeapFree(GetProcessHeap(), 0, Names[i]);
-
-	HeapFree(GetProcessHeap(), 0, Names);
+	PBaseFreeNameValue(Names, Values, Count);
 
 	return;
 }

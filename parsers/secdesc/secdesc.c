@@ -4,80 +4,13 @@
 #include <strsafe.h>
 #include <sddl.h>
 #include "general-types.h"
+#include "parser-base.h"
 #include "secdesc.h"
 
 
 
 #define IRP_MJ_QUERY_SECURITY		0x14
 #define IRP_MJ_SET_SECURITY			0x15
-
-typedef struct _NV_PAIR {
-	wchar_t **Names;
-	wchar_t **Values;
-	size_t Count;
-} NV_PAIR, *PNV_PAIR;
-
-
-static DWORD _AddNameValue(PNV_PAIR Pair, const wchar_t *Name, const wchar_t *Value)
-{
-	DWORD ret = ERROR_GEN_FAILURE;
-	wchar_t *tmpName = NULL;
-	wchar_t *tmpValue = NULL;
-	size_t nameLen = 0;
-	size_t valueLen = 0;
-	size_t totalLen = 0;
-	wchar_t **tmp = NULL;
-
-	ret = StringCbLengthW(Name, STRSAFE_MAX_CCH, &nameLen);
-	if (ret == S_OK) {
-		ret = StringCbLengthW(Value, STRSAFE_MAX_CCH, &valueLen);
-		if (ret == S_OK) {
-			totalLen = nameLen + 1 + valueLen;
-			tmpName = (wchar_t *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (totalLen + 1)*sizeof(wchar_t));
-			if (tmpName != NULL) {
-				tmpValue = tmpName + nameLen + 1;
-				CopyMemory(tmpName, Name, nameLen*sizeof(wchar_t));
-				CopyMemory(tmpValue, Value, valueLen * sizeof(wchar_t));
-				tmp = (wchar_t **)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 2*(Pair->Count + 1)*sizeof(wchar_t *));
-				if (tmp != NULL) {
-					CopyMemory(tmp, Pair->Names, Pair->Count*sizeof(wchar_t *));
-					tmp[Pair->Count] = tmpName;
-					CopyMemory(tmp + Pair->Count + 1, Pair->Values, Pair->Count*sizeof(wchar_t *));
-					tmp[Pair->Count * 2 + 1] = tmpValue;
-					if (Pair->Count > 0)
-						HeapFree(GetProcessHeap(), 0, Pair->Names);
-
-					Pair->Names = tmp;
-					Pair->Values = tmp + Pair->Count + 1;
-					++Pair->Count;
-				} else ret = GetLastError();
-			
-				if (ret != ERROR_SUCCESS)
-					HeapFree(GetProcessHeap(), 0, tmpName);
-			} else ret = GetLastError();
-		}
-	}
-
-	return ret;
-}
-
-
-static DWORD _AddNameFormat(PNV_PAIR Pair, const wchar_t *Name, const wchar_t *Format, ...)
-{
-	wchar_t buf[1024];
-	DWORD ret = ERROR_GEN_FAILURE;
-	va_list args;
-
-	va_start(args, Format);
-	RtlSecureZeroMemory(buf, sizeof(buf));
-	ret = StringCbVPrintf(buf, sizeof(buf) / sizeof(buf[0]), Format, args);
-	if (ret == S_OK)
-		ret = _AddNameValue(Pair, Name, buf);
-
-	va_end(args);
-
-	return ret;
-}
 
 
 static DWORD _PrintSid(PNV_PAIR Pair, const wchar_t *Name, BOOLEAN InAce, PSID Sid)
@@ -116,12 +49,12 @@ static DWORD _PrintSid(PNV_PAIR Pair, const wchar_t *Name, BOOLEAN InAce, PSID S
 		domNameConst += 4;
 		typNameConst += 4;
 		tp2NameConst += 4;
-		ret = _AddNameValue(Pair, Name, L"");
-	} else ret = _AddNameValue(Pair, L"    SID", L"");
+		ret = PBaseAddNameValue(Pair, Name, L"");
+	} else ret = PBaseAddNameValue(Pair, L"    SID", L"");
 
 	if (ret == ERROR_SUCCESS) {
 		if (ConvertSidToStringSid(Sid, &stringSid)) {
-			ret = _AddNameValue(Pair, sidNameConst, stringSid);
+			ret = PBaseAddNameValue(Pair, sidNameConst, stringSid);
 			LocalFree(stringSid);
 		}
 	}
@@ -131,15 +64,15 @@ static DWORD _PrintSid(PNV_PAIR Pair, const wchar_t *Name, BOOLEAN InAce, PSID S
 		if (sidType <= SidTypeLabel)
 			sidTypeName = sidTypeNames[sidType];
 
-		ret = _AddNameValue(Pair, accNameConst, accountName);
+		ret = PBaseAddNameValue(Pair, accNameConst, accountName);
 		if (ret == ERROR_SUCCESS)
-			ret = _AddNameValue(Pair, domNameConst, domainName);
+			ret = PBaseAddNameValue(Pair, domNameConst, domainName);
 
 		if (ret == ERROR_SUCCESS)
-			ret = _AddNameValue(Pair, typNameConst, sidTypeName);
+			ret = PBaseAddNameValue(Pair, typNameConst, sidTypeName);
 		
 		if (ret == ERROR_SUCCESS)
-			ret = _AddNameFormat(Pair, tp2NameConst, L"%u", sidType);
+			ret = PBaseAddNameFormat(Pair, tp2NameConst, L"%u", sidType);
 	}
 
 	return ret;
@@ -150,7 +83,7 @@ static DWORD _PrintMask(PNV_PAIR Pair, DWORD Mask)
 {
 	DWORD ret = ERROR_GEN_FAILURE;
 
-	ret = _AddNameFormat(Pair, L"    Mask", L"0x%x", Mask);
+	ret = PBaseAddNameFormat(Pair, L"    Mask", L"0x%x", Mask);
 
 	return ret;
 }
@@ -167,21 +100,21 @@ static DWORD _PrintACL(PNV_PAIR Pair, const wchar_t *Name, const ACL *Acl)
 	wchar_t *stringSid = NULL;
 
 	if (Acl != NULL) {
-		ret = _AddNameValue(Pair, Name, L"");
+		ret = PBaseAddNameValue(Pair, Name, L"");
 		if (ret == ERROR_SUCCESS) {
-			ret = _AddNameFormat(Pair, L"  Revision", L"%u", Acl->AclRevision);
+			ret = PBaseAddNameFormat(Pair, L"  Revision", L"%u", Acl->AclRevision);
 			if (ret == ERROR_SUCCESS)
-				ret = _AddNameFormat(Pair, L"  Size", L"%u", Acl->AclSize);
+				ret = PBaseAddNameFormat(Pair, L"  Size", L"%u", Acl->AclSize);
 
 			if (ret == ERROR_SUCCESS)
-				ret = _AddNameFormat(Pair, L"  ACE count", L"%u", Acl->AceCount);
+				ret = PBaseAddNameFormat(Pair, L"  ACE count", L"%u", Acl->AceCount);
 
 			if (ret == ERROR_SUCCESS) {
 				for (DWORD i = 0; i < Acl->AceCount; ++i) {
 					if (GetAce(Acl, i, (PVOID *)&aceHeader)) {
-						_AddNameFormat(Pair, L"  ACE", L"%u", i);
-						_AddNameFormat(Pair, L"    Flags", L"0x%x", aceHeader->AceFlags);
-						_AddNameFormat(Pair, L"    Type", L"%u", aceHeader->AceType);
+						PBaseAddNameFormat(Pair, L"  ACE", L"%u", i);
+						PBaseAddNameFormat(Pair, L"    Flags", L"0x%x", aceHeader->AceFlags);
+						PBaseAddNameFormat(Pair, L"    Type", L"%u", aceHeader->AceType);
 						switch (aceHeader->AceType) {
 						case ACCESS_ALLOWED_ACE_TYPE:
 							aaa = CONTAINING_RECORD(aceHeader, ACCESS_ALLOWED_ACE, Header);
@@ -218,7 +151,7 @@ static DWORD _PrintACL(PNV_PAIR Pair, const wchar_t *Name, const ACL *Acl)
 				}
 			}
 		}
-	} else ret = _AddNameValue(Pair, Name, L"null");
+	} else ret = PBaseAddNameValue(Pair, Name, L"null");
 
 	return ret;
 }
@@ -265,9 +198,9 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 
 	if (ret == ERROR_SUCCESS) {
 		if (IsValidSecurityDescriptor(data)) {
-			ret = _AddNameFormat(&p, L"Revision", L"%u", data->Revision);
+			ret = PBaseAddNameFormat(&p, L"Revision", L"%u", data->Revision);
 			if (ret == ERROR_SUCCESS)
-				ret = _AddNameFormat(&p, L"Control", L"%u", data->Control);
+				ret = PBaseAddNameFormat(&p, L"Control", L"%u", data->Control);
 
 			if (ret == ERROR_SUCCESS && GetSecurityDescriptorOwner(data, &binarySid, &defaulted))
 				ret = _PrintSid(&p, L"Owner", FALSE, binarySid);
@@ -306,10 +239,7 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 
 static void cdecl _FreeRoutine(wchar_t **Names, wchar_t **Values, size_t Count)
 {
-	for (size_t i = 0; i < Count; ++i)
-		HeapFree(GetProcessHeap(), 0, Names[i]);
-
-	HeapFree(GetProcessHeap(), 0, Names);
+	PBaseFreeNameValue(Names, Values, Count);
 
 	return;
 }

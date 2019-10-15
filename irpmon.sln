@@ -18,6 +18,9 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hexer", "parsers\hexer\hexer.vcxproj", "{1B0F5249-CA40-40BD-ACB6-D20F71171DFB}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "secdesc", "parsers\secdesc\secdesc.vcxproj", "{59062ED3-7FC2-4280-A175-C00A916EED21}"
+	ProjectSection(ProjectDependencies) = postProject
+		{8E36960A-A377-4529-B0F3-6E365504C3E0} = {8E36960A-A377-4529-B0F3-6E365504C3E0}
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Kernel", "Kernel", "{5FE904D0-AAD5-4CD7-A5C0-90374632507E}"
 EndProject
@@ -38,6 +41,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "keyboard", "parsers\keyboar
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pnp-interface", "parsers\pnp-interface\pnp-interface.vcxproj", "{7F584E6B-56CF-4E31-8267-5BEE814D1513}"
+	ProjectSection(ProjectDependencies) = postProject
+		{8E36960A-A377-4529-B0F3-6E365504C3E0} = {8E36960A-A377-4529-B0F3-6E365504C3E0}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "kbase", "kbase\kbase.vcxproj", "{42B0C13C-CF65-4CC5-8BE9-15FC87E9604A}"
 EndProject
