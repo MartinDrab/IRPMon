@@ -44,10 +44,10 @@ Source: "M:\Prace\Git\IRPMon\bin\x64\Release\pnp-ids.dll"; DestDir: "{app}"; Fla
 Source: "M:\Prace\Git\IRPMon\bin\x64\Release\pnp-interface.dll"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
 Source: "M:\Prace\Git\IRPMon\bin\x64\Release\regman.dll"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
 Source: "M:\Prace\Git\IRPMon\bin\x64\Release\secdesc.dll"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
+Source: "M:\Prace\Git\IRPMon\bin\x64\Release\pbase.dll"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
 Source: "M:\Prace\Git\IRPMon\bin\x64\Release\IRPMon.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
 Source: "M:\Prace\Git\IRPMon\bin\Win32\Release\hexer.dll"; DestDir: "{app}"; Flags: ignoreversion; Check: not Is64BitInstallMode
 Source: "M:\Prace\Git\IRPMon\bin\Win32\Release\irpmndrv.sys"; DestDir: "{app}"; Flags: ignoreversion; Check: not Is64BitInstallMode
-Source: "M:\Prace\Git\IRPMon\bin\Win32\Release\IRPMon.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: not Is64BitInstallMode
 Source: "M:\Prace\Git\IRPMon\bin\Win32\Release\irpmondll.dll"; DestDir: "{app}"; Flags: ignoreversion; Check: not Is64BitInstallMode
 Source: "M:\Prace\Git\IRPMon\bin\Win32\Release\kbase.dll"; DestDir: "{app}"; Flags: ignoreversion; Check: not Is64BitInstallMode
 Source: "M:\Prace\Git\IRPMon\bin\Win32\Release\keyboard.dll"; DestDir: "{app}"; Flags: ignoreversion; Check: not Is64BitInstallMode
@@ -56,6 +56,8 @@ Source: "M:\Prace\Git\IRPMon\bin\Win32\Release\pnp-ids.dll"; DestDir: "{app}"; F
 Source: "M:\Prace\Git\IRPMon\bin\Win32\Release\pnp-interface.dll"; DestDir: "{app}"; Flags: ignoreversion; Check: not Is64BitInstallMode
 Source: "M:\Prace\Git\IRPMon\bin\Win32\Release\regman.dll"; DestDir: "{app}"; Flags: ignoreversion; Check: not Is64BitInstallMode
 Source: "M:\Prace\Git\IRPMon\bin\Win32\Release\secdesc.dll"; DestDir: "{app}"; Flags: ignoreversion; Check: not Is64BitInstallMode
+Source: "M:\Prace\Git\IRPMon\bin\Win32\Release\pbase.dll"; DestDir: "{app}"; Flags: ignoreversion; Check: not Is64BitInstallMode
+Source: "M:\Prace\Git\IRPMon\bin\Win32\Release\IRPMon.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: not Is64BitInstallMode
 Source: "M:\Prace\Git\IRPMon\resources\ioctl.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "M:\Prace\Git\IRPMon\resources\ntstatus.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "M:\Prace\Git\IRPMon\resources\winerr.txt"; DestDir: "{app}"; Flags: ignoreversion
