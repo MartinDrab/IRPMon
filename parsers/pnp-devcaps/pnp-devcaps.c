@@ -3,6 +3,7 @@
 #include <windows.h>
 #include <strsafe.h>
 #include "general-types.h"
+#include "parser-base.h"
 #include "pnp-devcaps.h"
 
 
@@ -48,95 +49,8 @@ typedef struct _DEVICE_CAPABILITIES {
 } DEVICE_CAPABILITIES, *PDEVICE_CAPABILITIES;
 
 
-typedef struct _NV_PAIR {
-	wchar_t **Names;
-	wchar_t **Values;
-	size_t Count;
-} NV_PAIR, *PNV_PAIR;
-
-
 
 static BOOLEAN _hideZeroValues = TRUE;
-
-
-static DWORD _AddNameValue(PNV_PAIR Pair, const wchar_t *Name, const wchar_t *Value)
-{
-	DWORD ret = ERROR_GEN_FAILURE;
-	wchar_t *tmpName = NULL;
-	wchar_t *tmpValue = NULL;
-	size_t nameLen = 0;
-	size_t valueLen = 0;
-	size_t totalLen = 0;
-	wchar_t **tmp = NULL;
-
-	ret = StringCbLengthW(Name, STRSAFE_MAX_CCH, &nameLen);
-	if (ret == S_OK) {
-		ret = StringCbLengthW(Value, STRSAFE_MAX_CCH, &valueLen);
-		if (ret == S_OK) {
-			totalLen = nameLen + 1 + valueLen;
-			tmpName = (wchar_t *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (totalLen + 1) * sizeof(wchar_t));
-			if (tmpName != NULL) {
-				tmpValue = tmpName + nameLen + 1;
-				CopyMemory(tmpName, Name, nameLen * sizeof(wchar_t));
-				CopyMemory(tmpValue, Value, valueLen * sizeof(wchar_t));
-				tmp = (wchar_t **)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 2 * (Pair->Count + 1) * sizeof(wchar_t *));
-				if (tmp != NULL) {
-					CopyMemory(tmp, Pair->Names, Pair->Count * sizeof(wchar_t *));
-					tmp[Pair->Count] = tmpName;
-					CopyMemory(tmp + Pair->Count + 1, Pair->Values, Pair->Count * sizeof(wchar_t *));
-					tmp[Pair->Count * 2 + 1] = tmpValue;
-					if (Pair->Count > 0)
-						HeapFree(GetProcessHeap(), 0, Pair->Names);
-
-					Pair->Names = tmp;
-					Pair->Values = tmp + Pair->Count + 1;
-					++Pair->Count;
-				}
-				else ret = GetLastError();
-
-				if (ret != ERROR_SUCCESS)
-					HeapFree(GetProcessHeap(), 0, tmpName);
-			}
-			else ret = GetLastError();
-		}
-	}
-
-	return ret;
-}
-
-
-static DWORD _AddNameFormat(PNV_PAIR Pair, const wchar_t *Name, const wchar_t *Format, ...)
-{
-	wchar_t buf[1024];
-	DWORD ret = ERROR_GEN_FAILURE;
-	va_list args;
-
-	va_start(args, Format);
-	RtlSecureZeroMemory(buf, sizeof(buf));
-	ret = StringCbVPrintf(buf, sizeof(buf) / sizeof(buf[0]), Format, args);
-	if (ret == S_OK)
-		ret = _AddNameValue(Pair, Name, buf);
-
-	va_end(args);
-
-	return ret;
-}
-
-
-static DWORD _AddBooleanValue(PNV_PAIR Pair, const wchar_t *Name, BOOLEAN Value)
-{
-	DWORD ret = ERROR_GEN_FAILURE;
-	const wchar_t *boolValues[] = {L"false", L"true"};
-
-	ret = ERROR_SUCCESS;
-	if (Value)
-		Value = TRUE;
-
-	if (!_hideZeroValues || Value)
-	ret = _AddNameValue(Pair, Name, boolValues[Value]);
-
-	return ret;
-}
 
 
 static DWORD _AddDevicePowerStateValue(PNV_PAIR Pair, const wchar_t *Name, DEVICE_POWER_STATE Value)
@@ -158,8 +72,8 @@ static DWORD _AddDevicePowerStateValue(PNV_PAIR Pair, const wchar_t *Name, DEVIC
 
 	if (!_hideZeroValues || Value) {
 		if (v != NULL)
-			ret = _AddNameValue(Pair, Name, v);
-		else ret = _AddNameFormat(Pair, Name, L"Unknown (%u)", Value);
+			ret = PBaseAddNameValue(Pair, Name, v);
+		else ret = PBaseAddNameFormat(Pair, Name, L"Unknown (%u)", Value);
 	}
 
 	return ret;
@@ -187,8 +101,8 @@ static DWORD _AddSystemPowerStateValue(PNV_PAIR Pair, const wchar_t *Name, SYSTE
 
 	if (!_hideZeroValues || Value) {
 		if (v != NULL)
-			ret = _AddNameValue(Pair, Name, v);
-		else ret = _AddNameFormat(Pair, Name, L"Unknown (%u)", Value);
+			ret = PBaseAddNameValue(Pair, Name, v);
+		else ret = PBaseAddNameFormat(Pair, Name, L"Unknown (%u)", Value);
 	}
 
 	return ret;
@@ -213,96 +127,96 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 
 	if (devCaps != NULL) {
 		memset(&p, 0, sizeof(p));
-		ret = _AddNameFormat(&p, L"Version", L"%u", devCaps->Version);
+		ret = PBaseAddNameFormat(&p, L"Version", L"%u", devCaps->Version);
 		if (ret == ERROR_SUCCESS)
-			ret = _AddNameFormat(&p, L"Size", L"%u", devCaps->Size);
+			ret = PBaseAddNameFormat(&p, L"Size", L"%u", devCaps->Size);
 		
 		if (ret == ERROR_SUCCESS)
-			ret = _AddBooleanValue(&p, L"DeviceD1", devCaps->DeviceD1 != 0);
+			ret = PBaseAddBooleanValue(&p, L"DeviceD1", devCaps->DeviceD1 != 0, _hideZeroValues);
 		
 		if (ret == ERROR_SUCCESS)
-			ret = _AddBooleanValue(&p, L"DeviceD2", devCaps->DeviceD2 != 0);
+			ret = PBaseAddBooleanValue(&p, L"DeviceD2", devCaps->DeviceD2 != 0, _hideZeroValues);
 		
 		if (ret == ERROR_SUCCESS)
-			ret = _AddBooleanValue(&p, L"LockSupported", devCaps->LockSupported != 0);
+			ret = PBaseAddBooleanValue(&p, L"LockSupported", devCaps->LockSupported != 0, _hideZeroValues);
 		
 		if (ret == ERROR_SUCCESS)
-			ret = _AddBooleanValue(&p, L"EjectSupported", devCaps->EjectSupported != 0);
+			ret = PBaseAddBooleanValue(&p, L"EjectSupported", devCaps->EjectSupported != 0, _hideZeroValues);
 		
 		if (ret == ERROR_SUCCESS)
-			ret = _AddBooleanValue(&p, L"Removable", devCaps->Removable != 0);
+			ret = PBaseAddBooleanValue(&p, L"Removable", devCaps->Removable != 0, _hideZeroValues);
 		
 		if (ret == ERROR_SUCCESS)
-			ret = _AddBooleanValue(&p, L"DockDevice", devCaps->DockDevice != 0);
+			ret = PBaseAddBooleanValue(&p, L"DockDevice", devCaps->DockDevice != 0, _hideZeroValues);
 		
 		if (ret == ERROR_SUCCESS)
-			ret = _AddBooleanValue(&p, L"UniqueID", devCaps->UniqueID != 0);
+			ret = PBaseAddBooleanValue(&p, L"UniqueID", devCaps->UniqueID != 0, _hideZeroValues);
 		
 		if (ret == ERROR_SUCCESS)
-			ret = _AddBooleanValue(&p, L"SilentInstall", devCaps->SilentInstall != 0);
+			ret = PBaseAddBooleanValue(&p, L"SilentInstall", devCaps->SilentInstall != 0, _hideZeroValues);
 		
 		if (ret == ERROR_SUCCESS)
-			ret = _AddBooleanValue(&p, L"RawDeviceOK", devCaps->RawDeviceOK != 0);
+			ret = PBaseAddBooleanValue(&p, L"RawDeviceOK", devCaps->RawDeviceOK != 0, _hideZeroValues);
 		
 		if (ret == ERROR_SUCCESS)
-			ret = _AddBooleanValue(&p, L"SurpriseRemovalOK", devCaps->SurpriseRemovalOK != 0);
+			ret = PBaseAddBooleanValue(&p, L"SurpriseRemovalOK", devCaps->SurpriseRemovalOK != 0, _hideZeroValues);
 		
 		if (ret == ERROR_SUCCESS)
-			ret = _AddBooleanValue(&p, L"WakeFromD0", devCaps->WakeFromD0 != 0);
+			ret = PBaseAddBooleanValue(&p, L"WakeFromD0", devCaps->WakeFromD0 != 0, _hideZeroValues);
 		
 		if (ret == ERROR_SUCCESS)
-			ret = _AddBooleanValue(&p, L"WakeFromD1", devCaps->WakeFromD1 != 0);
+			ret = PBaseAddBooleanValue(&p, L"WakeFromD1", devCaps->WakeFromD1 != 0, _hideZeroValues);
 		
 		if (ret == ERROR_SUCCESS)
-			ret = _AddBooleanValue(&p, L"WakeFromD2", devCaps->WakeFromD2 != 0);
+			ret = PBaseAddBooleanValue(&p, L"WakeFromD2", devCaps->WakeFromD2 != 0, _hideZeroValues);
 		
 		if (ret == ERROR_SUCCESS)
-			ret = _AddBooleanValue(&p, L"WakeFromD3", devCaps->WakeFromD3 != 0);
+			ret = PBaseAddBooleanValue(&p, L"WakeFromD3", devCaps->WakeFromD3 != 0, _hideZeroValues);
 		
 		if (ret == ERROR_SUCCESS)
-			ret = _AddBooleanValue(&p, L"HardwareDisabled", devCaps->HardwareDisabled != 0);
+			ret = PBaseAddBooleanValue(&p, L"HardwareDisabled", devCaps->HardwareDisabled != 0, _hideZeroValues);
 		
 		if (ret == ERROR_SUCCESS)
-			ret = _AddBooleanValue(&p, L"NonDynamic", devCaps->NonDynamic != 0);
+			ret = PBaseAddBooleanValue(&p, L"NonDynamic", devCaps->NonDynamic != 0, _hideZeroValues);
 		
 		if (ret == ERROR_SUCCESS)
-			ret = _AddBooleanValue(&p, L"WarmEjectSupported", devCaps->WarmEjectSupported != 0);
+			ret = PBaseAddBooleanValue(&p, L"WarmEjectSupported", devCaps->WarmEjectSupported != 0, _hideZeroValues);
 		
 		if (ret == ERROR_SUCCESS)
-			ret = _AddBooleanValue(&p, L"NoDisplayInUI", devCaps->NoDisplayInUI != 0);
+			ret = PBaseAddBooleanValue(&p, L"NoDisplayInUI", devCaps->NoDisplayInUI != 0, _hideZeroValues);
 		
 		if (ret == ERROR_SUCCESS)
-			ret = _AddBooleanValue(&p, L"Reserved1", devCaps->Reserved1 != 0);
+			ret = PBaseAddBooleanValue(&p, L"Reserved1", devCaps->Reserved1 != 0, _hideZeroValues);
 		
 		if (ret == ERROR_SUCCESS)
-			ret = _AddBooleanValue(&p, L"WakeFromInterrupt", devCaps->WakeFromInterrupt != 0);
+			ret = PBaseAddBooleanValue(&p, L"WakeFromInterrupt", devCaps->WakeFromInterrupt != 0, _hideZeroValues);
 		
 		if (ret == ERROR_SUCCESS)
-			ret = _AddBooleanValue(&p, L"SecureDevice", devCaps->SecureDevice != 0);
+			ret = PBaseAddBooleanValue(&p, L"SecureDevice", devCaps->SecureDevice != 0, _hideZeroValues);
 		
 		if (ret == ERROR_SUCCESS)
-			ret = _AddBooleanValue(&p, L"ChildOfVgaEnabledBridge", devCaps->ChildOfVgaEnabledBridge != 0);
+			ret = PBaseAddBooleanValue(&p, L"ChildOfVgaEnabledBridge", devCaps->ChildOfVgaEnabledBridge != 0, _hideZeroValues);
 		
 		if (ret == ERROR_SUCCESS)
-			ret = _AddBooleanValue(&p, L"DecodeIoOnBoot", devCaps->DecodeIoOnBoot != 0);
+			ret = PBaseAddBooleanValue(&p, L"DecodeIoOnBoot", devCaps->DecodeIoOnBoot != 0, _hideZeroValues);
 		
 		if (ret == ERROR_SUCCESS)
-			ret = _AddNameFormat(&p, L"Reserved", L"%u", devCaps->Reserved);
+			ret = PBaseAddNameFormat(&p, L"Reserved", L"%u", devCaps->Reserved);
 		
 		if (ret == ERROR_SUCCESS)
-			ret = _AddNameFormat(&p, L"Address", L"%u", devCaps->Address);
+			ret = PBaseAddNameFormat(&p, L"Address", L"%u", devCaps->Address);
 		
 		if (ret == ERROR_SUCCESS)
-			ret = _AddNameFormat(&p, L"UI Number", L"0x%x", devCaps->UINumber);
+			ret = PBaseAddNameFormat(&p, L"UI Number", L"0x%x", devCaps->UINumber);
 		
 		if (ret == ERROR_SUCCESS)
-			ret = _AddNameFormat(&p, L"D1 Latency", L"%u ms", devCaps->D1Latency);
+			ret = PBaseAddNameFormat(&p, L"D1 Latency", L"%u ms", devCaps->D1Latency);
 		
 		if (ret == ERROR_SUCCESS)
-			ret = _AddNameFormat(&p, L"D2 Latency", L"%u ms", devCaps->D2Latency);
+			ret = PBaseAddNameFormat(&p, L"D2 Latency", L"%u ms", devCaps->D2Latency);
 		
 		if (ret == ERROR_SUCCESS)
-			ret = _AddNameFormat(&p, L"D3 Latency", L"%u ms", devCaps->D3Latency);
+			ret = PBaseAddNameFormat(&p, L"D3 Latency", L"%u ms", devCaps->D3Latency);
 		
 		if (ret == ERROR_SUCCESS) {
 			for (size_t i = 0; i < sizeof(devCaps->DeviceState) / sizeof(devCaps->DeviceState[0]); ++i) {
@@ -344,10 +258,7 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 
 static void cdecl _FreeRoutine(wchar_t **Names, wchar_t **Values, size_t Count)
 {
-	for (size_t i = 0; i < Count; ++i)
-		HeapFree(GetProcessHeap(), 0, Names[i]);
-
-	HeapFree(GetProcessHeap(), 0, Names);
+	PBaseFreeNameValue(Names, Values, Count);
 
 	return;
 }
