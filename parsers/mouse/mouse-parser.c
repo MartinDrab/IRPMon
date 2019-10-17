@@ -139,21 +139,14 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 			if (ret == ERROR_SUCCESS && (!_hideZeroValues || mouInput->Flags))
 				ret = PBaseAddNameFormat(&p, L"  Flags", L"0x%x", mouInput->Flags);
 
-			if (ret == ERROR_SUCCESS) {
-				for (size_t j = 0; j < sizeof(flagBits) / sizeof(flagBits[0]); ++j) {
-					ret = PBaseAddBooleanValue(&p, flagNames[j], (mouInput->Flags & flagBits[j]), _hideZeroValues);
-					if (ret != ERROR_SUCCESS)
-						break;
-				}
-			}
+			if (ret == ERROR_SUCCESS)
+				ret = PBaseAddFlags(&p, mouInput->Flags, flagBits, flagNames, sizeof(flagBits) / sizeof(flagBits[0]), _hideZeroValues);
 
-			if (ret == ERROR_SUCCESS) {
-				for (size_t j = 0; j < sizeof(buttonBits) / sizeof(buttonBits[0]); ++j) {
-					ret = PBaseAddBooleanValue(&p, buttonNames[j], (mouInput->ButtonFlags & buttonBits[j]), _hideZeroValues);
-					if (ret != ERROR_SUCCESS)
-						break;
-				}
-			}
+			if (ret == ERROR_SUCCESS && (!_hideZeroValues || mouInput->Flags))
+				ret = PBaseAddNameFormat(&p, L"  Buttons", L"0x%x", mouInput->ButtonFlags);
+
+			if (ret == ERROR_SUCCESS)
+				ret = PBaseAddFlags(&p, mouInput->ButtonFlags, buttonBits, buttonNames, sizeof(buttonBits) / sizeof(buttonBits[0]), _hideZeroValues);
 
 			if (ret == ERROR_SUCCESS && (!_hideZeroValues || mouInput->ButtonData != 0))
 				ret = PBaseAddNameFormat(&p, L"  Wheel data", L"0x%x", mouInput->ButtonData);
