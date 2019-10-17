@@ -48,14 +48,14 @@ typedef struct _MOUSE_INPUT_DATA {
 #define MOUSE_BUTTON_5_UP       0x0200
 
 #define MOUSE_WHEEL             0x0400
-#define MOUSE_HWHEEL		0x0800
+#define MOUSE_HWHEEL			0x0800
 
 #define MOUSE_MOVE_RELATIVE         0
 #define MOUSE_MOVE_ABSOLUTE         1
 #define MOUSE_VIRTUAL_DESKTOP    0x02  // the coordinates are mapped to the virtual desktop
 #define MOUSE_ATTRIBUTES_CHANGED 0x04  // requery for mouse attributes
 #define MOUSE_MOVE_NOCOALESCE    0x08  // do not coalesce WM_MOUSEMOVEs
-#define MOUSE_TERMSRV_SRC_SHADOW        0x100
+#define MOUSE_TERMSRV_SRC_SHADOW 0x100
 
 
 
@@ -71,8 +71,50 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 	const wchar_t *deviceName = L"\\Device\\PointerdClass0";
 	DWORD ret = ERROR_GEN_FAILURE;
 	const REQUEST_IRP_COMPLETION *irpComp = NULL;
-	const MOUSE_INPUT_DATA *kbdInput = NULL;
+	const MOUSE_INPUT_DATA *mouInput = NULL;
 	size_t inputCount = 0;
+	uint32_t flagBits[] = {
+		MOUSE_MOVE_ABSOLUTE,
+		MOUSE_VIRTUAL_DESKTOP, 
+		MOUSE_ATTRIBUTES_CHANGED,
+		MOUSE_MOVE_NOCOALESCE,
+		MOUSE_TERMSRV_SRC_SHADOW,
+	};
+	const wchar_t *flagNames[] = {
+		L"    Absolute position",
+		L"    Virtual desktop",
+		L"    Attributes changed",
+		L"    No move colesce",
+		L"    Source shadow",
+	};
+	uint32_t buttonBits[] = {
+		MOUSE_LEFT_BUTTON_DOWN,
+		MOUSE_LEFT_BUTTON_UP,
+		MOUSE_RIGHT_BUTTON_DOWN,
+		MOUSE_RIGHT_BUTTON_UP,
+		MOUSE_MIDDLE_BUTTON_DOWN,
+		MOUSE_MIDDLE_BUTTON_UP,
+		MOUSE_BUTTON_4_DOWN,     
+		MOUSE_BUTTON_4_UP,       
+		MOUSE_BUTTON_5_DOWN,     
+		MOUSE_BUTTON_5_UP,       
+		MOUSE_WHEEL,             
+		MOUSE_HWHEEL,			
+	};
+	const wchar_t *buttonNames[] = {
+		L"    Left down",
+		L"    Left up",
+		L"    Right down",
+		L"    Right up",
+		L"    Middle down",
+		L"    Middle up",
+		L"    #4 down",
+		L"    #4 up",
+		L"    #5 down",
+		L"    #5 up",
+		L"    V wheel",
+		L"    H wheel",
+	};
 
 	ret = ERROR_SUCCESS;
 	if (Request->Type == ertIRPCompletion) {
@@ -82,25 +124,56 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 			ExtraInfo->DriverName != NULL && _wcsicmp(ExtraInfo->DriverName, driverName) == 0 &&
 			ExtraInfo->DeviceName != NULL && wcslen(ExtraInfo->DeviceName) > wcslen(deviceName) &&
 			memcmp(ExtraInfo->DeviceName, deviceName, wcslen(deviceName) * sizeof(wchar_t)) == 0) {
-			kbdInput = (MOUSE_INPUT_DATA *)(irpComp + 1);
+			mouInput = (MOUSE_INPUT_DATA *)(irpComp + 1);
 			inputCount = irpComp->DataSize / sizeof(MOUSE_INPUT_DATA);
 		}
 	}
 
-	if (kbdInput != NULL) {
+	if (mouInput != NULL) {
 		memset(&p, 0, sizeof(p));
 		for (size_t i = 0; i < inputCount; ++i) {
 			ret = PBaseAddNameFormat(&p, L"Record ", L"%zu", i);
 			if (ret == ERROR_SUCCESS)
-				ret = PBaseAddNameFormat(&p, L"  Device", L"%u", kbdInput->UnitId);
+				ret = PBaseAddNameFormat(&p, L"  Device", L"%u", mouInput->UnitId);
 
-			if (ret == ERROR_SUCCESS && (!_hideZeroValues || kbdInput->Flags))
-				ret = PBaseAddNameFormat(&p, L"  Flags", L"0x%x", kbdInput->Flags);
+			if (ret == ERROR_SUCCESS && (!_hideZeroValues || mouInput->Flags))
+				ret = PBaseAddNameFormat(&p, L"  Flags", L"0x%x", mouInput->Flags);
+
+			if (ret == ERROR_SUCCESS) {
+				for (size_t j = 0; j < sizeof(flagBits) / sizeof(flagBits[0]); ++j) {
+					ret = PBaseAddBooleanValue(&p, flagNames[j], (mouInput->Flags & flagBits[j]), _hideZeroValues);
+					if (ret != ERROR_SUCCESS)
+						break;
+				}
+			}
+
+			if (ret == ERROR_SUCCESS) {
+				for (size_t j = 0; j < sizeof(buttonBits) / sizeof(buttonBits[0]); ++j) {
+					ret = PBaseAddBooleanValue(&p, buttonNames[j], (mouInput->ButtonFlags & buttonBits[j]), _hideZeroValues);
+					if (ret != ERROR_SUCCESS)
+						break;
+				}
+			}
+
+			if (ret == ERROR_SUCCESS && (!_hideZeroValues || mouInput->ButtonData != 0))
+				ret = PBaseAddNameFormat(&p, L"  Wheel data", L"0x%x", mouInput->ButtonData);
+
+			if (ret == ERROR_SUCCESS && (!_hideZeroValues || mouInput->RawButtons != 0))
+				ret = PBaseAddNameFormat(&p, L"  Raw buttons", L"0x%x", mouInput->RawButtons);
+
+			if (ret == ERROR_SUCCESS)
+				ret = PBaseAddNameFormat(&p, L"  X", L"%i", mouInput->LastX);
+
+			if (ret == ERROR_SUCCESS)
+				ret = PBaseAddNameFormat(&p, L"  Y", L"%i", mouInput->LastY);
+					
+			if (ret == ERROR_SUCCESS && (!_hideZeroValues || mouInput->ExtraInformation != 0))
+				ret = PBaseAddNameFormat(&p, L"  Extra", L"0x%x", mouInput->ExtraInformation);
 
 			if (ret != ERROR_SUCCESS)
 				break;
 
-			++kbdInput;
+			++mouInput;
 		}
 
 		if (ret == ERROR_SUCCESS) {
