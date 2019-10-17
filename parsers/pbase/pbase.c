@@ -87,6 +87,20 @@ DWORD PBaseAddBooleanValue(PNV_PAIR Pair, const wchar_t *Name, BOOLEAN Value, BO
 }
 
 
+DWORD PBaseAddFlags(PNV_PAIR Pair, uint32_t Flags, const uint32_t *FlagBits, const wchar_t **FlagNames, size_t FlagCount, BOOLEAN HideZeroValues)
+{
+	DWORD ret = ERROR_SUCCESS;
+
+	for (size_t i = 0; i < FlagCount; ++i) {
+		ret = PBaseAddBooleanValue(Pair, FlagNames[i], (Flags & FlagBits[i]), HideZeroValues);
+		if (ret != ERROR_SUCCESS)
+			break;
+	}
+
+	return ret;
+}
+
+
 void PBaseFreeNameValue(wchar_t **Names, wchar_t **Values, size_t Count)
 {
 	for (size_t i = 0; i < Count; ++i)
