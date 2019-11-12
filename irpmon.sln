@@ -16,6 +16,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "regman", "libregman\libregm
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hexer", "parsers\hexer\hexer.vcxproj", "{1B0F5249-CA40-40BD-ACB6-D20F71171DFB}"
+	ProjectSection(ProjectDependencies) = postProject
+		{8E36960A-A377-4529-B0F3-6E365504C3E0} = {8E36960A-A377-4529-B0F3-6E365504C3E0}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "secdesc", "parsers\secdesc\secdesc.vcxproj", "{59062ED3-7FC2-4280-A175-C00A916EED21}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -29,6 +32,9 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Data Parsers", "Data Parsers", "{6A0129AE-1EF9-4105-94AA-10D899F59BAD}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pnp-ids", "parsers\pnp-ids\pnp-ids.vcxproj", "{2FAE9475-0B33-43F7-B8E5-001C43AD4A55}"
+	ProjectSection(ProjectDependencies) = postProject
+		{8E36960A-A377-4529-B0F3-6E365504C3E0} = {8E36960A-A377-4529-B0F3-6E365504C3E0}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pnp-devcaps", "parsers\pnp-devcaps\pnp-devcaps.vcxproj", "{2EF83781-8FBF-4046-BDDC-6B8DD6BDC84E}"
 	ProjectSection(ProjectDependencies) = postProject

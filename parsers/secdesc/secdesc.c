@@ -245,17 +245,26 @@ static void cdecl _FreeRoutine(wchar_t **Names, wchar_t **Values, size_t Count)
 }
 
 
-
-DWORD cdecl DP_INIT_ROUTINE_NAME(PIRPMON_DATA_PARSER Parser)
+DWORD cdecl DP_INIT_ROUTINE_NAME(uint32_t RequestedVersion, PIRPMON_DATA_PARSER *Parser)
 {
-	RtlSecureZeroMemory(Parser, sizeof(IRPMON_DATA_PARSER));
-	Parser->MajorVersion = 1;
-	Parser->MinorVersion = 0;
-	Parser->BuildVersion = 0;
-	Parser->Name = L"SecDesc";
-	Parser->Priority = 1;
-	Parser->ParseRoutine = _ParseRoutine;
-	Parser->FreeRoutine = _FreeRoutine;
+	DWORD ret = ERROR_GEN_FAILURE;
+	PIRPMON_DATA_PARSER tmpParser = NULL;
 
-	return ERROR_SUCCESS;
+	ret = ERROR_SUCCESS;
+	if (RequestedVersion >= IRPMON_DATA_PARSER_VERSION_1) {
+		ret = PBaseDataParserAlloc(IRPMON_DATA_PARSER_VERSION_1, &tmpParser);
+		if (ret == ERROR_SUCCESS) {
+			tmpParser->MajorVersion = 1;
+			tmpParser->MinorVersion = 0;
+			tmpParser->BuildVersion = 0;
+			tmpParser->Name = L"SecDescs";
+			tmpParser->Description =L"Display security descriptors in a nice shape";
+			tmpParser->Priority = 1;
+			tmpParser->ParseRoutine = _ParseRoutine;
+			tmpParser->FreeRoutine = _FreeRoutine;
+			*Parser = tmpParser;
+		}
+	} else ret = ERROR_NOT_SUPPORTED;
+
+	return ret;
 }

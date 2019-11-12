@@ -394,6 +394,7 @@ With Item Do
   Caption := Format('%d', [UInt64(dp.Priority)]);
   SubItems.Add(dp.Name);
   SubItems.Add(Format('%d.%d.%d', [dp.MajorVersion, dp.MinorVersion, dp.BuildNumber]));
+  SubItems.Add(dp.Description);
   SubItems.Add(dp.LibraryName);
   end;
 end;

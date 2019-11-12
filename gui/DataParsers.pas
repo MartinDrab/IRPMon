@@ -7,7 +7,8 @@ Uses
   IRPMonDll, IRPMonRequest;
 
 Const
-  DATA_PARSER_INIT_ROUTINE = 'DataParserInit';
+  DATA_PARSER_INIT_ROUTINE     = 'DataParserInit';
+  IRPMON_DATA_PARSER_VERSION_1 = 1;
 
 Type
   _DP_REQUEST_EXTRA_INFO = Record
@@ -22,24 +23,28 @@ Type
   TDataParserFreeRoutine = Procedure (ANames:PPWideChar; AValues:PPWideChar; ACount:NativeUInt); Cdecl;
 
   _IRPMON_DATA_PARSER = Record
+    Version : Cardinal;
+    Size : Cardinal;
     Name : PWideChar;
-    ParseRoutine : TDataParserParseRoutine;
-    FreeRoutine : TDataParserFreeRoutine;
+    Description : PWideChar;
     MajorVersion : Cardinal;
     MinorVersion : Cardinal;
     BuildVersion : Cardinal;
     Priority : Cardinal;
+    ParseRoutine : TDataParserParseRoutine;
+    FreeRoutine : TDataParserFreeRoutine;
     end;
   IRPMON_DATA_PARSER = _IRPMON_DATA_PARSER;
   PIRPMON_DATA_PARSER = ^IRPMON_DATA_PARSER;
 
-  TDataParserInitRoutine = Function (Var AParser:IRPMON_DATA_PARSER):Cardinal; Cdecl;
+  TDataParserInitRoutine = Function (ARequestedVersion:Cardinal; Var AParser:PIRPMON_DATA_PARSER):Cardinal; Cdecl;
 
   TDataParser = Class
     Private
       FLibraryHandle : THandle;
       FLibraryName : WideString;
       FName : WideString;
+      FDescription : WideString;
       FParseRoutine : TDataParserParseRoutine;
       FFreeRoutine : TDataParserFreeRoutine;
       FPriority : Cardinal;
@@ -54,6 +59,7 @@ Type
       Function Parse(ARequest:TGeneralRequest; Var AHandled:ByteBool; ANames:TStrings; AValues:TStrings):Cardinal;
 
       Property Name : WideString Read FName;
+      Property Description : WideString Read FDescription;
       Property LibraryName : WideString Read FLibraryName;
       Property Priority : Cardinal Read FPriority;
       Property MajorVersion : Cardinal Read FMajorVersion;
@@ -75,6 +81,7 @@ Inherited Create;
 FParseRoutine := ARaw.ParseRoutine;
 FFreeRoutine := ARaw.FreeRoutine;
 FName := WideCharToString(ARaw.Name);
+FDescription := WideCharToString(ARaw.Description);
 FPriority := ARaw.Priority;
 FMajorVersion := ARaw.MajorVersion;
 FMinorVersion := ARaw.MinorVersion;
@@ -130,10 +137,11 @@ end;
 
 Class Function TDataParser.CreateForLibrary(ALibraryName:WideString; Var AError:Cardinal):TDataParser;
 Var
-  p : IRPMON_DATA_PARSER;
+  p : PIRPMON_DATA_PARSER;
   initRoutine : TDataParserInitRoutine;
   lh : THandle;
 begin
+p := Nil;
 Result := Nil;
 initRoutine := Nil;
 lh := LoadLibraryExW(PWideChar(ALibraryName), 0, DONT_RESOLVE_DLL_REFERENCES);
@@ -152,14 +160,16 @@ If Assigned(initRoutine) Then
     initRoutine := GetProcAddress(lh, DATA_PARSER_INIT_ROUTINE);
     If Assigned(initRoutine) Then
       begin
-      AError := initRoutine(p);
+      AError := initRoutine(IRPMON_DATA_PARSER_VERSION_1, p);
       If AError = ERROR_SUCCESS Then
         begin
         Try
-          Result := TDataParser.Create(lh, ALibraryName, p);
+          Result := TDataParser.Create(lh, ALibraryName, p^);
         Except
           Result := Nil;
           end;
+
+        HeapFree(GetProcessHeap, 0, p);
         end;
       end;
     end;

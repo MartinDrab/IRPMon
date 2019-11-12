@@ -21,14 +21,7 @@
 
 
 MOUSE_API
-DWORD cdecl DP_INIT_ROUTINE_NAME(PIRPMON_DATA_PARSER Parser);
-
-
-
-
-
-
-
+DWORD cdecl DP_INIT_ROUTINE_NAME(uint32_t RequestedVersion, PIRPMON_DATA_PARSER *Parser);
 
 
 
