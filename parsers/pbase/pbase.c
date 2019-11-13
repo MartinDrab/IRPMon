@@ -125,6 +125,10 @@ DWORD PBaseDataParserAlloc(uint32_t Version, PIRPMON_DATA_PARSER *Parser)
 			parserSize = sizeof(IRPMON_DATA_PARSER_V1);
 			ret = ERROR_SUCCESS;
 			break;
+		case IRPMON_DATA_PARSER_VERSION_2:
+			parserSize = sizeof(IRPMON_DATA_PARSER_V2);
+			ret = ERROR_SUCCESS;
+			break;
 		default:
 			ret = ERROR_INVALID_PARAMETER;
 			break;
