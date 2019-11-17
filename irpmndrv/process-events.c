@@ -113,6 +113,7 @@ static void _ProcessNotifyEx(PEPROCESS Process, HANDLE ProcessId, PPS_CREATE_NOT
 
 NTSTATUS ProcessEventsModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context)
 {
+//	PKLDR_DATA_TABLE_ENTRY loaderEntry = NULL;
 	UNICODE_STRING uRoutineName;
 	OSVERSIONINFOW vi;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
@@ -125,11 +126,13 @@ NTSTATUS ProcessEventsModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING Re
 			RtlInitUnicodeString(&uRoutineName, L"PsSetCreateProcessNotifyRoutineEx");
 			_PsSetCreateProcessNotifyROutineEx = (PSSETCREATEPROCESSNOTIFYROUTINEEX *)MmGetSystemRoutineAddress(&uRoutineName);
 			if (_PsSetCreateProcessNotifyROutineEx != NULL) {
+//				loaderEntry = (PKLDR_DATA_TABLE_ENTRY)DriverObject->DriverSection;
+//				loaderEntry->Flags |= 0x20;
 				status = _PsSetCreateProcessNotifyROutineEx(_ProcessNotifyEx, FALSE);
-				if (status == STATUS_ACCESS_DENIED) {
-					_PsSetCreateProcessNotifyROutineEx = NULL;
-					status = STATUS_SUCCESS;
-				}
+//				if (status == STATUS_ACCESS_DENIED) {
+//					status = STATUS_SUCCESS;
+//					_PsSetCreateProcessNotifyROutineEx = NULL;
+//				}
 			} else status = STATUS_NOT_FOUND;
 		}
 	}
