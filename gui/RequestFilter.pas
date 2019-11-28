@@ -358,7 +358,7 @@ If (FEnabled) And
       end;
 
     If FNegate Then
-      ret := Not FNegate;
+      ret := Not ret;
 
     If ret Then
       begin
