@@ -771,6 +771,7 @@ Var
   allInclusive : Boolean;
   allExclusive : Boolean;
 begin
+matchingRF := Nil;
 allInclusive := True;
 allExclusive := True;
 ARequest.Highlight := False;
