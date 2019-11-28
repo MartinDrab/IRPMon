@@ -37,11 +37,11 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Source: "M:\Prace\Git\IRPMon\bin\x64\Debug\*.dll"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
 Source: "M:\Prace\Git\IRPMon\bin\x64\Debug\*.sys"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
 Source: "M:\Prace\Git\IRPMon\bin\x64\Debug\*.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
-; Source: "M:\Prace\Git\IRPMon\dlls\x64\Debug\*.dll"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
+Source: "M:\Prace\Git\IRPMon\dlls\x64\Debug\*.dll"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
 Source: "M:\Prace\Git\IRPMon\bin\Win32\Debug\*.dll"; DestDir: "{app}"; Flags: ignoreversion; Check: not Is64BitInstallMode
 Source: "M:\Prace\Git\IRPMon\bin\Win32\Debug\*.sys"; DestDir: "{app}"; Flags: ignoreversion; Check: not Is64BitInstallMode
 Source: "M:\Prace\Git\IRPMon\bin\Win32\Debug\*.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: not Is64BitInstallMode
-; Source: "M:\Prace\Git\IRPMon\dlls\Win32\Debug\*.dll"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
+Source: "M:\Prace\Git\IRPMon\dlls\Win32\Debug\*.dll"; DestDir: "{app}"; Flags: ignoreversion; Check: not Is64BitInstallMode
 Source: "M:\Prace\Git\IRPMon\resources\ioctl.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "M:\Prace\Git\IRPMon\resources\ntstatus.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "M:\Prace\Git\IRPMon\resources\winerr.txt"; DestDir: "{app}"; Flags: ignoreversion

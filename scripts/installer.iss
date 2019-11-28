@@ -41,7 +41,7 @@ Source: "M:\Prace\Git\IRPMon\dlls\x64\Release\*.dll"; DestDir: "{app}"; Flags: i
 Source: "M:\Prace\Git\IRPMon\bin\Win32\Release\*.dll"; DestDir: "{app}"; Flags: ignoreversion; Check: not Is64BitInstallMode
 Source: "M:\Prace\Git\IRPMon\bin\Win32\Release\*.sys"; DestDir: "{app}"; Flags: ignoreversion; Check: not Is64BitInstallMode
 Source: "M:\Prace\Git\IRPMon\bin\Win32\Release\*.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: not Is64BitInstallMode
-Source: "M:\Prace\Git\IRPMon\dlls\Win32\Release\*.dll"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
+Source: "M:\Prace\Git\IRPMon\dlls\Win32\Release\*.dll"; DestDir: "{app}"; Flags: ignoreversion; Check: not Is64BitInstallMode
 Source: "M:\Prace\Git\IRPMon\resources\ioctl.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "M:\Prace\Git\IRPMon\resources\ntstatus.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "M:\Prace\Git\IRPMon\resources\winerr.txt"; DestDir: "{app}"; Flags: ignoreversion
