@@ -77,8 +77,11 @@ typedef enum _ERequestResultType {
 	rrtBOOLEAN,
 } ERequestResultType, *PERequstResultType;
 
-#define REQUEST_FLAG_EMULATED			0x1
-#define REQUEST_FLAG_DATA_STRIPPED		0x2
+#define REQUEST_FLAG_EMULATED				0x1
+#define REQUEST_FLAG_DATA_STRIPPED			0x2
+#define REQUEST_FLAG_ADMIN					0x4
+#define REQUEST_FLAG_IMPERSONATED			0x8
+#define REQUEST_FLAG_IMPERSONATED_ADMIN		0x10
 
 /** Header, containing information common for all request types. */
 typedef struct _REQUEST_HEADER {
@@ -308,6 +311,14 @@ typedef struct _REQUEST_GENERAL {
 		REQUEST_FILE_OBJECT_NAME_DELETED FileObjectNameDeleted;
 	} RequestTypes;
 } REQUEST_GENERAL, *PREQUEST_GENERAL;
+
+typedef struct _REQUEST_CREATE_IRP_ETRA_PARAMETERS {
+	BOOLEAN Admin;
+	BOOLEAN Impersonated;
+	BOOLEAN EffectiveOnly;
+	BOOLEAN CopyOnOpen;
+	SECURITY_IMPERSONATION_LEVEL ImpersonationLevel;
+} REQUEST_CREATE_IRP_ETRA_PARAMETERS, *PREQUEST_CREATE_IRP_ETRA_PARAMETERS;
 
 /************************************************************************/
 /*                     HOOKED DRIVERS AND DEVICES                       */

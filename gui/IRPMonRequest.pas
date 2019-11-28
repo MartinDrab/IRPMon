@@ -38,6 +38,9 @@ Type
     FEmulated : Boolean;
     FDataPresent : Boolean;
     FDataStripped : Boolean;
+    FAdmin : Boolean;
+    FImpersonated : Boolean;
+    FImpersonatedAdmin : Boolean;
     Procedure SetDriverName(AName:WideString);
     Procedure SetDeviceName(AName:WideString);
     Procedure SetFileName(AName:WideString);
@@ -77,9 +80,12 @@ Type
     Property Raw : PREQUEST_HEADER Read FRaw;
     Property RawSize : Cardinal Read FRawSize;
     Property Emulated : Boolean Read FEmulated;
+    Property Admin : Boolean Read FAdmin;
+    Property Impersonated : Boolean Read FImpersonated;
     Property DataPresent : Boolean Read FDataPresent;
     Property DataStripped : Boolean Read FDataStripped;
     Property ProcessName : WideString Read FProcessName;
+    Property ImpersonatedAdmin : Boolean Read FImpersonatedAdmin;
   end;
 
 implementation
@@ -115,6 +121,9 @@ If Not Assigned(FRaw) THen
 CopyMemory(FRaw, @ARequest, FRawSize);
 FEmulated := (ARequest.Flags And REQUEST_FLAG_EMULATED) <> 0;
 FDataStripped := (ARequest.Flags And REQUEST_FLAG_DATA_STRIPPED) <> 0;
+FAdmin := (ARequest.Flags And REQUEST_FLAG_ADMIN) <> 0;
+FImpersonated := (ARequest.Flags And REQUEST_FLAG_IMPERSONATED) <> 0;
+FImpersonatedAdmin := (ARequest.Flags And REQUEST_FLAG_IMPERSONATED_ADMIN) <> 0;
 end;
 
 Destructor TGeneralRequest.Destroy;

@@ -321,8 +321,11 @@ Type
   PERequestResultType = ^ERequestResultType;
 
 Const
-  REQUEST_FLAG_EMULATED         = $1;
-  REQUEST_FLAG_DATA_STRIPPED    = $2;
+  REQUEST_FLAG_EMULATED            = $1;
+  REQUEST_FLAG_DATA_STRIPPED       = $2;
+  REQUEST_FLAG_ADMIN               = $4;
+  REQUEST_FLAG_IMPERSONATED        = $8;
+  REQUEST_FLAG_IMPERSONATED_ADMIN  = $10;
 
 Type
   (** Header, containing information common for all request types. *)

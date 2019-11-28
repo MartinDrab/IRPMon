@@ -9,6 +9,36 @@
 typedef NTSTATUS (DEVICE_CONDITION_CALLBACK)(PDEVICE_OBJECT DeviceObject, PVOID Context, PVOID ReturnBuffer, ULONG ReturnBufferLength);
 
 
+
+typedef struct _CLIENT_TOKEN_INFORMATION {
+	UNICODE_STRING UserSid;
+	UNICODE_STRING UserName;
+	UNICODE_STRING UserDomain;
+	ULONG SessionId;
+	ULONG IntegrityLevel;
+	SID_NAME_USE SidType;
+	BOOLEAN Admin;
+} CLIENT_TOKEN_INFORMATION, *PCLIENT_TOKEN_INFORMATION;
+
+typedef struct _CLIENT_INFORMATION {
+	BOOLEAN Impersonated;
+	BOOLEAN CopyOnOpen;
+	BOOLEAN EffectiveOnly;
+	SECURITY_IMPERSONATION_LEVEL ImpersonationLevel;
+	CLIENT_TOKEN_INFORMATION PrimaryToken;
+	CLIENT_TOKEN_INFORMATION ImpersonationToken;
+} CLIENT_INFORMATION, *PCLIENT_INFORMATION;
+
+typedef struct _BASIC_CLIENT_INFO {
+	BOOLEAN Admin;
+	BOOLEAN Impersonated;
+	BOOLEAN ImpersonatedAdmin;
+	SECURITY_IMPERSONATION_LEVEL ImpersonationLevel;
+	BOOLEAN CopyOnOpen;
+	BOOLEAN EffectiveOnly;
+} BASIC_CLIENT_INFO, *PBASIC_CLIENT_INFO;
+
+
 VOID _ReleaseDriverArray(PDRIVER_OBJECT *DriverArray, SIZE_T DriverCount);
 VOID _ReleaseDeviceArray(PDEVICE_OBJECT *DeviceArray, SIZE_T ArrayLength);
 NTSTATUS _GetObjectName(PVOID Object, PUNICODE_STRING Name);
@@ -17,6 +47,10 @@ NTSTATUS _EnumDriverDevices(PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT **Device
 NTSTATUS _GetDeviceAddress(PUNICODE_STRING DeviceName, BOOLEAN SearchDrivers, BOOLEAN SearchFileSystems, PDEVICE_OBJECT *Object);
 NTSTATUS GetDriverObjectByName(PUNICODE_STRING Name, PDRIVER_OBJECT *DriverObject);
 NTSTATUS VerifyDeviceByAddress(PVOID Address, BOOLEAN SearchDrivers, BOOLEAN SearchFileSystems, PDEVICE_OBJECT *Object);
+NTSTATUS QueryTokenInfo(PACCESS_TOKEN Token, PCLIENT_TOKEN_INFORMATION Info);
+NTSTATUS QueryClientInformation(PCLIENT_INFORMATION Client);
+void QueryClientBasicInformation(PBASIC_CLIENT_INFO Info);
+NTSTATUS UtilsCopyUnicodeString(POOL_TYPE PoolType, PUNICODE_STRING Target, const UNICODE_STRING *Source);
 
 
 

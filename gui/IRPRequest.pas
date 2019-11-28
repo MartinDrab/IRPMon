@@ -279,6 +279,18 @@ Case AColumnType Of
     AValue := @FRequestorProcessId;
     AValueSize := SizeOf(FRequestorProcessId);
     end;
+  rlmctAdmin : begin
+    AValue := @FAdmin;
+    AValueSize := SizeOf(FAdmin);
+    end;
+  rlmctImpersonated : begin
+    AValue := @FImpersonated;
+    AValueSize := SizeOf(FImpersonated);
+    end;
+  rlmctImpersonatedAdmin : begin
+    AValue := @FImpersonatedAdmin;
+    AValueSize := SizeOf(FImpersonatedAdmin);
+    end
   Else Inherited GetColumnValueRaw(AColumnType, AValue, AValueSize);
   end;
 end;
@@ -301,6 +313,9 @@ Case AColumnType Of
   rlmctIOSBStatusValue : AResult := Format('0x%x', [FIOSBStatus]);
   rlmctIOSBStatusConstant : AResult := Format('%s', [NTSTATUSToString(FIOSBStatus)]);
   rlmctIOSBInformation : AResult := Format('%u (0x%p)', [FIOSBInformation, Pointer(FIOSBInformation)]);
+  rlmctAdmin : AResult := BoolToStr(FAdmin, True);
+  rlmctImpersonated : AResult := BoolToStr(FImpersonated, True);
+  rlmctImpersonatedAdmin : AResult := BoolToStr(FImpersonatedAdmin, True);
   Else Result := Inherited GetColumnValue(AColumnType, AResult);
   end;
 end;

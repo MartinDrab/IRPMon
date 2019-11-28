@@ -1058,6 +1058,9 @@ VOID HookHandlerStartIoDispatch(PDEVICE_OBJECT DeviceObject, PIRP Irp)
 					}
 				}
 			}
+
+			if (driverRecord->MonitorData)
+				DataLoggerResultRelease(&loggedData);
 		}
 
 		driverRecord->OldStartIo(DeviceObject, Irp);
@@ -1109,9 +1112,7 @@ static NTSTATUS _HookHandlerIRPCompletion(PDEVICE_OBJECT DeviceObject, PIRP Irp,
 	driverRecord = DriverHookRecordGet(cc->DriverObject);
 	if (driverRecord != NULL) {
 		if (driverRecord->MonitorData)
-			IRPDataLogger(Irp, &cc->StackLocation, TRUE, &loggedData);
-	
-		DriverHookRecordDereference(driverRecord);
+			IRPDataLogger(Irp, &cc->StackLocation, TRUE, &loggedData);	
 	}
 
 	completionRequest = HeapMemoryAllocNonPaged(sizeof(REQUEST_IRP_COMPLETION) + loggedData.BufferSize);
@@ -1129,6 +1130,7 @@ static NTSTATUS _HookHandlerIRPCompletion(PDEVICE_OBJECT DeviceObject, PIRP Irp,
 			completionRequest->Header.Flags |= REQUEST_FLAG_DATA_STRIPPED;
 
 		cc->CompRequest = completionRequest;
+		IRPDataLoggerSetRequestFlags(&completionRequest->Header, &loggedData);
 		if (loggedData.BufferSize > 0 && loggedData.Buffer != NULL) {
 			completionRequest->DataSize = loggedData.BufferSize;
 			__try {
@@ -1137,6 +1139,13 @@ static NTSTATUS _HookHandlerIRPCompletion(PDEVICE_OBJECT DeviceObject, PIRP Irp,
 
 			}
 		}
+	}
+
+	if (driverRecord != NULL) {
+		if (driverRecord->MonitorData)
+			DataLoggerResultRelease(&loggedData);
+	
+		DriverHookRecordDereference(driverRecord);
 	}
 
 	// Change the next (well, its the previous one in the completion path)
@@ -1265,9 +1274,7 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 						request->IOSBStatus = Irp->IoStatus.Status;
 						request->IOSBInformation = Irp->IoStatus.Information;
 						request->RequestorProcessId = IoGetRequestorProcessId(Irp);
-						if (loggedData.Stripped)
-							request->Header.Flags |= REQUEST_FLAG_DATA_STRIPPED;
-						
+						IRPDataLoggerSetRequestFlags(&request->Header, &loggedData);
 						if (loggedData.BufferSize > 0 && loggedData.Buffer != NULL) {
 							request->DataSize = loggedData.BufferSize;
 							__try {
@@ -1277,6 +1284,9 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 							}
 						}
 					}
+
+					if (driverRecord->MonitorData)
+						DataLoggerResultRelease(&loggedData);
 				}
 
 				if (driverRecord->MonitorIRPCompletion) {

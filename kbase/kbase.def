@@ -74,3 +74,4 @@ EXPORTS
 	DymArrayClear
 	DymArrayPushArrayNoAlloc
 	DymArrayPushArray
+	QueryClientBasicInformation

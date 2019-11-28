@@ -15,11 +15,17 @@ typedef struct _DATA_LOGGER_RESULT {
 	SIZE_T BufferSize;
 	PMDL BufferMdl;
 	BOOLEAN Stripped;
+	BOOLEAN BufferAllocated;
+	BOOLEAN Admin;
+	BOOLEAN Impersonated;
+	BOOLEAN ImpersonatedAdmin;
 } DATA_LOGGER_RESULT, *PDATA_LOGGER_RESULT;
 
 
 
 void IRPDataLogger(PIRP Irp, PIO_STACK_LOCATION IrpStack, BOOLEAN Completion, PDATA_LOGGER_RESULT Result);
+void IRPDataLoggerSetRequestFlags(PREQUEST_HEADER Request, const DATA_LOGGER_RESULT *Data);
+void DataLoggerResultRelease(PDATA_LOGGER_RESULT Result);
 
 
 

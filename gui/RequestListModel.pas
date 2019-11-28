@@ -57,13 +57,16 @@ Type
     rlmctEmulated,
     rlmctDataAssociated,
     rlmctDataStripped,
-    rlmctDataSize);
+    rlmctDataSize,
+    rlmctAdmin,
+    rlmctImpersonated,
+    rlmctImpersonatedAdmin);
   PERequestListModelColumnType = ^ERequestListModelColumnType;
 
   RequestListModelColumnSet = Set Of ERequestListModelColumnType;
 
 Const
-  RequestListModelColumnNames : Array [0..Ord(rlmctDataSize)] Of String = (
+  RequestListModelColumnNames : Array [0..Ord(rlmctImpersonatedAdmin)] Of String = (
     'ID',
     'Time',
     'Type',
@@ -96,10 +99,13 @@ Const
     'Emulated',
     'Associated data',
     'Data stripped',
-    'Data size'
+    'Data size',
+    'Admin',
+    'Impersonated',
+    'ImpAdmin'
   );
 
-  RequestListModelColumnValueTypes : Array [0..Ord(rlmctDataSize)] Of ERequestListModelColumnValueType = (
+  RequestListModelColumnValueTypes : Array [0..Ord(rlmctImpersonatedAdmin)] Of ERequestListModelColumnValueType = (
     rlmcvtInteger,
     rlmcvtTime,
     rlmcvtRequestType,
@@ -127,6 +133,9 @@ Const
     rlmcvtProcessorMode,
     rlmcvtInteger,
     rlmcvtString,
+    rlmcvtInteger,
+    rlmcvtInteger,
+    rlmcvtInteger,
     rlmcvtInteger,
     rlmcvtInteger,
     rlmcvtInteger,

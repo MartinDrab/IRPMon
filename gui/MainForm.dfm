@@ -2,8 +2,8 @@ object MainFrm: TMainFrm
   Left = 207
   Top = 129
   Caption = 'IRPMon'
-  ClientHeight = 244
-  ClientWidth = 483
+  ClientHeight = 329
+  ClientWidth = 582
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -874,13 +874,19 @@ object MainFrm: TMainFrm
   object PageControl1: TPageControl
     Left = 0
     Top = 0
-    Width = 483
-    Height = 244
+    Width = 582
+    Height = 329
     ActivePage = DataParsersTabSheet
     Align = alClient
     TabOrder = 0
+    ExplicitWidth = 483
+    ExplicitHeight = 244
     object RequestTabSheet: TTabSheet
       Caption = 'Requests'
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object RequestListView: TListView
         Left = 0
         Top = 0
@@ -900,11 +906,13 @@ object MainFrm: TMainFrm
       Caption = 'Data Parsers'
       ImageIndex = 1
       OnShow = DataParsersTabSheetShow
+      ExplicitWidth = 475
+      ExplicitHeight = 216
       object DataParsersListView: TListView
         Left = 0
         Top = 0
-        Width = 475
-        Height = 216
+        Width = 574
+        Height = 301
         Align = alClient
         Columns = <
           item
@@ -931,8 +939,8 @@ object MainFrm: TMainFrm
         TabOrder = 0
         ViewStyle = vsReport
         OnData = DataParsersListViewData
-        ExplicitLeft = 32
-        ExplicitWidth = 443
+        ExplicitWidth = 475
+        ExplicitHeight = 216
       end
     end
   end

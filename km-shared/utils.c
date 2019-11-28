@@ -422,3 +422,110 @@ NTSTATUS GetDriverObjectByName(PUNICODE_STRING Name, PDRIVER_OBJECT *DriverObjec
 	DEBUG_EXIT_FUNCTION("0x%x, *DriverObject=0x%p", status, *DriverObject);
 	return status;
 }
+
+
+NTSTATUS QueryTokenInfo(PACCESS_TOKEN Token, PCLIENT_TOKEN_INFORMATION Info)
+{
+	ULONG userNameLen = 0;
+	ULONG domainNameLen = 0;
+	unsigned char userNameBuffer[300];
+	unsigned char domainNameBuffer[300];
+	PUNICODE_STRING userName = (PUNICODE_STRING)userNameBuffer;
+	PUNICODE_STRING domainName = (PUNICODE_STRING)domainNameBuffer;
+	PTOKEN_USER tokenUser = NULL;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION("Token=0x%p; Info=0x%p", Token, Info);
+
+	memset(Info, 0, sizeof(CLIENT_TOKEN_INFORMATION));
+	Info->Admin = SeTokenIsAdmin(Token);
+	status = SeQueryInformationToken(Token, TokenSessionId, (void **)&Info->SessionId);
+	if (NT_SUCCESS(status))
+		status = SeQueryInformationToken(Token, TokenIntegrityLevel, (void **)&Info->IntegrityLevel);
+
+	if (NT_SUCCESS(status)) {
+		status = SeQueryInformationToken(Token, TokenUser, &tokenUser);
+		if (NT_SUCCESS(status)) {
+			status = RtlConvertSidToUnicodeString(&Info->UserSid, tokenUser->User.Sid, TRUE);
+			if (NT_SUCCESS(status)) {
+				userNameLen = sizeof(userNameBuffer);
+				domainNameLen = sizeof(domainNameBuffer);
+				status = SecLookupAccountSid(tokenUser->User.Sid, &userNameLen, userName, &domainNameLen, domainName, &Info->SidType);
+				if (NT_SUCCESS(status)) {
+
+				}
+			}
+
+			ExFreePool(tokenUser);
+		}
+	}
+
+	DEBUG_EXIT_FUNCTION("0x%x", status);
+	return status;
+}
+
+
+NTSTATUS QueryClientInformation(PCLIENT_INFORMATION Client)
+{
+	PACCESS_TOKEN token = NULL;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION("Client=0x%p", Client);
+
+	status = STATUS_SUCCESS;
+	token = PsReferenceImpersonationToken(PsGetCurrentThread(), &Client->CopyOnOpen, &Client->EffectiveOnly, &Client->ImpersonationLevel);
+	Client->Impersonated = (token != NULL);
+	if (token != NULL) {
+		status = QueryTokenInfo(token, &Client->ImpersonationToken);
+		PsDereferenceImpersonationToken(token);
+	} 
+		
+	token = PsReferencePrimaryToken(PsGetCurrentProcess());
+	if (token != NULL) {
+		status = QueryTokenInfo(token, &Client->PrimaryToken);
+		PsDereferencePrimaryToken(token);
+	}
+
+	DEBUG_EXIT_FUNCTION("0x%x", status);
+	return status;
+}
+
+
+NTSTATUS UtilsCopyUnicodeString(POOL_TYPE PoolType, PUNICODE_STRING Target, const UNICODE_STRING *Source)
+{
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION("PoolType=%u; Target=0x%p; Source=\"%wZ\"", PoolType, Target, Source);
+
+	Target->Length = Source->Length;
+	Target->MaximumLength = Target->MaximumLength;
+	Target->Buffer = HeapMemoryAlloc(PoolType, Target->Length);
+	if (Target->Buffer != NULL) {
+		memcpy(Target->Buffer, Source->Buffer, Target->Length);
+		status = STATUS_SUCCESS;
+	} else status = STATUS_INSUFFICIENT_RESOURCES;
+
+	DEBUG_EXIT_FUNCTION("0x%x", status);
+	return status;
+}
+
+
+void QueryClientBasicInformation(PBASIC_CLIENT_INFO Info)
+{
+	PACCESS_TOKEN token = NULL;
+	DEBUG_ENTER_FUNCTION("Info=0x%p", Info);
+
+	memset(Info, 0, sizeof(BASIC_CLIENT_INFO));
+	token = PsReferenceImpersonationToken(PsGetCurrentThread(), &Info->CopyOnOpen, &Info->EffectiveOnly, &Info->ImpersonationLevel);
+	if (token != NULL) {
+		Info->Impersonated = TRUE;
+		Info->ImpersonatedAdmin = SeTokenIsAdmin(token);
+		PsDereferenceImpersonationToken(token);
+	}
+
+	token = PsReferencePrimaryToken(PsGetCurrentProcess());
+	if (token != NULL) {
+		Info->Admin = SeTokenIsAdmin(token);
+		PsDereferencePrimaryToken(token);
+	}
+
+	DEBUG_EXIT_FUNCTION_VOID();
+	return;
+}
