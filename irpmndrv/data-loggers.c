@@ -86,6 +86,9 @@ void IRPDataLogger(PIRP Irp, PIO_STACK_LOCATION IrpStack, BOOLEAN Completion, PD
 				BASIC_CLIENT_INFO bci;
 
 				QueryClientBasicInformation(&bci);
+				Result->Admin = bci.Admin;
+				Result->Impersonated = bci.Impersonated;
+				Result->ImpersonatedAdmin = bci.ImpersonatedAdmin;
 			}
 		} break;
 		case IRP_MJ_READ: {
