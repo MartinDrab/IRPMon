@@ -23,7 +23,6 @@ object FilterFrm: TFilterFrm
     Height = 111
     Align = alTop
     TabOrder = 0
-    ExplicitWidth = 549
     object Label1: TLabel
       Left = 0
       Top = 13
@@ -186,7 +185,6 @@ object FilterFrm: TFilterFrm
     Height = 49
     Align = alBottom
     TabOrder = 1
-    ExplicitWidth = 549
     object CloseButton: TButton
       Left = 480
       Top = 8
@@ -258,7 +256,5 @@ object FilterFrm: TFilterFrm
     OnDeletion = FilterListViewDeletion
     OnSelectItem = FilterListViewSelectItem
     OnItemChecked = FilterListViewItemChecked
-    ExplicitLeft = 8
-    ExplicitWidth = 640
   end
 end

@@ -258,10 +258,7 @@ If Result Then
       rf := AList[I];
       tmp := GetByName(_next, AList);
       If (Assigned(tmp)) And (rf.Action = ffaPassToFilter) THen
-        begin
-        rf.SetAction(rf.Action, rf.HighlightColor);
         rf.AddNext(tmp);
-        end;
       end;
     end;
   end;
@@ -430,7 +427,7 @@ end;
 Function TRequestFilter.SetAction(AAction:EFilterAction; AHighlightColor:Cardinal = $FFFFFF):Cardinal;
 begin
 Result := 0;
-If (AAction = ffaPassToFilter) And (FAction <> AAction) Then
+If (FAction = ffaPassToFilter) And (FAction <> AAction) Then
   begin
   If Assigned(FNextFilter) Then
     begin

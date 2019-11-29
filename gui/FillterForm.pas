@@ -88,12 +88,34 @@ Uses
 
 Constructor TFilterFrm.Create(AOwner:TApplication; AFilterList:TObjectList<TRequestFilter>);
 Var
+  I : Integer;
+  n : WideString;
+  names : TStringList;
   rf : TRequestFilter;
+  tmp : TRequestFilter;
 begin
+names := TStringList.Create;
 FFilterList := TObjectList<TRequestFilter>.Create;
 For rf In AFilterList Do
+  begin
+  n := '';
   FFilterList.Add(rf.Copy);
+  If Assigned(rf.NextFilter) Then
+    n := rf.NextFilter.Name;
 
+  names.Add(n);
+  end;
+
+For I := 0 To names.Count - 1 Do
+  begin
+  n := names[I];
+  rf := FFilterList[I];
+  tmp := TRequestFilter.GetByName(n, FFilterList);
+  If Assigned(tmp) Then
+    rf.AddNext(tmp);
+  end;
+
+names.Free;
 Inherited Create(Application);
 end;
 
