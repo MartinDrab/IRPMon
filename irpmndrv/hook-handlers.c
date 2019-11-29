@@ -1094,6 +1094,7 @@ typedef struct _IRP_COMPLETION_CONTEXT {
 	PDEVICE_OBJECT DeviceObject;
 	volatile PREQUEST_IRP_COMPLETION CompRequest;
 	IO_STACK_LOCATION StackLocation;
+	ULONG IRPRequestFlags;
 } IRP_COMPLETION_CONTEXT, *PIRP_COMPLETION_CONTEXT;
 
 
@@ -1126,10 +1127,8 @@ static NTSTATUS _HookHandlerIRPCompletion(PDEVICE_OBJECT DeviceObject, PIRP Irp,
 		memcpy(completionRequest->Arguments, &cc->StackLocation.Parameters.Others, sizeof(completionRequest->Arguments));
 		completionRequest->MajorFunction = cc->StackLocation.MajorFunction;
 		completionRequest->MinorFunction = cc->StackLocation.MinorFunction;
-		if (loggedData.Stripped)
-			completionRequest->Header.Flags |= REQUEST_FLAG_DATA_STRIPPED;
-
 		cc->CompRequest = completionRequest;
+		completionRequest->Header.Flags |= (cc->IRPRequestFlags & (REQUEST_FLAG_ADMIN | REQUEST_FLAG_IMPERSONATED | REQUEST_FLAG_IMPERSONATED_ADMIN));
 		IRPDataLoggerSetRequestFlags(&completionRequest->Header, &loggedData);
 		if (loggedData.BufferSize > 0 && loggedData.Buffer != NULL) {
 			completionRequest->DataSize = loggedData.BufferSize;
@@ -1186,11 +1185,11 @@ static NTSTATUS _HookHandlerIRPCompletion(PDEVICE_OBJECT DeviceObject, PIRP Irp,
 }
 
 
-static PIRP_COMPLETION_CONTEXT _HookIRPCompletionRoutine(PIRP Irp, PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT DeviceObject)
+static PIRP_COMPLETION_CONTEXT _HookIRPCompletionRoutine(PIRP Irp, PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT DeviceObject, const REQUEST_IRP *Request)
 {
 	PIO_STACK_LOCATION irpStack = NULL;
 	PIRP_COMPLETION_CONTEXT ret = NULL;
-	DEBUG_ENTER_FUNCTION("Irp=0x%p; DriverObject=0x%p; DeviceObject=0x%p", Irp, DriverObject, DeviceObject);
+	DEBUG_ENTER_FUNCTION("Irp=0x%p; DriverObject=0x%p; DeviceObject=0x%p; Request=0x%p", Irp, DriverObject, DeviceObject, Request);
 
 	if (NT_SUCCESS(IoAcquireRemoveLock(&_rundownLock, Irp))) {
 		ret = HeapMemoryAllocNonPaged(sizeof(IRP_COMPLETION_CONTEXT));
@@ -1206,6 +1205,9 @@ static PIRP_COMPLETION_CONTEXT _HookIRPCompletionRoutine(PIRP Irp, PDRIVER_OBJEC
 				ret->OriginalRoutine = irpStack->CompletionRoutine;
 				ret->OriginalControl = irpStack->Control;
 			}
+
+			if (Request != NULL)
+				ret->IRPRequestFlags = Request->Header.Flags;
 
 			IoSkipCurrentIrpStackLocation(Irp);
 			IoSetCompletionRoutine(Irp, _HookHandlerIRPCompletion, ret, TRUE, TRUE, TRUE);
@@ -1290,7 +1292,7 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 				}
 
 				if (driverRecord->MonitorIRPCompletion) {
-					compContext = _HookIRPCompletionRoutine(Irp, Deviceobject->DriverObject, Deviceobject);
+					compContext = _HookIRPCompletionRoutine(Irp, Deviceobject->DriverObject, Deviceobject, request);
 					if (compContext != NULL && request != NULL)
 						InterlockedIncrement(&compContext->ReferenceCount);
 				}
