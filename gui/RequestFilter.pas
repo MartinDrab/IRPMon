@@ -395,11 +395,9 @@ begin
 Result := 0;
 If (FRequestType = ertUndefined) Or (FRequestType = AFilter.FRequestType) Then
   begin
-  If (Not Assigned(AFilter.FNextFilter)) And
-     (Not Assigned(AFilter.FPreviousFilter)) Then
+  If Not Assigned(AFilter.FPreviousFilter) Then
     begin
     FAction := ffaPassToFilter;
-    AFilter.FNextFilter := FNextFilter;
     AFilter.FPreviousFilter := Self;
     FNextFilter := AFIlter;
     end
