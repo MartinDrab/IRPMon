@@ -81,7 +81,6 @@ Type
     FRequestPrototype : TDriverRequest;
   Protected
     Procedure SetEnable(AValue:Boolean);
-    Function AddNext(AFilter:TRequestFilter):Cardinal;
     Procedure RemoveFromChain;
     Procedure AddMapping(ASources:TList<UInt64>; ATargets:TList<WideString>; AIntValue:UInt64; AStringValue:WideString);
   Public
@@ -92,7 +91,8 @@ Type
     Function SupportedOperators:RequestFilterOperatorSet; Virtual;
     Function Copy:TRequestFilter;
     Function Match(ARequest:TDriverRequest; AChainStart:Boolean = True):TRequestFilter;
-    Function SetAction(AAction:EFilterAction; AHighlightColor:Cardinal = $FFFFFF; ANextFilter:TRequestFilter = Nil):Cardinal;
+    Function SetAction(AAction:EFilterAction; AHighlightColor:Cardinal = $FFFFFF):Cardinal;
+    Function AddNext(AFilter:TRequestFilter):Cardinal;
     Function SetCondition(AColumn:ERequestListModelColumnType; AOperator:ERequestFilterOperator; AValue:UInt64):Boolean; Overload;
     Function SetCondition(AColumn:ERequestListModelColumnType; AOperator:ERequestFilterOperator; AValue:WideString):Boolean; Overload;
     Function HasPredecessor:Boolean;
@@ -114,6 +114,7 @@ Type
     Property HighlightColor : Cardinal Read FHighlightColor;
     Property Negate : Boolean Read FNegate Write FNegate;
     Property ColumnName : WideString Read FColumnName;
+    Property NextFilter : TRequestFilter Read FNextFilter;
   end;
 
   TIRPRequestFilter = Class (TRequestFilter)
@@ -257,7 +258,10 @@ If Result Then
       rf := AList[I];
       tmp := GetByName(_next, AList);
       If (Assigned(tmp)) And (rf.Action = ffaPassToFilter) THen
-        rf.SetAction(rf.Action, rf.HighlightColor, tmp)
+        begin
+        rf.SetAction(rf.Action, rf.HighlightColor);
+        rf.AddNext(tmp);
+        end;
       end;
     end;
   end;
@@ -423,23 +427,20 @@ If (Assigned(FNextFilter)) Or (Assigned(FPreviousFilter)) Then
 end;
 
 
-Function TRequestFilter.SetAction(AAction:EFilterAction; AHighlightColor:Cardinal = $FFFFFF; ANextFilter:TRequestFilter = Nil):Cardinal;
+Function TRequestFilter.SetAction(AAction:EFilterAction; AHighlightColor:Cardinal = $FFFFFF):Cardinal;
 begin
 Result := 0;
-If FAction <> AAction Then
+If (AAction = ffaPassToFilter) And (FAction <> AAction) Then
   begin
-  If AAction = ffaPassToFilter Then
+  If Assigned(FNextFilter) Then
     begin
-    If Assigned(ANextFilter) Then
-      Result := AddNext(ANextFilter)
-    Else Result := 3;
-    end
-  Else begin
-    FAction := AAction;
-    FHighlightColor := AHighlightColor;
+    FNextFilter.FPreviousFilter := Nil;
+    FNextFilter := Nil;
     end;
-  end
-Else FHighlightColor := AHighlightColor;
+  end;
+
+FAction := AAction;
+FHighlightColor := AHighlightColor;
 end;
 
 Function TRequestFilter.SetCondition(AColumn:ERequestListModelColumnType; AOperator:ERequestFilterOperator; AValue:UInt64):Boolean;

@@ -247,6 +247,7 @@ end;
 Procedure TFilterFrm.FilterListViewData(Sender: TObject; Item: TListItem);
 Var
   f : TRequestFilter;
+  nextFilterName : WideString;
 begin
 With Item  Do
   begin
@@ -262,6 +263,11 @@ With Item  Do
 
   SubItems.Add(f.StringValue);
   SubItems.Add(FilterActionComboBox.Items[Ord(f.Action)]);
+  nextFilterName := '<not applicable>';
+  If Assigned(f.NextFilter) Then
+    nextFilterName := f.NextFilter.Name;
+
+  SubItems.Add(nextFilterName);
   Checked := f.Enabled;
   end;
 end;
@@ -553,11 +559,21 @@ Try
     end;
 
   f.Negate := NegateCheckBox.Checked;
-  err := f.SetAction(fa, hc, passTarget);
+  err := f.SetAction(fa, hc);
   If err <> 0 Then
     begin
     ErrorMessage(IntToStr(err));
     Exit;
+    end;
+
+  If fa = ffaPassToFilter Then
+    begin
+    err := f.AddNext(passTarget);
+    If err <> 0 Then
+      begin
+      ErrorMessage(IntToStr(err));
+      Exit;
+      end;
     end;
 
   FFilterList.Add(f);
