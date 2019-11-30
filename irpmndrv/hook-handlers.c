@@ -1338,33 +1338,23 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 		}
 		
 		isCleanup = (irpStack->MajorFunction == IRP_MJ_CLEANUP);
-		if (isCleanup && KeGetCurrentIrql() < DISPATCH_LEVEL) {
+		if (isCleanup) {
 			cleanupFileObject = irpStack->FileObject;
-			if (cleanupFileObject != NULL) {
-				PBASIC_CLIENT_INFO ci = NULL;
-				PFILE_OBJECT_CONTEXT foc = NULL;
-				PREQUEST_FILE_OBJECT_NAME_DELETED dr = NULL;
+			if (cleanupFileObject != NULL) {				
+				if (KeGetCurrentIrql() < DISPATCH_LEVEL) {
+					PREQUEST_FILE_OBJECT_NAME_DELETED dr = NULL;
 
-				dr = HeapMemoryAllocNonPaged(sizeof(REQUEST_FILE_OBJECT_NAME_DELETED));
-				if (dr != NULL) {
-					memset(dr, 0, sizeof(REQUEST_FILE_OBJECT_NAME_DELETED));
-					RequestHeaderInit(&dr->Header, Deviceobject->DriverObject, Deviceobject, ertFileObjectNameDeleted);
-					RequestHeaderSetResult(dr->Header, NTSTATUS, STATUS_SUCCESS);
-					dr->FileObject = cleanupFileObject;
-					RequestQueueInsert(&dr->Header);
-				}
-
-				foc = FoTableDelete(&_foTable, cleanupFileObject);
-				if (foc != NULL) {
-					ci = (PBASIC_CLIENT_INFO)(foc + 1);
-					if (request != NULL) {
-						_SetRequestFlags(&request->Header, ci);
-						if (compContext != NULL)
-							compContext->ClientInfo = *ci;
+					dr = HeapMemoryAllocNonPaged(sizeof(REQUEST_FILE_OBJECT_NAME_DELETED));
+					if (dr != NULL) {
+						memset(dr, 0, sizeof(REQUEST_FILE_OBJECT_NAME_DELETED));
+						RequestHeaderInit(&dr->Header, Deviceobject->DriverObject, Deviceobject, ertFileObjectNameDeleted);
+						RequestHeaderSetResult(dr->Header, NTSTATUS, STATUS_SUCCESS);
+						dr->FileObject = cleanupFileObject;
+						RequestQueueInsert(&dr->Header);
 					}
-
-					FoContextDereference(foc);
 				}
+
+				FoTableDeleteNoReturn(&_foTable, cleanupFileObject);
 			}
 		}
 

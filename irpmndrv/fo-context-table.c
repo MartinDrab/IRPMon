@@ -183,7 +183,7 @@ PFILE_OBJECT_CONTEXT FoTableGet(PFO_CONTEXT_TABLE Table, PFILE_OBJECT FileObject
 
 void FoContextDereference(PFILE_OBJECT_CONTEXT FoContext)
 {
-	DEBUG_ENTER_FUNCTION("", FoContext);
+	DEBUG_ENTER_FUNCTION("FoContext=0x%p", FoContext);
 
 	if (InterlockedDecrement(&FoContext->ReferenceCount) == 0) {
 		if (FoContext->FreeRoutine != NULL)
