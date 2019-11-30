@@ -9,6 +9,7 @@
 #include "hook.h"
 #include "req-queue.h"
 #include "data-loggers.h"
+#include "fo-context-table.h"
 #include "hook-handlers.h"
 
 
@@ -20,11 +21,30 @@
 /************************************************************************/
 
 static IO_REMOVE_LOCK _rundownLock;
+static FO_CONTEXT_TABLE _foTable;
 
 
 /************************************************************************/
 /*                        HELPER ROUTINES                               */
 /************************************************************************/
+
+
+static void _SetRequestFlags(PREQUEST_HEADER Request, const BASIC_CLIENT_INFO *Info)
+{
+	DEBUG_ENTER_FUNCTION("Request=0x%p; Info=0x%p", Request, Info);
+
+	if (Info->Admin)
+		Request->Flags |= REQUEST_FLAG_ADMIN;
+
+	if (Info->Impersonated)
+		Request->Flags |= REQUEST_FLAG_IMPERSONATED;
+
+	if (Info->ImpersonatedAdmin)
+		Request->Flags |= REQUEST_FLAG_IMPERSONATED_ADMIN;
+
+	DEBUG_EXIT_FUNCTION_VOID();
+	return;
+}
 
 
 static PREQUEST_FASTIO _CreateFastIoRequest(EFastIoOperationType FastIoType, PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT DeviceObject, PVOID FileObject, PVOID Arg1, PVOID Arg2, PVOID Arg3, PVOID Arg4, PVOID Arg5, PVOID Arg6, PVOID Arg7)
@@ -1094,7 +1114,7 @@ typedef struct _IRP_COMPLETION_CONTEXT {
 	PDEVICE_OBJECT DeviceObject;
 	volatile PREQUEST_IRP_COMPLETION CompRequest;
 	IO_STACK_LOCATION StackLocation;
-	ULONG IRPRequestFlags;
+	BASIC_CLIENT_INFO ClientInfo;
 } IRP_COMPLETION_CONTEXT, *PIRP_COMPLETION_CONTEXT;
 
 
@@ -1116,6 +1136,11 @@ static NTSTATUS _HookHandlerIRPCompletion(PDEVICE_OBJECT DeviceObject, PIRP Irp,
 			IRPDataLogger(Irp, &cc->StackLocation, TRUE, &loggedData);	
 	}
 
+	if (cc->StackLocation.MajorFunction == IRP_MJ_CREATE &&
+		NT_SUCCESS(Irp->IoStatus.Status)) {
+		FoTableInsert(&_foTable, cc->StackLocation.FileObject, &cc->ClientInfo, sizeof(cc->ClientInfo));
+	}
+
 	completionRequest = HeapMemoryAllocNonPaged(sizeof(REQUEST_IRP_COMPLETION) + loggedData.BufferSize);
 	if (completionRequest != NULL) {
 		memset(completionRequest, 0, sizeof(REQUEST_IRP_COMPLETION) + loggedData.BufferSize);
@@ -1128,7 +1153,7 @@ static NTSTATUS _HookHandlerIRPCompletion(PDEVICE_OBJECT DeviceObject, PIRP Irp,
 		completionRequest->MajorFunction = cc->StackLocation.MajorFunction;
 		completionRequest->MinorFunction = cc->StackLocation.MinorFunction;
 		cc->CompRequest = completionRequest;
-		completionRequest->Header.Flags |= (cc->IRPRequestFlags & (REQUEST_FLAG_ADMIN | REQUEST_FLAG_IMPERSONATED | REQUEST_FLAG_IMPERSONATED_ADMIN));
+		_SetRequestFlags(&completionRequest->Header, &cc->ClientInfo);
 		IRPDataLoggerSetRequestFlags(&completionRequest->Header, &loggedData);
 		if (loggedData.BufferSize > 0 && loggedData.Buffer != NULL) {
 			completionRequest->DataSize = loggedData.BufferSize;
@@ -1206,9 +1231,6 @@ static PIRP_COMPLETION_CONTEXT _HookIRPCompletionRoutine(PIRP Irp, PDRIVER_OBJEC
 				ret->OriginalControl = irpStack->Control;
 			}
 
-			if (Request != NULL)
-				ret->IRPRequestFlags = Request->Header.Flags;
-
 			IoSkipCurrentIrpStackLocation(Irp);
 			IoSetCompletionRoutine(Irp, _HookHandlerIRPCompletion, ret, TRUE, TRUE, TRUE);
 			IoSetNextIrpStackLocation(Irp);
@@ -1225,6 +1247,7 @@ static PIRP_COMPLETION_CONTEXT _HookIRPCompletionRoutine(PIRP Irp, PDRIVER_OBJEC
 
 NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 {
+	BASIC_CLIENT_INFO clientInfo;
 	BOOLEAN isCleanup = FALSE;
 	PFILE_OBJECT cleanupFileObject = NULL;
 	BOOLEAN isCreate = FALSE;
@@ -1240,12 +1263,23 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 
 	driverRecord = DriverHookRecordGet(Deviceobject->DriverObject);
 	if (driverRecord != NULL) {
+		memset(&clientInfo, 0, sizeof(clientInfo));
 		deviceRecord = DriverHookRecordGetDevice(driverRecord, Deviceobject);
 		isCreate = (irpStack->MajorFunction == IRP_MJ_CREATE);
 		if (isCreate) {
 			createFileObject = irpStack->FileObject;
 			if (createFileObject != NULL && KeGetCurrentIrql() < DISPATCH_LEVEL)
 				fnAssignedId = RequestIdReserve();
+		
+			QueryClientBasicInformation(&clientInfo);
+		} else if (irpStack->FileObject != NULL) {
+			PFILE_OBJECT_CONTEXT foc = NULL;
+
+			foc = FoTableGet(&_foTable, irpStack->FileObject);
+			if (foc != NULL) {
+				clientInfo = *(PBASIC_CLIENT_INFO)(foc + 1);
+				FoContextDereference(foc);
+			}
 		}
 
 		if (_CatchRequest(driverRecord, deviceRecord, Deviceobject)) {
@@ -1276,6 +1310,7 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 						request->IOSBStatus = Irp->IoStatus.Status;
 						request->IOSBInformation = Irp->IoStatus.Information;
 						request->RequestorProcessId = IoGetRequestorProcessId(Irp);
+						_SetRequestFlags(&request->Header, &clientInfo);
 						IRPDataLoggerSetRequestFlags(&request->Header, &loggedData);
 						if (loggedData.BufferSize > 0 && loggedData.Buffer != NULL) {
 							request->DataSize = loggedData.BufferSize;
@@ -1293,8 +1328,11 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 
 				if (driverRecord->MonitorIRPCompletion) {
 					compContext = _HookIRPCompletionRoutine(Irp, Deviceobject->DriverObject, Deviceobject, request);
-					if (compContext != NULL && request != NULL)
-						InterlockedIncrement(&compContext->ReferenceCount);
+					if (compContext != NULL) {
+						compContext->ClientInfo = clientInfo;
+						if (request != NULL)
+							InterlockedIncrement(&compContext->ReferenceCount);
+					}
 				}
 			}
 		}
@@ -1303,6 +1341,8 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 		if (isCleanup && KeGetCurrentIrql() < DISPATCH_LEVEL) {
 			cleanupFileObject = irpStack->FileObject;
 			if (cleanupFileObject != NULL) {
+				PBASIC_CLIENT_INFO ci = NULL;
+				PFILE_OBJECT_CONTEXT foc = NULL;
 				PREQUEST_FILE_OBJECT_NAME_DELETED dr = NULL;
 
 				dr = HeapMemoryAllocNonPaged(sizeof(REQUEST_FILE_OBJECT_NAME_DELETED));
@@ -1312,6 +1352,18 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 					RequestHeaderSetResult(dr->Header, NTSTATUS, STATUS_SUCCESS);
 					dr->FileObject = cleanupFileObject;
 					RequestQueueInsert(&dr->Header);
+				}
+
+				foc = FoTableDelete(&_foTable, cleanupFileObject);
+				if (foc != NULL) {
+					ci = (PBASIC_CLIENT_INFO)(foc + 1);
+					if (request != NULL) {
+						_SetRequestFlags(&request->Header, ci);
+						if (compContext != NULL)
+							compContext->ClientInfo = *ci;
+					}
+
+					FoContextDereference(foc);
 				}
 			}
 		}
@@ -1350,6 +1402,9 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 
 				FltReleaseFileNameInformation(fi);
 			}
+
+			if (NT_SUCCESS(status) && status != STATUS_PENDING)
+				FoTableInsert(&_foTable, createFileObject, &clientInfo, sizeof(clientInfo));
 		}
 		
 		if (request != NULL) {
@@ -1459,6 +1514,7 @@ NTSTATUS HookHandlerModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING Regi
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"; Context=0x%p", DriverObject, RegistryPath, Context);
 
+	FoTableInit(&_foTable, NULL);
 	IoInitializeRemoveLock(&_rundownLock, 'LRHH', 0x7FFFFFFF, 0x7FFFFFFF);
 	status = IoAcquireRemoveLock(&_rundownLock, DriverObject);
 
@@ -1472,6 +1528,7 @@ void HookHandlerModuleFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING Registr
 	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"; Context=0x%p", DriverObject, RegistryPath, Context);
 
 	IoReleaseRemoveLockAndWait(&_rundownLock, DriverObject);
+	FoTableFinit(&_foTable);
 
 	DEBUG_EXIT_FUNCTION_VOID();
 	return;

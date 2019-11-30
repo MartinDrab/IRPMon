@@ -81,16 +81,6 @@ void IRPDataLogger(PIRP Irp, PIO_STACK_LOCATION IrpStack, BOOLEAN Completion, PD
 	mode = ExGetPreviousMode();
 	memset(Result, 0, sizeof(DATA_LOGGER_RESULT));
 	switch (IrpStack->MajorFunction) {
-		case IRP_MJ_CREATE: {
-			if (!Completion) {
-				BASIC_CLIENT_INFO bci;
-
-				QueryClientBasicInformation(&bci);
-				Result->Admin = bci.Admin;
-				Result->Impersonated = bci.Impersonated;
-				Result->ImpersonatedAdmin = bci.ImpersonatedAdmin;
-			}
-		} break;
 		case IRP_MJ_READ: {
 			if (Completion) {
 				if (Irp->MdlAddress != NULL) {
@@ -350,15 +340,6 @@ void IRPDataLoggerSetRequestFlags(PREQUEST_HEADER Request, const DATA_LOGGER_RES
 
 	if (Data->Stripped)
 		Request->Flags |= REQUEST_FLAG_DATA_STRIPPED;
-
-	if (Data->Admin)
-		Request->Flags |= REQUEST_FLAG_ADMIN;
-
-	if (Data->Impersonated)
-		Request->Flags |= REQUEST_FLAG_IMPERSONATED;
-
-	if (Data->ImpersonatedAdmin)
-		Request->Flags |= REQUEST_FLAG_IMPERSONATED_ADMIN;
 
 	DEBUG_EXIT_FUNCTION_VOID();
 	return;

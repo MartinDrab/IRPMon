@@ -16,9 +16,6 @@ typedef struct _DATA_LOGGER_RESULT {
 	PMDL BufferMdl;
 	BOOLEAN Stripped;
 	BOOLEAN BufferAllocated;
-	BOOLEAN Admin;
-	BOOLEAN Impersonated;
-	BOOLEAN ImpersonatedAdmin;
 } DATA_LOGGER_RESULT, *PDATA_LOGGER_RESULT;
 
 
