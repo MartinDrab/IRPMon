@@ -50,8 +50,10 @@ static void _SetRequestFlags(PREQUEST_HEADER Request, const BASIC_CLIENT_INFO *I
 static PREQUEST_FASTIO _CreateFastIoRequest(EFastIoOperationType FastIoType, PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT DeviceObject, PVOID FileObject, PVOID Arg1, PVOID Arg2, PVOID Arg3, PVOID Arg4, PVOID Arg5, PVOID Arg6, PVOID Arg7)
 {
 	PREQUEST_FASTIO ret = NULL;
+	BASIC_CLIENT_INFO clientInfo;
+	PFILE_OBJECT_CONTEXT foc = NULL;
 
-	ret = (PREQUEST_FASTIO)HeapMemoryAllocNonPaged(sizeof(REQUEST_FASTIO));
+	ret = HeapMemoryAllocNonPaged(sizeof(REQUEST_FASTIO));
 	if (ret != NULL) {
 		RequestHeaderInit(&ret->Header, DriverObject, DeviceObject, ertFastIo);
 		ret->FastIoType = FastIoType;
@@ -66,6 +68,12 @@ static PREQUEST_FASTIO _CreateFastIoRequest(EFastIoOperationType FastIoType, PDR
 		ret->Arg7 = Arg7;
 		ret->IOSBInformation = 0;
 		ret->IOSBStatus = STATUS_UNSUCCESSFUL;
+		foc = FoTableGet(&_foTable, FileObject);
+		if (foc != NULL) {
+			clientInfo = *(PBASIC_CLIENT_INFO)(foc + 1);
+			_SetRequestFlags(&ret->Header, &clientInfo);
+			FoContextDereference(foc);
+		}
 	}
 
 	return ret;
@@ -1350,6 +1358,7 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 						RequestHeaderInit(&dr->Header, Deviceobject->DriverObject, Deviceobject, ertFileObjectNameDeleted);
 						RequestHeaderSetResult(dr->Header, NTSTATUS, STATUS_SUCCESS);
 						dr->FileObject = cleanupFileObject;
+						_SetRequestFlags(&dr->Header, &clientInfo);
 						RequestQueueInsert(&dr->Header);
 					}
 				}
@@ -1386,6 +1395,7 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 						ar->FileObject = createFileObject;
 						ar->NameLength = uFileName.Length;
 						memcpy(ar + 1, uFileName.Buffer, uFileName.Length);
+						_SetRequestFlags(&ar->Header, &clientInfo);
 						RequestQueueInsert(&ar->Header);
 					} else tmpStatus = STATUS_INSUFFICIENT_RESOURCES;
 				}
