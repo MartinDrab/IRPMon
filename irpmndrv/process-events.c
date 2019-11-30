@@ -3,6 +3,7 @@
 #include "general-types.h"
 #include "preprocessor.h"
 #include "allocator.h"
+#include "request.h"
 #include "req-queue.h"
 #include "process-events.h"
 
@@ -84,21 +85,26 @@ static NTSTATUS _ProcessExittedEventAlloc(HANDLE ProcessId, PREQUEST_PROCESS_EXI
 
 static void _ProcessNotifyEx(PEPROCESS Process, HANDLE ProcessId, PPS_CREATE_NOTIFY_INFO CreateInfo)
 {
+	BASIC_CLIENT_INFO clientInfo;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	PREQUEST_PROCESS_CREATED createRecord = NULL;
 	PREQUEST_PROCESS_EXITTED exitRecord = NULL;
 	DEBUG_ENTER_FUNCTION("Process=0x%p; ProcessId=0x%p; CreateInfo=0x%p", Process, ProcessId, CreateInfo);
 
+	QueryClientBasicInformation(&clientInfo);
 	if (CreateInfo != NULL) {
 		status = _ProcessCreateEventAlloc(ProcessId, CreateInfo, &createRecord);
 		if (NT_SUCCESS(status)) {
+			_SetRequestFlags(&createRecord->Header, &clientInfo);
 			RequestQueueInsert(&createRecord->Header);
 			CreateInfo->CreationStatus = STATUS_SUCCESS;
 		}
 	} else {
 		status = _ProcessExittedEventAlloc(ProcessId, &exitRecord);
-		if (NT_SUCCESS(status))
+		if (NT_SUCCESS(status)) {
+			_SetRequestFlags(&exitRecord->Header, &clientInfo);
 			RequestQueueInsert(&exitRecord->Header);
+		}
 	}
 
 

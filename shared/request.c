@@ -1,6 +1,7 @@
 
 #ifdef _KERNEL_MODE
 #include <ntifs.h>
+#include "preprocessor.h"
 #else
 #include <windows.h>
 #include <strsafe.h>
@@ -29,6 +30,27 @@ static void _RequestHeaderInit(PREQUEST_HEADER Header, void *DriverObject, void 
 
 #endif
 
+#ifdef _KERNEL_MODE
+
+void _SetRequestFlags(PREQUEST_HEADER Request, const BASIC_CLIENT_INFO *Info)
+{
+	DEBUG_ENTER_FUNCTION("Request=0x%p; Info=0x%p", Request, Info);
+
+	if (Info->Admin)
+		Request->Flags |= REQUEST_FLAG_ADMIN;
+
+	if (Info->Impersonated)
+		Request->Flags |= REQUEST_FLAG_IMPERSONATED;
+
+	if (Info->ImpersonatedAdmin)
+		Request->Flags |= REQUEST_FLAG_IMPERSONATED_ADMIN;
+
+	DEBUG_EXIT_FUNCTION_VOID();
+	return;
+}
+
+
+#endif
 
 size_t RequestGetSize(const REQUEST_HEADER *Header)
 {

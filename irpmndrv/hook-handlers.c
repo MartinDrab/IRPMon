@@ -10,6 +10,7 @@
 #include "req-queue.h"
 #include "data-loggers.h"
 #include "fo-context-table.h"
+#include "request.h"
 #include "hook-handlers.h"
 
 
@@ -27,24 +28,6 @@ static FO_CONTEXT_TABLE _foTable;
 /************************************************************************/
 /*                        HELPER ROUTINES                               */
 /************************************************************************/
-
-
-static void _SetRequestFlags(PREQUEST_HEADER Request, const BASIC_CLIENT_INFO *Info)
-{
-	DEBUG_ENTER_FUNCTION("Request=0x%p; Info=0x%p", Request, Info);
-
-	if (Info->Admin)
-		Request->Flags |= REQUEST_FLAG_ADMIN;
-
-	if (Info->Impersonated)
-		Request->Flags |= REQUEST_FLAG_IMPERSONATED;
-
-	if (Info->ImpersonatedAdmin)
-		Request->Flags |= REQUEST_FLAG_IMPERSONATED_ADMIN;
-
-	DEBUG_EXIT_FUNCTION_VOID();
-	return;
-}
 
 
 static PREQUEST_FASTIO _CreateFastIoRequest(EFastIoOperationType FastIoType, PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT DeviceObject, PVOID FileObject, PVOID Arg1, PVOID Arg2, PVOID Arg3, PVOID Arg4, PVOID Arg5, PVOID Arg6, PVOID Arg7)
