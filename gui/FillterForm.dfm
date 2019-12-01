@@ -117,7 +117,7 @@ object FilterFrm: TFilterFrm
       TabOrder = 6
       OnChange = FilterActionComboBoxChange
       Items.Strings = (
-        'None'
+        'Highlight'
         'Include'
         'Exclude'
         'Pass')

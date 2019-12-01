@@ -56,14 +56,6 @@ Case AColumnType Of
   rlmctResultConstant,
   rlmctDriverObject,
   rlmctDriverName : Result := False;
-  rlmctFileObject : begin
-    AValue := @FileObject;
-    AValueSize := SizeOf(FileObject);
-    end;
-  rlmctFileName : begin
-    AValue := PWideChar(FileName);
-    AValueSize := 0;
-    end;
   Else Result := Inherited GetColumnValueRaw(AColumnType, AValue, AValueSize);
   end;
 end;
@@ -100,10 +92,6 @@ Case AColumnType Of
   rlmctResultConstant,
   rlmctDriverObject,
   rlmctDriverName : Result := False;
-  rlmctFileObject : begin
-    AValue := @FileObject;
-    AValueSize := SizeOf(FileObject);
-    end;
   Else Result := Inherited GetColumnValueRaw(AColumnType, AValue, AValueSize);
   end;
 end;
@@ -117,7 +105,6 @@ Case AColumnType Of
   rlmctResultValue,
   rlmctResultConstant,
   rlmctDriverObject,
-  rlmctFileName,
   rlmctDriverName : Result := False;
   Else Result := Inherited GetColumnValue(AColumnType, AResult);
   end;

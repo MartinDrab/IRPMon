@@ -770,10 +770,12 @@ Var
   matchingRF : TRequestFilter;
   allInclusive : Boolean;
   allExclusive : Boolean;
+  noMatch : Boolean;
 begin
 matchingRF := Nil;
 allInclusive := True;
 allExclusive := True;
+noMatch := True;
 ARequest.Highlight := False;
 AStore := (FFilters.Count = 0);
 For rf In FFilters Do
@@ -787,14 +789,22 @@ For rf In FFilters Do
   matchingRF := rf.Match(ARequest);
   If Assigned(matchingRF) Then
     begin
-    AStore := (matchingRF.Action = ffaInclude);
-    ARequest.Highlight := (matchingRF.HighlightColor <> $FFFFFF);
-    ARequest.HighlightColor := matchingRF.HighlightColor;
-    Break;
+    If (matchingRF.Action = ffaInclude) Or (matchingRF.Action = ffaExclude) Then
+      begin
+      noMatch := False;
+      If Not AStore Then
+        AStore := (matchingRF.Action = ffaInclude);
+      end;
+
+    If matchingRF.Action <> ffaExclude Then
+      begin
+      ARequest.Highlight := (matchingRF.HighlightColor <> $FFFFFF);
+      ARequest.HighlightColor := matchingRF.HighlightColor;
+      end;
     end;
   end;
 
-If Not Assigned(matchingRF) Then
+If noMatch Then
   begin
   If allInclusive Then
     AStore := False;

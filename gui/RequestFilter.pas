@@ -57,7 +57,7 @@ Const
 
 Type
   EFilterAction = (
-    ffaUndefined,
+    ffaHighlight, // If the request is included
     ffaInclude,
     ffaExclude,
     ffaPassToFilter
@@ -533,7 +533,7 @@ Result := True;
 Case RequestListModelColumnValueTypes[Ord(FField)] Of
   rlmcvtProcessorMode : begin
     AddMapping(ASources, ATargets, 0, 'KernelMode');
-    AddMapping(ASources, ATargets, 0, 'UserMode');
+    AddMapping(ASources, ATargets, 1, 'UserMode');
     end;
   rlmcvtIRQL : begin
     AddMapping(ASources, ATargets, 0, 'Passive');

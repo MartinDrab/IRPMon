@@ -440,6 +440,26 @@ Case AColumnType Of
   rlmctDataSize : begin
     AValue := @FDataSize;
     AValueSize := SizeOf(FDataSize);
+    end;
+  rlmctAdmin : begin
+    AValue := @FAdmin;
+    AValueSize := SizeOf(FAdmin);
+    end;
+  rlmctImpersonated : begin
+    AValue := @FImpersonated;
+    AValueSize := SizeOf(FImpersonated);
+    end;
+  rlmctImpersonatedAdmin : begin
+    AValue := @FImpersonatedAdmin;
+    AValueSize := SizeOf(FImpersonatedAdmin);
+    end;
+  rlmctFileObject: begin
+    AValue := @FileObject;
+    AValueSize := SizeOf(FileObject);
+    end;
+  rlmctFileName: begin
+    AValue := PWideChar(FileName);
+    AValueSize := 0;
     end
   Else Result := False;
   end;
@@ -506,6 +526,9 @@ Case AColumnType Of
   rlmctDataAssociated : AResult := BoolToStr(FDataPresent, True);
   rlmctDataStripped : AResult := BoolToStr(FDataStripped, True);
   rlmctDataSize : AResult := Format('%d', [FDataSize]);
+  rlmctAdmin : AResult := BoolToStr(FAdmin, True);
+  rlmctImpersonated : AResult := BoolToStr(FImpersonated, True);
+  rlmctImpersonatedAdmin : AResult := BoolToStr(FImpersonatedAdmin, True);
   Else Result := False;
   end;
 end;

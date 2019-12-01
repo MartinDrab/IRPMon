@@ -876,20 +876,16 @@ object MainFrm: TMainFrm
     Top = 0
     Width = 582
     Height = 329
-    ActivePage = DataParsersTabSheet
+    ActivePage = RequestTabSheet
     Align = alClient
     TabOrder = 0
     object RequestTabSheet: TTabSheet
       Caption = 'Requests'
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object RequestListView: TListView
         Left = 0
         Top = 0
-        Width = 475
-        Height = 216
+        Width = 574
+        Height = 301
         Align = alClient
         Columns = <>
         OwnerData = True
@@ -904,6 +900,10 @@ object MainFrm: TMainFrm
       Caption = 'Data Parsers'
       ImageIndex = 1
       OnShow = DataParsersTabSheetShow
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object DataParsersListView: TListView
         Left = 0
         Top = 0
