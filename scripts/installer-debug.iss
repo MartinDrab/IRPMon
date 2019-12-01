@@ -20,10 +20,10 @@ AppUpdatesURL={#MyAppURL}
 DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
-LicenseFile=M:\Prace\Git\IRPMon\LICENSE
+LicenseFile=..\LICENSE
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
-OutputDir=M:\Prace\Git\IRPMon\bin
+OutputDir=..\bin
 OutputBaseFilename=mysetup
 Compression=lzma
 SolidCompression=yes
@@ -34,17 +34,17 @@ ArchitecturesInstallIn64BitMode=x64
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Files]
-Source: "M:\Prace\Git\IRPMon\bin\x64\Debug\*.dll"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
-Source: "M:\Prace\Git\IRPMon\bin\x64\Debug\*.sys"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
-Source: "M:\Prace\Git\IRPMon\bin\x64\Debug\*.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
-Source: "M:\Prace\Git\IRPMon\dlls\x64\Debug\*.dll"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
-Source: "M:\Prace\Git\IRPMon\bin\Win32\Debug\*.dll"; DestDir: "{app}"; Flags: ignoreversion; Check: not Is64BitInstallMode
-Source: "M:\Prace\Git\IRPMon\bin\Win32\Debug\*.sys"; DestDir: "{app}"; Flags: ignoreversion; Check: not Is64BitInstallMode
-Source: "M:\Prace\Git\IRPMon\bin\Win32\Debug\*.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: not Is64BitInstallMode
-Source: "M:\Prace\Git\IRPMon\dlls\Win32\Debug\*.dll"; DestDir: "{app}"; Flags: ignoreversion; Check: not Is64BitInstallMode
-Source: "M:\Prace\Git\IRPMon\resources\ioctl.txt"; DestDir: "{app}"; Flags: ignoreversion
-Source: "M:\Prace\Git\IRPMon\resources\ntstatus.txt"; DestDir: "{app}"; Flags: ignoreversion
-Source: "M:\Prace\Git\IRPMon\resources\winerr.txt"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\bin\x64\Debug\*.dll"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
+Source: "..\bin\x64\Debug\*.sys"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
+Source: "..\bin\x64\Debug\*.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
+Source: "..\dlls\x64\Debug\*.dll"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
+Source: "..\bin\Win32\Debug\*.dll"; DestDir: "{app}"; Flags: ignoreversion; Check: not Is64BitInstallMode
+Source: "..\bin\Win32\Debug\*.sys"; DestDir: "{app}"; Flags: ignoreversion; Check: not Is64BitInstallMode
+Source: "..\bin\Win32\Debug\*.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: not Is64BitInstallMode
+Source: "..\dlls\Win32\Debug\*.dll"; DestDir: "{app}"; Flags: ignoreversion; Check: not Is64BitInstallMode
+Source: "..\resources\ioctl.txt"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\resources\ntstatus.txt"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\resources\winerr.txt"; DestDir: "{app}"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
