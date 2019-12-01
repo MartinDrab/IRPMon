@@ -219,7 +219,7 @@ static NTSTATUS _CheckDriver(PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT DeviceO
 			RequestQueueInsert(rq);
 	}
 
-	DEBUG_EXIT_FUNCTION("0x%x", status)
+	DEBUG_EXIT_FUNCTION("0x%x", status);
 	return status;
 }
 

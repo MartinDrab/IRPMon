@@ -77,7 +77,7 @@ NTSTATUS RequestQueueConnect(HANDLE hSemaphore)
 	ExReleaseResourceLite(&_connectLock);
 	KeLeaveCriticalRegion();
 
-	DEBUG_EXIT_FUNCTION("0x%x", status)
+	DEBUG_EXIT_FUNCTION("0x%x", status);
 	return status;
 }
 
