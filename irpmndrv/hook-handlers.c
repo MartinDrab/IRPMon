@@ -1179,11 +1179,9 @@ static NTSTATUS _HookHandlerIRPCompletion(PDEVICE_OBJECT DeviceObject, PIRP Irp,
 		(!NT_SUCCESS(irpStatus) && (cc->OriginalControl & SL_INVOKE_ON_ERROR)) ||
 		(NT_SUCCESS(irpStatus) && (cc->OriginalControl & SL_INVOKE_ON_SUCCESS))))
 		status = cc->OriginalRoutine(DeviceObject, Irp, cc->OriginalContext);
-	else if (Irp->PendingReturned && Irp->CurrentLocation < Irp->StackCount) {
+	else if (Irp->PendingReturned && Irp->CurrentLocation < Irp->StackCount)
 		// Inspired by IoCompleteRequest
 		IoMarkIrpPending(Irp);
-		status = STATUS_PENDING;
-	}
 
 	if (completionRequest != NULL)
 		RequestHeaderSetResult(completionRequest->Header, NTSTATUS, status);
