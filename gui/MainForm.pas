@@ -56,6 +56,12 @@ Type
     OpenMenuItem: TMenuItem;
     N2: TMenuItem;
     HideExcludedRequestsMenuItem: TMenuItem;
+    RequestPopupMenu: TPopupMenu;
+    RPDetailsMenuItem: TMenuItem;
+    N3: TMenuItem;
+    RPIncludeMenuItem: TMenuItem;
+    RPHighlightMenuItem: TMenuItem;
+    RPExcludeMenuItem: TMenuItem;
     Procedure ClearMenuItemClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure CaptureEventsMenuItemClick(Sender: TObject);
@@ -76,6 +82,9 @@ Type
     procedure FiltersMenuItemClick(Sender: TObject);
     procedure OpenMenuItemClick(Sender: TObject);
     procedure HideExcludedRequestsMenuItemClick(Sender: TObject);
+    procedure RPDetailsMenuItemClick(Sender: TObject);
+    procedure RequestPopupMenuPopup(Sender: TObject);
+    procedure PopupFilterClick(Sender: TObject);
   Private
 {$IFDEF FPC}
     FAppEvents: TApplicationProperties;
@@ -455,6 +464,58 @@ Else begin
   end;
 end;
 
+Procedure TMainFrm.RequestPopupMenuPopup(Sender: TObject);
+Var
+  value : WideString;
+  w : Integer;
+  c : TListModelColumn;
+  I : Integer;
+  p : TPoint;
+  clientP : TPoint;
+  selectedIndex : Integer;
+  columnFound : Boolean;
+begin
+w := 0;
+value := '';
+columnFound := False;
+GetCursorPos(p);
+clientP := RequestListView.ScreenToClient(p);
+selectedIndex := FModel.SelectedIndex;
+If selectedIndex <> -1 Then
+  begin
+  For I := 0 To FModel.ColumnCount - 1 Do
+    begin
+    c := FModel.Columns[I];
+    If c.Visible Then
+      begin
+      Inc(w, c.Width);
+      If clientP.X <= w Then
+        begin
+        value := FModel.Item(selectedIndex, I);
+        RPIncludeMenuItem.Caption := Format('Include "%s"', [value]);
+        RPHighlightMenuItem.Caption := Format('Highlight "%s"', [value]);
+        RPExcludeMenuItem.Caption := Format('IExclude "%s"', [value]);
+        RPHighlightMenuItem.Tag := c.Tag;
+        RPIncludeMenuItem.Tag := c.Tag;
+        RPExcludeMenuItem.Tag := c.Tag;
+        RequestPopupMenu.Tag := I;
+        columnFound := True;
+        Break;
+        end;
+      end;
+    end;
+  end;
+
+RPIncludeMenuItem.Enabled := columnFound;
+RPHighlightMenuItem.Enabled := columnFound;
+RPExcludeMenuItem.Enabled := columnFound;
+end;
+
+Procedure TMainFrm.RPDetailsMenuItemClick(Sender: TObject);
+begin
+Self.RequestDetailsMenuItemClick(RequestDetailsMenuItem);
+end;
+
 Procedure TMainFrm.SaveMenuItemClick(Sender: TObject);
 Var
   fn : WideString;
@@ -662,6 +723,37 @@ If LogOpenDialog.Execute Then
     fn := ChangeFileExt(fn, '.bin');
 
   FModel.LoadFromFile(fn);
+  end;
+end;
+
+procedure TMainFrm.PopupFilterClick(Sender: TObject);
+Var
+  filterAction : EFilterAction;
+  invalidButton : Boolean;
+  rf : TRequestFilter;
+  M : TMenuItem;
+  value : WideString;
+  rq : TDriverRequest;
+begin
+invalidButton := False;
+M := Sender As TMenuItem;
+If Sender = RPHighlightMenuItem Then
+  filterAction := ffaHighlight
+Else If Sender = RPIncludeMenuItem Then
+  filterAction := ffaInclude
+Else If Sender = RPExcludeMenuItem Then
+  filterAction := ffaExclude
+Else invalidButton := True;
+
+If Not invalidButton Then
+  begin
+  value := FModel.Item(FModel.SelectedIndex, RequestPopupMenu.Tag);
+  rq := FModel.Selected;
+  rf := TRequestFilter.NewInstance(rq.RequestType);
+  rf.SetCondition(ERequestListModelColumnType(M.Tag), rfoEquals, value);
+  rf.SetAction(filterAction);
+  FFilters.Insert(0, rf);
+  FModel.Reevaluate;
   end;
 end;
 

@@ -891,6 +891,7 @@ object MainFrm: TMainFrm
         OwnerData = True
         ReadOnly = True
         RowSelect = True
+        PopupMenu = RequestPopupMenu
         TabOrder = 0
         ViewStyle = vsReport
         OnDblClick = RequestDetailsMenuItemClick
@@ -900,10 +901,6 @@ object MainFrm: TMainFrm
       Caption = 'Data Parsers'
       ImageIndex = 1
       OnShow = DataParsersTabSheetShow
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object DataParsersListView: TListView
         Left = 0
         Top = 0
@@ -1059,5 +1056,29 @@ object MainFrm: TMainFrm
     Filter = 'Binary log files [*.bin]|*.bin|All files [*.*]|*.*'
     Left = 192
     Top = 88
+  end
+  object RequestPopupMenu: TPopupMenu
+    OnPopup = RequestPopupMenuPopup
+    Left = 68
+    Top = 168
+    object RPDetailsMenuItem: TMenuItem
+      Caption = 'Details...'
+      OnClick = RPDetailsMenuItemClick
+    end
+    object N3: TMenuItem
+      Caption = '-'
+    end
+    object RPIncludeMenuItem: TMenuItem
+      Caption = 'Include'
+      OnClick = PopupFilterClick
+    end
+    object RPHighlightMenuItem: TMenuItem
+      Caption = 'Highlight'
+      OnClick = PopupFilterClick
+    end
+    object RPExcludeMenuItem: TMenuItem
+      Caption = #203'xclude'
+      OnClick = PopupFilterClick
+    end
   end
 end

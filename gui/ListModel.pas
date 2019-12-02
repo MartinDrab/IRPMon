@@ -22,11 +22,13 @@ Type
     FColumn : TListColumn;
     FVisible : Boolean;
     FMenuItem : TMenuItem;
+  Protected
+    Function GetWidth:Cardinal;
   Public
     Constructor Create(ACaption:WideString; ATag:NativeUInt; AAutoSize:Boolean = False; AWidth:Cardinal = 50); Reintroduce;
 
     Property Caption : WideString Read FCaption;
-    Property Width : Cardinal Read FWidth;
+    Property Width : Cardinal Read GetWidth;
     Property AutoSize : Boolean Read FAutoSize;
     Property Tag : NativeUInt Read FTag;
     Property Visible : Boolean Read FVisible Write FVisible;
@@ -50,6 +52,7 @@ Type
     Function _Column(AIndex:Integer):TListModelColumn;
     Procedure OnColumnNemuItemClick(Sender:TObject);
     Function GetSelected:T;
+    Function GetSelectedIndex:Integer;
   Public
     Constructor Create(ADisplayer:TListView); Reintroduce;
     Destructor Destroy; Override;
@@ -75,6 +78,7 @@ Type
     Property Items [Index:Integer] : T Read _Item;
     Property Columns [Index:Integer] : TListModelColumn Read _Column;
     Property Selected:T Read GetSelected;
+    Property SelectedIndex:Integer Read GetSelectedIndex;
   end;
 
 Implementation
@@ -296,6 +300,18 @@ If Assigned(Displayer) Then
   end;
 end;
 
+Function TListModel<T>.GetSelectedIndex:Integer;
+Var
+  L : TListItem;
+begin
+Result := -1;
+If Assigned(Displayer) Then
+  begin
+  L := Displayer.Selected;
+  If Assigned(L) Then
+    Result := L.Index;
+  end;
+end;
 
 Procedure TListModel<T>.Clear;
 begin
@@ -382,6 +398,13 @@ FAutoSize := AAutoSize;
 FColumn := Nil;
 FMenuItem := Nil;
 FVisible := True;
+end;
+
+Function TListModelColumn.GetWidth:Cardinal;
+begin
+Result := FWidth;
+If FAutoSize Then
+  Result := FColumn.Width;
 end;
 
 
