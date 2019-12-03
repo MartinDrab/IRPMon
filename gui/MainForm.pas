@@ -62,6 +62,7 @@ Type
     RPIncludeMenuItem: TMenuItem;
     RPHighlightMenuItem: TMenuItem;
     RPExcludeMenuItem: TMenuItem;
+    HighlightColorDialog: TColorDialog;
     Procedure ClearMenuItemClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure CaptureEventsMenuItemClick(Sender: TObject);
@@ -734,6 +735,7 @@ Var
   M : TMenuItem;
   value : WideString;
   rq : TDriverRequest;
+  selectedColor : TColor;
 begin
 invalidButton := False;
 M := Sender As TMenuItem;
@@ -751,8 +753,18 @@ If Not invalidButton Then
   rq := FModel.Selected;
   rf := TRequestFilter.NewInstance(rq.RequestType);
   rf.SetCondition(ERequestListModelColumnType(M.Tag), rfoEquals, value);
+  selectedColor := $FFFFFF;
+  If filterAction = ffaHighlight Then
+    begin
+    If highlightColorDialog.Execute Then
+      selectedColor := highlightColorDialog.Color;
+    end;
+
   rf.SetAction(filterAction);
-  FFilters.Insert(0, rf);
+  If filterAction = ffaHighlight Then
+    FFilters.Add(rf)
+  Else FFilters.Insert(0, rf);
+
   FModel.Reevaluate;
   end;
 end;

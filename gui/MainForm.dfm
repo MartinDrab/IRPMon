@@ -1081,4 +1081,8 @@ object MainFrm: TMainFrm
       OnClick = PopupFilterClick
     end
   end
+  object HighlightColorDialog: TColorDialog
+    Left = 300
+    Top = 112
+  end
 end
