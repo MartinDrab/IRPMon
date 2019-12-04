@@ -4,7 +4,7 @@ program IRPMon;
   {$MODE Delphi}
 {$ENDIF}
 
-{$R 'uac.res' 'uac.rc'}
+
 
 uses
   WinSvc,
@@ -71,49 +71,41 @@ Var
   err : Cardinal;
   wow64 : LongBool;
 Begin
-If IsWow64Process(GetCurrentProcess, wow64) Then
+driverStarted := False;
+Application.Initialize;
+Application.MainFormOnTaskbar := True;
+err := TablesInit('ntstatus.txt', 'ioctl.txt');
+If err = ERROR_SUCCESS Then
   begin
-  If Not wow64 Then
+  hScm := OpenSCManagerW(Nil, Nil, scmAccess);
+  If hScm <> 0 Then
     begin
-    driverStarted := False;
-    Application.Initialize;
-    Application.MainFormOnTaskbar := True;
-    err := TablesInit('ntstatus.txt', 'ioctl.txt');
-    If err = ERROR_SUCCESS Then
+    taskList := TTaskOperationList.Create;
+    serviceTask := TDriverTaskObject.Create(hScm, serviceName, serviceDescription, serviceDescription, ExtractFilePath(Application.ExeName) + 'irpmndrv.sys');
+    serviceTask.SetCompletionCallback(OnServiceTaskComplete, Nil);
+    taskList.Add(hooHook, serviceTask);
+    taskList.Add(hooStart, serviceTask);
+    taskList.Add(hooLibraryInitialize, serviceTask);
+    With THookProgressFrm.Create(Application, taskList) Do
       begin
-      hScm := OpenSCManagerW(Nil, Nil, scmAccess);
-      If hScm <> 0 Then
-        begin
-        taskList := TTaskOperationList.Create;
-        serviceTask := TDriverTaskObject.Create(hScm, serviceName, serviceDescription, serviceDescription, ExtractFilePath(Application.ExeName) + 'irpmndrv.sys');
-        serviceTask.SetCompletionCallback(OnServiceTaskComplete, Nil);
-        taskList.Add(hooHook, serviceTask);
-        taskList.Add(hooStart, serviceTask);
-        taskList.Add(hooLibraryInitialize, serviceTask);
-        With THookProgressFrm.Create(Application, taskList) Do
-          begin
-          ShowModal;
-          Free;
-          end;
+      ShowModal;
+      Free;
+      end;
 
-        Application.CreateForm(TMainFrm, MainFrm);
-  MainFrm.TaskList := taskList;
-        MainFrm.ServiceTask := serviceTask;
-        Application.Run;
-        IRPMonDllFinalize;
+    Application.CreateForm(TMainFrm, MainFrm);
+    MainFrm.TaskList := taskList;
+    MainFrm.ServiceTask := serviceTask;
+    Application.Run;
+    IRPMonDllFinalize;
 
-        serviceTask.Free;
-        taskList.Free;
-        CloseServiceHandle(hScm);
-        end
-      Else WinErrorMessage('Unable to access SCM database', GetLastError);
-
-      TablesFinit;
-      end
-    Else WinErrorMessage('Unable to initialize name tables', err);
+    serviceTask.Free;
+    taskList.Free;
+    CloseServiceHandle(hScm);
     end
-  Else ErrorMessage('IRPMon cannot be run under WOW64. Please run the 64-bit version of the program');
+  Else WinErrorMessage('Unable to access SCM database', GetLastError);
+
+  TablesFinit;
   end
-Else WinErrorMessage('Failed to determine whether the IRPMon process is runnin under WOW64', GetLastError);
+Else WinErrorMessage('Unable to initialize name tables', err);
 End.
 
