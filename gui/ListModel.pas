@@ -236,6 +236,7 @@ Var
   I : Integer;
   m : TListModelColumn;
 begin
+FDisplayer.Columns.BeginUpdate;
 FDisplayer.Columns.Clear;
 For I := 0 To FColumns.Count - 1 Do
   begin
@@ -245,15 +246,16 @@ For I := 0 To FColumns.Count - 1 Do
 
   If m.Visible Then
     begin
-    With FDisplayer.Columns.Add Do
-      begin
-      Caption := m.Caption;
-      AutoSize := m.AutoSize;
-      Tag := m.Tag;
-      Width := m.Width;
-      end;
+    c := FDisplayer.Columns.Add;
+    m.FColumn := c;
+    c.Caption := m.Caption;
+    c.AutoSize := m.AutoSize;
+    c.Tag := m.Tag;
+    c.Width := m.Width;
     end;
   end;
+
+FDisplayer.Columns.EndUpdate;
 end;
 
 Procedure TListModel<T>.OnColumnNemuItemClick(Sender:TObject);
