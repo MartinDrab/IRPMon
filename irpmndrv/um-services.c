@@ -114,15 +114,13 @@ NTSTATUS UMHookDriver(PIOCTL_IRPMNDRV_HOOK_DRIVER_INPUT InputBuffer, ULONG Input
 		OutputBufferLength >= sizeof(IOCTL_IRPMNDRV_HOOK_DRIVER_OUTPUT)) {
 		if (ExGetPreviousMode() == UserMode) {
 			__try {
-				ProbeForRead(InputBuffer, sizeof(IOCTL_IRPMNDRV_HOOK_DRIVER_INPUT), 1);
+				ProbeForRead(InputBuffer, InputBufferLength, 1);
 				input = *InputBuffer;
 				ProbeForWrite(OutputBuffer, sizeof(IOCTL_IRPMNDRV_HOOK_DRIVER_OUTPUT), 1);
-				tmp = (PWCHAR)HeapMemoryAllocPaged(input.DriverNameLength + sizeof(WCHAR));
+				tmp = HeapMemoryAllocPaged(input.DriverNameLength);
 				if (tmp != NULL) {
-					ProbeForRead(input.DriverName, input.DriverNameLength, 1);
-					memcpy(tmp, input.DriverName, input.DriverNameLength);
+					memcpy(tmp, InputBuffer + 1, input.DriverNameLength);
 					tmp[input.DriverNameLength / sizeof(WCHAR)] = L'\0';
-					input.DriverName = tmp;
 					status = STATUS_SUCCESS;
 				} else status = STATUS_INSUFFICIENT_RESOURCES;
 			} __except (EXCEPTION_EXECUTE_HANDLER) {
@@ -139,7 +137,7 @@ NTSTATUS UMHookDriver(PIOCTL_IRPMNDRV_HOOK_DRIVER_INPUT InputBuffer, ULONG Input
 			PDRIVER_OBJECT targetDriver = NULL;
 			UNICODE_STRING uDriverName;
 
-			RtlInitUnicodeString(&uDriverName, input.DriverName);
+			RtlInitUnicodeString(&uDriverName, tmp);
 			status = GetDriverObjectByName(&uDriverName, &targetDriver);
 			if (NT_SUCCESS(status)) {
 				PDRIVER_HOOK_RECORD driverRecord = NULL;
@@ -170,7 +168,7 @@ NTSTATUS UMHookDriver(PIOCTL_IRPMNDRV_HOOK_DRIVER_INPUT InputBuffer, ULONG Input
 				ObDereferenceObject(targetDriver);
 			}
 
-			HeapMemoryFree(input.DriverName);
+			HeapMemoryFree(tmp);
 		}
 	} else status = STATUS_INFO_LENGTH_MISMATCH;
 
@@ -235,14 +233,12 @@ NTSTATUS UMHookAddDevice(PIOCTL_IRPMNDRV_HOOK_ADD_DEVICE_INPUT InputBUffer, ULON
 				input = *InputBUffer;
 				ProbeForWrite(OutputBuffer, OutputBufferLength, 1);
 				if (input.HookByName) {
-					deviceName = (PWCHAR)HeapMemoryAllocPaged(input.DeviceNameLength + sizeof(WCHAR));
+					deviceName = HeapMemoryAllocPaged(input.DeviceNameLength);
 					if (deviceName != NULL) {
-						ProbeForRead(input.DeviceName, input.DeviceNameLength, 1);
-						memcpy(deviceName, input.DeviceName, input.DeviceNameLength);
+						memcpy(deviceName, InputBUffer + 1, input.DeviceNameLength);
 						deviceName[input.DeviceNameLength / sizeof(WCHAR)] = L'\0';
-						input.DeviceName = deviceName;
 					} else status = STATUS_INSUFFICIENT_RESOURCES;
-				} else input.DeviceName = NULL;
+				}
 
 				if (NT_SUCCESS(status) && input.IRPSettings != NULL) {
 					irpSettings = (PUCHAR)HeapMemoryAllocPaged(sizeof(UCHAR)*(IRP_MJ_MAXIMUM_FUNCTION + 1));

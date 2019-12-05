@@ -331,22 +331,25 @@ VOID DriverComSnapshotFree(PIRPMON_DRIVER_INFO *DriverInfo, ULONG Count)
 DWORD DriverComHookDriver(PWCHAR DriverName, PDRIVER_MONITOR_SETTINGS MonitorSettings, PHANDLE HookHandle, PVOID *ObjectId)
 {
 	DWORD ret = ERROR_GEN_FAILURE;
-	IOCTL_IRPMNDRV_HOOK_DRIVER_INPUT input;
+	ULONG nameLen = 0;
+	PIOCTL_IRPMNDRV_HOOK_DRIVER_INPUT input = NULL;
 	IOCTL_IRPMNDRV_HOOK_DRIVER_OUTPUT output;
 	DEBUG_ENTER_FUNCTION("DriverName=\"%S\"; MonitorSettings=0x%p; HookHandle=0x%p; ObjectId=0x%p", DriverName, MonitorSettings, HookHandle, ObjectId);
 
-	input.DriverName = _CopyString(DriverName);
-	if (input.DriverName != NULL) {
-		input.DriverNameLength = (ULONG)wcslen(input.DriverName)*sizeof(WCHAR);
-		input.MonitorSettings = *MonitorSettings;
-		ret = _SynchronousOtherIOCTL(IOCTL_IRPMNDRV_HOOK_DRIVER, &input, sizeof(input), &output, sizeof(output));
+	nameLen = (ULONG)wcslen(DriverName)*sizeof(wchar_t);
+	input = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IOCTL_IRPMNDRV_HOOK_DRIVER_INPUT) + nameLen);
+	if (input != NULL) {
+		input->DriverNameLength = nameLen;
+		input->MonitorSettings = *MonitorSettings;
+		memcpy(input + 1, DriverName, nameLen);
+		ret = _SynchronousOtherIOCTL(IOCTL_IRPMNDRV_HOOK_DRIVER, input, sizeof(IOCTL_IRPMNDRV_HOOK_DRIVER_INPUT) + nameLen, &output, sizeof(output));
 		if (ret == ERROR_SUCCESS) {
 			*HookHandle = output.HookHandle;
 			if (ObjectId != NULL)
 				*ObjectId = output.ObjectId;
 		}
 
-		HeapFree(GetProcessHeap(), 0, input.DriverName);
+		HeapFree(GetProcessHeap(), 0, input);
 	} else ret = ERROR_NOT_ENOUGH_MEMORY;
 
 	DEBUG_EXIT_FUNCTION("0x%x, *Hookandle=0x%p", ret, *HookHandle);
@@ -451,25 +454,28 @@ DWORD DriverComGetRequest(PREQUEST_HEADER Request, DWORD Size)
 DWORD DriverComHookDeviceByName(PWCHAR DeviceName, PHANDLE HookHandle, PVOID *ObjectId)
 {
 	DWORD ret = ERROR_GEN_FAILURE;
-	IOCTL_IRPMNDRV_HOOK_ADD_DEVICE_INPUT input;
+	ULONG nameLen = 0;
+	PIOCTL_IRPMNDRV_HOOK_ADD_DEVICE_INPUT input = NULL;
 	IOCTL_IRPMNDRV_HOOK_ADD_DEVICE_OUTPUT output;
 	DEBUG_ENTER_FUNCTION("DeviceName=\"%S\"; HookHandle=0x%p; ObjectId=0x%p", DeviceName, HookHandle, ObjectId);
 
-	input.HookByName = TRUE;
-	input.IRPSettings = NULL;
-	input.FastIoSettings = NULL;
-	input.DeviceAddress = NULL;
-	input.DeviceName = _CopyString(DeviceName);
-	if (input.DeviceName != NULL) {
-		input.DeviceNameLength = (ULONG)wcslen(input.DeviceName)*sizeof(WCHAR);
-		ret = _SynchronousOtherIOCTL(IOCTL_IRPMNDRV_HOOK_ADD_DEVICE, &input, sizeof(input), &output, sizeof(output));
+	nameLen = (ULONG)wcslen(DeviceName)*sizeof(WCHAR);
+	input = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IOCTL_IRPMNDRV_HOOK_ADD_DEVICE_INPUT) + nameLen);
+	if (input != NULL) {
+		input->HookByName = TRUE;
+		input->IRPSettings = NULL;
+		input->FastIoSettings = NULL;
+		input->DeviceAddress = NULL;
+		input->DeviceNameLength = nameLen;
+		memcpy(input + 1, DeviceName, nameLen);
+		ret = _SynchronousOtherIOCTL(IOCTL_IRPMNDRV_HOOK_ADD_DEVICE, input, sizeof(IOCTL_IRPMNDRV_HOOK_ADD_DEVICE_INPUT) + nameLen, &output, sizeof(output));
 		if (ret == ERROR_SUCCESS) {
 			*HookHandle = output.DeviceHandle;
 			if (ObjectId != NULL)
 				*ObjectId = output.ObjectId;
 		}
 
-		HeapFree(GetProcessHeap(), 0, input.DeviceName);
+		HeapFree(GetProcessHeap(), 0, input);
 	} else ret = ERROR_NOT_ENOUGH_MEMORY;
 
 	DEBUG_EXIT_FUNCTION("%u, *HookHandle=0x%p", ret, *HookHandle);
@@ -484,7 +490,6 @@ DWORD DriverComHookDeviceByAddress(PVOID DeviceObject, PHANDLE HookHandle, PVOID
 	DEBUG_ENTER_FUNCTION("DeviceObject=0x%p; HookHandle=0x%p; ObjectId=0x%p", DeviceObject, HookHandle, ObjectId);
 
 	input.HookByName = FALSE;
-	input.DeviceName = NULL;
 	input.DeviceNameLength = 0;
 	input.DeviceAddress = DeviceObject;
 	input.FastIoSettings = NULL;
