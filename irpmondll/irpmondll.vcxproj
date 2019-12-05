@@ -174,12 +174,16 @@
     <ClInclude Include="..\include\irpmondll.h" />
     <ClInclude Include="..\include\kernel-shared.h" />
     <ClInclude Include="..\shared\request.h" />
+    <ClInclude Include="device-connector.h" />
     <ClInclude Include="driver-com.h" />
+    <ClInclude Include="network-connector.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\shared\request.c" />
+    <ClCompile Include="device-connector.c" />
     <ClCompile Include="driver-com.c" />
     <ClCompile Include="main.c" />
+    <ClCompile Include="network-connector.c" />
   </ItemGroup>
   <ItemGroup>
     <None Include="irpmondll.def" />

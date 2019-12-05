@@ -42,6 +42,12 @@
     <ClInclude Include="..\shared\request.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="device-connector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="network-connector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.c">
@@ -51,6 +57,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\shared\request.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="device-connector.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="network-connector.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

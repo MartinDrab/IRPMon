@@ -4,6 +4,7 @@
 #include "irpmondll-types.h"
 #include "driver-com.h"
 #include "request.h"
+#include "device-connector.h"
 #include "irpmondll.h"
 
 
