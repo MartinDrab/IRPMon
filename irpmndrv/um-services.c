@@ -216,6 +216,8 @@ NTSTATUS UMUnhookDriver(PIOCTL_IRPMNDRV_UNHOOK_DRIVER_INPUT InputBuffer, ULONG I
 NTSTATUS UMHookAddDevice(PIOCTL_IRPMNDRV_HOOK_ADD_DEVICE_INPUT InputBUffer, ULONG InputBufferLength, PIOCTL_IRPMNDRV_HOOK_ADD_DEVICE_OUTPUT OutputBuffer, ULONG OutputBufferLength)
 {
 	PWCHAR deviceName = NULL;
+	PUCHAR irpSettings = NULL;
+	PUCHAR fastIoSettings = NULL;
 	IOCTL_IRPMNDRV_HOOK_ADD_DEVICE_INPUT input = {0};
 	IOCTL_IRPMNDRV_HOOK_ADD_DEVICE_OUTPUT output = {0};
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
@@ -224,9 +226,6 @@ NTSTATUS UMHookAddDevice(PIOCTL_IRPMNDRV_HOOK_ADD_DEVICE_INPUT InputBUffer, ULON
 	if (InputBufferLength == sizeof(IOCTL_IRPMNDRV_HOOK_ADD_DEVICE_INPUT) &&
 		OutputBufferLength == sizeof(IOCTL_IRPMNDRV_HOOK_ADD_DEVICE_OUTPUT)) {
 		if (ExGetPreviousMode() == UserMode) {
-			PUCHAR irpSettings = NULL;
-			PUCHAR fastIoSettings = NULL;
-			
 			__try {
 				status = STATUS_SUCCESS;
 				ProbeForRead(InputBUffer, InputBufferLength, 1);
@@ -240,22 +239,18 @@ NTSTATUS UMHookAddDevice(PIOCTL_IRPMNDRV_HOOK_ADD_DEVICE_INPUT InputBUffer, ULON
 					} else status = STATUS_INSUFFICIENT_RESOURCES;
 				}
 
-				if (NT_SUCCESS(status) && input.IRPSettings != NULL) {
-					irpSettings = (PUCHAR)HeapMemoryAllocPaged(sizeof(UCHAR)*(IRP_MJ_MAXIMUM_FUNCTION + 1));
-					if (irpSettings != NULL) {
-						ProbeForRead(input.IRPSettings, sizeof(UCHAR)*(IRP_MJ_MAXIMUM_FUNCTION + 1), 1);
-						memcpy(irpSettings, input.IRPSettings, sizeof(UCHAR)*(IRP_MJ_MAXIMUM_FUNCTION + 1));
-						input.IRPSettings = irpSettings;
-					} else status = STATUS_INSUFFICIENT_RESOURCES;
+				if (NT_SUCCESS(status) && input.IRPSettingsSpecified) {
+					irpSettings = HeapMemoryAllocPaged(sizeof(input.IRPSettings));
+					if (irpSettings != NULL)
+						memcpy(irpSettings, input.IRPSettings, sizeof(input.IRPSettings));
+					else status = STATUS_INSUFFICIENT_RESOURCES;
 				}
 
-				if (NT_SUCCESS(status) && input.FastIoSettings != NULL) {
-					fastIoSettings = (PUCHAR)HeapMemoryAllocPaged(sizeof(UCHAR)*FastIoMax);
-					if (irpSettings != NULL) {
-						ProbeForRead(input.FastIoSettings, sizeof(UCHAR)*FastIoMax, 1);
-						memcpy(fastIoSettings, input.FastIoSettings, sizeof(UCHAR)*FastIoMax);
-						input.FastIoSettings = fastIoSettings;
-					} else status = STATUS_INSUFFICIENT_RESOURCES;
+				if (NT_SUCCESS(status) && input.FastIoSettingsSpecified) {
+					fastIoSettings = HeapMemoryAllocPaged(sizeof(input.FastIoSettings));
+					if (irpSettings != NULL)
+						memcpy(fastIoSettings, input.FastIoSettings, sizeof(input.FastIoSettings));
+					else status = STATUS_INSUFFICIENT_RESOURCES;
 				}
 
 				if (!NT_SUCCESS(status))
@@ -292,7 +287,7 @@ NTSTATUS UMHookAddDevice(PIOCTL_IRPMNDRV_HOOK_ADD_DEVICE_INPUT InputBUffer, ULON
 				if (driverRecord != NULL) {
 					PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-					status = DriverHookRecordAddDevice(driverRecord, targetDevice, input.IRPSettings, input.FastIoSettings, TRUE, &deviceRecord);
+					status = DriverHookRecordAddDevice(driverRecord, targetDevice, irpSettings, fastIoSettings, TRUE, &deviceRecord);
 					if (NT_SUCCESS(status)) {
 						status = HandleTableHandleCreate(_deviceHandleTable, deviceRecord, &output.DeviceHandle);
 						if (NT_SUCCESS(status)) {
@@ -322,11 +317,11 @@ NTSTATUS UMHookAddDevice(PIOCTL_IRPMNDRV_HOOK_ADD_DEVICE_INPUT InputBUffer, ULON
 			}
 
 			if (ExGetPreviousMode() == UserMode) {
-				if (input.FastIoSettings != NULL)
-					HeapMemoryFree(input.FastIoSettings);
+				if (irpSettings != NULL)
+					HeapMemoryFree(irpSettings);
 
-				if (input.IRPSettings != NULL)
-					HeapMemoryFree(input.IRPSettings);
+				if (fastIoSettings != NULL)
+					HeapMemoryFree(fastIoSettings);
 
 				if (deviceName != NULL)
 					HeapMemoryFree(deviceName);

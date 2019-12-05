@@ -463,8 +463,8 @@ DWORD DriverComHookDeviceByName(PWCHAR DeviceName, PHANDLE HookHandle, PVOID *Ob
 	input = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IOCTL_IRPMNDRV_HOOK_ADD_DEVICE_INPUT) + nameLen);
 	if (input != NULL) {
 		input->HookByName = TRUE;
-		input->IRPSettings = NULL;
-		input->FastIoSettings = NULL;
+		input->IRPSettingsSpecified = FALSE;
+		input->FastIoSettingsSpecified = FALSE;
 		input->DeviceAddress = NULL;
 		input->DeviceNameLength = nameLen;
 		memcpy(input + 1, DeviceName, nameLen);
@@ -490,10 +490,10 @@ DWORD DriverComHookDeviceByAddress(PVOID DeviceObject, PHANDLE HookHandle, PVOID
 	DEBUG_ENTER_FUNCTION("DeviceObject=0x%p; HookHandle=0x%p; ObjectId=0x%p", DeviceObject, HookHandle, ObjectId);
 
 	input.HookByName = FALSE;
+	input.FastIoSettingsSpecified = FALSE;
+	input.IRPSettingsSpecified = FALSE;
 	input.DeviceNameLength = 0;
 	input.DeviceAddress = DeviceObject;
-	input.FastIoSettings = NULL;
-	input.IRPSettings = NULL;
 	ret = _SynchronousOtherIOCTL(IOCTL_IRPMNDRV_HOOK_ADD_DEVICE, &input, sizeof(input), &output, sizeof(output));
 	if (ret == ERROR_SUCCESS) {
 		*HookHandle = output.DeviceHandle;
