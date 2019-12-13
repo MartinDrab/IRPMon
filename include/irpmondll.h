@@ -308,9 +308,6 @@ IRPMONDLL_API VOID WINAPI IRPMonDllSnapshotFree(PIRPMON_DRIVER_INFO *DriverInfo,
 /** Connects the current thread (the calling one) to the queue
  *  of events detected by the IRPMon driver.
  *
- *  @param Semaphore Handle to a semaphore the counter of which is increased
- *  by one every time a new event is inserted into the queue.
- *
  *  @return
  *  The function returns one of the following error codes:
  *  @value ERROR_SUCCESS The thread successfully connected to the queue.
@@ -320,7 +317,7 @@ IRPMONDLL_API VOID WINAPI IRPMonDllSnapshotFree(PIRPMON_DRIVER_INFO *DriverInfo,
  *  At most one thread can be connected to the IRPMon Event Queue at any
  *  moment of time.
  */
-IRPMONDLL_API DWORD WINAPI IRPMonDllConnect(HANDLE hSemaphore);
+IRPMONDLL_API DWORD WINAPI IRPMonDllConnect(void);
 
 
 /** Disconnects the current thread from the IRPMon Event Queue.
@@ -488,7 +485,7 @@ IRPMONDLL_API BOOL WINAPI IRPMonDllInitialized(VOID);
  *  This routine must be successfully called before any other routine exported
  *  by the library.
  */
-IRPMONDLL_API DWORD WINAPI IRPMonDllInitialize(VOID);
+IRPMONDLL_API DWORD WINAPI IRPMonDllInitialize(const IRPMON_INIT_INFO *Info);
 
 
 /** Disconnects the current process from the IRPMon driver and cleans up

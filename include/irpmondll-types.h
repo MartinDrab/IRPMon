@@ -2,6 +2,7 @@
 #ifndef __IRPMONDLL_TYPES_H__
 #define __IRPMONDLL_TYPES_H__
 
+#include <stdint.h>
 #include <windows.h>
 #include "general-types.h"
 
@@ -54,6 +55,44 @@ typedef struct _DRIVER_NAME_WATCH_RECORD {
 	DRIVER_MONITOR_SETTINGS MonitorSettings;
 	PWCHAR DriverName;
 } DRIVER_NAME_WATCH_RECORD, *PDRIVER_NAME_WATCH_RECORD;
+
+/************************************************************************/
+/*              LIBRARY INITIALIZATION DATA TYPES                       */
+/************************************************************************/
+
+typedef enum _EIRPMonConnectorType {
+	ictNone,
+	ictDevice,
+	ictNetwork,
+} EConnectorType, *PEConnectorType;
+
+typedef struct _IRPMON_INIT_INFO {
+	EConnectorType ConnectorType;
+	union {
+		struct {
+			wchar_t *DeviceName;
+		} Device;
+		struct {
+			wchar_t *Address;
+			wchar_t *Service;
+			uint16_t AddressFamily;
+		} Network;
+	};
+} IRPMON_INIT_INFO, *PIRPMON_INIT_INFO;
+
+typedef DWORD (DRIVERCOMM_SYNC_IOCTL)(DWORD Code, PVOID InputBuffer, ULONG InputBufferLength, PVOID OutputBuffer, ULONG OutputBufferLength);
+typedef DWORD(DRIVERCOMM_CONNECT)(const IRPMON_INIT_INFO *Info);
+typedef void(DRIVERCOMM_DISCONNECT)(void);
+typedef BOOL(DRIVERCOMM_CONNECTED)(void);
+
+typedef struct _IRPMON_DRIVER_COMM_INTERFACE {
+	EConnectorType InterfaceType;
+	DRIVERCOMM_SYNC_IOCTL *SynchronousIoctl;
+	DRIVERCOMM_CONNECT *Connect;
+	DRIVERCOMM_DISCONNECT *Disconnect;
+	DRIVERCOMM_CONNECTED *Connected;
+} IRPMON_DRIVER_COMM_INTERFACE, *PIRPMON_DRIVER_COMM_INTERFACE;
+
 
 
 

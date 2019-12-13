@@ -1,0 +1,7 @@
+LIBRARY network-connector
+EXPORTS
+	DriverCommInterface	PRIVATE
+	NetConn_SynchronousOtherIOCTL
+	NetConn_Connect
+	NetConn_Disconnect
+	NetConn_Active

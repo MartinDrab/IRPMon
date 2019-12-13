@@ -4,7 +4,6 @@
 #include "irpmondll-types.h"
 #include "driver-com.h"
 #include "request.h"
-#include "device-connector.h"
 #include "irpmondll.h"
 
 
@@ -29,9 +28,9 @@ IRPMONDLL_API size_t WINAPI IRPMonDllGetRequestSize(const REQUEST_HEADER *Reques
 }
 
 
-IRPMONDLL_API DWORD WINAPI IRPMonDllConnect(HANDLE hSemaphore)
+IRPMONDLL_API DWORD WINAPI IRPMonDllConnect(void)
 {
-	return DriverComConnect(hSemaphore);
+	return DriverComConnect();
 }
 
 IRPMONDLL_API DWORD WINAPI IRPMonDllDisconnect(VOID)
@@ -263,12 +262,12 @@ IRPMONDLL_API BOOL WINAPI IRPMonDllInitialized(VOID)
 	return ret;
 }
 
-IRPMONDLL_API DWORD WINAPI IRPMonDllInitialize(VOID)
+IRPMONDLL_API DWORD WINAPI IRPMonDllInitialize(const IRPMON_INIT_INFO *Info)
 {
 	DWORD ret = ERROR_GEN_FAILURE;
-	DEBUG_ENTER_FUNCTION_NO_ARGS();
+	DEBUG_ENTER_FUNCTION("Info=0x%p", Info);
 
-	ret = DriverComModuleInit();
+	ret = DriverComModuleInit(Info);
 
 	DEBUG_EXIT_FUNCTION("%u", ret);
 	return ret;

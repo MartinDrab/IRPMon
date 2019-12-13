@@ -14,7 +14,7 @@ DWORD DriverComHookedDriverGetInfo(HANDLE Driverhandle, PDRIVER_MONITOR_SETTINGS
 DWORD DriverComHookedDriverActivate(HANDLE DriverHandle, BOOLEAN Activate);
 DWORD DriverComUnhookDriver(HANDLE HookHandle);
 
-DWORD DriverComConnect(HANDLE hSemaphore);
+DWORD DriverComConnect(void);
 DWORD DriverComDisconnect(VOID);
 DWORD DriverComGetRequest(PREQUEST_HEADER Request, DWORD Size);
 
@@ -51,7 +51,7 @@ DWORD _SynchronousReadIOCTL(DWORD Code, PVOID OutputBuffer, ULONG OutputBufferLe
 DWORD _SynchronousOtherIOCTL(DWORD Code, PVOID InputBuffer, ULONG InputBufferLength, PVOID OutputBuffer, ULONG OutputBufferLength);
 DWORD _SynchronousVariableOutputIOCTL(ULONG Code, PVOID InputBuffer, ULONG InputBufferLength, ULONG InitialSize, PVOID *OutputBuffer, PULONG OutputBufferLength);
 
-DWORD DriverComModuleInit(VOID);
+DWORD DriverComModuleInit(const IRPMON_INIT_INFO *Info);
 VOID DriverComModuleFinit(VOID);
 BOOL DriverComDeviceConnected(VOID);
 

@@ -1,0 +1,7 @@
+LIBRARY device-connector
+EXPORTS
+	DriverCommInterface	PRIVATE
+	DevConn_SynchronousOtherIOCTL
+	DevConn_Connect
+	DevConn_Disconnect
+	DevConn_Active

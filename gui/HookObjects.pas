@@ -67,6 +67,7 @@ Type
 
   TDriverTaskObject = Class (TTaskObject)
   Private
+    FInitInfo : IRPMON_INIT_INFO;
     FServiceName : WideString;
     FServiceBinary : WideString;
     FServiceDescription : WideString;
@@ -77,7 +78,7 @@ Type
     Function Load:Cardinal;
     Function Unload:Cardinal;
   Public
-    Constructor Create(ASCHandle:SC_HANDLE; AServiceName:WideString; AServiceDisplayName:WideString = ''; AServiceDescription:WideString = ''; AFileName:WideString = ''); Reintroduce;
+    Constructor Create(Var AInitInfo:IRPMON_INIT_INFO; ASCHandle:SC_HANDLE; AServiceName:WideString; AServiceDisplayName:WideString = ''; AServiceDescription:WideString = ''; AFileName:WideString = ''); Reintroduce;
     Function Operation(AOperationType:EHookObjectOperation):Cardinal; Override;
     Function OperationString(AOpType:EHookObjectOperation):WideString; Override;
     Function OperationResult(AOpType:EHookObjectOperation; AStatus:Cardinal):EHookObjectOperationResult; Override;
@@ -390,9 +391,10 @@ end;
 
 (** TDriverTaskObject **)
 
-Constructor TDriverTaskObject.Create(ASCHandle:SC_HANDLE; AServiceName:WideString; AServiceDisplayName:WideString = ''; AServiceDescription:WideString = ''; AFileName:WideString = '');
+Constructor TDriverTaskObject.Create(Var AInitInfo:IRPMON_INIT_INFO; ASCHandle:SC_HANDLE; AServiceName:WideString; AServiceDisplayName:WideString = ''; AServiceDescription:WideString = ''; AFileName:WideString = '');
 begin
 Inherited Create('Driver', AServiceName, [hooHook, hooUnhook, hooStart, hooStop, hooLibraryInitialize, hooLibraryFinalize]);
+FInitInfo := AInitInfo;
 FServiceName := AServiceName;
 FServiceDisplayName := AServiceDisplayName;
 FServiceDescription := AServiceDescription;
@@ -408,7 +410,7 @@ Case AOperationType Of
   hooStart : Result := Load;
   hooStop : Result := Unload;
   hooUnhook : Result := Uninstall;
-  hooLibraryInitialize : Result := IRPMonDllInitialize;
+  hooLibraryInitialize : Result := IRPMonDllInitialize(FInitInfo);
   hooLibraryFinalize : IRPMonDllFInalize;
   Else Result := ERROR_NOT_SUPPORTED;
   end;

@@ -36,7 +36,8 @@ uses
   DataParsers in 'DataParsers.pas',
   FileObjectNameXXXRequest in 'FileObjectNameXXXRequest.pas',
   FillterForm in 'FillterForm.pas' {FilterFrm},
-  ProcessXXXRequests in 'ProcessXXXRequests.pas';
+  ProcessXXXRequests in 'ProcessXXXRequests.pas',
+  ConnectorSelectionForm in 'ConnectorSelectionForm.pas' {ConnectorSelectionFrm};
 
 {$R *.res}
 
@@ -65,45 +66,75 @@ end;
 
 
 Var
+  connectorForm : TConnectorSelectionFrm;
   taskList : TTaskOperationList;
   serviceTask : TDriverTaskObject;
   hScm : THandle;
   err : Cardinal;
   wow64 : LongBool;
+  connType : EIRPMonConnectorType;
+  initInfo : IRPMON_INIT_INFO;
 Begin
+connType := ictNone;
 driverStarted := False;
 Application.Initialize;
 Application.MainFormOnTaskbar := True;
 err := TablesInit('ntstatus.txt', 'ioctl.txt');
 If err = ERROR_SUCCESS Then
   begin
-  hScm := OpenSCManagerW(Nil, Nil, scmAccess);
-  If hScm <> 0 Then
+  FillChar(initInfo, SizeOf(initInfo), 0);
+  initInfo.AddressFamily := 2;
+  connectorForm := TConnectorSelectionFrm.Create(Application);
+  With connectorForm Do
     begin
-    taskList := TTaskOperationList.Create;
-    serviceTask := TDriverTaskObject.Create(hScm, serviceName, serviceDescription, serviceDescription, ExtractFilePath(Application.ExeName) + 'irpmndrv.sys');
-    serviceTask.SetCompletionCallback(OnServiceTaskComplete, Nil);
+    ShowModal;
+    If Not Cancelled Then
+      begin
+      connType := ConnectionType;
+      case connType of
+        ictDevice : initInfo.DeviceName := PWideChar(DeviceName);
+        ictNetwork : begin
+          initInfo.NetworkHost := PWideChar(NetworkAddress);
+          initInfo.NetworkPort := PWideChar(NetworkPort);
+          end;
+        end;
+      end;
+    end;
+
+  initInfo.ConnectionType := connType;
+  If connType = ictDevice Then
+    begin
+    hScm := OpenSCManagerW(Nil, Nil, scmAccess);
+    end;
+
+  taskList := TTaskOperationList.Create;
+  serviceTask := TDriverTaskObject.Create(initInfo, hScm, serviceName, serviceDescription, serviceDescription, ExtractFilePath(Application.ExeName) + 'irpmndrv.sys');
+  serviceTask.SetCompletionCallback(OnServiceTaskComplete, Nil);
+  If connType = ictDevice Then
+    begin
     taskList.Add(hooHook, serviceTask);
     taskList.Add(hooStart, serviceTask);
-    taskList.Add(hooLibraryInitialize, serviceTask);
-    With THookProgressFrm.Create(Application, taskList) Do
-      begin
-      ShowModal;
-      Free;
-      end;
+    end;
 
-    Application.CreateForm(TMainFrm, MainFrm);
-    MainFrm.TaskList := taskList;
-    MainFrm.ServiceTask := serviceTask;
-    Application.Run;
-    IRPMonDllFinalize;
+  taskList.Add(hooLibraryInitialize, serviceTask);
+  With THookProgressFrm.Create(Application, taskList) Do
+    begin
+    ShowModal;
+    Free;
+    end;
 
-    serviceTask.Free;
-    taskList.Free;
+  Application.CreateForm(TMainFrm, MainFrm);
+  MainFrm.ServiceTask := serviceTask;
+  MainFrm.TaskList := taskList;
+  MainFrm.ConnectorType := connType;
+  Application.Run;
+  IRPMonDllFinalize;
+  If connType = ictDevice Then
     CloseServiceHandle(hScm);
-    end
-  Else WinErrorMessage('Unable to access SCM database', GetLastError);
 
+   serviceTask.Free;
+   taskList.Free;
+   connectorForm.Free;
   TablesFinit;
   end
 Else WinErrorMessage('Unable to initialize name tables', err);

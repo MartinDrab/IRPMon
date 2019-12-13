@@ -6,7 +6,6 @@
 #include "kernel-shared.h"
 #include "general-types.h"
 #include "irpmondll-types.h"
-#include "device-connector.h"
 #include "driver-com.h"
 
 
@@ -24,7 +23,8 @@ typedef VOID(WINAPI RTLFREEUNICODESTRING)(PUNICODE_STRING String);
 
 
 static BOOLEAN _initialized = FALSE;
-static BOOLEAN _connected = FALSE;
+static PIRPMON_DRIVER_COMM_INTERFACE _dcInterface = NULL;
+static HMODULE _hConnector = NULL;
 
 static RTLSTRINGFROMGUID *_RtlStringFromGuid = NULL;
 static RTLFREEUNICODESTRING *_RtlFreeUnicodeString = NULL;
@@ -345,14 +345,12 @@ DWORD DriverComUnhookDriver(HANDLE HookHandle)
 	return ret;
 }
 
-DWORD DriverComConnect(HANDLE hSemaphore)
+DWORD DriverComConnect(void)
 {
 	DWORD ret = ERROR_GEN_FAILURE;
-	IOCTL_IRPMNDRV_CONNECT_INPUT input;
-	DEBUG_ENTER_FUNCTION("hSemaphore=0x%p", hSemaphore);
+	DEBUG_ENTER_FUNCTION_NO_ARGS();
 
-	input.SemaphoreHandle = hSemaphore;
-	ret = _SynchronousWriteIOCTL(IOCTL_IRPMNDRV_CONNECT, &input, sizeof(input));
+	ret = _SynchronousNoIOIOCTL(IOCTL_IRPMNDRV_CONNECT);
 
 	DEBUG_EXIT_FUNCTION("%u", ret);
 	return ret;
@@ -462,9 +460,18 @@ DWORD DriverComDeviceSetInfo(HANDLE DeviceHandle, PUCHAR IRPSettings, PUCHAR Fas
 	IOCTL_IRPMNDRV_HOOK_DEVICE_SET_INFO_INPUT input;
 	DEBUG_ENTER_FUNCTION("DeviceHandle=0x%p; IRPSettings=0x%p; FastIoSettings=0x%p; MonitoringEnabled=%u", DeviceHandle, IRPSettings, FastIoSettings, MonitoringEnabled);
 
+	memset(&input, 0, sizeof(input));
 	input.DeviceHandle = DeviceHandle;
-	input.IRPSettings = IRPSettings;
-	input.FastIoSettings = FastIoSettings;
+	if (IRPSettings != NULL) {
+		input.IRPSettingsSpecified = TRUE;
+		memcpy(input.IRPSettings, IRPSettings, sizeof(input.IRPSettings));
+	}
+
+	if (FastIoSettings != NULL) {
+		input.FastIoSettingsSpecified = TRUE;
+		memcpy(input.FastIoSettings, FastIoSettings, sizeof(input.FastIoSettings));
+	}
+
 	input.MonitoringEnabled = MonitoringEnabled;
 	ret = _SynchronousWriteIOCTL(IOCTL_IRPMNDRV_HOOK_DEVICE_SET_INFO, &input, sizeof(input));
 
@@ -947,7 +954,8 @@ BOOL DriverComDeviceConnected(VOID)
 	BOOL ret = FALSE;
 	DEBUG_ENTER_FUNCTION_NO_ARGS();
 
-	ret = DevConn_Active();
+	if (_dcInterface != NULL)
+		ret = _dcInterface->Connected();
 
 	DEBUG_EXIT_FUNCTION("%u", ret);
 	return ret;
@@ -956,25 +964,33 @@ BOOL DriverComDeviceConnected(VOID)
 
 DWORD _SynchronousNoIOIOCTL(DWORD Code)
 {
-	return DevConn_SynchronousNoIOIOCTL(Code);
+	return _SynchronousOtherIOCTL(Code, NULL, 0, NULL, 0);
 }
 
 
 DWORD _SynchronousWriteIOCTL(DWORD Code, PVOID InputBuffer, ULONG InputBufferLength)
 {
-	return DevConn_SynchronousWriteIOCTL(Code, InputBuffer, InputBufferLength);
+	return _SynchronousOtherIOCTL(Code, InputBuffer, InputBufferLength, NULL, 0);
 }
 
 
 DWORD _SynchronousReadIOCTL(DWORD Code, PVOID OutputBuffer, ULONG OutputBufferLength)
 {
-	return DevConn_SynchronousReadIOCTL(Code, OutputBuffer, OutputBufferLength);
+	return _SynchronousOtherIOCTL(Code, NULL, 0, OutputBuffer, OutputBufferLength);
 }
 
 
 DWORD _SynchronousOtherIOCTL(DWORD Code, PVOID InputBuffer, ULONG InputBufferLength, PVOID OutputBuffer, ULONG OutputBufferLength)
 {
-	return DevConn_SynchronousOtherIOCTL(Code, InputBuffer, InputBufferLength, OutputBuffer, OutputBufferLength);
+	DWORD ret = ERROR_GEN_FAILURE;
+	DEBUG_ENTER_FUNCTION("Code=0x%x; InputBuffer=0x%p; InputBufferLength=%u; OutputBuffer=0x%p; OutputBufferLength=%u", Code, InputBuffer, InputBufferLength, OutputBuffer, OutputBufferLength);
+
+	ret = ERROR_NOT_SUPPORTED;
+	if (_dcInterface != NULL)
+		ret = _dcInterface->SynchronousIoctl(Code, InputBuffer, InputBufferLength, OutputBuffer, OutputBufferLength);
+
+	DEBUG_EXIT_FUNCTION("%u", ret);
+	return ret;
 }
 
 
@@ -1015,19 +1031,50 @@ DWORD _SynchronousVariableOutputIOCTL(ULONG Code, PVOID InputBuffer, ULONG Input
 /************************************************************************/
 
 
-DWORD DriverComModuleInit(VOID)
+DWORD DriverComModuleInit(const IRPMON_INIT_INFO *Info)
 {
 	HMODULE HNtdll = NULL;
+	const wchar_t *libraryName = NULL;
 	DWORD ret = ERROR_GEN_FAILURE;
-	DEBUG_ENTER_FUNCTION_NO_ARGS();
+	DEBUG_ENTER_FUNCTION("Info=0x%p", Info);
 
+	ret = ERROR_SUCCESS;
 	HNtdll = GetModuleHandleW(L"ntdll.dll");
 	if (HNtdll != NULL) {
 		_RtlStringFromGuid = (RTLSTRINGFROMGUID *)GetProcAddress(HNtdll, "RtlStringFromGUID");
 		if (_RtlStringFromGuid != NULL) {
 			_RtlFreeUnicodeString = (RTLFREEUNICODESTRING *)GetProcAddress(HNtdll, "RtlFreeUnicodeString");
 			if (_RtlFreeUnicodeString != NULL) {
-				ret = DevConn_Connect();
+				switch (Info->ConnectorType) {
+					case ictNone:
+						libraryName = NULL;
+						break;
+					case ictDevice:
+						libraryName = L"device-connector.dll";
+						break;
+					case ictNetwork:
+						libraryName = L"network-connector.dll";
+						break;
+					default:
+						ret = ERROR_NOT_SUPPORTED;
+						break;
+				}
+				
+				if (libraryName != NULL) {
+					_hConnector = LoadLibraryW(libraryName);
+					if (_hConnector != NULL) {
+						_dcInterface = (PIRPMON_DRIVER_COMM_INTERFACE)GetProcAddress(_hConnector, "DriverCommInterface");
+						if (_dcInterface != NULL) {
+							ret = _dcInterface->Connect(Info);
+							if (ret != ERROR_SUCCESS)
+								_dcInterface = NULL;
+						} else ret = GetLastError();
+
+						if (ret != ERROR_SUCCESS)
+							FreeLibrary(_hConnector);
+					} else ret = GetLastError();
+				}
+
 				_initialized = (ret == ERROR_SUCCESS);
 			} else ret = GetLastError();
 		} else ret = GetLastError();
@@ -1042,9 +1089,12 @@ VOID DriverComModuleFinit(VOID)
 {
 	DEBUG_ENTER_FUNCTION_NO_ARGS();
 
-	_connected = FALSE;
 	_initialized = FALSE;
-	DevConn_Disconnect();
+	if (_dcInterface != NULL) {
+		_dcInterface->Disconnect();
+		_dcInterface = NULL;
+		FreeLibrary(_hConnector);
+	}
 
 	DEBUG_EXIT_FUNCTION_VOID();
 	return;

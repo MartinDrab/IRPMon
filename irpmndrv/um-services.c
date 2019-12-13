@@ -112,17 +112,21 @@ NTSTATUS UMHookDriver(PIOCTL_IRPMNDRV_HOOK_DRIVER_INPUT InputBuffer, ULONG Input
 
 	if (InputBufferLength >= sizeof(IOCTL_IRPMNDRV_HOOK_DRIVER_INPUT) &&
 		OutputBufferLength >= sizeof(IOCTL_IRPMNDRV_HOOK_DRIVER_OUTPUT)) {
+		status = STATUS_SUCCESS;
 		if (ExGetPreviousMode() == UserMode) {
 			__try {
 				ProbeForRead(InputBuffer, InputBufferLength, 1);
 				input = *InputBuffer;
-				ProbeForWrite(OutputBuffer, sizeof(IOCTL_IRPMNDRV_HOOK_DRIVER_OUTPUT), 1);
-				tmp = HeapMemoryAllocPaged(input.DriverNameLength);
-				if (tmp != NULL) {
-					memcpy(tmp, InputBuffer + 1, input.DriverNameLength);
-					tmp[input.DriverNameLength / sizeof(WCHAR)] = L'\0';
-					status = STATUS_SUCCESS;
-				} else status = STATUS_INSUFFICIENT_RESOURCES;
+				if (InputBufferLength < sizeof(input) + input.DriverNameLength)
+					ExRaiseStatus(STATUS_INFO_LENGTH_MISMATCH);
+
+				ProbeForWrite(OutputBuffer, sizeof(IOCTL_IRPMNDRV_HOOK_DRIVER_OUTPUT), 1);				
+				tmp = HeapMemoryAllocPaged(input.DriverNameLength + sizeof(WCHAR));
+				if (tmp == NULL)
+					ExRaiseStatus(STATUS_INSUFFICIENT_RESOURCES);
+				
+				memcpy(tmp, InputBuffer + 1, input.DriverNameLength);
+				tmp[input.DriverNameLength / sizeof(WCHAR)] = L'\0';
 			} __except (EXCEPTION_EXECUTE_HANDLER) {
 				status = GetExceptionCode();
 				if (tmp != NULL)
@@ -130,7 +134,7 @@ NTSTATUS UMHookDriver(PIOCTL_IRPMNDRV_HOOK_DRIVER_INPUT InputBuffer, ULONG Input
 			}
 		} else {
 			input = *InputBuffer;
-			status = STATUS_SUCCESS;
+			tmp = (PWCHAR)(InputBuffer + 1);
 		}
 
 		if (NT_SUCCESS(status)) {
@@ -223,38 +227,41 @@ NTSTATUS UMHookAddDevice(PIOCTL_IRPMNDRV_HOOK_ADD_DEVICE_INPUT InputBUffer, ULON
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("InputBufer=0x%p; InputBufferLength=%u; OutputBuffer=0x%p; OutputBufferLength=%u", InputBUffer, InputBufferLength, OutputBuffer, OutputBufferLength);
 
-	if (InputBufferLength == sizeof(IOCTL_IRPMNDRV_HOOK_ADD_DEVICE_INPUT) &&
+	if (InputBufferLength >= sizeof(IOCTL_IRPMNDRV_HOOK_ADD_DEVICE_INPUT) &&
 		OutputBufferLength == sizeof(IOCTL_IRPMNDRV_HOOK_ADD_DEVICE_OUTPUT)) {
+		status = STATUS_SUCCESS;
 		if (ExGetPreviousMode() == UserMode) {
 			__try {
-				status = STATUS_SUCCESS;
 				ProbeForRead(InputBUffer, InputBufferLength, 1);
 				input = *InputBUffer;
 				ProbeForWrite(OutputBuffer, OutputBufferLength, 1);
 				if (input.HookByName) {
-					deviceName = HeapMemoryAllocPaged(input.DeviceNameLength);
-					if (deviceName != NULL) {
-						memcpy(deviceName, InputBUffer + 1, input.DeviceNameLength);
-						deviceName[input.DeviceNameLength / sizeof(WCHAR)] = L'\0';
-					} else status = STATUS_INSUFFICIENT_RESOURCES;
+					if (InputBufferLength < sizeof(input) + input.DeviceNameLength)
+						ExRaiseStatus(STATUS_INFO_LENGTH_MISMATCH);
+
+					deviceName = HeapMemoryAllocPaged(input.DeviceNameLength + sizeof(WCHAR));
+					if (deviceName == NULL)
+						ExRaiseStatus(STATUS_INSUFFICIENT_RESOURCES);
+					
+					memcpy(deviceName, InputBUffer + 1, input.DeviceNameLength);
+					deviceName[input.DeviceNameLength / sizeof(WCHAR)] = L'\0';
 				}
 
-				if (NT_SUCCESS(status) && input.IRPSettingsSpecified) {
+				if (input.IRPSettingsSpecified) {
 					irpSettings = HeapMemoryAllocPaged(sizeof(input.IRPSettings));
-					if (irpSettings != NULL)
-						memcpy(irpSettings, input.IRPSettings, sizeof(input.IRPSettings));
-					else status = STATUS_INSUFFICIENT_RESOURCES;
+					if (irpSettings == NULL)
+						ExRaiseStatus(STATUS_INSUFFICIENT_RESOURCES);
+					
+					memcpy(irpSettings, input.IRPSettings, sizeof(input.IRPSettings));
 				}
 
-				if (NT_SUCCESS(status) && input.FastIoSettingsSpecified) {
+				if (input.FastIoSettingsSpecified) {
 					fastIoSettings = HeapMemoryAllocPaged(sizeof(input.FastIoSettings));
-					if (irpSettings != NULL)
-						memcpy(fastIoSettings, input.FastIoSettings, sizeof(input.FastIoSettings));
-					else status = STATUS_INSUFFICIENT_RESOURCES;
+					if (fastIoSettings == NULL)
+						ExRaiseStatus(STATUS_INSUFFICIENT_RESOURCES);
+					
+					memcpy(fastIoSettings, input.FastIoSettings, sizeof(input.FastIoSettings));
 				}
-
-				if (!NT_SUCCESS(status))
-					ExRaiseStatus(status);
 			} __except (EXCEPTION_EXECUTE_HANDLER) {
 				status = GetExceptionCode();
 				if (fastIoSettings != NULL)
@@ -268,7 +275,14 @@ NTSTATUS UMHookAddDevice(PIOCTL_IRPMNDRV_HOOK_ADD_DEVICE_INPUT InputBUffer, ULON
 			}
 		} else {
 			input = *InputBUffer;
-			status = STATUS_SUCCESS;
+			if (input.HookByName)
+				deviceName = (PWCHAR)(InputBUffer + 1);
+			
+			if (input.IRPSettingsSpecified)
+				irpSettings = input.IRPSettings;
+
+			if (input.FastIoSettingsSpecified)
+				fastIoSettings = input.FastIoSettings;
 		}
 
 		if (NT_SUCCESS(status)) {
@@ -317,11 +331,11 @@ NTSTATUS UMHookAddDevice(PIOCTL_IRPMNDRV_HOOK_ADD_DEVICE_INPUT InputBUffer, ULON
 			}
 
 			if (ExGetPreviousMode() == UserMode) {
-				if (irpSettings != NULL)
-					HeapMemoryFree(irpSettings);
-
 				if (fastIoSettings != NULL)
 					HeapMemoryFree(fastIoSettings);
+
+				if (irpSettings != NULL)
+					HeapMemoryFree(irpSettings);
 
 				if (deviceName != NULL)
 					HeapMemoryFree(deviceName);
@@ -620,29 +634,12 @@ NTSTATUS UMEnumDriversDevices(PVOID OutputBuffer, ULONG OutputBufferLength, PULO
 	return status;
 }
 
-NTSTATUS UMRequestQueueConnect(PIOCTL_IRPMNDRV_CONNECT_INPUT InputBuffer, ULONG InputBufferLength)
+NTSTATUS UMRequestQueueConnect(void)
 {
-	IOCTL_IRPMNDRV_CONNECT_INPUT input = {0};
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
-	DEBUG_ENTER_FUNCTION("InputBuffer=0x%p; InputBufferLength=%u", InputBuffer, InputBufferLength);
+	DEBUG_ENTER_FUNCTION_NO_ARGS();
 
-	if (InputBufferLength == sizeof(input)) {
-		if (ExGetPreviousMode() == UserMode) {
-			__try {
-				ProbeForRead(InputBuffer, InputBufferLength, 1);
-				input = *InputBuffer;
-				status = STATUS_SUCCESS;
-			} __except (EXCEPTION_EXECUTE_HANDLER) {
-				status = GetExceptionCode();
-			}
-		} else {
-			input = *InputBuffer;
-			status = STATUS_SUCCESS;
-		}
-
-		if (NT_SUCCESS(status)) 
-			status = RequestQueueConnect(input.SemaphoreHandle);
-	} else status = STATUS_INFO_LENGTH_MISMATCH;
+	status = RequestQueueConnect();
 
 	DEBUG_EXIT_FUNCTION("0x%x", status);
 	return status;
@@ -742,82 +739,36 @@ NTSTATUS UMHookedDriverGetInfo(PIOCTL_IRPMNDRV_HOOK_DRIVER_GET_INFO_INPUT InputB
 
 NTSTATUS UMHookedDeviceSetInfo(PIOCTL_IRPMNDRV_HOOK_DEVICE_SET_INFO_INPUT InputBuffer, ULONG InputBufferLength)
 {
+	PUCHAR irpSettings = NULL;
+	PUCHAR fastIoSettings = NULL;
 	IOCTL_IRPMNDRV_HOOK_DEVICE_SET_INFO_INPUT input = { 0 };
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("InputBuffer=0x%p; InputBufferLength=%u", InputBuffer, InputBufferLength);
 
 	if (InputBufferLength >= sizeof(input)) {
+		status = STATUS_SUCCESS;
 		if (ExGetPreviousMode() == UserMode) {
 			__try {
-				PUCHAR tmp = NULL;
-
 				ProbeForRead(InputBuffer, sizeof(input), 1);
 				input = *InputBuffer;
-				status = STATUS_SUCCESS;
-				if (input.IRPSettings != NULL) {
-					tmp = (PUCHAR)HeapMemoryAllocNonPaged(sizeof(UCHAR)*0x1C);
-					if (tmp != NULL) {
-						__try {
-							ProbeForRead(input.IRPSettings, sizeof(UCHAR) * 0x1C, 1);
-							memcpy(tmp, input.IRPSettings, sizeof(UCHAR) * 0x1C);
-							input.IRPSettings = tmp;
-							status = STATUS_SUCCESS;
-						} __except (EXCEPTION_EXECUTE_HANDLER) {
-							status = GetExceptionCode();
-						}
-
-						if (!NT_SUCCESS(status))
-							HeapMemoryFree(tmp);
-					} else status = STATUS_INSUFFICIENT_RESOURCES;
-				}
-
-				if (NT_SUCCESS(status)) {
-					if (input.FastIoSettings != NULL) {
-						tmp = (PUCHAR)HeapMemoryAllocNonPaged(sizeof(UCHAR) * FastIoMax);
-						if (tmp != NULL) {
-							__try {
-								ProbeForRead(input.FastIoSettings, sizeof(UCHAR) * FastIoMax, 1);
-								memcpy(tmp, input.FastIoSettings, sizeof(UCHAR) * FastIoMax);
-								input.FastIoSettings = tmp;
-								status = STATUS_SUCCESS;
-							} __except (EXCEPTION_EXECUTE_HANDLER) {
-								status = GetExceptionCode();
-							}
-
-							if (!NT_SUCCESS(status))
-								HeapMemoryFree(tmp);
-						} else status = STATUS_INSUFFICIENT_RESOURCES;
-					}
-
-					if (!NT_SUCCESS(status)) {
-						if (input.IRPSettings != NULL)
-							HeapMemoryFree(input.IRPSettings);
-					}
-				}
 			} __except (EXCEPTION_EXECUTE_HANDLER) {
 				status = GetExceptionCode();
 			}
-		}
-		else {
-			input = *InputBuffer;
-			status = STATUS_SUCCESS;
-		}
+		} else input = *InputBuffer;
 
 		if (NT_SUCCESS(status)) {
 			PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
+			if (input.IRPSettingsSpecified)
+				irpSettings = input.IRPSettings;
+
+			if (input.FastIoSettingsSpecified)
+				fastIoSettings = input.FastIoSettings;
+
 			status = HandleTablehandleTranslate(_deviceHandleTable, input.DeviceHandle, &deviceRecord);
 			if (NT_SUCCESS(status)) {
-				status = DeviceHookRecordSetInfo(deviceRecord, input.IRPSettings, input.FastIoSettings, input.MonitoringEnabled);
+				status = DeviceHookRecordSetInfo(deviceRecord, irpSettings, fastIoSettings, input.MonitoringEnabled);
 				DeviceHookRecordDereference(deviceRecord);
-			}
-
-			if (ExGetPreviousMode() == UserMode) {
-				if (input.FastIoSettings != NULL)
-					HeapMemoryFree(input.FastIoSettings);
-
-				if (input.IRPSettings != NULL)
-					HeapMemoryFree(input.IRPSettings);
 			}
 		}
 	} else status = STATUS_BUFFER_TOO_SMALL;

@@ -4,8 +4,7 @@
 #include "debug.h"
 #include "kernel-shared.h"
 #include "general-types.h"
-#include "driver-com.h"
-#include "network-connector.h"
+#include "device-connector.h"
 
 
 
@@ -14,6 +13,14 @@
 /************************************************************************/
 
 static HANDLE _deviceHandle = INVALID_HANDLE_VALUE;
+
+IRPMON_DRIVER_COMM_INTERFACE DriverCommInterface = {
+	ictDevice,
+	DevConn_SynchronousOtherIOCTL,
+	DevConn_Connect,
+	DevConn_Disconnect,
+	DevConn_Active,
+};
 
 
 /************************************************************************/
@@ -27,52 +34,7 @@ static HANDLE _deviceHandle = INVALID_HANDLE_VALUE;
 /************************************************************************/
 
 
-DWORD NetConn_SynchronousNoIOIOCTL(DWORD Code)
-{
-	DWORD dummy = 0;
-	DWORD ret = ERROR_GEN_FAILURE;
-	DEBUG_ENTER_FUNCTION("Code=0x%x", Code);
-
-	if (DeviceIoControl(_deviceHandle, Code, NULL, 0, NULL, 0, &dummy, NULL))
-		ret = ERROR_SUCCESS;
-	else ret = GetLastError();
-
-	DEBUG_EXIT_FUNCTION("%u", ret);
-	return ret;
-}
-
-
-DWORD NetConn_SynchronousWriteIOCTL(DWORD Code, PVOID InputBuffer, ULONG InputBufferLength)
-{
-	DWORD dummy = 0;
-	DWORD ret = ERROR_GEN_FAILURE;
-	DEBUG_ENTER_FUNCTION("Code=0x%x; InputBuffer=0x%p; InputBufferLength=%u", Code, InputBuffer, InputBufferLength);
-
-	if (DeviceIoControl(_deviceHandle, Code, InputBuffer, InputBufferLength, NULL, 0, &dummy, NULL))
-		ret = ERROR_SUCCESS;
-	else ret = GetLastError();
-
-	DEBUG_EXIT_FUNCTION("%u", ret);
-	return ret;
-}
-
-
-DWORD NetConn_SynchronousReadIOCTL(DWORD Code, PVOID OutputBuffer, ULONG OutputBufferLength)
-{
-	DWORD dummy = 0;
-	DWORD ret = ERROR_GEN_FAILURE;
-	DEBUG_ENTER_FUNCTION("Code=0x%x; OutputBuffer=0x%p; OutputBufferLength=%u", Code, OutputBuffer, OutputBufferLength);
-
-	if (DeviceIoControl(_deviceHandle, Code, NULL, 0, OutputBuffer, OutputBufferLength, &dummy, NULL))
-		ret = ERROR_SUCCESS;
-	else ret = GetLastError();
-
-	DEBUG_EXIT_FUNCTION("%u", ret);
-	return ret;
-}
-
-
-DWORD NetConn_SynchronousOtherIOCTL(DWORD Code, PVOID InputBuffer, ULONG InputBufferLength, PVOID OutputBuffer, ULONG OutputBufferLength)
+DWORD DevConn_SynchronousOtherIOCTL(DWORD Code, PVOID InputBuffer, ULONG InputBufferLength, PVOID OutputBuffer, ULONG OutputBufferLength)
 {
 	DWORD dummy = 0;
 	DWORD ret = ERROR_GEN_FAILURE;
@@ -87,13 +49,18 @@ DWORD NetConn_SynchronousOtherIOCTL(DWORD Code, PVOID InputBuffer, ULONG InputBu
 }
 
 
-DWORD NetConn_Connect(void)
+DWORD DevConn_Connect(const IRPMON_INIT_INFO *Info)
 {
+	wchar_t *deviceName = NULL;
 	DWORD ret = ERROR_GEN_FAILURE;
-	DEBUG_ENTER_FUNCTION_NO_ARGS();
+	DEBUG_ENTER_FUNCTION("Info=0x%p", Info);
 
 	ret = ERROR_SUCCESS;
-	_deviceHandle = CreateFileW(IRPMNDRV_USER_DEVICE_NAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	deviceName = Info->Device.DeviceName;
+	if (deviceName == NULL || *deviceName == L'\0')
+		deviceName = IRPMNDRV_USER_DEVICE_NAME;
+
+	_deviceHandle = CreateFileW(deviceName, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (_deviceHandle == INVALID_HANDLE_VALUE)
 		ret = GetLastError();
 
@@ -102,7 +69,7 @@ DWORD NetConn_Connect(void)
 }
 
 
-void NetConn_Disconnect(void)
+void DevConn_Disconnect(void)
 {
 	DEBUG_ENTER_FUNCTION_NO_ARGS();
 
@@ -114,7 +81,7 @@ void NetConn_Disconnect(void)
 }
 
 
-BOOL NetConn_Active(VOID)
+BOOL DevConn_Active(VOID)
 {
 	return (_deviceHandle != INVALID_HANDLE_VALUE);
 }

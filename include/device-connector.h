@@ -5,18 +5,15 @@
 
 #include <windows.h>
 #include "general-types.h"
-#include "kernel-shared.h"
+#include "irpmondll-types.h"
 
 
 
 
 
-DWORD DevConn_SynchronousNoIOIOCTL(DWORD Code);
-DWORD DevConn_SynchronousWriteIOCTL(DWORD Code, PVOID InputBuffer, ULONG InputBufferLength);
-DWORD DevConn_SynchronousReadIOCTL(DWORD Code, PVOID OutputBuffer, ULONG OutputBufferLength);
 DWORD DevConn_SynchronousOtherIOCTL(DWORD Code, PVOID InputBuffer, ULONG InputBufferLength, PVOID OutputBuffer, ULONG OutputBufferLength);
 
-DWORD DevConn_Connect(void);
+DWORD DevConn_Connect(const IRPMON_INIT_INFO *Info);
 void DevConn_Disconnect(void);
 BOOL DevConn_Active(VOID);
 

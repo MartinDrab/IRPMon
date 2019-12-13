@@ -109,7 +109,7 @@ static NTSTATUS _HandleCDORequest(ULONG ControlCode, PVOID InputBuffer, ULONG In
 
 	switch (ControlCode) {
 		case IOCTL_IRPMNDRV_CONNECT:
-			status = UMRequestQueueConnect((PIOCTL_IRPMNDRV_CONNECT_INPUT)InputBuffer, InputBufferLength);
+			status = UMRequestQueueConnect();
 			break;
 		case IOCTL_IRPMNDRV_DISCONNECT:
 			UMRequestQueueDisconnect();

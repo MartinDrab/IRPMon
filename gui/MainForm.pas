@@ -111,6 +111,7 @@ Type
     Procedure ReadSettings;
     Procedure OnRequestProcessed(ARequest:TDriverRequest; Var AStore:Boolean);
   Public
+    ConnectorType : EIRPMonConnectorType;
     ServiceTask : TDriverTaskObject;
     TaskList : TTaskOperationList;
     Procedure OnRequest(AList:TList<PREQUEST_GENERAL>);
@@ -215,11 +216,14 @@ WriteSettings;
 DataParsersListView.Items.Count := 0;
 FParsers.Free;
 taskList.Add(hooLibraryFinalize, serviceTask);
-If UnloadOnExitMenuItem.Checked Then
-  taskList.Add(hooStop, serviceTask);
+If ConnectorType = ictDevice Then
+  begin
+  If UnloadOnExitMenuItem.Checked Then
+    taskList.Add(hooStop, serviceTask);
 
-If UninstallOnExitMenuItem.Checked Then
-  taskList.Add(hooUnhook, serviceTask);
+  If UninstallOnExitMenuItem.Checked Then
+    taskList.Add(hooUnhook, serviceTask);
+  end;
 
 With THookProgressFrm.Create(Application, taskList) Do
   begin
