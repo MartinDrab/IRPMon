@@ -20,7 +20,7 @@ static RTL_GENERIC_COMPARE_RESULTS _PsCompareRoutine(__in struct _RTL_GENERIC_TA
 
 	if ((uintptr_t)a->ProcessId > (uintptr_t)b->ProcessId)
 		ret = GenericGreaterThan;
-	else if ((uintptr_t)a->ProcessId > (uintptr_t)b->ProcessId)
+	else if ((uintptr_t)a->ProcessId < (uintptr_t)b->ProcessId)
 		ret = GenericLessThan;
 
 	DEBUG_EXIT_FUNCTION("%u", ret);
@@ -99,6 +99,7 @@ NTSTATUS PsTableInsert(PPS_CONTEXT_TABLE Table, HANDLE ProcessId, const void *Bu
 	if (ProcessId != NULL) {
 		psc = HeapMemoryAllocNonPaged(sizeof(PROCESS_OBJECT_CONTEXT) + Length);
 		if (psc != NULL) {
+			memset(psc, 0, sizeof(PROCESS_OBJECT_CONTEXT) + Length);
 			InterlockedExchange(&psc->ReferenceCount, 1);
 			psc->FreeRoutine = Table->PsCFreeRoutine;
 			psc->DataSize = Length;
@@ -107,11 +108,11 @@ NTSTATUS PsTableInsert(PPS_CONTEXT_TABLE Table, HANDLE ProcessId, const void *Bu
 			entry.PsContext = psc;
 			KeAcquireSpinLock(&Table->Lock, &irql);
 			RtlInsertElementGenericTable(&Table->Table, &entry, sizeof(entry), &inserted);
-			KeReleaseSpinLock(&Table->Lock, irql);
 			status = (inserted) ? STATUS_SUCCESS : STATUS_ALREADY_REGISTERED;
 			if (NT_SUCCESS(status))
 				InterlockedIncrement(&psc->ReferenceCount);
 
+			KeReleaseSpinLock(&Table->Lock, irql);
 			PsContextDereference(psc);
 		} else status = STATUS_INSUFFICIENT_RESOURCES;
 	} else status = STATUS_INVALID_PARAMETER;
@@ -134,7 +135,8 @@ PPROCESS_OBJECT_CONTEXT PsTableDelete(PPS_CONTEXT_TABLE Table, HANDLE ProcessId)
 	entry2 = RtlLookupElementGenericTable(&Table->Table, &entry);
 	if (entry2 != NULL) {
 		ret = entry2->PsContext;
-		RtlDeleteElementGenericTable(&Table->Table, &entry);
+		if (!RtlDeleteElementGenericTable(&Table->Table, &entry))
+			__debugbreak();
 	}
 
 	KeReleaseSpinLock(&Table->Lock, irql);

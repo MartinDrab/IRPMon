@@ -20,7 +20,7 @@ static RTL_GENERIC_COMPARE_RESULTS _FoCompareRoutine(__in struct _RTL_GENERIC_TA
 
 	if ((uintptr_t)a->FileObject > (uintptr_t)b->FileObject)
 		ret = GenericGreaterThan;
-	else if ((uintptr_t)a->FileObject > (uintptr_t)b->FileObject)
+	else if ((uintptr_t)a->FileObject < (uintptr_t)b->FileObject)
 		ret = GenericLessThan;
 
 	DEBUG_EXIT_FUNCTION("%u", ret);
@@ -99,6 +99,7 @@ NTSTATUS FoTableInsert(PFO_CONTEXT_TABLE Table, PFILE_OBJECT FileObject, const v
 	if (FileObject != NULL) {
 		foc = HeapMemoryAllocNonPaged(sizeof(FILE_OBJECT_CONTEXT) + Length);
 		if (foc != NULL) {
+			memset(foc, 0, sizeof(FILE_OBJECT_CONTEXT) + Length);
 			InterlockedExchange(&foc->ReferenceCount, 1);
 			foc->FreeRoutine = Table->FOCFreeRoutine;
 			foc->DataSize = Length;
@@ -107,11 +108,11 @@ NTSTATUS FoTableInsert(PFO_CONTEXT_TABLE Table, PFILE_OBJECT FileObject, const v
 			entry.FoContext = foc;
 			KeAcquireSpinLock(&Table->Lock, &irql);
 			RtlInsertElementGenericTable(&Table->Table, &entry, sizeof(entry), &inserted);
-			KeReleaseSpinLock(&Table->Lock, irql);
 			status = (inserted) ? STATUS_SUCCESS : STATUS_ALREADY_REGISTERED;
 			if (NT_SUCCESS(status))
 				InterlockedIncrement(&foc->ReferenceCount);
 
+			KeReleaseSpinLock(&Table->Lock, irql);
 			FoContextDereference(foc);
 		} else status = STATUS_INSUFFICIENT_RESOURCES;
 	} else status = STATUS_INVALID_PARAMETER;

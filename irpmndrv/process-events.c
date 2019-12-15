@@ -127,32 +127,26 @@ static void _ProcessNotifyEx(PEPROCESS Process, HANDLE ProcessId, PPS_CREATE_NOT
 		if (NT_SUCCESS(status)) {
 			_SetRequestFlags(&createRecord->Header, &clientInfo);
 			RequestQueueInsert(&createRecord->Header);
-			pr = HeapMemoryAllocNonPaged(sizeof(PROCESS_RECORD) + createRecord->ImageNameLength + createRecord->CommandLineLength);
+			pr = HeapMemoryAllocNonPaged(sizeof(PROCESS_RECORD));
 			if (pr != NULL) {
-				memset(pr, 0, sizeof(PROCESS_RECORD) + createRecord->ImageNameLength + createRecord->CommandLineLength);
+				memset(pr, 0, sizeof(PROCESS_RECORD));
 				pr->ParentId = CreateInfo->ParentProcessId;
 				pr->ProcessId = CreateInfo->ParentProcessId;
 				pr->CreateTime.QuadPart = PsGetProcessCreateTimeQuadPart(Process);
-				if (CreateInfo->ImageFileName != NULL) {
-					pr->ImageName = *CreateInfo->ImageFileName;
-					pr->ImageName.MaximumLength = pr->ImageName.Length;
-					pr->ImageName.Buffer = (PWCH)(pr + 1);
-					memcpy(pr->ImageName.Buffer, CreateInfo->ImageFileName->Buffer, pr->ImageName.Length);
-				}
+				if (CreateInfo->ImageFileName != NULL)
+					status = UtilsCopyUnicodeString(NonPagedPool, &pr->ImageName, CreateInfo->ImageFileName);
 
-				if (CreateInfo->CommandLine != NULL) {
-					pr->CommandLine = *CreateInfo->CommandLine;
-					pr->CommandLine.MaximumLength = pr->CommandLine.Length;
-					pr->CommandLine.Buffer = (PWCH)(pr + 1);
-					pr->CommandLine.Buffer += (pr->ImageName.Length / sizeof(wchar_t));
-					memcpy(pr->CommandLine.Buffer, CreateInfo->CommandLine->Buffer, pr->CommandLine.Length);
-				}
+				if (NT_SUCCESS(status) && CreateInfo->CommandLine != NULL)
+					status = UtilsCopyUnicodeString(NonPagedPool, &pr->CommandLine, CreateInfo->CommandLine);
 
-				status = PsTableInsert(&_processTable, pr->ProcessId, pr, sizeof(PROCESS_RECORD) + pr->ImageName.Length + pr->CommandLine.Length);
+				if (!NT_SUCCESS(status) && CreateInfo->ImageFileName != NULL)
+					HeapMemoryFree(pr->ImageName.Buffer);
+
+				if (NT_SUCCESS(status))
+					status = PsTableInsert(&_processTable, pr->ProcessId, pr, sizeof(PROCESS_RECORD));
+								
 				HeapMemoryFree(pr);
 			} else status = STATUS_INSUFFICIENT_RESOURCES;
-
-			CreateInfo->CreationStatus = STATUS_SUCCESS;
 		}
 	} else {
 		status = _ProcessExittedEventAlloc(ProcessId, &exitRecord);
@@ -184,32 +178,34 @@ static NTSTATUS _FillProcessTable(void)
 	if (NT_SUCCESS(status)) {
 		tmp = spir;
 		do {
-			memset(&pr, 0, sizeof(pr));
-			pr.CreateTime = tmp->CreateTime;
-			pr.ProcessId = tmp->UniqueProcessId;
-			pr.ParentId = tmp->InheritedFromUniqueProcessId;
-			memset(&clientId, 0, sizeof(clientId));
-			clientId.UniqueProcess = pr.ProcessId;
-			InitializeObjectAttributes(&oa, NULL, OBJ_KERNEL_HANDLE, NULL, NULL);
-			if (_PsSetCreateProcessNotifyROutineEx != NULL)
-			status = ZwOpenProcess(&hProcess, PROCESS_ALL_ACCESS, &oa, &clientId);
-			if (NT_SUCCESS(status)) {
-				status = ProcessQueryFullImageName(hProcess, NonPagedPool, &pr.ImageName);
+			if (tmp->UniqueProcessId != NULL) {
+				memset(&pr, 0, sizeof(pr));
+				pr.CreateTime = tmp->CreateTime;
+				pr.ProcessId = tmp->UniqueProcessId;
+				pr.ParentId = tmp->InheritedFromUniqueProcessId;
+				memset(&clientId, 0, sizeof(clientId));
+				clientId.UniqueProcess = pr.ProcessId;
+				InitializeObjectAttributes(&oa, NULL, OBJ_KERNEL_HANDLE, NULL, NULL);
+				status = ZwOpenProcess(&hProcess, PROCESS_ALL_ACCESS, &oa, &clientId);
 				if (NT_SUCCESS(status)) {
-					if (_PsSetCreateProcessNotifyROutineEx != NULL)
-						status = ProcessQueryCommandLine(hProcess, NonPagedPool, &pr.CommandLine);
-					
+					status = ProcessQueryFullImageName(hProcess, NonPagedPool, &pr.ImageName);
 					if (NT_SUCCESS(status)) {
-						status = PsTableInsert(&_processTable, pr.ProcessId, &pr, sizeof(pr));
-						if (!NT_SUCCESS(status) && pr.CommandLine.Buffer != NULL)
-							HeapMemoryFree(pr.CommandLine.Buffer);
+						if (_PsSetCreateProcessNotifyROutineEx != NULL)
+							status = ProcessQueryCommandLine(hProcess, NonPagedPool, &pr.CommandLine);
+
+						if (NT_SUCCESS(status)) {
+							status = PsTableInsert(&_processTable, pr.ProcessId, &pr, sizeof(pr));
+							memset(&pr, 0, sizeof(pr));
+							if (!NT_SUCCESS(status) && pr.CommandLine.Buffer != NULL)
+								HeapMemoryFree(pr.CommandLine.Buffer);
+						}
+
+						if (!NT_SUCCESS(status) && pr.ImageName.Buffer != NULL)
+							HeapMemoryFree(pr.ImageName.Buffer);
 					}
 
-					if (!NT_SUCCESS(status) && pr.ImageName.Buffer != NULL)
-						HeapMemoryFree(pr.ImageName.Buffer);
-				}
-
-				ZwClose(hProcess);
+					ZwClose(hProcess);
+				} else status = STATUS_SUCCESS;
 			}
 
 			if (tmp->NextEntryOffset == 0)
@@ -290,9 +286,9 @@ NTSTATUS ProcessEventsModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING Re
 	vi.dwOSVersionInfoSize = sizeof(vi);
 	status = RtlGetVersion(&vi);
 	if (NT_SUCCESS(status)) {
-		if (vi.dwBuildNumber >= 6001) {
-			status = _FillProcessTable();
-			if (NT_SUCCESS(status)) {
+		status = _FillProcessTable();
+		if (NT_SUCCESS(status)) {
+			if (vi.dwBuildNumber >= 6001) {
 				RtlInitUnicodeString(&uRoutineName, L"PsSetCreateProcessNotifyRoutineEx");
 				_PsSetCreateProcessNotifyROutineEx = (PSSETCREATEPROCESSNOTIFYROUTINEEX *)MmGetSystemRoutineAddress(&uRoutineName);
 				if (_PsSetCreateProcessNotifyROutineEx != NULL)
