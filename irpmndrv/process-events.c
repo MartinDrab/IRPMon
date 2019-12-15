@@ -131,7 +131,7 @@ static void _ProcessNotifyEx(PEPROCESS Process, HANDLE ProcessId, PPS_CREATE_NOT
 			if (pr != NULL) {
 				memset(pr, 0, sizeof(PROCESS_RECORD));
 				pr->ParentId = CreateInfo->ParentProcessId;
-				pr->ProcessId = CreateInfo->ParentProcessId;
+				pr->ProcessId = ProcessId;
 				pr->CreateTime.QuadPart = PsGetProcessCreateTimeQuadPart(Process);
 				if (CreateInfo->ImageFileName != NULL)
 					status = UtilsCopyUnicodeString(NonPagedPool, &pr->ImageName, CreateInfo->ImageFileName);
