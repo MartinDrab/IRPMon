@@ -66,12 +66,12 @@ NTSTATUS RequestQueueConnect()
 			InitializeListHead(&psRequests);
 			status = ListProcessesByEvents(&psRequests);
 			if (NT_SUCCESS(status)) {
-				psRequest = CONTAINING_RECORD(psRequests.Flink, REQUEST_HEADER, Entry);
+				psRequest = CONTAINING_RECORD(psRequests.Blink, REQUEST_HEADER, Entry);
 				while (&psRequest->Entry != &psRequests) {
 					old = psRequest;
-					psRequest = CONTAINING_RECORD(psRequest->Entry.Flink, REQUEST_HEADER, Entry);
+					psRequest = CONTAINING_RECORD(psRequest->Entry.Blink, REQUEST_HEADER, Entry);
 					RemoveEntryList(&old->Entry);
-					ExInterlockedInsertTailList(&_requestListHead, &old->Entry, &_requestListLock);
+					ExInterlockedInsertHeadList(&_requestListHead, &old->Entry, &_requestListLock);
 					InterlockedIncrement(&_requestCount);
 				}
 
