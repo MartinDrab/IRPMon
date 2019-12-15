@@ -4,6 +4,7 @@
 #include "allocator.h"
 #include "utils.h"
 #include "request.h"
+#include "process-events.h"
 #include "req-queue.h"
 
 
@@ -49,6 +50,9 @@ static VOID _RequestQueueClear(VOID)
 
 NTSTATUS RequestQueueConnect()
 {
+	PREQUEST_HEADER old = NULL;
+	PREQUEST_HEADER psRequest = NULL;
+	LIST_ENTRY psRequests;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION_NO_ARGS();
 	DEBUG_IRQL_LESS_OR_EQUAL(PASSIVE_LEVEL);
@@ -58,7 +62,25 @@ NTSTATUS RequestQueueConnect()
 	if (!_connected) {
 		IoInitializeRemoveLock(&_removeLock, 0, 0, 0x7fffffff);
 		status = IoAcquireRemoveLock(&_removeLock, NULL);
-		_connected = NT_SUCCESS(status);
+		if (NT_SUCCESS(status)) {
+			InitializeListHead(&psRequests);
+			status = ListProcessesByEvents(&psRequests);
+			if (NT_SUCCESS(status)) {
+				psRequest = CONTAINING_RECORD(psRequests.Flink, REQUEST_HEADER, Entry);
+				while (&psRequest->Entry != &psRequests) {
+					old = psRequest;
+					psRequest = CONTAINING_RECORD(psRequest->Entry.Flink, REQUEST_HEADER, Entry);
+					RemoveEntryList(&old->Entry);
+					ExInterlockedInsertTailList(&_requestListHead, &old->Entry, &_requestListLock);
+					InterlockedIncrement(&_requestCount);
+				}
+
+				_connected = TRUE;
+			}
+
+			if (!NT_SUCCESS(status))
+				IoReleaseRemoveLock(&_removeLock, NULL);
+		}
 	} else status = STATUS_ALREADY_REGISTERED;
 
 	ExReleaseResourceLite(&_connectLock);
@@ -216,6 +238,9 @@ NTSTATUS RequestQueueGet(PREQUEST_HEADER *Buffer, PSIZE_T Length)
 				reqSize = RequestGetSize(h);
 				if (reqSize <= *Length) {
 					InterlockedDecrement(&_requestCount);
+					if (!IsListEmpty(&_requestListHead))
+						h->Flags |= REQUEST_FLAG_NEXT_AVAILABLE;
+
 					*Buffer = h;
 					status = STATUS_SUCCESS;
 				} else {

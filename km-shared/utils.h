@@ -38,6 +38,25 @@ typedef struct _BASIC_CLIENT_INFO {
 	BOOLEAN EffectiveOnly;
 } BASIC_CLIENT_INFO, *PBASIC_CLIENT_INFO;
 
+#define SystemProcessInformation 5
+
+typedef struct _SYSTEM_PROCESS_INFORMATION_REAL {
+	ULONG NextEntryOffset;
+	ULONG NumberOfThreads;
+	LARGE_INTEGER SpareLi1;
+	LARGE_INTEGER SpareLi2;
+	LARGE_INTEGER SpareLi3;
+	LARGE_INTEGER CreateTime;
+	LARGE_INTEGER UserTime;
+	LARGE_INTEGER KernelTime;
+	UNICODE_STRING ImageName;
+	LONG BasePriority;
+	HANDLE UniqueProcessId;
+	HANDLE InheritedFromUniqueProcessId;
+	ULONG HandleCount;
+	ULONG SessionId;
+} SYSTEM_PROCESS_INFORMATION_REAL, *PSYSTEM_PROCESS_INFORMATION_REAL;
+
 
 VOID _ReleaseDriverArray(PDRIVER_OBJECT *DriverArray, SIZE_T DriverCount);
 VOID _ReleaseDeviceArray(PDEVICE_OBJECT *DeviceArray, SIZE_T ArrayLength);
@@ -51,6 +70,11 @@ NTSTATUS QueryTokenInfo(PACCESS_TOKEN Token, PCLIENT_TOKEN_INFORMATION Info);
 NTSTATUS QueryClientInformation(PCLIENT_INFORMATION Client);
 void QueryClientBasicInformation(PBASIC_CLIENT_INFO Info);
 NTSTATUS UtilsCopyUnicodeString(POOL_TYPE PoolType, PUNICODE_STRING Target, const UNICODE_STRING *Source);
+
+NTSTATUS ProcessEnumerate(PSYSTEM_PROCESS_INFORMATION_REAL *Processes);
+VOID ProcessEnumerationFree(PSYSTEM_PROCESS_INFORMATION_REAL Processes);
+NTSTATUS ProcessQueryFullImageName(HANDLE ProcessHandle, POOL_TYPE PoolType, PUNICODE_STRING Name);
+NTSTATUS ProcessQueryCommandLine(HANDLE ProcessHandle, POOL_TYPE PoolType, PUNICODE_STRING CommandLine);
 
 
 

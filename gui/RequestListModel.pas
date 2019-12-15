@@ -254,7 +254,6 @@ Type
 Implementation
 
 Uses
-  TlHelp32,
   SysUtils, NameTables, IRPRequest, FastIoRequest,
   XXXDetectedRequests, FileObjectNameXXXRequest,
   ProcessXXXRequests, Utils;
@@ -780,8 +779,6 @@ Var
   tmp : PPIRPMON_DRIVER_INFO;
   pdei : PPIRPMON_DEVICE_INFO;
   dei : PIRPMON_DEVICE_INFO;
-  hSnap : THandle;
-  pe : PROCESSENTRY32W;
 begin
 Result := IRPMonDllSnapshotRetrieve(pdri, count);
 If Result = ERROR_SUCCESS Then
@@ -805,25 +802,6 @@ If Result = ERROR_SUCCESS Then
     end;
 
   IRPMonDllSnapshotFree(pdri, count);
-  end;
-
-If Result = 0 Then
-  begin
-  hSnap := CreateToolHelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-  If hSnap <> INVALID_HANDLE_VALUE Then
-    begin
-    pe.dwSize := SizeOf(pe);
-    If Process32FirstW(hSnap, pe) Then
-      begin
-      FProcessMap.Clear;
-      Repeat
-      FProcessMap.Add(pe.th32ProcessID, pe.szExeFile);
-      Until Not Process32NextW(hSnap, pe);
-      end;
-
-    CloseHandle(hSnap);
-    end
-  Else Result := GetLastError;
   end;
 end;
 

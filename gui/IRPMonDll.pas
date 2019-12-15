@@ -326,6 +326,7 @@ Const
   REQUEST_FLAG_ADMIN               = $4;
   REQUEST_FLAG_IMPERSONATED        = $8;
   REQUEST_FLAG_IMPERSONATED_ADMIN  = $10;
+  REQUEST_FLAG_NEXT_AVAILABLE      = $20;
 
 Type
   (** Header, containing information common for all request types. *)

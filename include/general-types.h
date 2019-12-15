@@ -82,6 +82,7 @@ typedef enum _ERequestResultType {
 #define REQUEST_FLAG_ADMIN					0x4
 #define REQUEST_FLAG_IMPERSONATED			0x8
 #define REQUEST_FLAG_IMPERSONATED_ADMIN		0x10
+#define REQUEST_FLAG_NEXT_AVAILABLE			0x20
 
 /** Header, containing information common for all request types. */
 typedef struct _REQUEST_HEADER {

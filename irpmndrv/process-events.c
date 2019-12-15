@@ -5,6 +5,7 @@
 #include "allocator.h"
 #include "request.h"
 #include "req-queue.h"
+#include "process-context-table.h"
 #include "process-events.h"
 
 
@@ -13,14 +14,41 @@
 /*                      GLOBAL VARIABLES                                */
 /************************************************************************/
 
+
+typedef struct _PROCESS_RECORD {
+	HANDLE ProcessId;
+	HANDLE ParentId;
+	LARGE_INTEGER CreateTime;
+	UNICODE_STRING ImageName;
+	UNICODE_STRING CommandLine;
+} PROCESS_RECORD, *PPROCESS_RECORD;
+
+
 typedef NTSTATUS (PSSETCREATEPROCESSNOTIFYROUTINEEX)(PCREATE_PROCESS_NOTIFY_ROUTINE_EX NotifyRoutine, BOOLEAN Remove);
 
 static PSSETCREATEPROCESSNOTIFYROUTINEEX *_PsSetCreateProcessNotifyROutineEx = NULL;
+static PS_CONTEXT_TABLE _processTable;
 
 
 /************************************************************************/
 /*              HELPER FUNCTIONS                                        */
 /************************************************************************/
+
+
+static void _PsRecordFree(void *PsContext)
+{
+	PPROCESS_RECORD pr = (PPROCESS_RECORD)PsContext;
+	DEBUG_ENTER_FUNCTION("PsContext=0x%p", PsContext);
+
+	if (pr->ImageName.Buffer != NULL)
+		HeapMemoryFree(pr->ImageName.Buffer);
+
+	if (pr->CommandLine.Buffer != NULL)
+		HeapMemoryFree(pr->CommandLine.Buffer);
+
+	DEBUG_EXIT_FUNCTION_VOID();
+	return;
+}
 
 
 static NTSTATUS _ProcessCreateEventAlloc(HANDLE ProcessId, const PS_CREATE_NOTIFY_INFO *NotifyInfo, PREQUEST_PROCESS_CREATED *Record)
@@ -85,18 +113,45 @@ static NTSTATUS _ProcessExittedEventAlloc(HANDLE ProcessId, PREQUEST_PROCESS_EXI
 
 static void _ProcessNotifyEx(PEPROCESS Process, HANDLE ProcessId, PPS_CREATE_NOTIFY_INFO CreateInfo)
 {
+	PPROCESS_RECORD pr = NULL;
 	BASIC_CLIENT_INFO clientInfo;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	PREQUEST_PROCESS_CREATED createRecord = NULL;
 	PREQUEST_PROCESS_EXITTED exitRecord = NULL;
 	DEBUG_ENTER_FUNCTION("Process=0x%p; ProcessId=0x%p; CreateInfo=0x%p", Process, ProcessId, CreateInfo);
 
+	status = STATUS_SUCCESS;
 	QueryClientBasicInformation(&clientInfo);
 	if (CreateInfo != NULL) {
 		status = _ProcessCreateEventAlloc(ProcessId, CreateInfo, &createRecord);
 		if (NT_SUCCESS(status)) {
 			_SetRequestFlags(&createRecord->Header, &clientInfo);
 			RequestQueueInsert(&createRecord->Header);
+			pr = HeapMemoryAllocNonPaged(sizeof(PROCESS_RECORD) + createRecord->ImageNameLength + createRecord->CommandLineLength);
+			if (pr != NULL) {
+				memset(pr, 0, sizeof(PROCESS_RECORD) + createRecord->ImageNameLength + createRecord->CommandLineLength);
+				pr->ParentId = CreateInfo->ParentProcessId;
+				pr->ProcessId = CreateInfo->ParentProcessId;
+				pr->CreateTime.QuadPart = PsGetProcessCreateTimeQuadPart(Process);
+				if (CreateInfo->ImageFileName != NULL) {
+					pr->ImageName = *CreateInfo->ImageFileName;
+					pr->ImageName.MaximumLength = pr->ImageName.Length;
+					pr->ImageName.Buffer = (PWCH)(pr + 1);
+					memcpy(pr->ImageName.Buffer, CreateInfo->ImageFileName->Buffer, pr->ImageName.Length);
+				}
+
+				if (CreateInfo->CommandLine != NULL) {
+					pr->CommandLine = *CreateInfo->CommandLine;
+					pr->CommandLine.MaximumLength = pr->CommandLine.Length;
+					pr->CommandLine.Buffer = (PWCH)(pr + 1);
+					pr->CommandLine.Buffer += (pr->ImageName.Length / sizeof(wchar_t));
+					memcpy(pr->CommandLine.Buffer, CreateInfo->CommandLine->Buffer, pr->CommandLine.Length);
+				}
+
+				status = PsTableInsert(&_processTable, pr->ProcessId, pr, sizeof(PROCESS_RECORD) + pr->ImageName.Length + pr->CommandLine.Length);
+				HeapMemoryFree(pr);
+			} else status = STATUS_INSUFFICIENT_RESOURCES;
+
 			CreateInfo->CreationStatus = STATUS_SUCCESS;
 		}
 	} else {
@@ -105,17 +160,123 @@ static void _ProcessNotifyEx(PEPROCESS Process, HANDLE ProcessId, PPS_CREATE_NOT
 			_SetRequestFlags(&exitRecord->Header, &clientInfo);
 			RequestQueueInsert(&exitRecord->Header);
 		}
-	}
 
+		PsTableDeleteNoReturn(&_processTable, ProcessId);
+	}
 
 	DEBUG_EXIT_FUNCTION_VOID();
 	return;
 }
 
 
+static NTSTATUS _FillProcessTable(void)
+{
+	PROCESS_RECORD pr;
+	CLIENT_ID clientId;
+	OBJECT_ATTRIBUTES oa;
+	HANDLE hProcess = NULL;
+	PSYSTEM_PROCESS_INFORMATION_REAL tmp = NULL;
+	PSYSTEM_PROCESS_INFORMATION_REAL spir = NULL;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION_NO_ARGS();
+
+	status = ProcessEnumerate(&spir);
+	if (NT_SUCCESS(status)) {
+		tmp = spir;
+		do {
+			memset(&pr, 0, sizeof(pr));
+			pr.CreateTime = tmp->CreateTime;
+			pr.ProcessId = tmp->UniqueProcessId;
+			pr.ParentId = tmp->InheritedFromUniqueProcessId;
+			memset(&clientId, 0, sizeof(clientId));
+			clientId.UniqueProcess = pr.ProcessId;
+			InitializeObjectAttributes(&oa, NULL, OBJ_KERNEL_HANDLE, NULL, NULL);
+			if (_PsSetCreateProcessNotifyROutineEx != NULL)
+			status = ZwOpenProcess(&hProcess, PROCESS_ALL_ACCESS, &oa, &clientId);
+			if (NT_SUCCESS(status)) {
+				status = ProcessQueryFullImageName(hProcess, NonPagedPool, &pr.ImageName);
+				if (NT_SUCCESS(status)) {
+					if (_PsSetCreateProcessNotifyROutineEx != NULL)
+						status = ProcessQueryCommandLine(hProcess, NonPagedPool, &pr.CommandLine);
+					
+					if (NT_SUCCESS(status)) {
+						status = PsTableInsert(&_processTable, pr.ProcessId, &pr, sizeof(pr));
+						if (!NT_SUCCESS(status) && pr.CommandLine.Buffer != NULL)
+							HeapMemoryFree(pr.CommandLine.Buffer);
+					}
+
+					if (!NT_SUCCESS(status) && pr.ImageName.Buffer != NULL)
+						HeapMemoryFree(pr.ImageName.Buffer);
+				}
+
+				ZwClose(hProcess);
+			}
+
+			if (tmp->NextEntryOffset == 0)
+				break;
+
+			tmp = (PSYSTEM_PROCESS_INFORMATION_REAL)((unsigned char *)tmp + tmp->NextEntryOffset);
+		} while (TRUE);
+
+		ProcessEnumerationFree(spir);
+	}
+
+	DEBUG_EXIT_FUNCTION("0x%x", status);
+	return status;
+}
+
+
+/************************************************************************/
+/*                     PUBLIC FUNCTIONS                                 */
+/************************************************************************/
+
+
+NTSTATUS ListProcessesByEvents(PLIST_ENTRY EventListHead)
+{
+	ULONG count = 0;
+	PS_CREATE_NOTIFY_INFO info;
+	PPROCESS_RECORD record = NULL;
+	PPROCESS_OBJECT_CONTEXT psc = NULL;
+	PREQUEST_PROCESS_CREATED request = NULL;
+	PPROCESS_OBJECT_CONTEXT *contexts = NULL;
+	NTSTATUS status = STATUS_INSUFFICIENT_RESOURCES;
+	DEBUG_ENTER_FUNCTION("EventListHead=0x%p", EventListHead);
+
+	status = PsTableEnum(&_processTable, &contexts, &count);
+	if (NT_SUCCESS(status)) {
+		if (count > 0) {
+			for (ULONG i = 0; i < count; ++i) {
+				psc = contexts[i];
+				if (NT_SUCCESS(status)) {
+					record = (PPROCESS_RECORD)PS_CONTEXT_TO_DATA(psc);
+					memset(&info, 0, sizeof(info));
+					info.Size = sizeof(info);
+					info.CommandLine = &record->CommandLine;
+					info.ImageFileName = &record->ImageName;
+					info.ParentProcessId = record->ParentId;
+					status = _ProcessCreateEventAlloc(record->ProcessId, &info, &request);
+					if (NT_SUCCESS(status)) {
+						request->Header.Flags |= REQUEST_FLAG_EMULATED;
+						InsertTailList(EventListHead, &request->Header.Entry);
+					}
+				}
+
+				PsContextDereference(psc);
+			}
+
+			HeapMemoryFree(contexts);
+		}
+	}
+
+	DEBUG_EXIT_FUNCTION("0x%x", status);
+	return status;
+}
+
+
 /************************************************************************/
 /*                   INITIALIZATION AND FINALIZATION                    */
 /************************************************************************/
+
 
 NTSTATUS ProcessEventsModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context)
 {
@@ -125,21 +286,19 @@ NTSTATUS ProcessEventsModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING Re
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"; Context=0x%p", DriverObject, RegistryPath, Context);
 
+	PsTableInit(&_processTable, _PsRecordFree);
 	vi.dwOSVersionInfoSize = sizeof(vi);
 	status = RtlGetVersion(&vi);
 	if (NT_SUCCESS(status)) {
 		if (vi.dwBuildNumber >= 6001) {
-			RtlInitUnicodeString(&uRoutineName, L"PsSetCreateProcessNotifyRoutineEx");
-			_PsSetCreateProcessNotifyROutineEx = (PSSETCREATEPROCESSNOTIFYROUTINEEX *)MmGetSystemRoutineAddress(&uRoutineName);
-			if (_PsSetCreateProcessNotifyROutineEx != NULL) {
-//				loaderEntry = (PKLDR_DATA_TABLE_ENTRY)DriverObject->DriverSection;
-//				loaderEntry->Flags |= 0x20;
-				status = _PsSetCreateProcessNotifyROutineEx(_ProcessNotifyEx, FALSE);
-//				if (status == STATUS_ACCESS_DENIED) {
-//					status = STATUS_SUCCESS;
-//					_PsSetCreateProcessNotifyROutineEx = NULL;
-//				}
-			} else status = STATUS_NOT_FOUND;
+			status = _FillProcessTable();
+			if (NT_SUCCESS(status)) {
+				RtlInitUnicodeString(&uRoutineName, L"PsSetCreateProcessNotifyRoutineEx");
+				_PsSetCreateProcessNotifyROutineEx = (PSSETCREATEPROCESSNOTIFYROUTINEEX *)MmGetSystemRoutineAddress(&uRoutineName);
+				if (_PsSetCreateProcessNotifyROutineEx != NULL)
+					status = _PsSetCreateProcessNotifyROutineEx(_ProcessNotifyEx, FALSE);
+				else status = STATUS_NOT_FOUND;
+			}
 		}
 	}
 
@@ -154,6 +313,8 @@ VOID ProcessEventsModuleFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING Regis
 
 	if (_PsSetCreateProcessNotifyROutineEx != NULL)
 		_PsSetCreateProcessNotifyROutineEx(_ProcessNotifyEx, TRUE);
+
+	PsTableFinit(&_processTable);
 
 	DEBUG_EXIT_FUNCTION_VOID();
 	return;

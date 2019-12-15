@@ -60,7 +60,11 @@ If Assigned(rq) Then
   begin
   Result := IRPMonDllGetRequest(@rq.Header, SizeOf(REQUEST_GENERAL) + 2048);
   If Result = ERROR_SUCCESS Then
+    begin
     AList.Add(rq);
+    If ((rq.Header.Flags And REQUEST_FLAG_NEXT_AVAILABLE) = 0) Then
+      Break;
+    end;
 
   If Result <> ERROR_SUCCESS Then
     begin

@@ -29,7 +29,18 @@ typedef NTSTATUS (NTAPI OBREFERENCEOBJECTBYNAME) (
    PVOID ParseContext OPTIONAL,
    PVOID *ObjectPtr); 
 
+typedef NTSTATUS(NTAPI ZWQUERYINFORMATIONPROCESS)(
+	HANDLE ProcessHandle,
+	PROCESSINFOCLASS ProcessInformationClass,
+	PVOID ProcessInformation,
+	ULONG ProcessInformationLength,
+	PULONG ReturnLength);
 
+typedef NTSTATUS (NTAPI ZWQUERYSYSTEMINFORMATION)(
+	ULONG SystemInformationClass,
+	PVOID SystemInformation,
+	ULONG SystemInformationLength,
+	PULONG ReturnLength);
 
 typedef struct _OBJECT_DIRECTORY_INFORMATION {
    UNICODE_STRING Name;
@@ -38,6 +49,8 @@ typedef struct _OBJECT_DIRECTORY_INFORMATION {
 
 __declspec(dllimport) ZWQUERYDIRECTORYOBJECT ZwQueryDirectoryObject;
 __declspec(dllimport) OBREFERENCEOBJECTBYNAME ObReferenceObjectByName;
+__declspec(dllimport) ZWQUERYSYSTEMINFORMATION ZwQuerySystemInformation;
+__declspec(dllimport) ZWQUERYINFORMATIONPROCESS ZwQueryInformationProcess;
 __declspec(dllimport) POBJECT_TYPE *IoDriverObjectType;
 
 
@@ -494,13 +507,16 @@ NTSTATUS UtilsCopyUnicodeString(POOL_TYPE PoolType, PUNICODE_STRING Target, cons
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("PoolType=%u; Target=0x%p; Source=\"%wZ\"", PoolType, Target, Source);
 
+	status = STATUS_SUCCESS;
+	memset(Target, 0, sizeof(UNICODE_STRING));
 	Target->Length = Source->Length;
 	Target->MaximumLength = Target->MaximumLength;
-	Target->Buffer = HeapMemoryAlloc(PoolType, Target->Length);
-	if (Target->Buffer != NULL) {
-		memcpy(Target->Buffer, Source->Buffer, Target->Length);
-		status = STATUS_SUCCESS;
-	} else status = STATUS_INSUFFICIENT_RESOURCES;
+	if (Target->Length > 0) {
+		Target->Buffer = HeapMemoryAlloc(PoolType, Target->Length);
+		if (Target->Buffer != NULL)
+			memcpy(Target->Buffer, Source->Buffer, Target->Length);
+		else status = STATUS_INSUFFICIENT_RESOURCES;
+	}
 
 	DEBUG_EXIT_FUNCTION("0x%x", status);
 	return status;
@@ -528,4 +544,105 @@ void QueryClientBasicInformation(PBASIC_CLIENT_INFO Info)
 
 	DEBUG_EXIT_FUNCTION_VOID();
 	return;
+}
+
+
+NTSTATUS ProcessEnumerate(PSYSTEM_PROCESS_INFORMATION_REAL *Processes)
+{
+	ULONG retLen = 0;
+	ULONG spiSize = 64;
+	PSYSTEM_PROCESS_INFORMATION_REAL spi = NULL;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION("Processes=0x%p", Processes);
+
+	status = STATUS_INFO_LENGTH_MISMATCH;
+	do {
+		spi = HeapMemoryAllocPaged(spiSize);
+		if (spi != NULL) {
+			status = ZwQuerySystemInformation(SystemProcessInformation, spi, spiSize, &retLen);
+			if (status == STATUS_INFO_LENGTH_MISMATCH) {
+				HeapMemoryFree(spi);
+				spiSize *= 2;
+			}
+		}
+	} while (status == STATUS_INFO_LENGTH_MISMATCH);
+
+	if (NT_SUCCESS(status))
+		*Processes = spi;
+
+	DEBUG_EXIT_FUNCTION("0x%x", status, *Processes);
+	return status;
+}
+
+
+VOID ProcessEnumerationFree(PSYSTEM_PROCESS_INFORMATION_REAL Processes)
+{
+	DEBUG_ENTER_FUNCTION("Processes=0x%p", Processes);
+
+	HeapMemoryFree(Processes);
+
+	DEBUG_EXIT_FUNCTION_VOID();
+	return;
+}
+
+
+NTSTATUS ProcessQueryFullImageName(HANDLE ProcessHandle, POOL_TYPE PoolType, PUNICODE_STRING Name)
+{
+	ULONG retLength = 0;
+	ULONG pniSize = 512;
+	PUNICODE_STRING pni = NULL;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION("ProcessHandle=0x%p; PoolType=%u; Name=0x%p", ProcessHandle, PoolType, Name);
+
+	do {
+		if (pni != NULL) {
+			HeapMemoryFree(pni);
+			pniSize *= 2;
+		}
+
+		pni = HeapMemoryAllocPaged(pniSize);
+		if (pni != NULL)
+			status = ZwQueryInformationProcess(ProcessHandle, ProcessImageFileName, pni, pniSize, &retLength);
+		else status = STATUS_INSUFFICIENT_RESOURCES;
+	} while (status == STATUS_INFO_LENGTH_MISMATCH);
+
+	if (NT_SUCCESS(status))
+		status = UtilsCopyUnicodeString(PoolType, Name, pni);
+
+	if (pni != NULL)
+		HeapMemoryFree(pni);
+
+	DEBUG_EXIT_FUNCTION("0x%x, Name=\"%wZ\"", status, Name);
+	return status;
+}
+
+
+NTSTATUS ProcessQueryCommandLine(HANDLE ProcessHandle, POOL_TYPE PoolType, PUNICODE_STRING CommandLine)
+{
+	ULONG retLength = 0;
+	ULONG pcliSize = 512;
+	PUNICODE_STRING pcli = NULL;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION("ProcessHandle=0x%p; PoolType=%u; CommandLine=0x%p", ProcessHandle, PoolType, CommandLine);
+
+	do {
+		if (pcli != NULL) {
+			HeapMemoryFree(pcli);
+			pcliSize *= 2;
+		}
+
+		pcli = HeapMemoryAllocPaged(pcliSize);
+		if (pcli != NULL)
+			status = ZwQueryInformationProcess(ProcessHandle, ProcessCommandLineInformation, pcli, pcliSize, &retLength);
+		else status = STATUS_INSUFFICIENT_RESOURCES;
+	} while (status == STATUS_INFO_LENGTH_MISMATCH);
+
+	if (NT_SUCCESS(status))
+		status = UtilsCopyUnicodeString(PoolType, CommandLine, pcli);
+
+	if (pcli != NULL)
+		HeapMemoryFree(pcli);
+
+	DEBUG_EXIT_FUNCTION("0x%x, CommandLine=\"%wZ\"", status, CommandLine);
+	return status;
 }

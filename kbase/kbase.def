@@ -75,3 +75,7 @@ EXPORTS
 	DymArrayPushArrayNoAlloc
 	DymArrayPushArray
 	QueryClientBasicInformation
+	ProcessEnumerate
+	ProcessEnumerationFree
+	ProcessQueryFullImageName
+	ProcessQueryCommandLine
