@@ -391,7 +391,8 @@ static NTSTATUS _DeviceHookRecordCreate(PDRIVER_HOOK_RECORD DriverRecord, PDEVIC
 				tmpRecord->MonitoringEnabled = MonitoringEnabled;
 				tmpRecord->CreateReason = CreateReason;
 				memcpy(tmpRecord->IRPMonitorSettings, DriverRecord->IRPSettings, sizeof(tmpRecord->IRPMonitorSettings));
-				memcpy(tmpRecord->FastIoMonitorSettings, DriverRecord->FastIoSettings, sizeof(tmpRecord->FastIoMonitorSettings));			if (IRPSettings != NULL)
+				memcpy(tmpRecord->FastIoMonitorSettings, DriverRecord->FastIoSettings, sizeof(tmpRecord->FastIoMonitorSettings));
+				if (IRPSettings != NULL)
 					memcpy(&tmpRecord->IRPMonitorSettings, IRPSettings, sizeof(tmpRecord->IRPMonitorSettings));
 
 				if (FastIoSettings != NULL)
