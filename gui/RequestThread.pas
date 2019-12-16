@@ -62,7 +62,8 @@ If Assigned(rq) Then
   If Result = ERROR_SUCCESS Then
     begin
     AList.Add(rq);
-    If ((rq.Header.Flags And REQUEST_FLAG_NEXT_AVAILABLE) = 0) Then
+    If ((rq.Header.Flags And REQUEST_FLAG_NEXT_AVAILABLE) = 0) Or
+       (AList.Count >= 50) Then
       Break;
     end;
 
