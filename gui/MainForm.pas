@@ -739,7 +739,6 @@ Var
   M : TMenuItem;
   value : WideString;
   rq : TDriverRequest;
-  selectedColor : TColor;
 begin
 invalidButton := False;
 M := Sender As TMenuItem;
@@ -757,17 +756,18 @@ If Not invalidButton Then
   rq := FModel.Selected;
   rf := TRequestFilter.NewInstance(rq.RequestType);
   rf.SetCondition(ERequestListModelColumnType(M.Tag), rfoEquals, value);
-  selectedColor := $FFFFFF;
   If filterAction = ffaHighlight Then
     begin
     If highlightColorDialog.Execute Then
-      selectedColor := highlightColorDialog.Color;
+      begin
+      rf.SetAction(filterAction, highlightColorDialog.Color);
+      FFilters.Add(rf);
+      end;
+    end
+  Else begin
+    rf.SetAction(filterAction);
+    FFilters.Insert(0, rf);
     end;
-
-  rf.SetAction(filterAction);
-  If filterAction = ffaHighlight Then
-    FFilters.Add(rf)
-  Else FFilters.Insert(0, rf);
 
   FModel.Reevaluate;
   end;
