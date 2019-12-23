@@ -389,11 +389,14 @@ NTSTATUS UMHookDeleteDevice(PIOCTL_IRPMNDRV_HOOK_REMOVE_DEVICE_INPUT InputBuffer
 NTSTATUS UMGetRequestRecord(PVOID Buffer, ULONG BufferLength, PSIZE_T ReturnLength)
 {
 	SIZE_T requestSize = 0;
+	SIZE_T tmpRequestSize = 0;
 	PREQUEST_HEADER request;
+	size_t requestsAggregated = 0;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("Buffer=0x%p; BufferLength=%u; ReturnLength=0x%p", Buffer, BufferLength, ReturnLength);
 
 	if (BufferLength >= sizeof(REQUEST_HEADER)) {
+		*ReturnLength = 0;
 		if (ExGetPreviousMode() == UserMode) {
 			__try {
 				ProbeForWrite(Buffer, BufferLength, 1);
@@ -404,23 +407,46 @@ NTSTATUS UMGetRequestRecord(PVOID Buffer, ULONG BufferLength, PSIZE_T ReturnLeng
 		} else status = STATUS_SUCCESS;
 
 		if (NT_SUCCESS(status)) {
-			requestSize = BufferLength;
-			status = RequestQueueGet(&request, &requestSize);
-			if (NT_SUCCESS(status)) {
-				if (ExGetPreviousMode() == UserMode) {
-					__try {
+			do {
+				tmpRequestSize = requestSize;
+				requestSize = BufferLength;
+				status = RequestQueueGet(&request, &requestSize);
+				if (NT_SUCCESS(status)) {
+					Buffer = (unsigned char *)Buffer + tmpRequestSize;
+					if (ExGetPreviousMode() == UserMode) {
+						__try {
+							memcpy(Buffer, request, requestSize);
+							((PREQUEST_HEADER)Buffer)->Entry.Flink = (PLIST_ENTRY)((unsigned char *)Buffer + requestSize);
+						} __except (EXCEPTION_EXECUTE_HANDLER) {
+							status = GetExceptionCode();
+						}
+					} else {
 						memcpy(Buffer, request, requestSize);
-						*ReturnLength = requestSize;
-					} __except (EXCEPTION_EXECUTE_HANDLER) {
-						status = GetExceptionCode();
+						((PREQUEST_HEADER)Buffer)->Entry.Flink = (PLIST_ENTRY)((unsigned char *)Buffer + requestSize);
 					}
-				} else {
-					memcpy(Buffer, request, requestSize);
-					*ReturnLength = requestSize;
-				}
 
-				HeapMemoryFree(request);
-			}
+					if (NT_SUCCESS(status)) {
+						requestsAggregated++;
+						BufferLength -= (ULONG)requestSize;
+						*ReturnLength += requestSize;
+					}
+
+					HeapMemoryFree(request);
+				} else if (requestsAggregated > 0) {
+					if (status == STATUS_BUFFER_TOO_SMALL || status == STATUS_NO_MORE_ENTRIES)
+						status = STATUS_SUCCESS;
+
+					if (ExGetPreviousMode() == UserMode) {
+						__try {
+							((PREQUEST_HEADER)Buffer)->Entry.Flink = NULL;
+						} __except (EXCEPTION_EXECUTE_HANDLER) {
+							status = GetExceptionCode();
+						}
+					} else ((PREQUEST_HEADER)Buffer)->Entry.Flink = NULL;
+
+					break;
+				}
+			} while (NT_SUCCESS(status));
 		}
 	} else status = STATUS_BUFFER_TOO_SMALL;
 
