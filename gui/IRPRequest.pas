@@ -89,6 +89,7 @@ Type
     Public
       Function GetColumnName(AColumnType:ERequestListModelColumnType):WideString; Override;
       Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
+      Class Function InformationClassToString(AClass:Cardinal):WideString;
     end;
 
   TQuerySetVolumeRequest = Class (TIRPRequest)
@@ -639,9 +640,9 @@ Function TReadWriteRequest.GetColumnValue(AColumnType:ERequestListModelColumnTyp
 begin
 Result := True;
 Case AColumnType Of
-  rlmctArg1: AResult := Format('L: %u', [FArgs.ReadWrite.Length]);
-  rlmctArg2: AResult := Format('K: 0x%x', [FArgs.ReadWrite.Key]);
-  rlmctArg3: AResult := Format('O: 0x%x', [FArgs.ReadWrite.ByteOffset]);
+  rlmctArg1: AResult := Format('%u', [FArgs.ReadWrite.Length]);
+  rlmctArg2: AResult := Format('0x%x', [FArgs.ReadWrite.Key]);
+  rlmctArg3: AResult := Format('0x%x', [FArgs.ReadWrite.ByteOffset]);
   rlmctArg4: Result := False;
   Else Result := Inherited GetColumnValue(AColumnType, AResult);
   end;
@@ -660,12 +661,21 @@ end;
 
 (** TQuerySetRequest **)
 
+
+Class Function TQuerySetRequest.InformationClassToString(AClass:Cardinal):WideString;
+begin
+Result := '';
+If AClass < 76 Then
+  Result := FIleInformationClassArray[AClass]
+Else Format('%u', [AClass]);
+end;
+
 Function TQuerySetRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
 begin
 Result := True;
 Case AColumnType Of
-  rlmctArg1: AResult := Format('L: %u', [FArgs.QuerySetInformation.Lenth]);
-  rlmctArg2: AResult := Format('I: %u', [FArgs.QuerySetInformation.FileInformationClass]);
+  rlmctArg1: AResult := Format('%u', [FArgs.QuerySetInformation.Lenth]);
+  rlmctArg2: AResult := InformationClassToString(FArgs.QuerySetInformation.FileInformationClass);
   rlmctArg3,
   rlmctArg4: Result := False
   Else Result := Inherited GetColumnValue(AColumnType, AResult);
