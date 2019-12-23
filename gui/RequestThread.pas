@@ -58,7 +58,7 @@ Repeat
 rq := AllocMem(bufSize);
 If Assigned(rq) Then
   begin
-  Result := IRPMonDllGetRequest(@rq.Header, SizeOf(REQUEST_GENERAL) + 2048);
+  Result := IRPMonDllGetRequest(@rq.Header, bufSize);
   If Result = ERROR_SUCCESS Then
     begin
     AList.Add(rq);
