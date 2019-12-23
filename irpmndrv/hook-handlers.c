@@ -1199,11 +1199,11 @@ static NTSTATUS _HookHandlerIRPCompletion(PDEVICE_OBJECT DeviceObject, PIRP Irp,
 }
 
 
-static PIRP_COMPLETION_CONTEXT _HookIRPCompletionRoutine(PIRP Irp, PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT DeviceObject, const REQUEST_IRP *Request)
+static PIRP_COMPLETION_CONTEXT _HookIRPCompletionRoutine(PIRP Irp, PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT DeviceObject)
 {
 	PIO_STACK_LOCATION irpStack = NULL;
 	PIRP_COMPLETION_CONTEXT ret = NULL;
-	DEBUG_ENTER_FUNCTION("Irp=0x%p; DriverObject=0x%p; DeviceObject=0x%p; Request=0x%p", Irp, DriverObject, DeviceObject, Request);
+	DEBUG_ENTER_FUNCTION("Irp=0x%p; DriverObject=0x%p; DeviceObject=0x%p", Irp, DriverObject, DeviceObject);
 
 	if (NT_SUCCESS(IoAcquireRemoveLock(&_rundownLock, Irp))) {
 		ret = HeapMemoryAllocNonPaged(sizeof(IRP_COMPLETION_CONTEXT));
@@ -1236,6 +1236,7 @@ static PIRP_COMPLETION_CONTEXT _HookIRPCompletionRoutine(PIRP Irp, PDRIVER_OBJEC
 
 NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 {
+	BOOLEAN catchRequest = FALSE;
 	BASIC_CLIENT_INFO clientInfo;
 	BOOLEAN isCleanup = FALSE;
 	PFILE_OBJECT cleanupFileObject = NULL;
@@ -1254,140 +1255,141 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 	if (driverRecord != NULL) {
 		memset(&clientInfo, 0, sizeof(clientInfo));
 		deviceRecord = DriverHookRecordGetDevice(driverRecord, Deviceobject);
-		isCreate = (irpStack->MajorFunction == IRP_MJ_CREATE);
-		if (isCreate) {
-			createFileObject = irpStack->FileObject;
-			if (createFileObject != NULL && KeGetCurrentIrql() < DISPATCH_LEVEL)
-				fnAssignedId = RequestIdReserve();
-		
-			QueryClientBasicInformation(&clientInfo);
-		} else if (irpStack->FileObject != NULL) {
-			PFILE_OBJECT_CONTEXT foc = NULL;
 
-			foc = FoTableGet(&_foTable, irpStack->FileObject);
-			if (foc != NULL) {
-				clientInfo = *(PBASIC_CLIENT_INFO)(foc + 1);
-				FoContextDereference(foc);
+		catchRequest = (_CatchRequest(driverRecord, deviceRecord, Deviceobject) && deviceRecord == NULL || deviceRecord->IRPMonitorSettings[irpStack->MajorFunction]);
+		if (catchRequest) {
+			isCreate = (irpStack->MajorFunction == IRP_MJ_CREATE);
+			if (isCreate) {
+				createFileObject = irpStack->FileObject;
+				if (createFileObject != NULL && KeGetCurrentIrql() < DISPATCH_LEVEL)
+					fnAssignedId = RequestIdReserve();
+
+				QueryClientBasicInformation(&clientInfo);
+			} else if (irpStack->FileObject != NULL) {
+				PFILE_OBJECT_CONTEXT foc = NULL;
+
+				foc = FoTableGet(&_foTable, irpStack->FileObject);
+				if (foc != NULL) {
+					clientInfo = *(PBASIC_CLIENT_INFO)(foc + 1);
+					FoContextDereference(foc);
+				}
 			}
-		}
 
-		if (_CatchRequest(driverRecord, deviceRecord, Deviceobject)) {
-			if (deviceRecord == NULL || deviceRecord->IRPMonitorSettings[irpStack->MajorFunction]) {
-				if (driverRecord->MonitorIRP) {
-					DATA_LOGGER_RESULT loggedData;
+			if (driverRecord->MonitorIRP) {
+				DATA_LOGGER_RESULT loggedData;
 
-					memset(&loggedData, 0, sizeof(loggedData));
-					if (driverRecord->MonitorData)
-						IRPDataLogger(Irp, irpStack, FALSE, &loggedData);
-					
-					request = HeapMemoryAllocNonPaged(sizeof(REQUEST_IRP) + loggedData.BufferSize);
-					if (request != NULL) {
-						memset(request, 0, sizeof(REQUEST_IRP) + loggedData.BufferSize);
-						RequestHeaderInit(&request->Header, Deviceobject->DriverObject, Deviceobject, ertIRP);
-						RequestHeaderSetResult(request->Header, NTSTATUS, STATUS_PENDING);
-						request->IRPAddress = Irp;
-						request->MajorFunction = irpStack->MajorFunction;
-						request->MinorFunction = irpStack->MinorFunction;
-						request->PreviousMode = ExGetPreviousMode();
-						request->RequestorMode = Irp->RequestorMode;
-						request->Arg1 = irpStack->Parameters.Others.Argument1;
-						request->Arg2 = irpStack->Parameters.Others.Argument2;
-						request->Arg3 = irpStack->Parameters.Others.Argument3;
-						request->Arg4 = irpStack->Parameters.Others.Argument4;
-						request->IrpFlags = Irp->Flags;
-						request->FileObject = irpStack->FileObject;
-						request->IOSBStatus = Irp->IoStatus.Status;
-						request->IOSBInformation = Irp->IoStatus.Information;
-						request->RequestorProcessId = IoGetRequestorProcessId(Irp);
-						_SetRequestFlags(&request->Header, &clientInfo);
-						IRPDataLoggerSetRequestFlags(&request->Header, &loggedData);
-						if (loggedData.BufferSize > 0 && loggedData.Buffer != NULL) {
-							request->DataSize = loggedData.BufferSize;
-							__try {
-								memcpy(request + 1, loggedData.Buffer, request->DataSize);
-							} __except (EXCEPTION_EXECUTE_HANDLER) {
+				memset(&loggedData, 0, sizeof(loggedData));
+				if (driverRecord->MonitorData)
+					IRPDataLogger(Irp, irpStack, FALSE, &loggedData);
 
-							}
+				request = HeapMemoryAllocNonPaged(sizeof(REQUEST_IRP) + loggedData.BufferSize);
+				if (request != NULL) {
+					memset(request, 0, sizeof(REQUEST_IRP) + loggedData.BufferSize);
+					RequestHeaderInit(&request->Header, Deviceobject->DriverObject, Deviceobject, ertIRP);
+					RequestHeaderSetResult(request->Header, NTSTATUS, STATUS_PENDING);
+					request->IRPAddress = Irp;
+					request->MajorFunction = irpStack->MajorFunction;
+					request->MinorFunction = irpStack->MinorFunction;
+					request->PreviousMode = ExGetPreviousMode();
+					request->RequestorMode = Irp->RequestorMode;
+					request->Arg1 = irpStack->Parameters.Others.Argument1;
+					request->Arg2 = irpStack->Parameters.Others.Argument2;
+					request->Arg3 = irpStack->Parameters.Others.Argument3;
+					request->Arg4 = irpStack->Parameters.Others.Argument4;
+					request->IrpFlags = Irp->Flags;
+					request->FileObject = irpStack->FileObject;
+					request->IOSBStatus = Irp->IoStatus.Status;
+					request->IOSBInformation = Irp->IoStatus.Information;
+					request->RequestorProcessId = IoGetRequestorProcessId(Irp);
+					_SetRequestFlags(&request->Header, &clientInfo);
+					IRPDataLoggerSetRequestFlags(&request->Header, &loggedData);
+					if (loggedData.BufferSize > 0 && loggedData.Buffer != NULL) {
+						request->DataSize = loggedData.BufferSize;
+						__try {
+							memcpy(request + 1, loggedData.Buffer, request->DataSize);
+						} __except (EXCEPTION_EXECUTE_HANDLER) {
+						}
+					}
+				}
+
+				if (driverRecord->MonitorData)
+					DataLoggerResultRelease(&loggedData);
+			}
+
+			if (driverRecord->MonitorIRPCompletion) {
+				compContext = _HookIRPCompletionRoutine(Irp, Deviceobject->DriverObject, Deviceobject);
+				if (compContext != NULL) {
+					compContext->ClientInfo = clientInfo;
+					if (request != NULL)
+						InterlockedIncrement(&compContext->ReferenceCount);
+				}
+			}
+
+			isCleanup = (irpStack->MajorFunction == IRP_MJ_CLEANUP);
+			if (isCleanup) {
+				cleanupFileObject = irpStack->FileObject;
+				if (cleanupFileObject != NULL) {
+					if (KeGetCurrentIrql() < DISPATCH_LEVEL) {
+						PREQUEST_FILE_OBJECT_NAME_DELETED dr = NULL;
+
+						dr = HeapMemoryAllocNonPaged(sizeof(REQUEST_FILE_OBJECT_NAME_DELETED));
+						if (dr != NULL) {
+							memset(dr, 0, sizeof(REQUEST_FILE_OBJECT_NAME_DELETED));
+							RequestHeaderInit(&dr->Header, Deviceobject->DriverObject, Deviceobject, ertFileObjectNameDeleted);
+							RequestHeaderSetResult(dr->Header, NTSTATUS, STATUS_SUCCESS);
+							dr->FileObject = cleanupFileObject;
+							_SetRequestFlags(&dr->Header, &clientInfo);
+							RequestQueueInsert(&dr->Header);
 						}
 					}
 
-					if (driverRecord->MonitorData)
-						DataLoggerResultRelease(&loggedData);
+					FoTableDeleteNoReturn(&_foTable, cleanupFileObject);
 				}
-
-				if (driverRecord->MonitorIRPCompletion) {
-					compContext = _HookIRPCompletionRoutine(Irp, Deviceobject->DriverObject, Deviceobject, request);
-					if (compContext != NULL) {
-						compContext->ClientInfo = clientInfo;
-						if (request != NULL)
-							InterlockedIncrement(&compContext->ReferenceCount);
-					}
-				}
-			}
-		}
-		
-		isCleanup = (irpStack->MajorFunction == IRP_MJ_CLEANUP);
-		if (isCleanup) {
-			cleanupFileObject = irpStack->FileObject;
-			if (cleanupFileObject != NULL) {				
-				if (KeGetCurrentIrql() < DISPATCH_LEVEL) {
-					PREQUEST_FILE_OBJECT_NAME_DELETED dr = NULL;
-
-					dr = HeapMemoryAllocNonPaged(sizeof(REQUEST_FILE_OBJECT_NAME_DELETED));
-					if (dr != NULL) {
-						memset(dr, 0, sizeof(REQUEST_FILE_OBJECT_NAME_DELETED));
-						RequestHeaderInit(&dr->Header, Deviceobject->DriverObject, Deviceobject, ertFileObjectNameDeleted);
-						RequestHeaderSetResult(dr->Header, NTSTATUS, STATUS_SUCCESS);
-						dr->FileObject = cleanupFileObject;
-						_SetRequestFlags(&dr->Header, &clientInfo);
-						RequestQueueInsert(&dr->Header);
-					}
-				}
-
-				FoTableDeleteNoReturn(&_foTable, cleanupFileObject);
 			}
 		}
 
 		status = driverRecord->OldMajorFunction[irpStack->MajorFunction](Deviceobject, Irp);
-		if (isCreate && createFileObject != NULL && NT_SUCCESS(status) && KeGetCurrentIrql() < DISPATCH_LEVEL && status != STATUS_PENDING) {
-			PFLT_FILE_NAME_INFORMATION fi = NULL;
-			NTSTATUS tmpStatus = STATUS_UNSUCCESSFUL;
-			PREQUEST_FILE_OBJECT_NAME_ASSIGNED ar = NULL;
+		if (catchRequest) {
+			if (isCreate && createFileObject != NULL && NT_SUCCESS(status) && KeGetCurrentIrql() < DISPATCH_LEVEL && status != STATUS_PENDING) {
+				PFLT_FILE_NAME_INFORMATION fi = NULL;
+				NTSTATUS tmpStatus = STATUS_UNSUCCESSFUL;
+				PREQUEST_FILE_OBJECT_NAME_ASSIGNED ar = NULL;
 
-			tmpStatus = FltGetFileNameInformationUnsafe(createFileObject, NULL, FLT_FILE_NAME_NORMALIZED | FLT_FILE_NAME_QUERY_ALWAYS_ALLOW_CACHE_LOOKUP, &fi);
-			if (NT_SUCCESS(tmpStatus)) {
-				tmpStatus = FltParseFileNameInformation(fi);
+				tmpStatus = FltGetFileNameInformationUnsafe(createFileObject, NULL, FLT_FILE_NAME_NORMALIZED | FLT_FILE_NAME_QUERY_ALWAYS_ALLOW_CACHE_LOOKUP, &fi);
 				if (NT_SUCCESS(tmpStatus)) {
-					UNICODE_STRING uFileName;
+					tmpStatus = FltParseFileNameInformation(fi);
+					if (NT_SUCCESS(tmpStatus)) {
+						UNICODE_STRING uFileName;
 
-					uFileName = fi->Name;
-					if (fi->Volume.Length > 0 && fi->Volume.Length <= fi->Name.Length) {
-						uFileName.Length -= fi->Volume.Length;
-						uFileName.MaximumLength = uFileName.Length;
-						uFileName.Buffer += fi->Volume.Length / sizeof(wchar_t);
+						uFileName = fi->Name;
+						if (fi->Volume.Length > 0 && fi->Volume.Length <= fi->Name.Length) {
+							uFileName.Length -= fi->Volume.Length;
+							uFileName.MaximumLength = uFileName.Length;
+							uFileName.Buffer += fi->Volume.Length / sizeof(wchar_t);
+						}
+
+						ar = HeapMemoryAllocNonPaged(sizeof(REQUEST_FILE_OBJECT_NAME_ASSIGNED) + uFileName.Length);
+						if (ar != NULL) {
+							memset(ar, 0, sizeof(REQUEST_FILE_OBJECT_NAME_ASSIGNED) + uFileName.Length);
+							RequestHeaderInitNoId(&ar->Header, Deviceobject->DriverObject, Deviceobject, ertFileObjectNameAssigned);
+							ar->Header.Id = fnAssignedId;
+							RequestHeaderSetResult(ar->Header, NTSTATUS, STATUS_SUCCESS);
+							ar->FileObject = createFileObject;
+							ar->NameLength = uFileName.Length;
+							memcpy(ar + 1, uFileName.Buffer, uFileName.Length);
+							_SetRequestFlags(&ar->Header, &clientInfo);
+							RequestQueueInsert(&ar->Header);
+						} else tmpStatus = STATUS_INSUFFICIENT_RESOURCES;
 					}
 
-					ar = HeapMemoryAllocNonPaged(sizeof(REQUEST_FILE_OBJECT_NAME_ASSIGNED) + uFileName.Length);
-					if (ar != NULL) {
-						memset(ar, 0, sizeof(REQUEST_FILE_OBJECT_NAME_ASSIGNED) + uFileName.Length);
-						RequestHeaderInitNoId(&ar->Header, Deviceobject->DriverObject, Deviceobject, ertFileObjectNameAssigned);
-						ar->Header.Id = fnAssignedId;
-						RequestHeaderSetResult(ar->Header, NTSTATUS, STATUS_SUCCESS);
-						ar->FileObject = createFileObject;
-						ar->NameLength = uFileName.Length;
-						memcpy(ar + 1, uFileName.Buffer, uFileName.Length);
-						_SetRequestFlags(&ar->Header, &clientInfo);
-						RequestQueueInsert(&ar->Header);
-					} else tmpStatus = STATUS_INSUFFICIENT_RESOURCES;
+					FltReleaseFileNameInformation(fi);
 				}
 
-				FltReleaseFileNameInformation(fi);
+				if (NT_SUCCESS(status) && status != STATUS_PENDING)
+					FoTableInsert(&_foTable, createFileObject, &clientInfo, sizeof(clientInfo));
 			}
-
-			if (NT_SUCCESS(status) && status != STATUS_PENDING)
-				FoTableInsert(&_foTable, createFileObject, &clientInfo, sizeof(clientInfo));
 		}
-		
+
 		if (request != NULL) {
 			RequestHeaderSetResult(request->Header, NTSTATUS, status);
 			RequestQueueInsert(&request->Header);
