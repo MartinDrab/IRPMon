@@ -681,7 +681,8 @@ end;
 Function TRequestListModel.Update:Cardinal;
 Var
   keepRequest : Boolean;
-  ur : PREQUEST_GENERAL;
+  requestBuffer : PREQUEST_GENERAL;
+  tmpUR : PREQUEST_GENERAL;
   dr : TDriverRequest;
   deviceName : WideString;
   driverName : WideString;
@@ -691,77 +692,86 @@ begin
 Result := ERROR_SUCCESS;
 If Assigned(UpdateRequest) Then
   begin
-  For ur In UpdateRequest Do
+  For requestBuffer In UpdateRequest Do
     begin
-    Case ur.Header.RequestType Of
-      ertIRP: dr := TIRPRequest.Build(ur.Irp);
-      ertIRPCompletion: dr := TIRPCompleteRequest.Create(ur.IrpComplete);
-      ertAddDevice: dr := TAddDeviceRequest.Create(ur.AddDevice);
-      ertDriverUnload: dr := TDriverUnloadRequest.Create(ur.DriverUnload);
-      ertFastIo: dr := TFastIoRequest.Create(ur.FastIo);
-      ertStartIo: dr := TStartIoRequest.Create(ur.StartIo);
-      ertDriverDetected : begin
-        dr := TDriverDetectedRequest.Create(ur.DriverDetected);
-        If FDriverMap.ContainsKey(dr.DriverObject) Then
-          FDriverMap.Remove(dr.DriverObject);
+    tmpUR := requestBuffer;
+    While Assigned(tmpUR) Do
+      begin
+      Case tmpUR.Header.RequestType Of
+        ertIRP: dr := TIRPRequest.Build(tmpUR.Irp);
+        ertIRPCompletion: dr := TIRPCompleteRequest.Create(tmpUR.IrpComplete);
+        ertAddDevice: dr := TAddDeviceRequest.Create(tmpUR.AddDevice);
+        ertDriverUnload: dr := TDriverUnloadRequest.Create(tmpUR.DriverUnload);
+        ertFastIo: dr := TFastIoRequest.Create(tmpUR.FastIo);
+        ertStartIo: dr := TStartIoRequest.Create(tmpUR.StartIo);
+        ertDriverDetected : begin
+          dr := TDriverDetectedRequest.Create(tmpUR.DriverDetected);
+          If FDriverMap.ContainsKey(dr.DriverObject) Then
+            FDriverMap.Remove(dr.DriverObject);
 
-        FDriverMap.Add(dr.DriverObject, dr.DriverName);
-        end;
-      ertDeviceDetected : begin
-        dr := TDeviceDetectedRequest.Create(ur.DeviceDetected);
-        If FDeviceMap.ContainsKey(dr.DeviceObject) Then
-          FDeviceMap.Remove(dr.DeviceObject);
+          FDriverMap.Add(dr.DriverObject, dr.DriverName);
+          end;
+        ertDeviceDetected : begin
+          dr := TDeviceDetectedRequest.Create(tmpUR.DeviceDetected);
+          If FDeviceMap.ContainsKey(dr.DeviceObject) Then
+            FDeviceMap.Remove(dr.DeviceObject);
 
-        FDeviceMap.Add(dr.DeviceObject, dr.DeviceName);
-        end;
-      ertFileObjectNameAssigned : begin
-        dr := TFileObjectNameAssignedRequest.Create(ur.FileObjectNameAssigned);
-        If FFileMap.ContainsKey(dr.FileObject) Then
-          FFileMap.Remove(dr.FileObject);
+          FDeviceMap.Add(dr.DeviceObject, dr.DeviceName);
+          end;
+        ertFileObjectNameAssigned : begin
+          dr := TFileObjectNameAssignedRequest.Create(tmpUR.FileObjectNameAssigned);
+          If FFileMap.ContainsKey(dr.FileObject) Then
+            FFileMap.Remove(dr.FileObject);
 
-        FFileMap.Add(dr.FileObject, dr.FileName);
-        end;
-      ertFileObjectNameDeleted : begin
-        dr := TFileObjectNameDeletedRequest.Create(ur.FileObjectNameDeleted);
-        If FFileMap.ContainsKey(dr.FileObject) Then
-          FFileMap.Remove(dr.FileObject);
-        end;
-      ertProcessCreated : begin
-        dr := TProcessCreatedRequest.Create(ur.ProcessCreated);
-        If FProcessMap.ContainsKey(Cardinal(dr.DriverObject)) Then
-          FProcessMap.Remove(Cardinal(dr.DriverObject));
+          FFileMap.Add(dr.FileObject, dr.FileName);
+          end;
+        ertFileObjectNameDeleted : begin
+          dr := TFileObjectNameDeletedRequest.Create(tmpUR.FileObjectNameDeleted);
+          If FFileMap.ContainsKey(dr.FileObject) Then
+            FFileMap.Remove(dr.FileObject);
+          end;
+        ertProcessCreated : begin
+          dr := TProcessCreatedRequest.Create(tmpUR.ProcessCreated);
+          If FProcessMap.ContainsKey(Cardinal(dr.DriverObject)) Then
+            FProcessMap.Remove(Cardinal(dr.DriverObject));
 
-        FProcessMap.Add(Cardinal(dr.DriverObject), dr.DriverName);
+          FProcessMap.Add(Cardinal(dr.DriverObject), dr.DriverName);
+          end;
+        ertProcessExitted : begin
+          dr := TProcessExittedRequest.Create(tmpUR.ProcessExitted);
+          end;
+        Else dr := TDriverRequest.Create(tmpUR.Header);
         end;
-      ertProcessExitted : begin
-        dr := TProcessExittedRequest.Create(ur.ProcessExitted);
-        end;
-      Else dr := TDriverRequest.Create(ur.Header);
+
+      If FDriverMap.TryGetValue(dr.DriverObject, driverName) Then
+        dr.DriverName := driverName;
+
+      If FDeviceMap.TryGetValue(dr.DeviceObject, deviceName) Then
+        dr.DeviceName := deviceName;
+
+      If FFileMap.TryGetValue(dr.FileObject, fileName) Then
+        dr.SetFileName(fileName);
+
+      If FProcessMap.TryGetValue(dr.ProcessId, processName) Then
+        dr.SetProcessName(processName);
+
+      keepRequest := True;
+      If Assigned(FOnRequestProcessed) Then
+        FOnRequestProcessed(dr, keepRequest);
+
+      If FFilterDisplayOnly Then
+        FAllRequests.Add(dr);
+
+      If keepRequest Then
+        FRequests.Add(dr)
+      Else If Not FFilterDisplayOnly Then
+        dr.Free;
+
+      If Not Assigned(tmpUR.Header.Next) Then
+        Break;
+
+      tmpUR := PREQUEST_GENERAL(NativeUInt(tmpUR) + IRPMonDllGetRequestSize(@tmpUR.Header));
       end;
-
-    If FDriverMap.TryGetValue(dr.DriverObject, driverName) Then
-      dr.DriverName := driverName;
-
-    If FDeviceMap.TryGetValue(dr.DeviceObject, deviceName) Then
-      dr.DeviceName := deviceName;
-
-    If FFileMap.TryGetValue(dr.FileObject, fileName) Then
-      dr.SetFileName(fileName);
-
-    If FProcessMap.TryGetValue(dr.ProcessId, processName) Then
-      dr.SetProcessName(processName);
-
-    keepRequest := True;
-    If Assigned(FOnRequestProcessed) Then
-      FOnRequestProcessed(dr, keepRequest);
-
-    If FFilterDisplayOnly Then
-      FAllRequests.Add(dr);
-
-    If keepRequest Then
-      FRequests.Add(dr)
-    Else If Not FFilterDisplayOnly Then
-      dr.Free;
     end;
 
   UpdateRequest := Nil;

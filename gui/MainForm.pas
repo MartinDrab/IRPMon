@@ -873,14 +873,12 @@ end;
 
 Procedure TMainFrm.OnRequestProcessed(ARequest:TDriverRequest; Var AStore:Boolean);
 Var
-  matchResult : Cardinal;
   rf : TRequestFilter;
   matchingRF : TRequestFilter;
   allInclusive : Boolean;
   allExclusive : Boolean;
   noMatch : Boolean;
 begin
-matchingRF := Nil;
 allInclusive := True;
 allExclusive := True;
 noMatch := True;

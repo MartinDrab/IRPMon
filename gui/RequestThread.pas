@@ -53,7 +53,7 @@ Var
   rq : PREQUEST_GENERAL;
   bufSize : Cardinal;
 begin
-bufSize := SizeOf(REQUEST_GENERAL) + 2048;
+bufSize := 65536;
 Repeat
 rq := AllocMem(bufSize);
 If Assigned(rq) Then

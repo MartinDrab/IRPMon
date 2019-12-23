@@ -71,7 +71,6 @@ Var
   serviceTask : TDriverTaskObject;
   hScm : THandle;
   err : Cardinal;
-  wow64 : LongBool;
   connType : EIRPMonConnectorType;
   initInfo : IRPMON_INIT_INFO;
 Begin

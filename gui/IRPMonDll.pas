@@ -331,7 +331,7 @@ Const
 Type
   (** Header, containing information common for all request types. *)
   _REQUEST_HEADER = Record
-	  Nothing1 : Pointer;
+	  Next : ^_REQUEST_HEADER;
     Nothing2 : Pointer;
 	  (** Date and time of the request's detection (in 100 nanosecond
 	    units from January 1 1601). *)
