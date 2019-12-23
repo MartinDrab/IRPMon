@@ -141,7 +141,9 @@ NTSTATUS UMHookDriver(PIOCTL_IRPMNDRV_HOOK_DRIVER_INPUT InputBuffer, ULONG Input
 			PDRIVER_OBJECT targetDriver = NULL;
 			UNICODE_STRING uDriverName;
 
-			RtlInitUnicodeString(&uDriverName, tmp);
+			uDriverName.Length = (USHORT)input.DriverNameLength;
+			uDriverName.MaximumLength = uDriverName.Length;
+			uDriverName.Buffer = tmp;
 			status = GetDriverObjectByName(&uDriverName, &targetDriver);
 			if (NT_SUCCESS(status)) {
 				PDRIVER_HOOK_RECORD driverRecord = NULL;
