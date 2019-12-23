@@ -1355,7 +1355,7 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 				NTSTATUS tmpStatus = STATUS_UNSUCCESSFUL;
 				PREQUEST_FILE_OBJECT_NAME_ASSIGNED ar = NULL;
 
-				tmpStatus = FltGetFileNameInformationUnsafe(createFileObject, NULL, FLT_FILE_NAME_NORMALIZED | FLT_FILE_NAME_QUERY_ALWAYS_ALLOW_CACHE_LOOKUP, &fi);
+				tmpStatus = FltGetFileNameInformationUnsafe(createFileObject, NULL, FLT_FILE_NAME_NORMALIZED | FLT_FILE_NAME_QUERY_DEFAULT, &fi);
 				if (NT_SUCCESS(tmpStatus)) {
 					tmpStatus = FltParseFileNameInformation(fi);
 					if (NT_SUCCESS(tmpStatus)) {
