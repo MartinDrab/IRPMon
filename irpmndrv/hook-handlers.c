@@ -1248,6 +1248,7 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
+	PREQUEST_FILE_OBJECT_NAME_DELETED rfond = NULL;
 	PIO_STACK_LOCATION irpStack = IoGetCurrentIrpStackLocation(Irp);
 	DEBUG_ENTER_FUNCTION("DeviceObject=0x%p; Irp=0x%p", Deviceobject, Irp);
 
@@ -1330,16 +1331,13 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 				cleanupFileObject = irpStack->FileObject;
 				if (cleanupFileObject != NULL) {
 					if (KeGetCurrentIrql() < DISPATCH_LEVEL) {
-						PREQUEST_FILE_OBJECT_NAME_DELETED dr = NULL;
-
-						dr = HeapMemoryAllocNonPaged(sizeof(REQUEST_FILE_OBJECT_NAME_DELETED));
-						if (dr != NULL) {
-							memset(dr, 0, sizeof(REQUEST_FILE_OBJECT_NAME_DELETED));
-							RequestHeaderInit(&dr->Header, Deviceobject->DriverObject, Deviceobject, ertFileObjectNameDeleted);
-							RequestHeaderSetResult(dr->Header, NTSTATUS, STATUS_SUCCESS);
-							dr->FileObject = cleanupFileObject;
-							_SetRequestFlags(&dr->Header, &clientInfo);
-							RequestQueueInsert(&dr->Header);
+						rfond = HeapMemoryAllocNonPaged(sizeof(REQUEST_FILE_OBJECT_NAME_DELETED));
+						if (rfond != NULL) {
+							memset(rfond, 0, sizeof(REQUEST_FILE_OBJECT_NAME_DELETED));
+							RequestHeaderInit(&rfond->Header, Deviceobject->DriverObject, Deviceobject, ertFileObjectNameDeleted);
+							RequestHeaderSetResult(rfond->Header, NTSTATUS, STATUS_SUCCESS);
+							rfond->FileObject = cleanupFileObject;
+							_SetRequestFlags(&rfond->Header, &clientInfo);
 						}
 					}
 
@@ -1399,6 +1397,9 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 			RequestQueueInsert(&compContext->CompRequest->Header);
 			HeapMemoryFree(compContext);
 		}
+
+		if (rfond != NULL)
+			RequestQueueInsert(&rfond->Header);
 
 		if (deviceRecord != NULL)
 			DeviceHookRecordDereference(deviceRecord);
