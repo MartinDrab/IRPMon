@@ -20,11 +20,7 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllGetRequest(PREQUEST_HEADER Request, DWORD Si
 
 IRPMONDLL_API size_t WINAPI IRPMonDllGetRequestSize(const REQUEST_HEADER *Request)
 {
-	size_t ret = 0;
-
-	ret = RequestGetSize(Request);
-
-	return ret;
+	return RequestGetSize(Request);
 }
 
 
