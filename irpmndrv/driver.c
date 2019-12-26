@@ -14,6 +14,7 @@
 #include "process-events.h"
 #include "req-queue.h"
 #include "regman.h"
+#include "driver-settings.h"
 #include "driver.h"
 
 
@@ -115,6 +116,10 @@ static NTSTATUS _HandleCDORequest(ULONG ControlCode, PVOID InputBuffer, ULONG In
 			UMRequestQueueDisconnect();
 			status = STATUS_SUCCESS;
 			break;
+		case IOCTL_IRPMNDRV_QUEUE_CLEAR:
+			UMRequestQueueClear();
+			status = STATUS_SUCCESS;
+			break;
 		case IOCTL_IRPMNDRV_GET_RECORD:
 			status = UMGetRequestRecord(OutputBuffer, OutputBufferLength, &IoStatus->Information);
 			break;
@@ -187,6 +192,20 @@ static NTSTATUS _HandleCDORequest(ULONG ControlCode, PVOID InputBuffer, ULONG In
 		case IOCTL_IRPMNDRV_DRIVER_WATCH_ENUM:
 			status = PWDDriverNameEnumerate((PIOCTL_IRPMNDRV_DRIVER_WATCH_ENUM_OUTPUT)OutputBuffer, OutputBufferLength, &IoStatus->Information, ExGetPreviousMode());
 			break;
+		case IOCTL_IRPMNDRV_EMULATE_DRVDEV:
+			status = UMListDriversDevicesByEvents();
+			break;
+		case IOCTL_IRPMNDRV_EMULATE_PROCESS:
+			status = UMListProcessesByEvents();
+			break;
+
+		case IOCTL_IRPMNDRV_SETTINGS_QUERY:
+			status = UMDriverSettingsQuery(OutputBuffer, OutputBufferLength, &IoStatus->Information);
+			break;
+		case IOCTL_IRPMNDRV_SETTINGS_SET:
+			status = UMDriverSettingsSet(InputBuffer, InputBufferLength);
+			break;
+
 		default:
 			status = STATUS_INVALID_DEVICE_REQUEST;
 			break;
@@ -352,6 +371,7 @@ VOID DriverFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOI
 /************************************************************************/
 
 static DRIVER_MODULE_ENTRY_PARAMETERS _moduleEntries[] = {
+	{DriverSettingsInit, DriverSettingsFinit, NULL},
 	{RequestQueueModuleInit, RequestQueueModuleFinit, NULL},
 	{HookModuleInit, HookModuleFinit, NULL},
 	{HookHandlerModuleInit, HookHandlerModuleFinit, NULL},

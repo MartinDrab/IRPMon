@@ -378,6 +378,17 @@ DWORD DriverComGetRequest(PREQUEST_HEADER Request, DWORD Size)
 	return ret;
 }
 
+DWORD DriverComQueueClear(void)
+{
+	DWORD ret = ERROR_GEN_FAILURE;
+	DEBUG_ENTER_FUNCTION_NO_ARGS();
+
+	ret = _SynchronousNoIOIOCTL(IOCTL_IRPMNDRV_QUEUE_CLEAR);
+
+	DEBUG_EXIT_FUNCTION("%u", ret);
+	return ret;
+}
+
 DWORD DriverComHookDeviceByName(PWCHAR DeviceName, PHANDLE HookHandle, PVOID *ObjectId)
 {
 	DWORD ret = ERROR_GEN_FAILURE;
@@ -946,6 +957,60 @@ VOID DriverComDriverNameWatchEnumFree(PDRIVER_NAME_WATCH_RECORD Array, ULONG Cou
 
 	DEBUG_EXIT_FUNCTION_VOID();
 	return;
+}
+
+
+DWORD DriverComEmulateDriverDevices(void)
+{
+	DWORD ret = ERROR_GEN_FAILURE;
+	DEBUG_ENTER_FUNCTION_NO_ARGS();
+
+	ret = _SynchronousNoIOIOCTL(IOCTL_IRPMNDRV_EMULATE_DRVDEV);
+
+	DEBUG_EXIT_FUNCTION("%u", ret);
+	return ret;
+}
+
+
+DWORD DriverComEmulateProcesses(void)
+{
+	DWORD ret = ERROR_GEN_FAILURE;
+	DEBUG_ENTER_FUNCTION_NO_ARGS();
+
+	ret = _SynchronousNoIOIOCTL(IOCTL_IRPMNDRV_EMULATE_PROCESS);
+
+	DEBUG_EXIT_FUNCTION("%u", ret);
+	return ret;
+}
+
+
+DWORD DriverComSettingsQuery(PIRPMNDRV_SETTINGS Settings)
+{
+	DWORD ret = ERROR_GEN_FAILURE;
+	IOCTL_IRPMNDRV_SETTINGS_QUERY_OUTPUT output;
+	DEBUG_ENTER_FUNCTION("Settings=0x%p", Settings);
+
+	ret = _SynchronousReadIOCTL(IOCTL_IRPMNDRV_SETTINGS_QUERY, &output, sizeof(output));
+	if (ret == ERROR_SUCCESS)
+		*Settings = output.Settings;
+
+	DEBUG_EXIT_FUNCTION("%u", ret);
+	return ret;
+}
+
+
+DWORD DriverComSettingsSet(PIRPMNDRV_SETTINGS Settings, BOOLEAN Save)
+{
+	DWORD ret = ERROR_GEN_FAILURE;
+	IOCTL_IRPMNDRV_SETTINGS_SET_INPUT input;
+	DEBUG_ENTER_FUNCTION("Settings=0x%p; Save=%u", Settings, Save);
+
+	input.Settings = *Settings;
+	input.Save = Save;
+	ret = _SynchronousWriteIOCTL(IOCTL_IRPMNDRV_SETTINGS_SET, &input, sizeof(input));
+
+	DEBUG_EXIT_FUNCTION("%u", ret);
+	return ret;
 }
 
 

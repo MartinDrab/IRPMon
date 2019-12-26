@@ -793,6 +793,22 @@ Type
   IRPMON_INIT_INFO = _IRPMON_INIT_INFO;
   PIRPMON_INIT_INFO = ^IRPMON_INIT_INFO;
 
+  _IRPMNDRV_SETTINGS = Record
+    ReqQueueLastRequestId : UInt32;
+	  ReqQueueLength : UInt32;
+	  ReqQueueConnected : ByteBool;
+	  ReqQueueClearOnDisconnect : ByteBool;
+	  ReqQueueCollectWhenDisconnected : ByteBool;
+	  ProcessEventsCollect : ByteBool;
+	  FileObjectEventsCollect : ByteBool;
+	  DriverSnapshotEventsCollect : ByteBool;
+	  ProcessEmulateOnConnect : ByteBool;
+	  DriverSnapshotOnConnect : ByteBool;
+    end;
+  IRPMNDRV_SETTINGS = _IRPMNDRV_SETTINGS;
+  PIRPMNDRV_SETTINGS = ^IRPMNDRV_SETTINGS;
+
+
 Function IRPMonDllDriverHooksEnumerate(Var AHookedDrivers:PHOOKED_DRIVER_UMINFO; Var ACount:Cardinal):Cardinal; StdCall;
 Procedure IRPMonDllDriverHooksFree(AHookedDrivers:PHOOKED_DRIVER_UMINFO; ACount:Cardinal); StdCall;
 
@@ -832,6 +848,11 @@ Function IRPMonDllDriverNameWatchUnregister(ADriverName:PWideChar):Cardinal; Std
 Function IRPMonDllDriverNameWatchEnum(Var AArray:PDRIVER_NAME_WATCH_RECORD; Var ACount:Cardinal):Cardinal; StdCall;
 Procedure IRPMonDllDriverNameWatchEnumFree(AArray:PDRIVER_NAME_WATCH_RECORD; ACount:Cardinal); StdCall;
 
+Function IRPMonDllEmulateDriverDevices:Cardinal; StdCall;
+Function IRPMonDllEmulateProcesses:Cardinal; StdCall;
+
+Function IRPMonDllSettingsQuery(Var ASettings:IRPMNDRV_SETTINGS):Cardinal; StdCall;
+Function IRPMonDllSettingsSet(Var ASettings:IRPMNDRV_SETTINGS; ASave:ByteBool):Cardinal; StdCall;
 
 Function IRPMonDllInitialized:LongBool; StdCall;
 Function IRPMonDllInitialize(Var AInfo:IRPMON_INIT_INFO):Cardinal; StdCall;
@@ -880,6 +901,12 @@ Function IRPMonDllDriverNameWatchRegister(ADriverName:PWideChar; Var AMonitorSet
 Function IRPMonDllDriverNameWatchUnregister(ADriverName:PWideChar):Cardinal; StdCall; External LibraryName;
 Function IRPMonDllDriverNameWatchEnum(Var AArray:PDRIVER_NAME_WATCH_RECORD; Var ACount:Cardinal):Cardinal; StdCall; External LibraryName;
 Procedure IRPMonDllDriverNameWatchEnumFree(AArray:PDRIVER_NAME_WATCH_RECORD; ACount:Cardinal); StdCall; External LibraryName;
+
+Function IRPMonDllEmulateDriverDevices:Cardinal; StdCall; External LibraryName;
+Function IRPMonDllEmulateProcesses:Cardinal; StdCall; External LibraryName;
+
+Function IRPMonDllSettingsQuery(Var ASettings:IRPMNDRV_SETTINGS):Cardinal; StdCall; External LibraryName;
+Function IRPMonDllSettingsSet(Var ASettings:IRPMNDRV_SETTINGS; ASave:ByteBool):Cardinal; StdCall; External LibraryName;
 
 Function IRPMonDllInitialized:LongBool; StdCall; External LibraryName;
 Function IRPMonDllInitialize(Var AInfo:IRPMON_INIT_INFO):Cardinal; StdCall; External LibraryName;

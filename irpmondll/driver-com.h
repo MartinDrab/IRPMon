@@ -17,6 +17,7 @@ DWORD DriverComUnhookDriver(HANDLE HookHandle);
 DWORD DriverComConnect(void);
 DWORD DriverComDisconnect(VOID);
 DWORD DriverComGetRequest(PREQUEST_HEADER Request, DWORD Size);
+DWORD DriverComQueueClear(void);
 
 DWORD DriverComHookDeviceByName(PWCHAR DeviceName, PHANDLE HookHandle, PVOID *ObjectId);
 DWORD DriverComHookDeviceByAddress(PVOID DeviceObject, PHANDLE HookHandle, PVOID *ObjectId);
@@ -50,6 +51,12 @@ DWORD _SynchronousWriteIOCTL(DWORD Code, PVOID InputBuffer, ULONG InputBufferLen
 DWORD _SynchronousReadIOCTL(DWORD Code, PVOID OutputBuffer, ULONG OutputBufferLength);
 DWORD _SynchronousOtherIOCTL(DWORD Code, PVOID InputBuffer, ULONG InputBufferLength, PVOID OutputBuffer, ULONG OutputBufferLength);
 DWORD _SynchronousVariableOutputIOCTL(ULONG Code, PVOID InputBuffer, ULONG InputBufferLength, ULONG InitialSize, PVOID *OutputBuffer, PULONG OutputBufferLength);
+
+DWORD DriverComEmulateDriverDevices(void);
+DWORD DriverComEmulateProcesses(void);
+
+DWORD DriverComSettingsQuery(PIRPMNDRV_SETTINGS Settings);
+DWORD DriverComSettingsSet(PIRPMNDRV_SETTINGS Settings, BOOLEAN Save);
 
 DWORD DriverComModuleInit(const IRPMON_INIT_INFO *Info);
 VOID DriverComModuleFinit(VOID);

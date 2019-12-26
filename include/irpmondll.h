@@ -330,6 +330,8 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllConnect(void);
 IRPMONDLL_API DWORD WINAPI IRPMonDllDisconnect(VOID);
 
 
+IRPMONDLL_API DWORD WINAPI IRPMonDllQueueClear(void);
+
 /** Removes a request from the IRPMon Event Queue and copies it to a given
  *  buffer.
  *
@@ -452,6 +454,12 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllRequestEmulateFileNameDeleted(void *FileObje
 IRPMONDLL_API DWORD WINAPI IRPMonDllRequestEmulateProcessCreated(HANDLE ProcessId, HANDLE ParentId, const wchar_t *ImageName, const wchar_t *CommandLine, PREQUEST_PROCESS_CREATED *Request);
 IRPMONDLL_API DWORD WINAPI IRPMonDllRequestEmulateProcessExitted(HANDLE ProcessId, PREQUEST_PROCESS_EXITTED *Request);
 IRPMONDLL_API void WINAPI IRPMonDllRequestEmulatedFree(PREQUEST_HEADER Header);
+
+IRPMONDLL_API DWORD WINAPI IRPMonDllEmulateDriverDevices(void);
+IRPMONDLL_API DWORD WINAPI IRPMonDllEmulateProcesses(void);
+
+IRPMONDLL_API DWORD WINAPI IRPMonDllSettingsQuery(PIRPMNDRV_SETTINGS Settings);
+IRPMONDLL_API DWORD WINAPI IRPMonDllSettingsSet(PIRPMNDRV_SETTINGS Settings, BOOLEAN Save);
 
 
 /************************************************************************/

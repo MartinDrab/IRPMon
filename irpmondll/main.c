@@ -38,6 +38,10 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllDisconnect(VOID)
 	return DriverComDisconnect();
 }
 
+IRPMONDLL_API DWORD WINAPI IRPMonDllQueueClear(void)
+{
+	return DriverComQueueClear();
+}
 
 IRPMONDLL_API DWORD WINAPI IRPMonDllHookDriver(PWCHAR DriverName, PDRIVER_MONITOR_SETTINGS MonitorSettings, PHANDLE DriverHandle, PVOID *ObjectId)
 {
@@ -245,6 +249,29 @@ IRPMONDLL_API void WINAPI IRPMonDllRequestEmulatedFree(PREQUEST_HEADER Header)
 	return;
 }
 
+
+IRPMONDLL_API DWORD WINAPI IRPMonDllEmulateDriverDevices(void)
+{
+	return DriverComEmulateProcesses();
+}
+
+
+IRPMONDLL_API DWORD WINAPI IRPMonDllEmulateProcesses(void)
+{
+	return DriverComEmulateProcesses();
+}
+
+
+IRPMONDLL_API DWORD WINAPI IRPMonDllSettingsQuery(PIRPMNDRV_SETTINGS Settings)
+{
+	return DriverComSettingsQuery(Settings);
+}
+
+
+IRPMONDLL_API DWORD WINAPI IRPMonDllSettingsSet(PIRPMNDRV_SETTINGS Settings, BOOLEAN Save)
+{
+	return DriverComSettingsSet(Settings, Save);
+}
 
 
 /************************************************************************/

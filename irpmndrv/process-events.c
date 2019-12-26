@@ -6,6 +6,7 @@
 #include "request.h"
 #include "req-queue.h"
 #include "process-context-table.h"
+#include "driver-settings.h"
 #include "process-events.h"
 
 
@@ -28,6 +29,7 @@ typedef NTSTATUS (PSSETCREATEPROCESSNOTIFYROUTINEEX)(PCREATE_PROCESS_NOTIFY_ROUT
 
 static PSSETCREATEPROCESSNOTIFYROUTINEEX *_PsSetCreateProcessNotifyROutineEx = NULL;
 static PS_CONTEXT_TABLE _processTable;
+static PIRPMNDRV_SETTINGS _driverSettings = NULL;
 
 
 /************************************************************************/
@@ -116,43 +118,50 @@ static void _ProcessNotifyEx(PEPROCESS Process, HANDLE ProcessId, PPS_CREATE_NOT
 	PPROCESS_RECORD pr = NULL;
 	BASIC_CLIENT_INFO clientInfo;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
-	PREQUEST_PROCESS_CREATED createRecord = NULL;
-	PREQUEST_PROCESS_EXITTED exitRecord = NULL;
 	DEBUG_ENTER_FUNCTION("Process=0x%p; ProcessId=0x%p; CreateInfo=0x%p", Process, ProcessId, CreateInfo);
 
 	status = STATUS_SUCCESS;
 	QueryClientBasicInformation(&clientInfo);
 	if (CreateInfo != NULL) {
-		status = _ProcessCreateEventAlloc(ProcessId, CreateInfo, &createRecord);
-		if (NT_SUCCESS(status)) {
-			_SetRequestFlags(&createRecord->Header, &clientInfo);
-			RequestQueueInsert(&createRecord->Header);
-			pr = HeapMemoryAllocNonPaged(sizeof(PROCESS_RECORD));
-			if (pr != NULL) {
-				memset(pr, 0, sizeof(PROCESS_RECORD));
-				pr->ParentId = CreateInfo->ParentProcessId;
-				pr->ProcessId = ProcessId;
-				pr->CreateTime.QuadPart = PsGetProcessCreateTimeQuadPart(Process);
-				if (CreateInfo->ImageFileName != NULL)
-					status = UtilsCopyUnicodeString(NonPagedPool, &pr->ImageName, CreateInfo->ImageFileName);
+		if (_driverSettings->ProcessEventsCollect) {
+			PREQUEST_PROCESS_CREATED createRecord = NULL;
 
-				if (NT_SUCCESS(status) && CreateInfo->CommandLine != NULL)
-					status = UtilsCopyUnicodeString(NonPagedPool, &pr->CommandLine, CreateInfo->CommandLine);
-
-				if (!NT_SUCCESS(status) && CreateInfo->ImageFileName != NULL)
-					HeapMemoryFree(pr->ImageName.Buffer);
-
-				if (NT_SUCCESS(status))
-					status = PsTableInsert(&_processTable, pr->ProcessId, pr, sizeof(PROCESS_RECORD));
-								
-				HeapMemoryFree(pr);
-			} else status = STATUS_INSUFFICIENT_RESOURCES;
+			status = _ProcessCreateEventAlloc(ProcessId, CreateInfo, &createRecord);
+			if (NT_SUCCESS(status)) {
+				_SetRequestFlags(&createRecord->Header, &clientInfo);
+				RequestQueueInsert(&createRecord->Header);
+			}
 		}
+
+		pr = HeapMemoryAllocNonPaged(sizeof(PROCESS_RECORD));
+		if (pr != NULL) {
+			memset(pr, 0, sizeof(PROCESS_RECORD));
+			pr->ParentId = CreateInfo->ParentProcessId;
+			pr->ProcessId = ProcessId;
+			pr->CreateTime.QuadPart = PsGetProcessCreateTimeQuadPart(Process);
+			if (CreateInfo->ImageFileName != NULL)
+				status = UtilsCopyUnicodeString(NonPagedPool, &pr->ImageName, CreateInfo->ImageFileName);
+
+			if (NT_SUCCESS(status) && CreateInfo->CommandLine != NULL)
+				status = UtilsCopyUnicodeString(NonPagedPool, &pr->CommandLine, CreateInfo->CommandLine);
+
+			if (!NT_SUCCESS(status) && CreateInfo->ImageFileName != NULL)
+				HeapMemoryFree(pr->ImageName.Buffer);
+
+			if (NT_SUCCESS(status))
+				status = PsTableInsert(&_processTable, pr->ProcessId, pr, sizeof(PROCESS_RECORD));
+								
+			HeapMemoryFree(pr);
+		} else status = STATUS_INSUFFICIENT_RESOURCES;
 	} else {
-		status = _ProcessExittedEventAlloc(ProcessId, &exitRecord);
-		if (NT_SUCCESS(status)) {
-			_SetRequestFlags(&exitRecord->Header, &clientInfo);
-			RequestQueueInsert(&exitRecord->Header);
+		if (_driverSettings->ProcessEventsCollect) {
+			PREQUEST_PROCESS_EXITTED exitRecord = NULL;
+
+			status = _ProcessExittedEventAlloc(ProcessId, &exitRecord);
+			if (NT_SUCCESS(status)) {
+				_SetRequestFlags(&exitRecord->Header, &clientInfo);
+				RequestQueueInsert(&exitRecord->Header);
+			}
 		}
 
 		PsTableDeleteNoReturn(&_processTable, ProcessId);
@@ -282,6 +291,7 @@ NTSTATUS ProcessEventsModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING Re
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"; Context=0x%p", DriverObject, RegistryPath, Context);
 
+	_driverSettings = DriverSettingsGet();
 	PsTableInit(&_processTable, _PsRecordFree);
 	vi.dwOSVersionInfoSize = sizeof(vi);
 	status = RtlGetVersion(&vi);
@@ -311,6 +321,7 @@ VOID ProcessEventsModuleFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING Regis
 		_PsSetCreateProcessNotifyROutineEx(_ProcessNotifyEx, TRUE);
 
 	PsTableFinit(&_processTable);
+	_driverSettings = NULL;
 
 	DEBUG_EXIT_FUNCTION_VOID();
 	return;

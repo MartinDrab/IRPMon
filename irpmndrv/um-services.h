@@ -28,6 +28,7 @@ NTSTATUS UMGetRequestRecord(PVOID Buffer, ULONG BufferLength, PSIZE_T ReturnLeng
 NTSTATUS UMEnumDriversDevices(PVOID OutputBuffer, ULONG OutputBufferLength, PULONG ReturnLength);
 NTSTATUS UMRequestQueueConnect(void);
 VOID UMRequestQueueDisconnect(VOID);
+void UMRequestQueueClear(void);
 
 NTSTATUS UMHookedDriverSetInfo(PIOCTL_IRPMNDRV_HOOK_DRIVER_SET_INFO_INPUT InputBuffer, ULONG InputBufferLength);
 NTSTATUS UMHookedDriverGetInfo(PIOCTL_IRPMNDRV_HOOK_DRIVER_GET_INFO_INPUT InputBuffer, ULONG InputBufferLength, PIOCTL_IRPMNDRV_HOOK_DRIVER_GET_INFO_OUTPUT OutputBuffer, ULONG OutputBufferLength);
@@ -45,6 +46,12 @@ NTSTATUS UMClassWatchRegister(PIOCTL_IRPMNDRV_CLASS_WATCH_REGISTER_INPUT InputBu
 NTSTATUS UMClassWatchUnregister(PIOCTL_IRPMNDRV_CLASS_WATCH_UNREGISTER_INPUT InputBuffer, ULONG InputBUfferLength);
 NTSTATUS UMDriverNameWatchRegister(PIOCTL_IRPMNDRV_DRIVER_WATCH_REGISTER_INPUT InputBuffer, ULONG InputBufferLength);
 NTSTATUS UMDriverNamehUnregister(PIOCTL_IRPMNDRV_DRIVER_WATCH_UNREGISTER_INPUT InputBuffer, ULONG InputBUfferLength);
+
+NTSTATUS UMListDriversDevicesByEvents(void);
+NTSTATUS UMListProcessesByEvents(void);
+
+NTSTATUS UMDriverSettingsQuery(PIOCTL_IRPMNDRV_SETTINGS_QUERY_OUTPUT OutputBuffer, ULONG OutputBufferLength, PULONG_PTR ReturnLength);
+NTSTATUS UMDriverSettingsSet(PIOCTL_IRPMNDRV_SETTINGS_SET_INPUT InputBuffer, ULONG InputBufferLength);
 
 NTSTATUS UMServicesModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context);
 VOID UMServicesModuleFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context);

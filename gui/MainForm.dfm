@@ -875,17 +875,19 @@ object MainFrm: TMainFrm
     Left = 0
     Top = 0
     Width = 582
-    Height = 329
+    Height = 296
     ActivePage = RequestTabSheet
     Align = alClient
     TabOrder = 0
+    ExplicitHeight = 281
     object RequestTabSheet: TTabSheet
       Caption = 'Requests'
+      ExplicitHeight = 301
       object RequestListView: TListView
         Left = 0
         Top = 0
         Width = 574
-        Height = 301
+        Height = 268
         Align = alClient
         Columns = <>
         OwnerData = True
@@ -895,17 +897,20 @@ object MainFrm: TMainFrm
         TabOrder = 0
         ViewStyle = vsReport
         OnDblClick = RequestDetailsMenuItemClick
+        ExplicitLeft = 32
+        ExplicitTop = 3
       end
     end
     object DataParsersTabSheet: TTabSheet
       Caption = 'Data Parsers'
       ImageIndex = 1
       OnShow = DataParsersTabSheetShow
+      ExplicitHeight = 282
       object DataParsersListView: TListView
         Left = 0
         Top = 0
         Width = 574
-        Height = 301
+        Height = 268
         Align = alClient
         Columns = <
           item
@@ -932,8 +937,20 @@ object MainFrm: TMainFrm
         TabOrder = 0
         ViewStyle = vsReport
         OnData = DataParsersListViewData
+        ExplicitHeight = 282
       end
     end
+  end
+  object StatusBar1: TStatusBar
+    Left = 0
+    Top = 296
+    Width = 582
+    Height = 33
+    Panels = <>
+    SimplePanel = True
+    ExplicitLeft = 72
+    ExplicitTop = 288
+    ExplicitWidth = 73
   end
   object MainMenu1: TMainMenu
     Left = 168
@@ -1023,6 +1040,7 @@ object MainFrm: TMainFrm
     end
     object DriverMenuItem: TMenuItem
       Caption = 'Driver'
+      OnClick = DriverMenuItemExpand
       object UnloadOnExitMenuItem: TMenuItem
         Caption = 'Unload on exit'
         OnClick = DriverMenuItemClick
@@ -1030,6 +1048,43 @@ object MainFrm: TMainFrm
       object UninstallOnExitMenuItem: TMenuItem
         Caption = 'Uninstall on exit'
         OnClick = DriverMenuItemClick
+      end
+      object N4: TMenuItem
+        Caption = '-'
+      end
+      object ReqQueueClearOnDisconnectMenuItem: TMenuItem
+        Caption = 'Clear on disconnect'
+        OnClick = DriverSettingsMenuItemClick
+      end
+      object ReqQueueCollectWhenDisconnectedMenuItem: TMenuItem
+        Tag = 1
+        Caption = 'Collect on disconnect'
+        OnClick = DriverSettingsMenuItemClick
+      end
+      object ProcessEventsCollectMenuItem: TMenuItem
+        Tag = 2
+        Caption = 'Collect process events'
+        OnClick = DriverSettingsMenuItemClick
+      end
+      object FileObjectEventsCollectMenuItem: TMenuItem
+        Tag = 3
+        Caption = 'Collect file events'
+        OnClick = DriverSettingsMenuItemClick
+      end
+      object DriverSnapshotEventsCollectMenuItem: TMenuItem
+        Tag = 4
+        Caption = 'Collect detection events'
+        OnClick = DriverSettingsMenuItemClick
+      end
+      object ProcessEmulateOnConnectMenuItem: TMenuItem
+        Tag = 5
+        Caption = 'Process snapshot on connect'
+        OnClick = DriverSettingsMenuItemClick
+      end
+      object DriverSnapshotOnConnectMenuItem: TMenuItem
+        Tag = 6
+        Caption = 'Driver snapshot on connect'
+        OnClick = DriverSettingsMenuItemClick
       end
     end
     object ColumnsMenuItem: TMenuItem
@@ -1054,8 +1109,8 @@ object MainFrm: TMainFrm
   end
   object LogOpenDialog: TOpenDialog
     Filter = 'Binary log files [*.bin]|*.bin|All files [*.*]|*.*'
-    Left = 192
-    Top = 88
+    Left = 200
+    Top = 56
   end
   object RequestPopupMenu: TPopupMenu
     OnPopup = RequestPopupMenuPopup
@@ -1084,5 +1139,10 @@ object MainFrm: TMainFrm
   object HighlightColorDialog: TColorDialog
     Left = 300
     Top = 112
+  end
+  object StatusTimer: TTimer
+    OnTimer = StatusTimerTimer
+    Left = 52
+    Top = 104
   end
 end

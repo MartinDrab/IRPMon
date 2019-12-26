@@ -100,40 +100,42 @@ If err = ERROR_SUCCESS Then
       end;
     end;
 
-  initInfo.ConnectionType := connType;
-  If connType = ictDevice Then
+  If Not connectorForm.Cancelled Then
     begin
-    hScm := OpenSCManagerW(Nil, Nil, scmAccess);
+    initInfo.ConnectionType := connType;
+    If connType = ictDevice Then
+      hScm := OpenSCManagerW(Nil, Nil, scmAccess);
+
+    taskList := TTaskOperationList.Create;
+    serviceTask := TDriverTaskObject.Create(initInfo, hScm, serviceName, serviceDescription, serviceDescription, ExtractFilePath(Application.ExeName) + 'irpmndrv.sys');
+    serviceTask.SetCompletionCallback(OnServiceTaskComplete, Nil);
+    If (connType = ictDevice) And (hScm <> 0) Then
+      begin
+      taskList.Add(hooHook, serviceTask);
+      taskList.Add(hooStart, serviceTask);
+      end;
+
+    taskList.Add(hooLibraryInitialize, serviceTask);
+    With THookProgressFrm.Create(Application, taskList) Do
+      begin
+      ShowModal;
+      Free;
+      end;
+
+    Application.CreateForm(TMainFrm, MainFrm);
+    MainFrm.ServiceTask := serviceTask;
+    MainFrm.TaskList := taskList;
+    MainFrm.ConnectorType := connType;
+    Application.Run;
+    IRPMonDllFinalize;
+    If (connType = ictDevice) And (hScm <> 0) Then
+      CloseServiceHandle(hScm);
+
+    serviceTask.Free;
+    taskList.Free;
     end;
 
-  taskList := TTaskOperationList.Create;
-  serviceTask := TDriverTaskObject.Create(initInfo, hScm, serviceName, serviceDescription, serviceDescription, ExtractFilePath(Application.ExeName) + 'irpmndrv.sys');
-  serviceTask.SetCompletionCallback(OnServiceTaskComplete, Nil);
-  If connType = ictDevice Then
-    begin
-    taskList.Add(hooHook, serviceTask);
-    taskList.Add(hooStart, serviceTask);
-    end;
-
-  taskList.Add(hooLibraryInitialize, serviceTask);
-  With THookProgressFrm.Create(Application, taskList) Do
-    begin
-    ShowModal;
-    Free;
-    end;
-
-  Application.CreateForm(TMainFrm, MainFrm);
-  MainFrm.ServiceTask := serviceTask;
-  MainFrm.TaskList := taskList;
-  MainFrm.ConnectorType := connType;
-  Application.Run;
-  IRPMonDllFinalize;
-  If connType = ictDevice Then
-    CloseServiceHandle(hScm);
-
-   serviceTask.Free;
-   taskList.Free;
-   connectorForm.Free;
+  connectorForm.Free;
   TablesFinit;
   end
 Else WinErrorMessage('Unable to initialize name tables', err);

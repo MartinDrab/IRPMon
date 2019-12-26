@@ -149,6 +149,7 @@
   <ItemGroup>
     <ClCompile Include="..\shared\request.c" />
     <ClCompile Include="data-loggers.c" />
+    <ClCompile Include="driver-settings.c" />
     <ClCompile Include="driver.c" />
     <ClCompile Include="fo-context-table.c" />
     <ClCompile Include="hook-handlers.c" />
@@ -167,13 +168,13 @@
     <ClInclude Include="..\km-shared\preprocessor.h" />
     <ClInclude Include="..\shared\request.h" />
     <ClInclude Include="data-loggers.h" />
+    <ClInclude Include="driver-settings.h" />
     <ClInclude Include="driver.h" />
     <ClInclude Include="fo-context-table.h" />
     <ClInclude Include="hook-handlers.h" />
     <ClInclude Include="hook.h" />
     <ClInclude Include="modules.h" />
     <ClInclude Include="pnp-driver-watch.h" />
-    <ClInclude Include="preprocessor.h" />
     <ClInclude Include="process-context-table.h" />
     <ClInclude Include="process-events.h" />
     <ClInclude Include="req-queue.h" />

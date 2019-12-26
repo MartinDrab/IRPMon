@@ -387,6 +387,24 @@ typedef struct _HOOKED_DRIVER_UMINFO {
 } HOOKED_DRIVER_UMINFO, *PHOOKED_DRIVER_UMINFO;
 
 
+/************************************************************************/
+/*                GLOBAL DRIVER SETTINGS                                */
+/************************************************************************/
+
+
+typedef struct _IRPMNDRV_SETTINGS {
+	volatile LONG ReqQueueLastRequestId;
+	volatile LONG ReqQueueLength;
+	BOOLEAN ReqQueueConnected;
+	BOOLEAN ReqQueueClearOnDisconnect;
+	BOOLEAN ReqQueueCollectWhenDisconnected;
+	BOOLEAN ProcessEventsCollect;
+	BOOLEAN FileObjectEventsCollect;
+	BOOLEAN DriverSnapshotEventsCollect;
+	BOOLEAN ProcessEmulateOnConnect;
+	BOOLEAN DriverSnapshotOnConnect;
+} IRPMNDRV_SETTINGS, *PIRPMNDRV_SETTINGS;
+
 
 
 #endif 

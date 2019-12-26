@@ -230,6 +230,7 @@ Type
       Procedure FreeItem(AItem:TDriverRequest); Override;
       Function _Item(AIndex:Integer):TDriverRequest; Override;
       Procedure SetFilterDisplayOnly(AValue:Boolean);
+      Function GetTotalCount:Cardinal;
     Public
       UpdateRequest : TList<PREQUEST_GENERAL>;
       Constructor Create; Reintroduce;
@@ -249,6 +250,7 @@ Type
       Property FilterDisplayOnly : Boolean Read FFilterDisplayOnly Write SetFilterDisplayOnly;
       Property Parsers : TObjectList<TDataParser> Read FParsers Write FParsers;
       Property OnRequestProcessed : TRequestListModelOnRequestProcessed Read FOnRequestProcessed Write FOnRequestProcessed;
+      Property TotalCount : Cardinal Read GetTotalCount;
     end;
 
 Implementation
@@ -961,6 +963,14 @@ If Assigned(Displayer) Then
   Displayer.Invalidate;
   end;
 end;
+
+Function TRequestListModel.GetTotalCount:Cardinal;
+begin
+Result := FRequests.Count;
+If FFilterDisplayOnly Then
+  Result := FAllRequests.Count;
+end;
+
 
 
 End.

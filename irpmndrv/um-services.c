@@ -10,6 +10,8 @@
 #include "hook.h"
 #include "req-queue.h"
 #include "pnp-driver-watch.h"
+#include "process-events.h"
+#include "driver-settings.h"
 #include "um-services.h"
 
 
@@ -683,6 +685,16 @@ VOID UMRequestQueueDisconnect(VOID)
 	return;
 }
 
+void UMRequestQueueClear(void)
+{
+	DEBUG_ENTER_FUNCTION_NO_ARGS();
+
+	RequestQueueClear();
+
+	DEBUG_EXIT_FUNCTION_VOID();
+	return;
+}
+
 NTSTATUS UMHookedDriverSetInfo(PIOCTL_IRPMNDRV_HOOK_DRIVER_SET_INFO_INPUT InputBuffer, ULONG InputBufferLength)
 {
 	IOCTL_IRPMNDRV_HOOK_DRIVER_SET_INFO_INPUT input = {0};
@@ -1253,6 +1265,110 @@ NTSTATUS UMDriverNamehUnregister(PIOCTL_IRPMNDRV_DRIVER_WATCH_UNREGISTER_INPUT I
 	return status;
 }
 
+
+NTSTATUS UMListDriversDevicesByEvents(void)
+{
+	LIST_ENTRY eventListHead;
+	PREQUEST_HEADER old = NULL;
+	PREQUEST_HEADER tmpRequest = NULL;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION_NO_ARGS();
+
+	InitializeListHead(&eventListHead);
+	status = ListDriversAndDevicesByEvents(&eventListHead);
+	if (NT_SUCCESS(status)) {
+		tmpRequest = CONTAINING_RECORD(eventListHead.Blink, REQUEST_HEADER, Entry);
+		while (&tmpRequest->Entry != &eventListHead) {
+			old = tmpRequest;
+			tmpRequest = CONTAINING_RECORD(tmpRequest->Entry.Blink, REQUEST_HEADER, Entry);
+			RemoveEntryList(&old->Entry);
+			if (NT_SUCCESS(status)) {
+				old->Flags |= REQUEST_FLAG_EMULATED;
+				RequestQueueInsert(old);
+			} else HeapMemoryFree(old);
+		}
+	}
+
+	DEBUG_EXIT_FUNCTION("0x%x", status);
+	return status;
+}
+
+
+NTSTATUS UMListProcessesByEvents(void)
+{
+	LIST_ENTRY eventListHead;
+	PREQUEST_HEADER old = NULL;
+	PREQUEST_HEADER psRequest = NULL;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION_NO_ARGS();
+
+	InitializeListHead(&eventListHead);
+	status = ListProcessesByEvents(&eventListHead);
+	if (NT_SUCCESS(status)) {
+		psRequest = CONTAINING_RECORD(eventListHead.Blink, REQUEST_HEADER, Entry);
+		while (&psRequest->Entry != &eventListHead) {
+			old = psRequest;
+			psRequest = CONTAINING_RECORD(psRequest->Entry.Blink, REQUEST_HEADER, Entry);
+			RemoveEntryList(&old->Entry);
+			RequestQueueInsert(old);
+		}
+	}
+
+	DEBUG_EXIT_FUNCTION("0x%x", status);
+	return status;
+}
+
+
+NTSTATUS UMDriverSettingsQuery(PIOCTL_IRPMNDRV_SETTINGS_QUERY_OUTPUT OutputBuffer, ULONG OutputBufferLength, PULONG_PTR ReturnLength)
+{
+	PIRPMNDRV_SETTINGS settings = NULL;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION("OutputBuffer=0x%p; OutputBufferLength=%u", OutputBuffer, OutputBufferLength);
+
+	if (OutputBufferLength >= sizeof(IOCTL_IRPMNDRV_SETTINGS_QUERY_OUTPUT)) {
+		status = STATUS_SUCCESS;
+		settings = DriverSettingsGet();
+		if (ExGetPreviousMode() == UserMode) {
+			__try {
+				ProbeForWrite(OutputBuffer, sizeof(OutputBuffer->Settings), 1);
+				memcpy(&OutputBuffer->Settings, settings, sizeof(OutputBuffer->Settings));
+			} __except (EXCEPTION_EXECUTE_HANDLER) {
+				status = GetExceptionCode();
+			}
+		} else memcpy(&OutputBuffer->Settings, settings, sizeof(OutputBuffer->Settings));
+
+		*ReturnLength = sizeof(OutputBuffer->Settings);
+	} else status = STATUS_INFO_LENGTH_MISMATCH;
+
+	DEBUG_EXIT_FUNCTION("0x%x, *ReturnLength=%zu", status, *ReturnLength);
+	return status;
+}
+
+
+NTSTATUS UMDriverSettingsSet(PIOCTL_IRPMNDRV_SETTINGS_SET_INPUT InputBuffer, ULONG InputBufferLength)
+{
+	IOCTL_IRPMNDRV_SETTINGS_SET_INPUT input = {0};
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION("InputBuffer=0x%p; InputBufferLength=%u", InputBuffer, InputBufferLength);
+
+	if (InputBufferLength >= sizeof(input)) {
+		status = STATUS_SUCCESS;
+		if (ExGetPreviousMode() == UserMode) {
+			__try {
+				ProbeForRead(InputBuffer, sizeof(input), 1);
+				input = *InputBuffer;
+			} __except (EXCEPTION_EXECUTE_HANDLER) {
+				status = GetExceptionCode();
+			}
+		} else input = *InputBuffer;
+
+		if (NT_SUCCESS(status))
+			status = DriverSettingsSet(&input.Settings, input.Save);
+	} else status = STATUS_INFO_LENGTH_MISMATCH;
+
+	DEBUG_EXIT_FUNCTION("0x%x", status);
+	return status;
+}
 
 
 /************************************************************************/

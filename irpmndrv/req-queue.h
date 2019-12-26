@@ -12,6 +12,8 @@ VOID RequestHeaderInitNoId(PREQUEST_HEADER Header, PDRIVER_OBJECT DriverObject, 
 NTSTATUS RequestXXXDetectedCreate(ERequesttype Type, PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT DeviceObject, PREQUEST_HEADER *Header);
 NTSTATUS RequestQueueGet(PREQUEST_HEADER *Buffer, PSIZE_T Length);
 VOID RequestQueueInsert(PREQUEST_HEADER Header);
+NTSTATUS ListDriversAndDevicesByEvents(PLIST_ENTRY ListHead);
+void RequestQueueClear(void);
 
 NTSTATUS RequestQueueConnect(void);
 VOID RequestQueueDisconnect(void);
