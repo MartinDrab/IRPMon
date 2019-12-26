@@ -879,10 +879,8 @@ object MainFrm: TMainFrm
     ActivePage = RequestTabSheet
     Align = alClient
     TabOrder = 0
-    ExplicitHeight = 281
     object RequestTabSheet: TTabSheet
       Caption = 'Requests'
-      ExplicitHeight = 301
       object RequestListView: TListView
         Left = 0
         Top = 0
@@ -897,15 +895,12 @@ object MainFrm: TMainFrm
         TabOrder = 0
         ViewStyle = vsReport
         OnDblClick = RequestDetailsMenuItemClick
-        ExplicitLeft = 32
-        ExplicitTop = 3
       end
     end
     object DataParsersTabSheet: TTabSheet
       Caption = 'Data Parsers'
       ImageIndex = 1
       OnShow = DataParsersTabSheetShow
-      ExplicitHeight = 282
       object DataParsersListView: TListView
         Left = 0
         Top = 0
@@ -937,7 +932,6 @@ object MainFrm: TMainFrm
         TabOrder = 0
         ViewStyle = vsReport
         OnData = DataParsersListViewData
-        ExplicitHeight = 282
       end
     end
   end
@@ -948,9 +942,6 @@ object MainFrm: TMainFrm
     Height = 33
     Panels = <>
     SimplePanel = True
-    ExplicitLeft = 72
-    ExplicitTop = 288
-    ExplicitWidth = 73
   end
   object MainMenu1: TMainMenu
     Left = 168

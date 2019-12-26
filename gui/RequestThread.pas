@@ -63,7 +63,7 @@ If Assigned(rq) Then
     begin
     AList.Add(rq);
     If ((rq.Header.Flags And REQUEST_FLAG_NEXT_AVAILABLE) = 0) Or
-       (AList.Count >= 50) Then
+       (AList.Count >= 200) Then
       Break;
     end;
 
@@ -89,7 +89,7 @@ l := TList<PREQUEST_GENERAL>.Create;
 While Not Terminated  Do
   begin
   ProcessRequest(l);
-  If l.Count > 20 Then
+  If l.Count >= 200 Then
     begin
     FCurrentList := l;
     PostRequestList;

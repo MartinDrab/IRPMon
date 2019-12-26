@@ -630,8 +630,8 @@ err := IRPMonDllSettingsQuery(settings);
 If err = ERROR_SUCCESS Then
   begin
   If settings.ReqQueueConnected Then
-    statusText := 'Connected | Requests: '
-  Else statusText := 'Disconnected | Requests: ';
+    statusText := 'Monitoring | Requests: '
+  Else statusText := 'Not monitoring | Requests: ';
 
   If settings.ReqQueueConnected Then
     statusText := statusText + Format('%u queued, ', [settings.ReqQueueLength]);

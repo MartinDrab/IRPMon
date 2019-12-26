@@ -119,6 +119,7 @@ If Not Assigned(FRaw) THen
   Raise Exception.Create('Not enough memory');
 
 CopyMemory(FRaw, @ARequest, FRawSize);
+FRaw.Flags := (FRaw.Flags And Not (REQUEST_FLAG_NEXT_AVAILABLE));
 FEmulated := (ARequest.Flags And REQUEST_FLAG_EMULATED) <> 0;
 FDataStripped := (ARequest.Flags And REQUEST_FLAG_DATA_STRIPPED) <> 0;
 FAdmin := (ARequest.Flags And REQUEST_FLAG_ADMIN) <> 0;
