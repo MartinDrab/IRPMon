@@ -155,7 +155,7 @@ Type
     Function GetColumnName(AColumnType:ERequestListModelColumnType):WideString; Virtual;
     Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Virtual;
     Function GetColumnValueRaw(AColumnType:ERequestListModelColumnType; Var AValue:Pointer; Var AValueSize:Cardinal):Boolean; Virtual;
-    Procedure SaveToStream(AStream:TStream; AParsers:TObjectList<TDataParser>; ABinary:Boolean = False); Virtual;
+    Procedure SaveToStream(AStream:TStream; AParsers:TObjectList<TDataParser>; ABinary:Boolean = False; ACompress:Boolean = False); Virtual;
     Procedure SaveToFile(AFileName:WideString; AParsers:TObjectList<TDataParser>; ABinary:Boolean = False); Virtual;
 
     Class Function CreatePrototype(AType:ERequestType):TDriverRequest;
@@ -241,7 +241,7 @@ Type
       Procedure Clear; Override;
       Function RowCount : Cardinal; Override;
       Function Update:Cardinal; Override;
-      Procedure SaveToStream(AStream:TStream; ABinary:Boolean = False);
+      Procedure SaveToStream(AStream:TStream; ABinary:Boolean = False; ACompress:Boolean = False);
       Procedure SaveToFile(AFileName:WideString; ABinary:Boolean = False);
       Procedure LoadFromStream(AStream:TStream);
       Procedure LoadFromFile(AFileName:WideString);
@@ -329,8 +329,9 @@ If Assigned(AParsers) Then
 end;
 
 
-Procedure TDriverRequest.SaveToStream(AStream: TStream; AParsers:TObjectList<TDataParser>; ABinary:Boolean = False);
+Procedure TDriverRequest.SaveToStream(AStream: TStream; AParsers:TObjectList<TDataParser>; ABinary:Boolean = False; ACompress:Boolean = False);
 Var
+  tmp : PREQUEST_HEADER;
   reqSize : Cardinal;
   s : TStringList;
   value : WideString;
@@ -356,9 +357,24 @@ If Not ABinary Then
   s.Free;
   end
 Else begin
-  reqSize := IRPMonDllGetRequestSize(FRaw);
-  AStream.Write(reqSize, SizeOf(reqSize));
-  AStream.Write(FRaw^, reqSize);
+  tmp := FRaw;
+  If ACompress Then
+    begin
+    tmp := IRPMonDllRequestCopy(FRaw);
+    If Not Assigned(tmp) Then
+      Raise Exception.Create('Not enough memory');
+
+    IRPMonDllRequestCompress(tmp);
+    end;
+
+  Try
+    reqSize := IRPMonDllGetRequestSize(tmp);
+    AStream.Write(reqSize, SizeOf(reqSize));
+    AStream.Write(tmp^, reqSize);
+  Finally
+    If ACompress Then
+      IRPMonDllRequestMemoryFree(tmp);
+    end;
   end;
 end;
 
@@ -823,7 +839,7 @@ FRequests.Free;
 Inherited Destroy;
 end;
 
-Procedure TRequestListModel.SaveToStream(AStream:TStream; ABinary:Boolean = False);
+Procedure TRequestListModel.SaveToStream(AStream:TStream; ABinary:Boolean = False; ACompress:Boolean = False);
 Var
   I : Integer;
   dr : TDriverRequest;
@@ -831,7 +847,7 @@ begin
 For I := 0 To RowCount - 1 Do
   begin
   dr := _Item(I);
-  dr.SaveToStream(AStream, FParsers, ABinary);
+  dr.SaveToStream(AStream, FParsers, ABinary, ACompress);
   end;
 end;
 
@@ -851,6 +867,7 @@ Procedure TRequestListModel.LoadFromStream(AStream:TStream);
 Var
   reqSize : Cardinal;
   rg : PREQUEST_GENERAL;
+  tmp : PREQUEST_GENERAL;
   l : TList<PREQUEST_GENERAL>;
 begin
 l := TList<PREQUEST_GENERAL>.Create;
@@ -858,8 +875,16 @@ While AStream.Position < AStream.Size Do
   begin
   AStream.Read(reqSize, SizeOf(reqSize));
   rg := AllocMem(reqSize);
-  AStream.Read(rg^, reqSize);
-  l.Add(rg);
+  Try
+    AStream.Read(rg^, reqSize);
+    tmp := PREQUEST_GENERAL(IRPMonDllRequestDecompress(@rg.Header));
+    If Not Assigned(tmp) Then
+      Raise Exception.Create('Not enough memory');
+
+    l.Add(tmp);
+  Finally
+    FreeMem(rg);
+    end;
   end;
 
 UpdateRequest := l;

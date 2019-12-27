@@ -453,7 +453,11 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllRequestEmulateFileNameAssigned(void *FileObj
 IRPMONDLL_API DWORD WINAPI IRPMonDllRequestEmulateFileNameDeleted(void *FileObject, PREQUEST_FILE_OBJECT_NAME_DELETED *Request);
 IRPMONDLL_API DWORD WINAPI IRPMonDllRequestEmulateProcessCreated(HANDLE ProcessId, HANDLE ParentId, const wchar_t *ImageName, const wchar_t *CommandLine, PREQUEST_PROCESS_CREATED *Request);
 IRPMONDLL_API DWORD WINAPI IRPMonDllRequestEmulateProcessExitted(HANDLE ProcessId, PREQUEST_PROCESS_EXITTED *Request);
-IRPMONDLL_API void WINAPI IRPMonDllRequestEmulatedFree(PREQUEST_HEADER Header);
+IRPMONDLL_API PREQUEST_HEADER WINAPI IRPMonDllRequestCopy(const REQUEST_HEADER *Header);
+IRPMONDLL_API PREQUEST_HEADER WINAPI IRPMonDllRequestMemoryAlloc(size_t Size);
+IRPMONDLL_API void WINAPI IRPMonDllRequestMemoryFree(PREQUEST_HEADER Header);
+IRPMONDLL_API BOOLEAN WINAPI IRPMonDllRequestCompress(PREQUEST_HEADER Header);
+IRPMONDLL_API PREQUEST_HEADER WINAPI IRPMonDllRequestDecompress(const REQUEST_HEADER *Header);
 
 IRPMONDLL_API DWORD WINAPI IRPMonDllEmulateDriverDevices(void);
 IRPMONDLL_API DWORD WINAPI IRPMonDllEmulateProcesses(void);

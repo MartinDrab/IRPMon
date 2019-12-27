@@ -238,11 +238,31 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllRequestEmulateProcessExitted(HANDLE ProcessI
 	return RequestEmulateProcessExitted(ProcessId, Request);
 }
 
-IRPMONDLL_API void WINAPI IRPMonDllRequestEmulatedFree(PREQUEST_HEADER Header)
+IRPMONDLL_API PREQUEST_HEADER WINAPI IRPMonDllRequestCopy(const REQUEST_HEADER *Header)
 {
-	RequestEmulatedFree(Header);
+	return RequestCopy(Header);
+}
+
+IRPMONDLL_API PREQUEST_HEADER WINAPI IRPMonDllRequestMemoryAlloc(size_t Size)
+{
+	return RequestMemoryAlloc(Size);
+}
+
+IRPMONDLL_API void WINAPI IRPMonDllRequestMemoryFree(PREQUEST_HEADER Header)
+{
+	RequestMemoryFree(Header);
 
 	return;
+}
+
+IRPMONDLL_API BOOLEAN WINAPI IRPMonDllRequestCompress(PREQUEST_HEADER Header)
+{
+	return RequestCompress(Header);
+}
+
+IRPMONDLL_API PREQUEST_HEADER WINAPI IRPMonDllRequestDecompress(const REQUEST_HEADER *Header)
+{
+	return RequestDecompress(Header);
 }
 
 

@@ -11,7 +11,6 @@
 #include "request.h"
 
 
-#ifndef _KERNEL_MODE
 
 static void _RequestHeaderInit(PREQUEST_HEADER Header, void *DriverObject, void *DeviceObject, ERequesttype RequestType)
 {
@@ -22,17 +21,21 @@ static void _RequestHeaderInit(PREQUEST_HEADER Header, void *DriverObject, void 
 	Header->Type = RequestType;
 	Header->ResultType = rrtUndefined;
 	Header->Result.Other = NULL;
+#ifdef _KERNEL_MODE
+	Header->ProcessId = PsGetCurrentProcessId();
+	Header->ThreadId = PsGetCurrentThreadId();
+	Header->Irql = KeGetCurrentIrql();
+#else
 	Header->ProcessId = (HANDLE)(ULONG_PTR)GetCurrentProcessId();
 	Header->ThreadId = (HANDLE)(ULONG_PTR)GetCurrentThreadId();
 	Header->Irql = 0;
+#endif
 
 	return;
 }
 
-#endif
 
-
-static PREQUEST_HEADER _RequestMemoryAlloc(size_t Size)
+PREQUEST_HEADER RequestMemoryAlloc(size_t Size)
 {
 #ifdef _KERNEL_MODE
 	return HeapMemoryAllocNonPaged(Size);
@@ -42,7 +45,7 @@ static PREQUEST_HEADER _RequestMemoryAlloc(size_t Size)
 }
 
 
-static void _RequestMemoryFree(PREQUEST_HEADER Request)
+void RequestMemoryFree(PREQUEST_HEADER Request)
 {
 #ifdef _KERNEL_MODE
 	HeapMemoryFree(Request);
@@ -250,7 +253,7 @@ PREQUEST_HEADER RequestDecompress(const REQUEST_HEADER *Header)
 
 	oldSize = RequestGetSize(Header);
 	newSize = oldSize + charCount;
-	newRequest = _RequestMemoryAlloc(newSize);
+	newRequest = RequestMemoryAlloc(newSize);
 	if (newRequest != NULL) {
 		memcpy(newRequest, Header, oldSize);
 		target = (wchar_t *)((unsigned char *)newRequest + newSize - charCount*sizeof(wchar_t));
@@ -284,154 +287,147 @@ PREQUEST_HEADER RequestDecompress(const REQUEST_HEADER *Header)
 }
 
 
-DWORD RequestEmulateDriverDetected(void *DriverObject, const wchar_t *DriverName, PREQUEST_DRIVER_DETECTED *Request)
+PREQUEST_HEADER RequestCopy(const REQUEST_HEADER *Header)
 {
-	DWORD ret = ERROR_GEN_FAILURE;
+	size_t reqSize = 0;
+	PREQUEST_HEADER ret = NULL;
+
+	reqSize = RequestGetSize(Header);
+	ret = RequestMemoryAlloc(reqSize);
+	if (ret != NULL)
+		memcpy(ret, Header, reqSize);
+
+	return ret;
+}
+
+
+ERROR_TYPE RequestEmulateDriverDetected(void *DriverObject, const wchar_t *DriverName, PREQUEST_DRIVER_DETECTED *Request)
+{
+	ERROR_TYPE ret = ERROR_VALUE_INVAL;
 	PREQUEST_DRIVER_DETECTED tmpRequest = NULL;
 	size_t driverNameLen = 0;
 
-	ret = S_OK;
 	if (DriverName != NULL)
-		ret = StringCbLengthW(DriverName, 65536, &driverNameLen);
+		driverNameLen = wcslen(DriverName) * sizeof(wchar_t);
 
-	if (ret == S_OK) {
-		tmpRequest = _RequestMemoryAlloc(sizeof(REQUEST_DRIVER_DETECTED) + driverNameLen);
-		if (tmpRequest != NULL) {
-			_RequestHeaderInit(&tmpRequest->Header, DriverObject, NULL, ertDriverDetected);
-			tmpRequest->DriverNameLength = (ULONG)driverNameLen;
-			memcpy(tmpRequest + 1, DriverName, driverNameLen);;
-			*Request = tmpRequest;
-			ret = ERROR_SUCCESS;
-		} else ret = ERROR_NOT_ENOUGH_MEMORY;
-	}
+	tmpRequest = (PREQUEST_DRIVER_DETECTED)RequestMemoryAlloc(sizeof(REQUEST_DRIVER_DETECTED) + driverNameLen);
+	if (tmpRequest != NULL) {
+		_RequestHeaderInit(&tmpRequest->Header, DriverObject, NULL, ertDriverDetected);
+		tmpRequest->DriverNameLength = (ULONG)driverNameLen;
+		memcpy(tmpRequest + 1, DriverName, driverNameLen);;
+		*Request = tmpRequest;
+		ret = ERROR_VALUE_SUCCESS;
+	} else ret = ERROR_VALUE_NOMEM;
 
 	return ret;
 }
 
 
-DWORD RequestEmulateDeviceDetected(void *DriverObject, void *DeviceObject, const wchar_t *DeviceName, PREQUEST_DEVICE_DETECTED *Request)
+ERROR_TYPE RequestEmulateDeviceDetected(void *DriverObject, void *DeviceObject, const wchar_t *DeviceName, PREQUEST_DEVICE_DETECTED *Request)
 {
-	DWORD ret = ERROR_GEN_FAILURE;
+	ERROR_TYPE ret = ERROR_VALUE_INVAL;
 	PREQUEST_DEVICE_DETECTED tmpRequest = NULL;
 	size_t deviceNameLen = 0;
 
-	ret = S_OK;
 	if (DeviceName != NULL)
-		ret = StringCbLengthW(DeviceName, 65536, &deviceNameLen);
+		deviceNameLen = wcslen(DeviceName)*sizeof(wchar_t);
 
-	if (ret == S_OK) {
-		tmpRequest = _RequestMemoryAlloc(sizeof(REQUEST_DEVICE_DETECTED) + deviceNameLen);
-		if (tmpRequest != NULL) {
-			_RequestHeaderInit(&tmpRequest->Header, DriverObject, DeviceObject, ertDeviceDetected);
-			tmpRequest->DeviceNameLength = (ULONG)deviceNameLen;
-			memcpy(tmpRequest + 1, DeviceName, deviceNameLen);;
-			*Request = tmpRequest;
-			ret = ERROR_SUCCESS;
-		} else ret = ERROR_NOT_ENOUGH_MEMORY;
-	}
+	tmpRequest = (PREQUEST_DEVICE_DETECTED)RequestMemoryAlloc(sizeof(REQUEST_DEVICE_DETECTED) + deviceNameLen);
+	if (tmpRequest != NULL) {
+		_RequestHeaderInit(&tmpRequest->Header, DriverObject, DeviceObject, ertDeviceDetected);
+		tmpRequest->DeviceNameLength = (ULONG)deviceNameLen;
+		memcpy(tmpRequest + 1, DeviceName, deviceNameLen);;
+		*Request = tmpRequest;
+		ret = ERROR_VALUE_SUCCESS;
+	} else ret = ERROR_VALUE_NOMEM;
 
 	return ret;
 }
 
 
-DWORD RequestEmulateFileNameAssigned(void *FileObject, const wchar_t *FileName, PREQUEST_FILE_OBJECT_NAME_ASSIGNED *Request)
+ERROR_TYPE RequestEmulateFileNameAssigned(void *FileObject, const wchar_t *FileName, PREQUEST_FILE_OBJECT_NAME_ASSIGNED *Request)
 {
-	DWORD ret = ERROR_GEN_FAILURE;
+	ERROR_TYPE ret = ERROR_VALUE_INVAL;
 	PREQUEST_FILE_OBJECT_NAME_ASSIGNED tmpRequest = NULL;
 	size_t fileNameLen = 0;
 
-	ret = S_OK;
 	if (FileName != NULL)
-		ret = StringCbLengthW(FileName, 65536, &fileNameLen);
+		fileNameLen = wcslen(FileName) * sizeof(wchar_t);
 
-	if (ret == S_OK) {
-		tmpRequest = _RequestMemoryAlloc(sizeof(REQUEST_FILE_OBJECT_NAME_ASSIGNED) + fileNameLen);
-		if (tmpRequest != NULL) {
-			_RequestHeaderInit(&tmpRequest->Header, NULL, NULL, ertFileObjectNameAssigned);
-			tmpRequest->FileObject = FileObject;
-			tmpRequest->NameLength = (ULONG)fileNameLen;
-			memcpy(tmpRequest + 1, FileName, fileNameLen);;
-			*Request = tmpRequest;
-			ret = ERROR_SUCCESS;
-		} else ret = ERROR_NOT_ENOUGH_MEMORY;
-	}
+	tmpRequest = (PREQUEST_FILE_OBJECT_NAME_ASSIGNED)RequestMemoryAlloc(sizeof(REQUEST_FILE_OBJECT_NAME_ASSIGNED) + fileNameLen);
+	if (tmpRequest != NULL) {
+		_RequestHeaderInit(&tmpRequest->Header, NULL, NULL, ertFileObjectNameAssigned);
+		tmpRequest->FileObject = FileObject;
+		tmpRequest->NameLength = (ULONG)fileNameLen;
+		memcpy(tmpRequest + 1, FileName, fileNameLen);;
+		*Request = tmpRequest;
+		ret = ERROR_VALUE_SUCCESS;
+	} else ret = ERROR_VALUE_NOMEM;
 
 	return ret;
 }
 
 
-DWORD RequestEmulateFileNameDeleted(void *FileObject, PREQUEST_FILE_OBJECT_NAME_DELETED *Request)
+ERROR_TYPE RequestEmulateFileNameDeleted(void *FileObject, PREQUEST_FILE_OBJECT_NAME_DELETED *Request)
 {
-	DWORD ret = ERROR_GEN_FAILURE;
+	ERROR_TYPE ret = ERROR_VALUE_INVAL;
 	PREQUEST_FILE_OBJECT_NAME_DELETED tmpRequest = NULL;
 
-	tmpRequest = _RequestMemoryAlloc(sizeof(REQUEST_FILE_OBJECT_NAME_DELETED));
+	tmpRequest = (PREQUEST_FILE_OBJECT_NAME_DELETED)RequestMemoryAlloc(sizeof(REQUEST_FILE_OBJECT_NAME_DELETED));
 	if (tmpRequest != NULL) {
 		_RequestHeaderInit(&tmpRequest->Header, NULL, NULL, ertFileObjectNameDeleted);
 		tmpRequest->FileObject = FileObject;
 		*Request = tmpRequest;
-		ret = ERROR_SUCCESS;
-	} else ret = ERROR_NOT_ENOUGH_MEMORY;
+		ret = ERROR_VALUE_SUCCESS;
+	} else ret = ERROR_VALUE_NOMEM;
 
 	return ret;
 }
 
 
-DWORD RequestEmulateProcessCreated(HANDLE ProcessId, HANDLE ParentId, const wchar_t *ImageName, const wchar_t *CommandLine, PREQUEST_PROCESS_CREATED *Request)
+ERROR_TYPE RequestEmulateProcessCreated(HANDLE ProcessId, HANDLE ParentId, const wchar_t *ImageName, const wchar_t *CommandLine, PREQUEST_PROCESS_CREATED *Request)
 {
-	DWORD ret = ERROR_GEN_FAILURE;
+	ERROR_TYPE ret = ERROR_VALUE_INVAL;
 	PREQUEST_PROCESS_CREATED tmpRequest = NULL;
 	size_t imageNameLen = 0;
 	size_t commandLineLen = 0;
 
-	ret = S_OK;
 	if (ImageName != NULL)
-		ret = StringCbLengthW(ImageName, 65536, &imageNameLen);
+		imageNameLen = wcslen(ImageName) * sizeof(wchar_t);
 
-	if (ret == S_OK && CommandLine != NULL)
-		ret = StringCbLengthW(CommandLine, 65536, &commandLineLen);
+	if (CommandLine != NULL)
+		commandLineLen = wcslen(CommandLine) * sizeof(wchar_t);
 
-	if (ret == S_OK) {
-		tmpRequest = _RequestMemoryAlloc(sizeof(REQUEST_PROCESS_CREATED) + imageNameLen + commandLineLen);
-		if (tmpRequest != NULL) {
-			_RequestHeaderInit(&tmpRequest->Header, NULL, NULL, ertProcessCreated);
-			tmpRequest->ProcessId = ProcessId;
-			tmpRequest->ParentId = ParentId;
-			tmpRequest->ImageNameLength = (ULONG)imageNameLen;
-			memcpy(tmpRequest + 1, ImageName, tmpRequest->ImageNameLength);
-			tmpRequest->CommandLineLength = (ULONG)commandLineLen;
-			memcpy((unsigned char *)(tmpRequest + 1) + tmpRequest->ImageNameLength, CommandLine, tmpRequest->CommandLineLength);
-			*Request = tmpRequest;
-			ret = ERROR_SUCCESS;
-		} else ret = ERROR_NOT_ENOUGH_MEMORY;
-	}
+	tmpRequest = (PREQUEST_PROCESS_CREATED)RequestMemoryAlloc(sizeof(REQUEST_PROCESS_CREATED) + imageNameLen + commandLineLen);
+	if (tmpRequest != NULL) {
+		_RequestHeaderInit(&tmpRequest->Header, NULL, NULL, ertProcessCreated);
+		tmpRequest->ProcessId = ProcessId;
+		tmpRequest->ParentId = ParentId;
+		tmpRequest->ImageNameLength = (ULONG)imageNameLen;
+		memcpy(tmpRequest + 1, ImageName, tmpRequest->ImageNameLength);
+		tmpRequest->CommandLineLength = (ULONG)commandLineLen;
+		memcpy((unsigned char *)(tmpRequest + 1) + tmpRequest->ImageNameLength, CommandLine, tmpRequest->CommandLineLength);
+		*Request = tmpRequest;
+		ret = ERROR_VALUE_SUCCESS;
+	} else ret = ERROR_VALUE_NOMEM;
 
 	return ret;
 }
 
 
-DWORD RequestEmulateProcessExitted(HANDLE ProcessId, PREQUEST_PROCESS_EXITTED *Request)
+ERROR_TYPE RequestEmulateProcessExitted(HANDLE ProcessId, PREQUEST_PROCESS_EXITTED *Request)
 {
-	DWORD ret = ERROR_GEN_FAILURE;
+	ERROR_TYPE ret = ERROR_VALUE_INVAL;
 	PREQUEST_PROCESS_EXITTED tmpRequest = NULL;
 
-	tmpRequest = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(REQUEST_PROCESS_EXITTED));
+	tmpRequest = (PREQUEST_PROCESS_EXITTED)RequestMemoryAlloc(sizeof(REQUEST_PROCESS_EXITTED));
 	if (tmpRequest != NULL) {
 		_RequestHeaderInit(&tmpRequest->Header, NULL, NULL, ertProcessExitted);
 		tmpRequest->Header.ProcessId = ProcessId;
 		tmpRequest->ProcessId = ProcessId;
 		*Request = tmpRequest;
-		ret = ERROR_SUCCESS;
-	} else ret = ERROR_NOT_ENOUGH_MEMORY;
+		ret = ERROR_VALUE_SUCCESS;
+	} else ret = ERROR_VALUE_NOMEM;
 
 	return ret;
 }
-
-
-void RequestEmulatedFree(PREQUEST_HEADER Header)
-{
-	_RequestMemoryFree(Header);
-
-	return;
-}
-

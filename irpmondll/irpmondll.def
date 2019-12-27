@@ -38,7 +38,11 @@ EXPORTS
 	IRPMonDllRequestEmulateFileNameDeleted
 	IRPMonDllRequestEmulateProcessCreated
 	IRPMonDllRequestEmulateProcessExitted
-	IRPMonDllRequestEmulatedFree
+	IRPMonDllRequestCopy
+	IRPMonDllRequestMemoryAlloc
+	IRPMonDllRequestMemoryFree
+	IRPMonDllRequestCompress
+	IRPMonDllRequestDecompress
 	IRPMonDllEmulateDriverDevices
 	IRPMonDllEmulateProcesses
 	IRPMonDllInitialized
