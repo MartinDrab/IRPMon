@@ -10,6 +10,7 @@ The goal of the tool is to monitor requests received by selected device objects 
 
 ## Donations
 
-If you wish to support development of this tool, you may donate some stuff (BTC) to the following address:
+If you wish to support development of this tool, you may donate some stuff to the following addresses:
 
-17tEADhePvhHPj2X5GWn8vfiYhZCRH1f7V
+* 17tEADhePvhHPj2X5GWn8vfiYhZCRH1f7V (BTC)
+* [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=6QWP4WH49Y3Z2&item_name=IRPMon&currency_code=CZK&source=url)

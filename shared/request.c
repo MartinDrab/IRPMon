@@ -2,6 +2,7 @@
 #ifdef _KERNEL_MODE
 #include <ntifs.h>
 #include "preprocessor.h"
+#include "allocator.h"
 #else
 #include <windows.h>
 #include <strsafe.h>
@@ -21,14 +22,37 @@ static void _RequestHeaderInit(PREQUEST_HEADER Header, void *DriverObject, void 
 	Header->Type = RequestType;
 	Header->ResultType = rrtUndefined;
 	Header->Result.Other = NULL;
-	Header->ProcessId = (HANDLE)GetCurrentProcessId();
-	Header->ThreadId = (HANDLE)GetCurrentThreadId();
+	Header->ProcessId = (HANDLE)(ULONG_PTR)GetCurrentProcessId();
+	Header->ThreadId = (HANDLE)(ULONG_PTR)GetCurrentThreadId();
 	Header->Irql = 0;
 
 	return;
 }
 
 #endif
+
+
+static PREQUEST_HEADER _RequestMemoryAlloc(size_t Size)
+{
+#ifdef _KERNEL_MODE
+	return HeapMemoryAllocNonPaged(Size);
+#else
+	return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, Size);
+#endif
+}
+
+
+static void _RequestMemoryFree(PREQUEST_HEADER Request)
+{
+#ifdef _KERNEL_MODE
+	HeapMemoryFree(Request);
+#else
+	HeapFree(GetProcessHeap(), 0, Request);
+#endif
+
+	return;
+}
+
 
 #ifdef _KERNEL_MODE
 
@@ -114,7 +138,151 @@ size_t RequestGetSize(const REQUEST_HEADER *Header)
 	return ret;
 }
 
-#ifndef _KERNEL_MODE
+
+BOOLEAN RequestCompress(PREQUEST_HEADER Header)
+{
+	BOOLEAN ret = FALSE;
+	wchar_t *source = NULL;
+	char *target = NULL;
+	size_t charCount = 0;
+	PREQUEST_DRIVER_DETECTED drr = CONTAINING_RECORD(Header, REQUEST_DRIVER_DETECTED, Header);
+	PREQUEST_DEVICE_DETECTED der = CONTAINING_RECORD(Header, REQUEST_DEVICE_DETECTED, Header);
+	PREQUEST_FILE_OBJECT_NAME_ASSIGNED ar = NULL;
+	PREQUEST_PROCESS_CREATED pcr = CONTAINING_RECORD(Header, REQUEST_PROCESS_CREATED, Header);
+
+	if ((Header->Flags & REQUEST_FLAG_COMPRESSED) == 0) {
+		switch (Header->Type) {
+			case ertDriverDetected:
+				source = (wchar_t *)(drr + 1);
+				charCount = drr->DriverNameLength / sizeof(wchar_t);
+				ret = TRUE;
+				break;
+			case ertDeviceDetected:
+				source = (wchar_t *)(der + 1);
+				charCount = der->DeviceNameLength / sizeof(wchar_t);
+				ret = TRUE;
+				break;
+			case ertFileObjectNameAssigned:
+				ar = CONTAINING_RECORD(Header, REQUEST_FILE_OBJECT_NAME_ASSIGNED, Header);
+				source = (wchar_t *)(ar + 1);
+				charCount = ar->NameLength / sizeof(wchar_t);
+				ret = TRUE;
+				break;
+			case ertProcessCreated:
+				source = (wchar_t *)(pcr + 1);
+				charCount = (pcr->ImageNameLength + pcr->CommandLineLength) / sizeof(wchar_t);
+				ret = TRUE;
+				break;
+		}
+
+		if (ret) {
+			for (size_t i = 0; i < charCount; ++i) {
+				if (source[i] >= 0x100) {
+					ret = FALSE;
+					break;
+				}
+			}
+
+			if (ret) {
+				switch (Header->Type) {
+					case ertDriverDetected:
+						drr->DriverNameLength /= sizeof(wchar_t);
+						break;
+					case ertDeviceDetected:
+						der->DeviceNameLength /= sizeof(wchar_t);
+						break;
+					case ertFileObjectNameAssigned:
+						ar->NameLength /= sizeof(wchar_t);
+						break;
+					case ertProcessCreated:
+						pcr->ImageNameLength /= sizeof(wchar_t);
+						pcr->CommandLineLength /= sizeof(wchar_t);
+						break;
+				}
+
+				target = (char *)source;
+				for (size_t i = 0; i < charCount; ++i)
+					target[i] = (char)source[i];
+
+				Header->Flags |= REQUEST_FLAG_COMPRESSED;
+			}
+		}
+	}
+
+	return ret;
+}
+
+
+PREQUEST_HEADER RequestDecompress(const REQUEST_HEADER *Header)
+{
+	const char *source = NULL;
+	wchar_t *target = NULL;
+	size_t charCount = 0;
+	size_t newSize = 0;
+	size_t oldSize = 0;
+	PREQUEST_HEADER newRequest = NULL;
+	PREQUEST_DRIVER_DETECTED drr = CONTAINING_RECORD(Header, REQUEST_DRIVER_DETECTED, Header);
+	PREQUEST_DEVICE_DETECTED der = CONTAINING_RECORD(Header, REQUEST_DEVICE_DETECTED, Header);
+	PREQUEST_FILE_OBJECT_NAME_ASSIGNED ar = NULL;
+	PREQUEST_PROCESS_CREATED pcr = CONTAINING_RECORD(Header, REQUEST_PROCESS_CREATED, Header);
+
+	if (Header->Flags & REQUEST_FLAG_COMPRESSED) {
+		switch (Header->Type) {
+			case ertDriverDetected:
+				source = (char *)(drr + 1);
+				charCount = drr->DriverNameLength;
+				break;
+			case ertDeviceDetected:
+				source = (char *)(der + 1);
+				charCount = der->DeviceNameLength;
+				break;
+			case ertFileObjectNameAssigned:
+				ar = CONTAINING_RECORD(Header, REQUEST_FILE_OBJECT_NAME_ASSIGNED, Header);
+				source = (char *)(ar + 1);
+				charCount = ar->NameLength;
+				break;
+			case ertProcessCreated:
+				source = (char *)(pcr + 1);
+				charCount = (pcr->ImageNameLength + pcr->CommandLineLength);
+				break;
+		}
+	}
+
+	oldSize = RequestGetSize(Header);
+	newSize = oldSize + charCount;
+	newRequest = _RequestMemoryAlloc(newSize);
+	if (newRequest != NULL) {
+		memcpy(newRequest, Header, oldSize);
+		target = (wchar_t *)((unsigned char *)newRequest + newSize - charCount*sizeof(wchar_t));
+		switch (Header->Type) {
+			case ertDriverDetected:
+				drr = CONTAINING_RECORD(newRequest, REQUEST_DRIVER_DETECTED, Header);
+				drr->DriverNameLength *= sizeof(wchar_t);
+				break;
+			case ertDeviceDetected:
+				der = CONTAINING_RECORD(newRequest, REQUEST_DEVICE_DETECTED, Header);
+				der->DeviceNameLength *= sizeof(wchar_t);
+				break;
+			case ertFileObjectNameAssigned:
+				ar = CONTAINING_RECORD(newRequest, REQUEST_FILE_OBJECT_NAME_ASSIGNED, Header);;
+				ar->NameLength *= sizeof(wchar_t);
+				break;
+			case ertProcessCreated:
+				pcr = CONTAINING_RECORD(newRequest, REQUEST_PROCESS_CREATED, Header);
+				pcr->ImageNameLength *= sizeof(wchar_t);
+				pcr->CommandLineLength *= sizeof(wchar_t);
+				break;
+		}
+
+		for (size_t i = 0; i < charCount; ++i)
+			target[i] = source[i];
+
+		newRequest->Flags &= (~REQUEST_FLAG_COMPRESSED);
+	}
+
+	return newRequest;
+}
+
 
 DWORD RequestEmulateDriverDetected(void *DriverObject, const wchar_t *DriverName, PREQUEST_DRIVER_DETECTED *Request)
 {
@@ -127,14 +295,14 @@ DWORD RequestEmulateDriverDetected(void *DriverObject, const wchar_t *DriverName
 		ret = StringCbLengthW(DriverName, 65536, &driverNameLen);
 
 	if (ret == S_OK) {
-		tmpRequest = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(REQUEST_DRIVER_DETECTED) + driverNameLen);
+		tmpRequest = _RequestMemoryAlloc(sizeof(REQUEST_DRIVER_DETECTED) + driverNameLen);
 		if (tmpRequest != NULL) {
 			_RequestHeaderInit(&tmpRequest->Header, DriverObject, NULL, ertDriverDetected);
-			tmpRequest->DriverNameLength = driverNameLen;
+			tmpRequest->DriverNameLength = (ULONG)driverNameLen;
 			memcpy(tmpRequest + 1, DriverName, driverNameLen);;
 			*Request = tmpRequest;
 			ret = ERROR_SUCCESS;
-		} else ret = GetLastError();
+		} else ret = ERROR_NOT_ENOUGH_MEMORY;
 	}
 
 	return ret;
@@ -152,14 +320,14 @@ DWORD RequestEmulateDeviceDetected(void *DriverObject, void *DeviceObject, const
 		ret = StringCbLengthW(DeviceName, 65536, &deviceNameLen);
 
 	if (ret == S_OK) {
-		tmpRequest = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(REQUEST_DEVICE_DETECTED) + deviceNameLen);
+		tmpRequest = _RequestMemoryAlloc(sizeof(REQUEST_DEVICE_DETECTED) + deviceNameLen);
 		if (tmpRequest != NULL) {
 			_RequestHeaderInit(&tmpRequest->Header, DriverObject, DeviceObject, ertDeviceDetected);
-			tmpRequest->DeviceNameLength = deviceNameLen;
+			tmpRequest->DeviceNameLength = (ULONG)deviceNameLen;
 			memcpy(tmpRequest + 1, DeviceName, deviceNameLen);;
 			*Request = tmpRequest;
 			ret = ERROR_SUCCESS;
-		} else ret = GetLastError();
+		} else ret = ERROR_NOT_ENOUGH_MEMORY;
 	}
 
 	return ret;
@@ -177,16 +345,15 @@ DWORD RequestEmulateFileNameAssigned(void *FileObject, const wchar_t *FileName, 
 		ret = StringCbLengthW(FileName, 65536, &fileNameLen);
 
 	if (ret == S_OK) {
-		tmpRequest = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(REQUEST_FILE_OBJECT_NAME_ASSIGNED) + fileNameLen);
+		tmpRequest = _RequestMemoryAlloc(sizeof(REQUEST_FILE_OBJECT_NAME_ASSIGNED) + fileNameLen);
 		if (tmpRequest != NULL) {
 			_RequestHeaderInit(&tmpRequest->Header, NULL, NULL, ertFileObjectNameAssigned);
 			tmpRequest->FileObject = FileObject;
-			tmpRequest->NameLength = fileNameLen;
+			tmpRequest->NameLength = (ULONG)fileNameLen;
 			memcpy(tmpRequest + 1, FileName, fileNameLen);;
 			*Request = tmpRequest;
 			ret = ERROR_SUCCESS;
-		}
-		else ret = GetLastError();
+		} else ret = ERROR_NOT_ENOUGH_MEMORY;
 	}
 
 	return ret;
@@ -198,13 +365,13 @@ DWORD RequestEmulateFileNameDeleted(void *FileObject, PREQUEST_FILE_OBJECT_NAME_
 	DWORD ret = ERROR_GEN_FAILURE;
 	PREQUEST_FILE_OBJECT_NAME_DELETED tmpRequest = NULL;
 
-	tmpRequest = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(REQUEST_FILE_OBJECT_NAME_DELETED));
+	tmpRequest = _RequestMemoryAlloc(sizeof(REQUEST_FILE_OBJECT_NAME_DELETED));
 	if (tmpRequest != NULL) {
 		_RequestHeaderInit(&tmpRequest->Header, NULL, NULL, ertFileObjectNameDeleted);
 		tmpRequest->FileObject = FileObject;
 		*Request = tmpRequest;
 		ret = ERROR_SUCCESS;
-	} else ret = GetLastError();
+	} else ret = ERROR_NOT_ENOUGH_MEMORY;
 
 	return ret;
 }
@@ -225,18 +392,18 @@ DWORD RequestEmulateProcessCreated(HANDLE ProcessId, HANDLE ParentId, const wcha
 		ret = StringCbLengthW(CommandLine, 65536, &commandLineLen);
 
 	if (ret == S_OK) {
-		tmpRequest = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(REQUEST_PROCESS_CREATED) + imageNameLen + commandLineLen);
+		tmpRequest = _RequestMemoryAlloc(sizeof(REQUEST_PROCESS_CREATED) + imageNameLen + commandLineLen);
 		if (tmpRequest != NULL) {
 			_RequestHeaderInit(&tmpRequest->Header, NULL, NULL, ertProcessCreated);
 			tmpRequest->ProcessId = ProcessId;
 			tmpRequest->ParentId = ParentId;
-			tmpRequest->ImageNameLength = imageNameLen;
+			tmpRequest->ImageNameLength = (ULONG)imageNameLen;
 			memcpy(tmpRequest + 1, ImageName, tmpRequest->ImageNameLength);
-			tmpRequest->CommandLineLength = commandLineLen;
+			tmpRequest->CommandLineLength = (ULONG)commandLineLen;
 			memcpy((unsigned char *)(tmpRequest + 1) + tmpRequest->ImageNameLength, CommandLine, tmpRequest->CommandLineLength);
 			*Request = tmpRequest;
 			ret = ERROR_SUCCESS;
-		} else ret = GetLastError();
+		} else ret = ERROR_NOT_ENOUGH_MEMORY;
 	}
 
 	return ret;
@@ -255,8 +422,7 @@ DWORD RequestEmulateProcessExitted(HANDLE ProcessId, PREQUEST_PROCESS_EXITTED *R
 		tmpRequest->ProcessId = ProcessId;
 		*Request = tmpRequest;
 		ret = ERROR_SUCCESS;
-	}
-	else ret = GetLastError();
+	} else ret = ERROR_NOT_ENOUGH_MEMORY;
 
 	return ret;
 }
@@ -264,10 +430,8 @@ DWORD RequestEmulateProcessExitted(HANDLE ProcessId, PREQUEST_PROCESS_EXITTED *R
 
 void RequestEmulatedFree(PREQUEST_HEADER Header)
 {
-	HeapFree(GetProcessHeap(), 0, Header);
+	_RequestMemoryFree(Header);
 
 	return;
 }
 
-
-#endif
