@@ -245,28 +245,30 @@ PREQUEST_HEADER RequestDecompress(const REQUEST_HEADER *Header)
 	if (newRequest != NULL) {
 		memcpy(newRequest, Header, oldSize);
 		target = (wchar_t *)((unsigned char *)newRequest + newSize - charCount*sizeof(wchar_t));
-		switch (Header->Type) {
-			case ertDriverDetected:
-				drr = CONTAINING_RECORD(newRequest, REQUEST_DRIVER_DETECTED, Header);
-				drr->DriverNameLength *= sizeof(wchar_t);
-				break;
-			case ertDeviceDetected:
-				der = CONTAINING_RECORD(newRequest, REQUEST_DEVICE_DETECTED, Header);
-				der->DeviceNameLength *= sizeof(wchar_t);
-				break;
-			case ertFileObjectNameAssigned:
-				ar = CONTAINING_RECORD(newRequest, REQUEST_FILE_OBJECT_NAME_ASSIGNED, Header);;
-				ar->NameLength *= sizeof(wchar_t);
-				break;
-			case ertProcessCreated:
-				pcr = CONTAINING_RECORD(newRequest, REQUEST_PROCESS_CREATED, Header);
-				pcr->ImageNameLength *= sizeof(wchar_t);
-				pcr->CommandLineLength *= sizeof(wchar_t);
-				break;
-		}
+		if (charCount > 0) {
+			switch (Header->Type) {
+				case ertDriverDetected:
+					drr = CONTAINING_RECORD(newRequest, REQUEST_DRIVER_DETECTED, Header);
+					drr->DriverNameLength *= sizeof(wchar_t);
+					break;
+				case ertDeviceDetected:
+					der = CONTAINING_RECORD(newRequest, REQUEST_DEVICE_DETECTED, Header);
+					der->DeviceNameLength *= sizeof(wchar_t);
+					break;
+				case ertFileObjectNameAssigned:
+					ar = CONTAINING_RECORD(newRequest, REQUEST_FILE_OBJECT_NAME_ASSIGNED, Header);;
+					ar->NameLength *= sizeof(wchar_t);
+					break;
+				case ertProcessCreated:
+					pcr = CONTAINING_RECORD(newRequest, REQUEST_PROCESS_CREATED, Header);
+					pcr->ImageNameLength *= sizeof(wchar_t);
+					pcr->CommandLineLength *= sizeof(wchar_t);
+					break;
+			}
 
-		for (size_t i = 0; i < charCount; ++i)
-			target[i] = source[i];
+			for (size_t i = 0; i < charCount; ++i)
+				target[i] = source[i];
+		}
 
 		newRequest->Flags &= (~REQUEST_FLAG_COMPRESSED);
 	}
