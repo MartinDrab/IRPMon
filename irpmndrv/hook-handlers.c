@@ -1048,7 +1048,6 @@ VOID HookHandlerStartIoDispatch(PDEVICE_OBJECT DeviceObject, PIRP Irp)
 			
 			request = (PREQUEST_STARTIO)RequestMemoryAlloc(sizeof(REQUEST_STARTIO) + loggedData.BufferSize);
 			if (request != NULL) {
-				memset(request, 0, sizeof(REQUEST_STARTIO) + loggedData.BufferSize);
 				RequestHeaderInit(&request->Header, DeviceObject->DriverObject, DeviceObject, ertStartIo);
 				request->IRPAddress = Irp;
 				request->MajorFunction = IrpStack->MajorFunction;
@@ -1134,7 +1133,6 @@ static NTSTATUS _HookHandlerIRPCompletion(PDEVICE_OBJECT DeviceObject, PIRP Irp,
 
 	completionRequest = (PREQUEST_IRP_COMPLETION)RequestMemoryAlloc(sizeof(REQUEST_IRP_COMPLETION) + loggedData.BufferSize);
 	if (completionRequest != NULL) {
-		memset(completionRequest, 0, sizeof(REQUEST_IRP_COMPLETION) + loggedData.BufferSize);
 		RequestHeaderInit(&completionRequest->Header, cc->DriverObject, cc->DeviceObject, ertIRPCompletion);
 		completionRequest->IRPAddress = Irp;
 		completionRequest->CompletionInformation = Irp->IoStatus.Information;
@@ -1285,7 +1283,6 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 
 				request = (PREQUEST_IRP)RequestMemoryAlloc(sizeof(REQUEST_IRP) + loggedData.BufferSize);
 				if (request != NULL) {
-					memset(request, 0, sizeof(REQUEST_IRP) + loggedData.BufferSize);
 					RequestHeaderInit(&request->Header, Deviceobject->DriverObject, Deviceobject, ertIRP);
 					RequestHeaderSetResult(request->Header, NTSTATUS, STATUS_PENDING);
 					request->IRPAddress = Irp;
@@ -1333,7 +1330,6 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 					if (KeGetCurrentIrql() < DISPATCH_LEVEL) {
 						rfond = (PREQUEST_FILE_OBJECT_NAME_DELETED)RequestMemoryAlloc(sizeof(REQUEST_FILE_OBJECT_NAME_DELETED));
 						if (rfond != NULL) {
-							memset(rfond, 0, sizeof(REQUEST_FILE_OBJECT_NAME_DELETED));
 							RequestHeaderInit(&rfond->Header, Deviceobject->DriverObject, Deviceobject, ertFileObjectNameDeleted);
 							RequestHeaderSetResult(rfond->Header, NTSTATUS, STATUS_SUCCESS);
 							rfond->FileObject = cleanupFileObject;
@@ -1368,7 +1364,6 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 
 						ar = (PREQUEST_FILE_OBJECT_NAME_ASSIGNED)RequestMemoryAlloc(sizeof(REQUEST_FILE_OBJECT_NAME_ASSIGNED) + uFileName.Length);
 						if (ar != NULL) {
-							memset(ar, 0, sizeof(REQUEST_FILE_OBJECT_NAME_ASSIGNED) + uFileName.Length);
 							RequestHeaderInitNoId(&ar->Header, Deviceobject->DriverObject, Deviceobject, ertFileObjectNameAssigned);
 							ar->Header.Id = fnAssignedId;
 							RequestHeaderSetResult(ar->Header, NTSTATUS, STATUS_SUCCESS);

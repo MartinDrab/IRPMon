@@ -33,6 +33,7 @@ static void _RequestInsert(PREQUEST_HEADER Header, BOOLEAN Head)
 	DEBUG_ENTER_FUNCTION("Header=0x%p; Head=%u", Header, Head);
 
 	if (Header->Flags & REQUEST_FLAG_PAGED) {
+		ASSERT(KeGetCurrentIrql() < DISPATCH_LEVEL);
 		listHead = &_pagedRequestListHead;
 		KeEnterCriticalRegion();
 		ExAcquireResourceExclusiveLite(&_pagedRequestListLock, TRUE);
@@ -137,22 +138,22 @@ NTSTATUS RequestQueueConnect()
 				status = ListDriversAndDevicesByEvents(&psRequests);
 
 			if (NT_SUCCESS(status)) {
-				psRequest = CONTAINING_RECORD(psRequests.Blink, REQUEST_HEADER, Entry);
+				psRequest = CONTAINING_RECORD(psRequests.Flink, REQUEST_HEADER, Entry);
 				while (&psRequest->Entry != &psRequests) {
 					old = psRequest;
-					psRequest = CONTAINING_RECORD(psRequest->Entry.Blink, REQUEST_HEADER, Entry);
+					psRequest = CONTAINING_RECORD(psRequest->Entry.Flink, REQUEST_HEADER, Entry);
 					RemoveEntryList(&old->Entry);
-					_RequestInsert(old, TRUE);
+					_RequestInsert(old, FALSE);
 				}
 
 				_driverSettings->ReqQueueConnected = TRUE;
 			}
 
 			if (!NT_SUCCESS(status)) {
-				psRequest = CONTAINING_RECORD(psRequests.Blink, REQUEST_HEADER, Entry);
+				psRequest = CONTAINING_RECORD(psRequests.Flink, REQUEST_HEADER, Entry);
 				while (&psRequest->Entry != &psRequests) {
 					old = psRequest;
-					psRequest = CONTAINING_RECORD(psRequest->Entry.Blink, REQUEST_HEADER, Entry);
+					psRequest = CONTAINING_RECORD(psRequest->Entry.Flink, REQUEST_HEADER, Entry);
 					RemoveEntryList(&old->Entry);
 					RequestMemoryFree(old);
 				}
