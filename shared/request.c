@@ -12,6 +12,10 @@
 
 
 
+/************************************************************************/
+/*              HELPER FUNCTIONS                                        */
+/************************************************************************/
+
 static void _RequestHeaderInit(PREQUEST_HEADER Header, void *DriverObject, void *DeviceObject, ERequesttype RequestType)
 {
 	RtlSecureZeroMemory(Header, sizeof(REQUEST_HEADER));
@@ -35,26 +39,9 @@ static void _RequestHeaderInit(PREQUEST_HEADER Header, void *DriverObject, void 
 }
 
 
-PREQUEST_HEADER RequestMemoryAlloc(size_t Size)
-{
-#ifdef _KERNEL_MODE
-	return HeapMemoryAllocNonPaged(Size);
-#else
-	return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, Size);
-#endif
-}
-
-
-void RequestMemoryFree(PREQUEST_HEADER Request)
-{
-#ifdef _KERNEL_MODE
-	HeapMemoryFree(Request);
-#else
-	HeapFree(GetProcessHeap(), 0, Request);
-#endif
-
-	return;
-}
+/************************************************************************/
+/*                  PUBLIC FUNCTIONS                                    */
+/************************************************************************/
 
 
 #ifdef _KERNEL_MODE
@@ -78,6 +65,7 @@ void _SetRequestFlags(PREQUEST_HEADER Request, const BASIC_CLIENT_INFO *Info)
 
 
 #endif
+
 
 size_t RequestGetSize(const REQUEST_HEADER *Header)
 {
@@ -430,4 +418,44 @@ ERROR_TYPE RequestEmulateProcessExitted(HANDLE ProcessId, PREQUEST_PROCESS_EXITT
 	} else ret = ERROR_VALUE_NOMEM;
 
 	return ret;
+}
+
+
+PREQUEST_HEADER RequestMemoryAlloc(size_t Size)
+{
+	PREQUEST_HEADER ret = NULL;
+#ifdef _KERNEL_MODE
+	POOL_TYPE pt;
+
+	pt = (KeGetCurrentIrql() < DISPATCH_LEVEL) ? PagedPool : NonPagedPool;
+	ret = HeapMemoryAlloc(pt, Size);
+	if (ret != NULL) {
+		memset(ret, 0, Size);
+		switch (pt) {
+			case NonPagedPool:
+				ret->Flags |= REQUEST_FLAG_NONPAGED;
+				break;
+			case PagedPool:
+				ret->Flags |= REQUEST_FLAG_PAGED;
+				break;
+		}
+	}
+
+#else
+	ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, Size);
+#endif
+
+	return ret;
+}
+
+
+void RequestMemoryFree(PREQUEST_HEADER Request)
+{
+#ifdef _KERNEL_MODE
+	HeapMemoryFree(Request);
+#else
+	HeapFree(GetProcessHeap(), 0, Request);
+#endif
+
+	return;
 }

@@ -36,7 +36,7 @@ static PREQUEST_FASTIO _CreateFastIoRequest(EFastIoOperationType FastIoType, PDR
 	BASIC_CLIENT_INFO clientInfo;
 	PFILE_OBJECT_CONTEXT foc = NULL;
 
-	ret = HeapMemoryAllocNonPaged(sizeof(REQUEST_FASTIO));
+	ret = (PREQUEST_FASTIO)RequestMemoryAlloc(sizeof(REQUEST_FASTIO));
 	if (ret != NULL) {
 		RequestHeaderInit(&ret->Header, DriverObject, DeviceObject, ertFastIo);
 		ret->FastIoType = FastIoType;
@@ -1046,7 +1046,7 @@ VOID HookHandlerStartIoDispatch(PDEVICE_OBJECT DeviceObject, PIRP Irp)
 			if (driverRecord->MonitorData)
 				IRPDataLogger(Irp, IrpStack, FALSE, &loggedData);
 			
-			request = HeapMemoryAllocNonPaged(sizeof(REQUEST_STARTIO) + loggedData.BufferSize);
+			request = (PREQUEST_STARTIO)RequestMemoryAlloc(sizeof(REQUEST_STARTIO) + loggedData.BufferSize);
 			if (request != NULL) {
 				memset(request, 0, sizeof(REQUEST_STARTIO) + loggedData.BufferSize);
 				RequestHeaderInit(&request->Header, DeviceObject->DriverObject, DeviceObject, ertStartIo);
@@ -1132,7 +1132,7 @@ static NTSTATUS _HookHandlerIRPCompletion(PDEVICE_OBJECT DeviceObject, PIRP Irp,
 		FoTableInsert(&_foTable, cc->StackLocation.FileObject, &cc->ClientInfo, sizeof(cc->ClientInfo));
 	}
 
-	completionRequest = HeapMemoryAllocNonPaged(sizeof(REQUEST_IRP_COMPLETION) + loggedData.BufferSize);
+	completionRequest = (PREQUEST_IRP_COMPLETION)RequestMemoryAlloc(sizeof(REQUEST_IRP_COMPLETION) + loggedData.BufferSize);
 	if (completionRequest != NULL) {
 		memset(completionRequest, 0, sizeof(REQUEST_IRP_COMPLETION) + loggedData.BufferSize);
 		RequestHeaderInit(&completionRequest->Header, cc->DriverObject, cc->DeviceObject, ertIRPCompletion);
@@ -1283,7 +1283,7 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 				if (driverRecord->MonitorData)
 					IRPDataLogger(Irp, irpStack, FALSE, &loggedData);
 
-				request = HeapMemoryAllocNonPaged(sizeof(REQUEST_IRP) + loggedData.BufferSize);
+				request = (PREQUEST_IRP)RequestMemoryAlloc(sizeof(REQUEST_IRP) + loggedData.BufferSize);
 				if (request != NULL) {
 					memset(request, 0, sizeof(REQUEST_IRP) + loggedData.BufferSize);
 					RequestHeaderInit(&request->Header, Deviceobject->DriverObject, Deviceobject, ertIRP);
@@ -1331,7 +1331,7 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 				cleanupFileObject = irpStack->FileObject;
 				if (cleanupFileObject != NULL) {
 					if (KeGetCurrentIrql() < DISPATCH_LEVEL) {
-						rfond = HeapMemoryAllocNonPaged(sizeof(REQUEST_FILE_OBJECT_NAME_DELETED));
+						rfond = (PREQUEST_FILE_OBJECT_NAME_DELETED)RequestMemoryAlloc(sizeof(REQUEST_FILE_OBJECT_NAME_DELETED));
 						if (rfond != NULL) {
 							memset(rfond, 0, sizeof(REQUEST_FILE_OBJECT_NAME_DELETED));
 							RequestHeaderInit(&rfond->Header, Deviceobject->DriverObject, Deviceobject, ertFileObjectNameDeleted);
@@ -1366,7 +1366,7 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 							uFileName.Buffer += fi->Volume.Length / sizeof(wchar_t);
 						}
 
-						ar = HeapMemoryAllocNonPaged(sizeof(REQUEST_FILE_OBJECT_NAME_ASSIGNED) + uFileName.Length);
+						ar = (PREQUEST_FILE_OBJECT_NAME_ASSIGNED)RequestMemoryAlloc(sizeof(REQUEST_FILE_OBJECT_NAME_ASSIGNED) + uFileName.Length);
 						if (ar != NULL) {
 							memset(ar, 0, sizeof(REQUEST_FILE_OBJECT_NAME_ASSIGNED) + uFileName.Length);
 							RequestHeaderInitNoId(&ar->Header, Deviceobject->DriverObject, Deviceobject, ertFileObjectNameAssigned);
@@ -1425,7 +1425,7 @@ NTSTATUS HookHandlerAddDeviceDispatch(PDRIVER_OBJECT DriverObject, PDEVICE_OBJEC
 	driverRecord = DriverHookRecordGet(DriverObject);
 	if (driverRecord != NULL) {
 		if (driverRecord->MonitoringEnabled && driverRecord->MonitorAddDevice) {
-			request = (PREQUEST_ADDDEVICE)HeapMemoryAllocNonPaged(sizeof(REQUEST_ADDDEVICE));
+			request = (PREQUEST_ADDDEVICE)RequestMemoryAlloc(sizeof(REQUEST_ADDDEVICE));
 			if (request != NULL)
 				RequestHeaderInit(&request->Header, DriverObject, PhysicalDeviceObject, ertAddDevice);
 		}
@@ -1468,7 +1468,7 @@ VOID HookHandlerDriverUnloadDisptach(PDRIVER_OBJECT DriverObject)
 	driverRecord = DriverHookRecordGet(DriverObject);
 	if (driverRecord != NULL) {
 		if (driverRecord->MonitoringEnabled && driverRecord->MonitorDriverUnload) {
-			request = (PREQUEST_UNLOAD)HeapMemoryAllocNonPaged(sizeof(REQUEST_UNLOAD));
+			request = (PREQUEST_UNLOAD)RequestMemoryAlloc(sizeof(REQUEST_UNLOAD));
 			if (request != NULL)
 				RequestHeaderInit(&request->Header, DriverObject, NULL, ertDriverUnload);
 		}

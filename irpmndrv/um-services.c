@@ -8,6 +8,7 @@
 #include "utils-dym-array.h"
 #include "handle-table.h"
 #include "hook.h"
+#include "request.h"
 #include "req-queue.h"
 #include "pnp-driver-watch.h"
 #include "process-events.h"
@@ -433,7 +434,7 @@ NTSTATUS UMGetRequestRecord(PVOID Buffer, ULONG BufferLength, PSIZE_T ReturnLeng
 						*ReturnLength += requestSize;
 					}
 
-					HeapMemoryFree(request);
+					RequestMemoryFree(request);
 				} else if (requestsAggregated > 0) {
 					if (status == STATUS_BUFFER_TOO_SMALL || status == STATUS_NO_MORE_ENTRIES)
 						status = STATUS_SUCCESS;

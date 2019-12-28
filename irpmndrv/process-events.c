@@ -69,7 +69,7 @@ static NTSTATUS _ProcessCreateEventAlloc(HANDLE ProcessId, const PS_CREATE_NOTIF
 	if (NotifyInfo->CommandLine != NULL)
 		cmdLineSize = NotifyInfo->CommandLine->Length;
 
-	tmpRecord = HeapMemoryAllocNonPaged(sizeof(REQUEST_PROCESS_CREATED) + imageNameSize + cmdLineSize);
+	tmpRecord = (PREQUEST_PROCESS_CREATED)RequestMemoryAlloc(sizeof(REQUEST_PROCESS_CREATED) + imageNameSize + cmdLineSize);
 	if (tmpRecord != NULL) {
 		RequestHeaderInit(&tmpRecord->Header, NULL, NULL, ertProcessCreated);
 		tmpRecord->ProcessId = ProcessId;
@@ -100,7 +100,7 @@ static NTSTATUS _ProcessExittedEventAlloc(HANDLE ProcessId, PREQUEST_PROCESS_EXI
 	PREQUEST_PROCESS_EXITTED tmpRecord = NULL;
 	DEBUG_ENTER_FUNCTION("ProcessId=0x%p; Record=0x%p", ProcessId, Record);
 
-	tmpRecord = HeapMemoryAllocNonPaged(sizeof(REQUEST_PROCESS_EXITTED));
+	tmpRecord = (PREQUEST_PROCESS_EXITTED)RequestMemoryAlloc(sizeof(REQUEST_PROCESS_EXITTED));
 	if (tmpRecord != NULL) {
 		RequestHeaderInit(&tmpRecord->Header, NULL, NULL, ertProcessExitted);
 		tmpRecord->ProcessId = ProcessId;

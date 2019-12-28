@@ -409,6 +409,9 @@ Const
   REQUEST_FLAG_IMPERSONATED        = $8;
   REQUEST_FLAG_IMPERSONATED_ADMIN  = $10;
   REQUEST_FLAG_NEXT_AVAILABLE      = $20;
+  REQUEST_FLAG_COMPRESSED          = $40;
+  REQUEST_FLAG_PAGED					     = $80;
+  REQUEST_FLAG_NONPAGED				     = $100;
 
 Type
   (** Header, containing information common for all request types. *)
@@ -796,6 +799,8 @@ Type
   _IRPMNDRV_SETTINGS = Record
     ReqQueueLastRequestId : UInt32;
 	  ReqQueueLength : UInt32;
+    ReqQueueNonPagedLength : UInt32;
+    ReqQueuePagedLength : UInt32;
 	  ReqQueueConnected : ByteBool;
 	  ReqQueueClearOnDisconnect : ByteBool;
 	  ReqQueueCollectWhenDisconnected : ByteBool;

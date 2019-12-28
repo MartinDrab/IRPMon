@@ -84,6 +84,9 @@ typedef enum _ERequestResultType {
 #define REQUEST_FLAG_IMPERSONATED_ADMIN		0x10
 #define REQUEST_FLAG_NEXT_AVAILABLE			0x20
 #define REQUEST_FLAG_COMPRESSED				0x40
+#define REQUEST_FLAG_PAGED					0x80
+#define REQUEST_FLAG_NONPAGED				0x100
+
 
 /** Header, containing information common for all request types. */
 typedef struct _REQUEST_HEADER {
@@ -396,6 +399,8 @@ typedef struct _HOOKED_DRIVER_UMINFO {
 typedef struct _IRPMNDRV_SETTINGS {
 	volatile LONG ReqQueueLastRequestId;
 	volatile LONG ReqQueueLength;
+	volatile LONG ReqQueueNonPagedLength;
+	volatile LONG ReqQueuePagedLength;
 	BOOLEAN ReqQueueConnected;
 	BOOLEAN ReqQueueClearOnDisconnect;
 	BOOLEAN ReqQueueCollectWhenDisconnected;

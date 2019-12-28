@@ -634,7 +634,7 @@ If err = ERROR_SUCCESS Then
   Else statusText := 'Not monitoring | Requests: ';
 
   If settings.ReqQueueConnected Then
-    statusText := statusText + Format('%u queued, ', [settings.ReqQueueLength]);
+    statusText := statusText + Format('%u queued, (%u paged, %u nonpaged) ', [settings.ReqQueueLength, settings.ReqQueuePagedLength, settings.ReqQueueNonPagedLength]);
 
   statusText := statusText + Format('%u displayed, ', [FModel.RowCount]);
   statusText := statusText + Format('%u total', [FModel.TotalCount]);
