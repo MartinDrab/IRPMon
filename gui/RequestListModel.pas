@@ -714,7 +714,10 @@ If Assigned(UpdateRequest) Then
         ertFileObjectNameDeleted : begin
           dr := TFileObjectNameDeletedRequest.Create(tmpUR.FileObjectNameDeleted);
           If FFileMap.ContainsKey(dr.FileObject) Then
+            begin
+            dr.SetFileName(FFileMap.Items[dr.FileObject]);
             FFileMap.Remove(dr.FileObject);
+            end;
           end;
         ertProcessCreated : begin
           dr := TProcessCreatedRequest.Create(tmpUR.ProcessCreated);
