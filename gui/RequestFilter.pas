@@ -149,21 +149,7 @@ FAction := ffaInclude;
 FNextFilter := Nil;
 FPreviousFilter := Nil;
 FHighlightColor := $FFFFFF;
-Case FRequestType Of
-  ertUndefined: FRequestPrototype := TDriverRequest.Create;
-  ertIRP: FRequestPrototype := TIRPRequest.Create;
-  ertIRPCompletion: FRequestPrototype := TIRPCompleteRequest.Create;
-  ertAddDevice: FRequestPrototype := TAddDeviceRequest.Create;
-  ertDriverUnload: FRequestPrototype := TDriverUnloadRequest.Create;
-  ertFastIo: FRequestPrototype := TFastIoRequest.Create;
-  ertStartIo: FRequestPrototype := TStartIoRequest.Create;
-  ertDriverDetected: FRequestPrototype := TDriverDetectedRequest.Create;
-  ertDeviceDetected: FRequestPrototype := TDeviceDetectedRequest.Create;
-  ertFileObjectNameAssigned: FRequestPrototype := TFileObjectNameAssignedRequest.Create;
-  ertFileObjectNameDeleted: FRequestPrototype := TFileObjectNameDeletedRequest.Create;
-  ertProcessCreated : FRequestPrototype := TProcessCreatedRequest.Create;
-  ertProcessExitted : FRequestPrototype := TProcessExittedRequest.Create;
-  end;
+FRequestPrototype := TDriverRequest.CreatePrototype(FRequestType);
 end;
 
 Destructor TRequestFilter.Destroy;
@@ -411,12 +397,18 @@ Procedure TRequestFilter.RemoveFromChain;
 begin
 If (Assigned(FNextFilter)) Or (Assigned(FPreviousFilter)) Then
   begin
-  FAction := ffaInclude;
   If Assigned(FPreviousFilter) Then
+    begin
     FPreviousFilter.FNextFilter := FNextFilter;
+    If Not Assigned(FNextFilter) Then
+      FPreviousFilter.FAction := ffaInclude;
+    end;
 
   If Assigned(FNextFilter) Then
+    begin
     FNextFilter.FPreviousFilter := FPreviousFilter;
+    FAction := ffaInclude;
+    end;
 
   FNextFilter := Nil;
   FPreviousFilter := Nil;
