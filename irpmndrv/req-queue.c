@@ -314,6 +314,8 @@ NTSTATUS RequestQueueGet(PREQUEST_HEADER *Buffer, PSIZE_T Length)
 					if (nextAvailable)
 						h->Flags |= REQUEST_FLAG_NEXT_AVAILABLE;
 
+					h->Entry.Flink = NULL;
+					h->Entry.Blink = NULL;
 					*Buffer = h;
 					status = STATUS_SUCCESS;
 				} else {
