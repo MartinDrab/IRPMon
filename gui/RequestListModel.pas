@@ -878,16 +878,8 @@ While AStream.Position < AStream.Size Do
   begin
   AStream.Read(reqSize, SizeOf(reqSize));
   rg := AllocMem(reqSize);
-  Try
-    AStream.Read(rg^, reqSize);
-    tmp := PREQUEST_GENERAL(IRPMonDllRequestDecompress(@rg.Header));
-    If Not Assigned(tmp) Then
-      Raise Exception.Create('Not enough memory');
-
-    l.Add(tmp);
-  Finally
-    FreeMem(rg);
-    end;
+  AStream.Read(rg^, reqSize);
+  l.Add(rg);
   end;
 
 UpdateRequest := l;
