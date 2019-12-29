@@ -272,7 +272,7 @@ Case AColumnType Of
     AValue := @FRequestorProcessId;
     AValueSize := SizeOf(FRequestorProcessId);
     end;
-  Else Inherited GetColumnValueRaw(AColumnType, AValue, AValueSize);
+  Else Result := Inherited GetColumnValueRaw(AColumnType, AValue, AValueSize);
   end;
 end;
 
@@ -555,7 +555,7 @@ Case AColumnType Of
   rlmctArg2,
   rlmctArg3,
   rlmctArg4 : Result := False;
-  Else Inherited GetColumnValue(AColumnType, AResult);
+  Else Result := Inherited GetColumnValue(AColumnType, AResult);
   end;
 end;
 
