@@ -845,21 +845,24 @@ If Not invalidButton Then
   value := FModel.Item(FModel.SelectedIndex, RequestPopupMenu.Tag);
   rq := FModel.Selected;
   rf := TRequestFilter.NewInstance(rq.RequestType);
-  rf.SetCondition(ERequestListModelColumnType(M.Tag), rfoEquals, value);
-  If filterAction = ffaHighlight Then
+  If rf.SetCondition(ERequestListModelColumnType(M.Tag), rfoEquals, value) Then
     begin
-    If highlightColorDialog.Execute Then
+    If filterAction = ffaHighlight Then
       begin
-      rf.SetAction(filterAction, highlightColorDialog.Color);
-      FFilters.Add(rf);
+      If highlightColorDialog.Execute Then
+        begin
+        rf.SetAction(filterAction, highlightColorDialog.Color);
+        FFilters.Add(rf);
+        end;
+      end
+    Else begin
+      rf.SetAction(filterAction);
+      FFilters.Insert(0, rf);
       end;
-    end
-  Else begin
-    rf.SetAction(filterAction);
-    FFilters.Insert(0, rf);
-    end;
 
-  FModel.Reevaluate;
+    FModel.Reevaluate;
+    end
+  Else ErrorMessage('Unable to set filter condition');
   end;
 end;
 
