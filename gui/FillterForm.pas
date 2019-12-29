@@ -351,15 +351,12 @@ Var
 begin
 f := FFilterList[Item.Index];
 f.Enabled := Item.Checked;
-If f.Action = ffaPassToFilter Then
+For I := 0 To FilterListVIew.Items.Count - 1 Do
   begin
-  For I := 0 To FilterListVIew.Items.Count - 1 Do
-    begin
-    If I = Item.Index Then
-      Continue;
+  If I = Item.Index Then
+    Continue;
 
-    FilterListView.Items[I].Checked := FFilterList[I].Enabled;
-    end;
+  FilterListView.Items[I].Checked := FFilterList[I].Enabled;
   end;
 end;
 
