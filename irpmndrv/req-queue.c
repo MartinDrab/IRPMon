@@ -203,6 +203,7 @@ VOID RequestQueueInsert(PREQUEST_HEADER Header)
 		_driverSettings->ReqQueueCollectWhenDisconnected) {
 		status = IoAcquireRemoveLock(&_removeLock, NULL);
 		if (NT_SUCCESS(status)) {
+			Header->Id = InterlockedIncrement(&_driverSettings->ReqQueueLastRequestId);
 			_RequestInsert(Header, FALSE);
 			IoReleaseRemoveLock(&_removeLock, NULL);
 		}
@@ -216,16 +217,9 @@ VOID RequestQueueInsert(PREQUEST_HEADER Header)
 }
 
 
-ULONG RequestIdReserve(void)
-{
-	return InterlockedIncrement(&_driverSettings->ReqQueueLastRequestId);
-}
-
-
 VOID RequestHeaderInit(PREQUEST_HEADER Header, PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT DeviceObject, ERequesttype RequestType)
 {
 	RequestHeaderInitNoId(Header, DriverObject, DeviceObject, RequestType);
-	Header->Id = RequestIdReserve();
 
 	return;
 }
