@@ -1028,6 +1028,10 @@ object MainFrm: TMainFrm
         Caption = 'Hide excluded requests'
         OnClick = HideExcludedRequestsMenuItemClick
       end
+      object CompressMenuItem: TMenuItem
+        Caption = 'Compress'
+        OnClick = CompressMenuItemClick
+      end
     end
     object DriverMenuItem: TMenuItem
       Caption = 'Driver'

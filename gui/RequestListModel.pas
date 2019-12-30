@@ -156,7 +156,7 @@ Type
     Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Virtual;
     Function GetColumnValueRaw(AColumnType:ERequestListModelColumnType; Var AValue:Pointer; Var AValueSize:Cardinal):Boolean; Virtual;
     Procedure SaveToStream(AStream:TStream; AParsers:TObjectList<TDataParser>; ABinary:Boolean = False; ACompress:Boolean = False); Virtual;
-    Procedure SaveToFile(AFileName:WideString; AParsers:TObjectList<TDataParser>; ABinary:Boolean = False); Virtual;
+    Procedure SaveToFile(AFileName:WideString; AParsers:TObjectList<TDataParser>; ABinary:Boolean = False; ACompress:Boolean = False); Virtual;
 
     Class Function CreatePrototype(AType:ERequestType):TDriverRequest;
 
@@ -242,7 +242,7 @@ Type
       Function RowCount : Cardinal; Override;
       Function Update:Cardinal; Override;
       Procedure SaveToStream(AStream:TStream; ABinary:Boolean = False; ACompress:Boolean = False);
-      Procedure SaveToFile(AFileName:WideString; ABinary:Boolean = False);
+      Procedure SaveToFile(AFileName:WideString; ABinary:Boolean = False; ACompress:Boolean = False);
       Procedure LoadFromStream(AStream:TStream);
       Procedure LoadFromFile(AFileName:WideString);
       Procedure Reevaluate;
@@ -378,13 +378,13 @@ Else begin
   end;
 end;
 
-Procedure TDriverRequest.SaveToFile(AFileName: WideString; AParsers:TObjectList<TDataParser>; ABinary:Boolean = False);
+Procedure TDriverRequest.SaveToFile(AFileName: WideString; AParsers:TObjectList<TDataParser>; ABinary:Boolean = False; ACompress:Boolean = False);
 Var
   F : TFileStream;
 begin
 F := TFileStream.Create(AFileName, fmCreate Or fmOpenWrite);
 Try
-  SaveToStream(F, AParsers, ABinary);
+  SaveToStream(F, AParsers, ABinary, ACompress);
 Finally
   F.Free;
   end;
@@ -854,13 +854,13 @@ For I := 0 To RowCount - 1 Do
   end;
 end;
 
-Procedure TRequestListModel.SaveToFile(AFileName:WideString; ABinary:Boolean = False);
+Procedure TRequestListModel.SaveToFile(AFileName:WideString; ABinary:Boolean = False; ACompress:Boolean = False);
 Var
   F : TFileStream;
 begin
 F := TFileStream.Create(AFileName, fmCreate Or fmOpenWrite);
 Try
-  SaveToStream(F, ABinary);
+  SaveToStream(F, ABinary, ACompress);
 Finally
   F.Free;
   end;
