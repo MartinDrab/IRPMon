@@ -845,6 +845,7 @@ If Not invalidButton Then
   value := FModel.Item(FModel.SelectedIndex, RequestPopupMenu.Tag);
   rq := FModel.Selected;
   rf := TRequestFilter.NewInstance(rq.RequestType);
+  rf.Enabled := True;
   If rf.SetCondition(ERequestListModelColumnType(M.Tag), rfoEquals, value) Then
     begin
     If filterAction = ffaHighlight Then
