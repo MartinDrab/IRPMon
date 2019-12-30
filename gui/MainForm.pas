@@ -853,14 +853,16 @@ If Not invalidButton Then
         begin
         rf.SetAction(filterAction, highlightColorDialog.Color);
         FFilters.Add(rf);
-        end;
+        end
+      Else FreeAndNil(rf);
       end
     Else begin
       rf.SetAction(filterAction);
       FFilters.Insert(0, rf);
       end;
 
-    FModel.Reevaluate;
+    If Assigned(rf) Then
+      FModel.Reevaluate;
     end
   Else ErrorMessage('Unable to set filter condition');
   end;
