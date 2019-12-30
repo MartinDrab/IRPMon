@@ -863,12 +863,14 @@ If Not invalidButton Then
       If highlightColorDialog.Execute Then
         begin
         rf.SetAction(filterAction, highlightColorDialog.Color);
+        rf.GenerateName(FFilters);
         FFilters.Add(rf);
         end
       Else FreeAndNil(rf);
       end
     Else begin
       rf.SetAction(filterAction);
+      rf.GenerateName(FFilters);
       FFilters.Insert(0, rf);
       end;
 

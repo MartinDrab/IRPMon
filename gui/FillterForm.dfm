@@ -20,9 +20,10 @@ object FilterFrm: TFilterFrm
     Left = 0
     Top = 0
     Width = 648
-    Height = 111
+    Height = 145
     Align = alTop
     TabOrder = 0
+    ExplicitTop = -6
     object Label1: TLabel
       Left = 0
       Top = 13
@@ -57,6 +58,13 @@ object FilterFrm: TFilterFrm
       Width = 26
       Height = 13
       Caption = 'Value'
+    end
+    object Label6: TLabel
+      Left = 0
+      Top = 59
+      Width = 27
+      Height = 13
+      Caption = 'Name'
     end
     object FilterTypeComboBox: TComboBox
       Left = 0
@@ -124,7 +132,7 @@ object FilterFrm: TFilterFrm
     end
     object AddButton: TButton
       Left = 0
-      Top = 72
+      Top = 114
       Width = 57
       Height = 25
       Caption = 'Add'
@@ -133,7 +141,7 @@ object FilterFrm: TFilterFrm
     end
     object DeleteButton: TButton
       Left = 63
-      Top = 72
+      Top = 114
       Width = 57
       Height = 25
       Caption = 'Delete'
@@ -161,7 +169,7 @@ object FilterFrm: TFilterFrm
     end
     object UpButton: TButton
       Left = 126
-      Top = 72
+      Top = 114
       Width = 57
       Height = 25
       Caption = 'Up'
@@ -170,12 +178,19 @@ object FilterFrm: TFilterFrm
     end
     object DownButton: TButton
       Left = 189
-      Top = 72
+      Top = 114
       Width = 57
       Height = 25
       Caption = 'Down'
       TabOrder = 12
       OnClick = UpDownButtonClick
+    end
+    object NameEdit: TEdit
+      Left = 0
+      Top = 78
+      Width = 253
+      Height = 21
+      TabOrder = 13
     end
   end
   object LowerPanel: TPanel
@@ -206,9 +221,9 @@ object FilterFrm: TFilterFrm
   end
   object FilterListView: TListView
     Left = 0
-    Top = 111
+    Top = 145
     Width = 648
-    Height = 171
+    Height = 137
     Align = alClient
     Checkboxes = True
     Columns = <
@@ -256,5 +271,7 @@ object FilterFrm: TFilterFrm
     OnDeletion = FilterListViewDeletion
     OnSelectItem = FilterListViewSelectItem
     OnItemChecked = FilterListViewItemChecked
+    ExplicitTop = 152
+    ExplicitHeight = 130
   end
 end

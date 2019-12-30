@@ -43,6 +43,8 @@ Type
     NextFilterComboBox: TComboBox;
     UpButton: TButton;
     DownButton: TButton;
+    Label6: TLabel;
+    NameEdit: TEdit;
     Procedure FormCreate(Sender: TObject);
     procedure FilterTypeComboBoxChange(Sender: TObject);
     procedure FilterColumnComboBoxChange(Sender: TObject);
@@ -307,6 +309,7 @@ L := FilterListView.Selected;
 If Assigned(L) Then
   begin
   f := FFilterList[L.Index];
+  NameEdit.Text := f.Name;
   FilterTypeComboBox.ItemIndex := Ord(f.RequestType);
   FilterTypeComboBoxChange(FilterTypeComboBox);
   FilterColumnComboBox.ItemIndex := FilterColumnComboBox.Items.IndexOf(f.ColumnName);
@@ -541,19 +544,16 @@ Try
       end;
     end;
 
-  newName :=
-    FilterTypeComboBox.Text + '-' +
-    FilterColumnComboBox.Text + '-' +
-    FilterOperatorComboBox.Text + '-' +
-    FilterValueComboBox.Text + '-' +
-    FilterActionComboBox.Text;
-
-  f := TRequestFilter.GetByName(newName, FFilterList);
-  If Assigned(f) Then
+  newName := NameEdit.Text;
+  If newName <> '' Then
     begin
-    ErrorMessage('The filter is already present in the list');
-    f := Nil;
-    Exit;
+    f := TRequestFilter.GetByName(newName, FFilterList);
+    If Assigned(f) Then
+      begin
+      ErrorMessage('The filter is already present in the list');
+      f := Nil;
+      Exit;
+      end;
     end;
 
   f := TRequestFilter.NewInstance(rt);
@@ -561,6 +561,7 @@ Try
     Exit;
 
   f.Name := newName;
+  f.GenerateName(FFilterList);
   If Not f.SetCondition(ct, op, v) Then
     begin
     ErrorMessage('Unable to set filter condition, bad value of the constant');

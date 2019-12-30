@@ -63,6 +63,16 @@ Type
     ffaPassToFilter
   );
 
+Const
+  RequestFilterActionNames : Array [0..Ord(ffaPassToFilter)] Of WideString = (
+    'Highlight',
+    'Include',
+    'Exclude',
+    'Pass'
+  );
+
+
+Type
   TRequestFilter = Class
   Private
     FHighlightColor : Cardinal;
@@ -87,6 +97,7 @@ Type
     Constructor Create(AName:WideString; ARequestType:ERequestType = ertUndefined); Reintroduce;
     Destructor Destroy; Override;
 
+    Procedure GenerateName(AList:TObjectList<TRequestFilter> = Nil);
     Function GetPossibleValues(ASources:TList<UInt64>; ATargets:TList<WideString>; Var ABitmask:Boolean):Boolean; Virtual;
     Function SupportedOperators:RequestFilterOperatorSet; Virtual;
     Function Copy:TRequestFilter;
@@ -178,6 +189,26 @@ Try
   Result := True;
 Except
   Result := False;
+  end;
+end;
+
+Procedure TRequestFilter.GenerateName(AList:TObjectList<TRequestFilter> = Nil);
+Var
+  I : Integer;
+begin
+I := 0;
+While (FName = '') Or (Assigned(AList) And Assigned(GetByName(FName, AList))) Do
+  begin
+  FName := TDriverRequest.RequestTypeToString(FRequestType) + '-' +
+    FColumnName + '-' +
+    RequestFilterOperatorNames[Ord(FOp)] + '-' +
+    FStringValue + '-' +
+    RequestFilterActionNames[Ord(FAction)];
+
+  If I <> 0 Then
+    FName := FName + '-' + IntToStr(Int64(I));
+
+  Inc(I);
   end;
 end;
 
