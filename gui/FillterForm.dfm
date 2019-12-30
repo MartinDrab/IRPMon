@@ -196,7 +196,7 @@ object FilterFrm: TFilterFrm
     end
     object OkButton: TButton
       Left = 417
-      Top = 8
+      Top = 6
       Width = 57
       Height = 33
       Caption = 'Ok'
