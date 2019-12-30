@@ -75,20 +75,16 @@
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win32)'!=''">
         <DCC_UsePackage>bindcompvcl;vcltouch;vcldbx;VclSmp;vcl;CloudService;vclib;dsnapcon;vclx;svnui;ibxpress;svn;vclimg;fmi;bdertl;vclactnband;vcldb;adortl;vcldsnap;$(DCC_UsePackage)</DCC_UsePackage>
-        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <DCC_Namespace>Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;Bde;$(DCC_Namespace)</DCC_Namespace>
         <VerInfo_Locale>1033</VerInfo_Locale>
-        <Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
         <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
         <UWP_DelphiLogo44>$(BDS)\bin\Artwork\Windows\UWP\delphi_UwpDefault_44.png</UWP_DelphiLogo44>
         <UWP_DelphiLogo150>$(BDS)\bin\Artwork\Windows\UWP\delphi_UwpDefault_150.png</UWP_DelphiLogo150>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win64)'!=''">
         <DCC_UsePackage>bindcompvcl;vcltouch;VclSmp;vcl;dsnapcon;vclx;vclimg;vclactnband;vcldb;vcldsnap;$(DCC_UsePackage)</DCC_UsePackage>
-        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <DCC_Namespace>Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;$(DCC_Namespace)</DCC_Namespace>
         <VerInfo_Locale>1033</VerInfo_Locale>
-        <Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
         <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
         <UWP_DelphiLogo44>$(BDS)\bin\Artwork\Windows\UWP\delphi_UwpDefault_44.png</UWP_DelphiLogo44>
         <UWP_DelphiLogo150>$(BDS)\bin\Artwork\Windows\UWP\delphi_UwpDefault_150.png</UWP_DelphiLogo150>
@@ -125,18 +121,17 @@
         <DCC_DebugInformation>0</DCC_DebugInformation>
         <DCC_AssertionsAtRuntime>false</DCC_AssertionsAtRuntime>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
-        <VerInfo_MajorVer>0</VerInfo_MajorVer>
         <VerInfo_MinorVer>9</VerInfo_MinorVer>
         <VerInfo_Build>322</VerInfo_Build>
         <VerInfo_AutoIncVersion>true</VerInfo_AutoIncVersion>
-        <VerInfo_Keys>CompanyName=Martin Drab;FileDescription=IRP Monitor;FileVersion=0.9.0.322;InternalName=IRPMON.EXE;LegalCopyright=Copyright (c) Martin Drab, 2019;LegalTrademarks=;OriginalFilename=IRPMon.exe;ProductName=IRPMon;ProductVersion=0.9.0.0;Comments=</VerInfo_Keys>
+        <VerInfo_Keys>CompanyName=Martin Drab;FileDescription=IRP Monitor;FileVersion=1.9.0.322;InternalName=IRPMON.EXE;LegalCopyright=Copyright (c) Martin Drab, 2020;LegalTrademarks=;OriginalFilename=IRPMon.exe;ProductName=IRPMon;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
         <VerInfo_PreRelease>true</VerInfo_PreRelease>
+        <VerInfo_Locale>1033</VerInfo_Locale>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_Win32)'!=''">
         <VerInfo_MinorVer>8</VerInfo_MinorVer>
         <VerInfo_AutoGenVersion>true</VerInfo_AutoGenVersion>
         <VerInfo_Keys>CompanyName=Martin Drab;FileDescription=The IRPMon GUI Application;FileVersion=0.8.0.322;InternalName=IRPMon.exe;LegalCopyright=CopyRight (c) Martin Drab 2017;LegalTrademarks=;OriginalFilename=IRPMon.exe;ProductName=IRPMon;ProductVersion=0.8.0.0;Comments=This is released as a freeware;ProgramID=com.embarcadero.$(MSBuildProjectName)</VerInfo_Keys>
-        <VerInfo_Locale>1033</VerInfo_Locale>
         <VerInfo_AutoIncVersion>false</VerInfo_AutoIncVersion>
         <BT_BuildType>Debug</BT_BuildType>
         <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
@@ -147,7 +142,6 @@
         <VerInfo_AutoGenVersion>true</VerInfo_AutoGenVersion>
         <VerInfo_MinorVer>5</VerInfo_MinorVer>
         <VerInfo_Build>100</VerInfo_Build>
-        <VerInfo_Locale>1033</VerInfo_Locale>
         <VerInfo_Release>100</VerInfo_Release>
         <VerInfo_Keys>CompanyName=Martin Dráb;FileDescription=IRP Monitor GUI Application;FileVersion=0.5.100.100;InternalName=IRPMon.exe;LegalCopyright=Copyright (c) Martin Dráb, 2015-2016;LegalTrademarks=;OriginalFilename=IRPMon.exe;ProductName=IRP Monitor;ProductVersion=0.5.0.0;Comments=;ProgramID=com.embarcadero.$(MSBuildProjectName)</VerInfo_Keys>
         <BT_BuildType>Debug</BT_BuildType>
