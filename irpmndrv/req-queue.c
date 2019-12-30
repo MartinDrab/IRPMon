@@ -143,6 +143,7 @@ NTSTATUS RequestQueueConnect()
 					old = psRequest;
 					psRequest = CONTAINING_RECORD(psRequest->Entry.Flink, REQUEST_HEADER, Entry);
 					RemoveEntryList(&old->Entry);
+					old->Id = InterlockedIncrement(&_driverSettings->ReqQueueLastRequestId);
 					_RequestInsert(old, FALSE);
 				}
 
