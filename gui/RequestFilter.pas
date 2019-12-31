@@ -413,13 +413,21 @@ begin
 Result := 0;
 If (FRequestType = ertUndefined) Or (FRequestType = AFilter.FRequestType) Then
   begin
-  If Not Assigned(AFilter.FPreviousFilter) Then
+  If Assigned(AFilter.FPreviousFilter) Then
     begin
-    FAction := ffaPassToFilter;
-    AFilter.FPreviousFilter := Self;
-    FNextFilter := AFIlter;
-    end
-  Else Result := 2;
+    AFilter.FPreviousFilter.FNextFilter := Nil;
+    AFilter.FPreviousFilter := Nil;
+    end;
+
+  If Assigned(FNextFilter) Then
+    begin
+    FNextFilter.FPreviousFilter := Nil;
+    FNextFilter := Nil;
+    end;
+
+  FAction := ffaPassToFilter;
+  AFilter.FPreviousFilter := Self;
+  FNextFilter := AFIlter;
   end
 Else Result := 1;
 end;
