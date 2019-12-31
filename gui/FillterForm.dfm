@@ -159,7 +159,7 @@ object FilterFrm: TFilterFrm
     end
     object NextFilterComboBox: TComboBox
       Left = 464
-      Top = 84
+      Top = 85
       Width = 85
       Height = 21
       Style = csDropDownList
