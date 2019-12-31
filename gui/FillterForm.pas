@@ -493,6 +493,7 @@ Var
   ct : ERequestListModelColumnType;
   op : ERequestFilterOperator;
   f : TRequestFilter;
+  existingFilter : TRequestFilter;
   v : WideString;
   fa : EFilterAction;
   hc : TColor;
@@ -558,7 +559,9 @@ Try
   newName := NameEdit.Text;
   If newName <> '' Then
     begin
-    If Assigned(TRequestFilter.GetByName(newName, FFilterList)) Then
+    existingFilter := TRequestFilter.GetByName(newName, FFilterList);
+    If (Assigned(existingFilter)) And
+        ((Not modifyFilter) Or (existingFilter <> f)) Then
       begin
       ErrorMessage('The filter is already present in the list');
       Exit;
@@ -573,7 +576,9 @@ Try
     end;
 
   f.Name := newName;
-  f.GenerateName(FFilterList);
+  If (Not modifyFilter) Or (f.Name = '') Then
+    f.GenerateName(FFilterList);
+
   If Not f.SetCondition(ct, op, v) Then
     begin
     ErrorMessage('Unable to set filter condition, bad value of the constant');
