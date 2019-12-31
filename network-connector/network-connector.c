@@ -199,7 +199,13 @@ DWORD NetConn_Connect(const IRPMON_INIT_INFO *Info)
 
 					FreeAddrInfoW(addrs);
 				}
+
+				if (ret != 0)
+					WSACleanup();
 			} else ret = WSAGetLastError();
+
+			if (ret != 0)
+				DeleteCriticalSection(&_ioctlLock);
 		} else ret = GetLastError();
 	} else ret = ERROR_ALREADY_EXISTS;
 
