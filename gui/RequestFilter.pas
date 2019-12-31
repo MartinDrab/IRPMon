@@ -399,14 +399,14 @@ Var
 begin
 FEnabled := AValue;
 tmp := FPreviousFilter;
-While Assigned(tmp) Do
+While Assigned(tmp) And (tmp <> Self) Do
   begin
   tmp.FEnabled := AValue;
   tmp := tmp.FPreviousFilter;
   end;
 
 tmp := FNextFilter;
-While Assigned(tmp) Do
+While Assigned(tmp) And (tmp <> Self) Do
   begin
   tmp.FEnabled := AValue;
   tmp := tmp.FNextFilter;
