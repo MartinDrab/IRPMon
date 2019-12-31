@@ -58,9 +58,9 @@
         <Base>true</Base>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base)'!=''">
-        <VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
+        <VerInfo_Keys>CompanyName=Martin Drab;FileDescription=IRPMon Application;FileVersion=1.0.0.322;InternalName=IRPMON.EXE;LegalCopyright=Copyright (c) Martin Drab, 2015-2020;LegalTrademarks=;OriginalFilename=IRPMon.exe;ProductName=IRP Monitor;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
         <Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
-        <VerInfo_Locale>1029</VerInfo_Locale>
+        <VerInfo_Locale>1033</VerInfo_Locale>
         <DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;Vcl;Vcl.Imaging;Vcl.Touch;Vcl.Samples;Vcl.Shell;$(DCC_Namespace)</DCC_Namespace>
         <Icon_MainIcon>$(BDS)\bin\delphi_PROJECTICON.ico</Icon_MainIcon>
         <DCC_UsePackage>dbexpress;bindcompfmx;CustomIPTransport;dsnap;fmx;rtl;dbrtl;fmxase;IndyCore;bindcomp;IndySystem;DbxClientDriver;DBXInterBaseDriver;inet;fmxobj;xmlrtl;DbxCommonDriver;fmxdae;IndyProtocols;DBXMySQLDriver;dbxcds;bindengine;IPIndyImpl;$(DCC_UsePackage)</DCC_UsePackage>
@@ -72,6 +72,9 @@
         <DCC_F>false</DCC_F>
         <DCC_K>false</DCC_K>
         <SanitizedProjectName>IRPMon</SanitizedProjectName>
+        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
+        <VerInfo_Build>322</VerInfo_Build>
+        <VerInfo_AutoIncVersion>true</VerInfo_AutoIncVersion>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win32)'!=''">
         <DCC_UsePackage>bindcompvcl;vcltouch;vcldbx;VclSmp;vcl;CloudService;vclib;dsnapcon;vclx;svnui;ibxpress;svn;vclimg;fmi;bdertl;vclactnband;vcldb;adortl;vcldsnap;$(DCC_UsePackage)</DCC_UsePackage>
@@ -99,7 +102,6 @@
     <PropertyGroup Condition="'$(Cfg_1_Win32)'!=''">
         <Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
         <DCC_ExeOutput>..\bin\$(Platform)\$(Config)</DCC_ExeOutput>
-        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <DCC_DcuOutput>..\tmp\IRPMon\$(Platform)\$(Config)</DCC_DcuOutput>
         <DCC_RemoteDebug>false</DCC_RemoteDebug>
@@ -108,7 +110,6 @@
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1_Win64)'!=''">
         <DCC_ExeOutput>..\bin\x64\$(Config)</DCC_ExeOutput>
-        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <BT_BuildType>Debug</BT_BuildType>
         <Debugger_CWD>..\bin\x64\$(Config)</Debugger_CWD>
@@ -120,34 +121,15 @@
         <DCC_SymbolReferenceInfo>0</DCC_SymbolReferenceInfo>
         <DCC_DebugInformation>0</DCC_DebugInformation>
         <DCC_AssertionsAtRuntime>false</DCC_AssertionsAtRuntime>
-        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
-        <VerInfo_MinorVer>9</VerInfo_MinorVer>
-        <VerInfo_Build>322</VerInfo_Build>
-        <VerInfo_AutoIncVersion>true</VerInfo_AutoIncVersion>
-        <VerInfo_Keys>CompanyName=Martin Drab;FileDescription=IRP Monitor;FileVersion=1.9.0.322;InternalName=IRPMON.EXE;LegalCopyright=Copyright (c) Martin Drab, 2020;LegalTrademarks=;OriginalFilename=IRPMon.exe;ProductName=IRPMon;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
-        <VerInfo_PreRelease>true</VerInfo_PreRelease>
-        <VerInfo_Locale>1033</VerInfo_Locale>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_Win32)'!=''">
-        <VerInfo_MinorVer>8</VerInfo_MinorVer>
-        <VerInfo_AutoGenVersion>true</VerInfo_AutoGenVersion>
-        <VerInfo_Keys>CompanyName=Martin Drab;FileDescription=The IRPMon GUI Application;FileVersion=0.8.0.322;InternalName=IRPMon.exe;LegalCopyright=CopyRight (c) Martin Drab 2017;LegalTrademarks=;OriginalFilename=IRPMon.exe;ProductName=IRPMon;ProductVersion=0.8.0.0;Comments=This is released as a freeware;ProgramID=com.embarcadero.$(MSBuildProjectName)</VerInfo_Keys>
-        <VerInfo_AutoIncVersion>false</VerInfo_AutoIncVersion>
         <BT_BuildType>Debug</BT_BuildType>
         <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
-        <VerInfo_IncludeVerInfo>false</VerInfo_IncludeVerInfo>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_Win64)'!=''">
         <DCC_ExeOutput>..\bin\x64\$(Config)</DCC_ExeOutput>
-        <VerInfo_AutoGenVersion>true</VerInfo_AutoGenVersion>
-        <VerInfo_MinorVer>5</VerInfo_MinorVer>
-        <VerInfo_Build>100</VerInfo_Build>
-        <VerInfo_Release>100</VerInfo_Release>
-        <VerInfo_Keys>CompanyName=Martin Dráb;FileDescription=IRP Monitor GUI Application;FileVersion=0.5.100.100;InternalName=IRPMon.exe;LegalCopyright=Copyright (c) Martin Dráb, 2015-2016;LegalTrademarks=;OriginalFilename=IRPMon.exe;ProductName=IRP Monitor;ProductVersion=0.5.0.0;Comments=;ProgramID=com.embarcadero.$(MSBuildProjectName)</VerInfo_Keys>
         <BT_BuildType>Debug</BT_BuildType>
-        <VerInfo_AutoIncVersion>false</VerInfo_AutoIncVersion>
         <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
-        <VerInfo_IncludeVerInfo>false</VerInfo_IncludeVerInfo>
     </PropertyGroup>
     <ItemGroup>
         <DelphiCompile Include="$(MainSource)">
