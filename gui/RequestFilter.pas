@@ -195,11 +195,13 @@ end;
 Procedure TRequestFilter.GenerateName(AList:TObjectList<TRequestFilter> = Nil);
 Var
   I : Integer;
+  tmpName : WideString;
 begin
 I := 0;
-While (FName = '') Or (Assigned(AList) And Assigned(GetByName(FName, AList))) Do
+tmpName := FName;
+While (tmpName = '') Or (Assigned(AList) And Assigned(GetByName(tmpName, AList))) Do
   begin
-  FName := TDriverRequest.RequestTypeToString(FRequestType) + '-' +
+  tmpName := TDriverRequest.RequestTypeToString(FRequestType) + '-' +
     FColumnName + '-' +
     RequestFilterOperatorNames[Ord(FOp)] + '-' +
     FStringValue + '-' +
@@ -207,10 +209,12 @@ While (FName = '') Or (Assigned(AList) And Assigned(GetByName(FName, AList))) Do
     RequestFilterActionNames[Ord(FAction)];
 
   If I <> 0 Then
-    FName := FName + '-' + IntToStr(Int64(I));
+    tmpName := tmpName + '-' + IntToStr(Int64(I));
 
   Inc(I);
   end;
+
+FName := tmpName;
 end;
 
 Class Function TRequestFilter.LoadList(AFile:TIniFile; AList:TList<TRequestFilter>):Boolean;
