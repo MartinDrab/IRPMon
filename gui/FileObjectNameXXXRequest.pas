@@ -37,13 +37,15 @@ Uses
 Constructor TFileObjectNameAssignedRequest.Create(Var ARequest:REQUEST_FILE_OBJECT_NAME_ASSIGNED);
 Var
   fn : PWideChar;
+  rawReq : PREQUEST_FILE_OBJECT_NAME_ASSIGNED;
   tmpFileName : WideString;
 begin
 Inherited Create(ARequest.Header);
-SetFileObject(ARequest.FileObject);
-fn := PWideChar(PByte(@ARequest) + SizeOf(REQUEST_FILE_OBJECT_NAME_ASSIGNED));
-SetLength(tmpFileName, ARequest.FileNameLength Div SizeOf(WideChar));
-CopyMemory(PWideChar(tmpFileName), fn, ARequest.FileNameLength);
+rawReq := PREQUEST_FILE_OBJECT_NAME_ASSIGNED(FRaw);
+SetFileObject(rawReq.FileObject);
+fn := PWideChar(PByte(rawReq) + SizeOf(REQUEST_FILE_OBJECT_NAME_ASSIGNED));
+SetLength(tmpFileName, rawReq.FileNameLength Div SizeOf(WideChar));
+CopyMemory(PWideChar(tmpFileName), fn, rawReq.FileNameLength);
 SetFileName(tmpFileName);
 end;
 

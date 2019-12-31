@@ -48,12 +48,14 @@ Uses
 Constructor TDriverDetectedRequest.Create(Var ARequest:REQUEST_DRIVER_DETECTED);
 Var
   dn : PWideChar;
+  rawRequest : PREQUEST_DRIVER_DETECTED;
 begin
 Inherited Create(ARequest.Header);
-FDriverObject := ARequest.Header.Driver;
-dn := PWideChar(PByte(@ARequest) + SizeOf(REQUEST_DRIVER_DETECTED));
-SetLength(FDriverName, ARequest.DriverNameLength Div SizeOf(WideChar));
-CopyMemory(PWideChar(FDriverName), dn, ARequest.DriverNameLength);
+rawRequest := PREQUEST_DRIVER_DETECTED(Raw);
+FDriverObject := rawRequest.Header.Driver;
+dn := PWideChar(PByte(rawRequest) + SizeOf(REQUEST_DRIVER_DETECTED));
+SetLength(FDriverName, rawRequest.DriverNameLength Div SizeOf(WideChar));
+CopyMemory(PWideChar(FDriverName), dn, rawRequest.DriverNameLength);
 SetDriverName(FDriverName);
 end;
 
@@ -77,13 +79,15 @@ end;
 Constructor TDeviceDetectedRequest.Create(Var ARequest:REQUEST_DEVICE_DETECTED);
 Var
   dn : PWideChar;
+  rawRequest : PREQUEST_DEVICE_DETECTED;
 begin
 Inherited Create(ARequest.Header);
-FDriverObject := ARequest.Header.Driver;
-FDeviceObject := ARequest.Header.Device;
-dn := PWideChar(PByte(@ARequest) + SizeOf(REQUEST_DEVICE_DETECTED));
-SetLength(FDeviceName, ARequest.DeviceNameLength Div SizeOf(WideChar));
-CopyMemory(PWideChar(FDeviceName), dn, ARequest.DeviceNameLength);
+rawRequest := PREQUEST_DEVICE_DETECTED(Raw);
+FDriverObject := rawRequest.Header.Driver;
+FDeviceObject := rawRequest.Header.Device;
+dn := PWideChar(PByte(rawRequest) + SizeOf(REQUEST_DEVICE_DETECTED));
+SetLength(FDeviceName, rawRequest.DeviceNameLength Div SizeOf(WideChar));
+CopyMemory(PWideChar(FDeviceName), dn, rawRequest.DeviceNameLength);
 SetDeviceName(FDeviceName);
 end;
 

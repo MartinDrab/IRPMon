@@ -35,18 +35,20 @@ Uses
 Constructor TProcessCreatedRequest.Create(Var ARequest:REQUEST_PROCESS_CREATED);
 Var
   tmp : WideString;
+  rawRequest : PREQUEST_PROCESS_CREATED;
 begin
 Inherited Create(ARequest.Header);
+rawRequest := PREQUEST_PROCESS_CREATED(Raw);
 tmp := '';
-SetLength(tmp, ARequest.ImageNameLength Div SizeOf(WideChar));
-CopyMemory(PWideChar(tmp), PByte(@ARequest) + SizeOf(ARequest), ARequest.ImageNameLength);
+SetLength(tmp, rawRequest.ImageNameLength Div SizeOf(WideChar));
+CopyMemory(PWideChar(tmp), PByte(rawRequest) + SizeOf(ARequest), rawRequest.ImageNameLength);
 SetFileName(tmp);
 SetDriverName(ExtractFileName(tmp));
-SetLength(tmp, ARequest.CommandLineLength Div SizeOf(WideChar));
-CopyMemory(PWideChar(tmp), PByte(@ARequest) + SizeOf(ARequest) + ARequest.ImageNameLength, ARequest.CommandLineLength);
+SetLength(tmp, rawRequest.CommandLineLength Div SizeOf(WideChar));
+CopyMemory(PWideChar(tmp), PByte(rawRequest) + SizeOf(ARequest) + rawRequest.ImageNameLength, rawRequest.CommandLineLength);
 SetDeviceName(tmp);
-FDriverObject := Pointer(ARequest.ProcessId);
-FDeviceObject := Pointer(ARequest.ParentId);
+FDriverObject := Pointer(rawRequest.ProcessId);
+FDeviceObject := Pointer(rawRequest.ParentId);
 end;
 
 Function TProcessCreatedRequest.GetColumnName(AColumnType:ERequestListModelColumnType):WideString;
