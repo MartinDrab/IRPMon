@@ -203,6 +203,7 @@ While (FName = '') Or (Assigned(AList) And Assigned(GetByName(FName, AList))) Do
     FColumnName + '-' +
     RequestFilterOperatorNames[Ord(FOp)] + '-' +
     FStringValue + '-' +
+    BoolToStr(FNegate) + '-' +
     RequestFilterActionNames[Ord(FAction)];
 
   If I <> 0 Then
