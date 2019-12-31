@@ -8,6 +8,8 @@
 #include <windows.h>
 #include "irpmondll-types.h"
 
+#define IOCTL_IRPMON_SERVER_ARCH_32BIT				1
+#define IOCTL_IRPMON_SERVER_ARCH_64BIT				2
 
 typedef struct _NETWORK_MSG_IOCTL {
 	uint32_t Result;
