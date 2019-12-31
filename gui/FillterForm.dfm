@@ -23,7 +23,6 @@ object FilterFrm: TFilterFrm
     Height = 145
     Align = alTop
     TabOrder = 0
-    ExplicitTop = -6
     object Label1: TLabel
       Left = 0
       Top = 13
@@ -140,7 +139,7 @@ object FilterFrm: TFilterFrm
       OnClick = AddButtonClick
     end
     object DeleteButton: TButton
-      Left = 63
+      Left = 120
       Top = 114
       Width = 57
       Height = 25
@@ -168,7 +167,7 @@ object FilterFrm: TFilterFrm
       Visible = False
     end
     object UpButton: TButton
-      Left = 126
+      Left = 183
       Top = 114
       Width = 57
       Height = 25
@@ -177,7 +176,7 @@ object FilterFrm: TFilterFrm
       OnClick = UpDownButtonClick
     end
     object DownButton: TButton
-      Left = 189
+      Left = 246
       Top = 114
       Width = 57
       Height = 25
@@ -191,6 +190,15 @@ object FilterFrm: TFilterFrm
       Width = 253
       Height = 21
       TabOrder = 13
+    end
+    object ApplyButton: TButton
+      Left = 57
+      Top = 114
+      Width = 57
+      Height = 25
+      Caption = 'Apply'
+      TabOrder = 14
+      OnClick = AddButtonClick
     end
   end
   object LowerPanel: TPanel
@@ -271,7 +279,5 @@ object FilterFrm: TFilterFrm
     OnDeletion = FilterListViewDeletion
     OnSelectItem = FilterListViewSelectItem
     OnItemChecked = FilterListViewItemChecked
-    ExplicitTop = 152
-    ExplicitHeight = 130
   end
 end

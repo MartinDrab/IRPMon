@@ -45,6 +45,7 @@ Type
     DownButton: TButton;
     Label6: TLabel;
     NameEdit: TEdit;
+    ApplyButton: TButton;
     Procedure FormCreate(Sender: TObject);
     procedure FilterTypeComboBoxChange(Sender: TObject);
     procedure FilterColumnComboBoxChange(Sender: TObject);
@@ -370,6 +371,7 @@ Procedure TFilterFrm.FilterListViewSelectItem(Sender: TObject; Item: TListItem;
   Selected: Boolean);
 begin
 DeleteButton.Enabled := (Assigned(Item)) And (Selected);
+ApplyButton.Enabled := (Assigned(Item)) And (Selected);
 UpButton.Enabled := ((Assigned(Item)) And (Selected) And (Item.Index > 0));
 DownButton.Enabled := ((Assigned(Item)) And (Selected) And (Item.Index < FilterListView.Items.Count - 1));
 end;
@@ -486,6 +488,7 @@ Procedure TFilterFrm.AddButtonClick(Sender: TObject);
 Var
   I : Integer;
   L : TListItem;
+  modifyFilter : Boolean;
   rt : ERequestType;
   ct : ERequestListModelColumnType;
   op : ERequestFilterOperator;
@@ -498,6 +501,14 @@ Var
   newName : WideString;
 begin
 f := Nil;
+modifyFilter := (Sender = ApplyButton);
+If modifyFilter Then
+  begin
+  L := FilterListView.Selected;
+  If Assigned(L) Then
+    f := FFilterList[L.Index];
+  end;
+
 passTarget := Nil;
 Try
   If FilterTypeComboBox.ItemIndex = -1 Then
@@ -547,18 +558,19 @@ Try
   newName := NameEdit.Text;
   If newName <> '' Then
     begin
-    f := TRequestFilter.GetByName(newName, FFilterList);
-    If Assigned(f) Then
+    If Assigned(TRequestFilter.GetByName(newName, FFilterList)) Then
       begin
       ErrorMessage('The filter is already present in the list');
-      f := Nil;
       Exit;
       end;
     end;
 
-  f := TRequestFilter.NewInstance(rt);
-  If Not Assigned(f) Then
-    Exit;
+  If Not modifyFilter Then
+    begin
+    f := TRequestFilter.NewInstance(rt);
+    If Not Assigned(f) Then
+      Exit;
+    end;
 
   f.Name := newName;
   f.GenerateName(FFilterList);
@@ -586,13 +598,17 @@ Try
       end;
     end;
 
-  FFilterList.Add(f);
-  L := FilterListVIew.Items.Add;
+  If Not modifyFilter Then
+    begin
+    FFilterList.Add(f);
+    L := FilterListVIew.Items.Add;
+    end;
+
   f.Enabled := EnabledCheckBox.Checked;
   FilterListViewData(FilterListView, L);
   f := Nil;
 Finally
-  If Assigned(f) Then
+  If (Not modifyFilter) And (Assigned(f)) Then
     f.Free;
   end;
 end;
