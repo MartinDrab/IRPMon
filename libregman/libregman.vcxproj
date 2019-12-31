@@ -30,9 +30,13 @@
     <ClInclude Include="key-record.h" />
     <ClInclude Include="registry-callback.h" />
     <ClInclude Include="value-record.h" />
+    <ClInclude Include="version.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="regman.def" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\resources\version.rc" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{9B737BC7-1EDA-4AB8-B1DF-9A8F66BBFED7}</ProjectGuid>

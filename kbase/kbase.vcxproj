@@ -170,9 +170,13 @@
     <ClInclude Include="..\km-shared\utils-dym-array-types.h" />
     <ClInclude Include="..\km-shared\utils-dym-array.h" />
     <ClInclude Include="..\km-shared\utils.h" />
+    <ClInclude Include="version.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="kbase.def" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\resources\version.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -175,6 +175,8 @@
     <ClInclude Include="..\include\kernel-shared.h" />
     <ClInclude Include="..\shared\request.h" />
     <ClInclude Include="driver-com.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="version.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\shared\request.c" />
@@ -183,6 +185,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="irpmondll.def" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\resources\version.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
