@@ -243,7 +243,7 @@ PREQUEST_HEADER RequestDecompress(const REQUEST_HEADER *Header)
 	newSize = oldSize + charCount;
 	newRequest = RequestMemoryAlloc(newSize);
 	if (newRequest != NULL) {
-		memcpy(newRequest, Header, oldSize);
+		memcpy(newRequest, Header, oldSize - charCount);
 		target = (wchar_t *)((unsigned char *)newRequest + newSize - charCount*sizeof(wchar_t));
 		if (charCount > 0) {
 			switch (Header->Type) {
