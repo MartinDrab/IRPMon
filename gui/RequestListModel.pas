@@ -243,8 +243,8 @@ Type
       Function Update:Cardinal; Override;
       Procedure SaveToStream(AStream:TStream; ABinary:Boolean = False; ACompress:Boolean = False);
       Procedure SaveToFile(AFileName:WideString; ABinary:Boolean = False; ACompress:Boolean = False);
-      Procedure LoadFromStream(AStream:TStream);
-      Procedure LoadFromFile(AFileName:WideString);
+      Procedure LoadFromStream(AStream:TStream; ARequireHeader:Boolean = True);
+      Procedure LoadFromFile(AFileName:WideString; ARequireHeader:Boolean = True);
       Procedure Reevaluate;
 
       Property FilterDisplayOnly : Boolean Read FFilterDisplayOnly Write SetFilterDisplayOnly;
@@ -258,7 +258,7 @@ Implementation
 Uses
   SysUtils, NameTables, IRPRequest, FastIoRequest,
   XXXDetectedRequests, FileObjectNameXXXRequest,
-  ProcessXXXRequests, Utils;
+  ProcessXXXRequests, Utils, BinaryLogHeader;
 
 (** TDriverRequestComparer **)
 
@@ -844,9 +844,12 @@ end;
 
 Procedure TRequestListModel.SaveToStream(AStream:TStream; ABinary:Boolean = False; ACompress:Boolean = False);
 Var
+  bh : TBinaryLogHeader;
   I : Integer;
   dr : TDriverRequest;
 begin
+TBinaryLogHeader.Fill(bh);
+AStream.Write(bh, SizeOf(bh));
 For I := 0 To RowCount - 1 Do
   begin
   dr := _Item(I);
@@ -866,13 +869,43 @@ Finally
   end;
 end;
 
-Procedure TRequestListModel.LoadFromStream(AStream:TStream);
+Procedure TRequestListModel.LoadFromStream(AStream:TStream; ARequireHeader:Boolean = True);
 Var
   reqSize : Cardinal;
   rg : PREQUEST_GENERAL;
   tmp : PREQUEST_GENERAL;
   l : TList<PREQUEST_GENERAL>;
+  bh : TBinaryLogHeader;
+  oldPos : Int64;
+  invalidHeader : Boolean;
 begin
+invalidHeader := False;
+oldPos := AStream.Position;
+AStream.Read(bh, SizeOf(bh));
+If Not TBinaryLogHeader.SignatureValid(bh) Then
+  begin
+  invalidHeader := True;
+  If ARequireHeader Then
+    Raise Exception.Create('Invalid log file signature');
+  end;
+
+If Not TBinaryLogHeader.VersionSupported(bh) Then
+  begin
+  invalidHeader := True;
+  If ARequireHeader Then
+    Raise Exception.Create('Log file version not supported');
+  end;
+
+If Not TBinaryLogHeader.ArchitectureSupported(bh) Then
+  begin
+  invalidHeader := True;
+  If ARequireHeader Then
+    Raise Exception.Create('The log file and application "bitness"  differ.'#13#10'Use other application version');
+  end;
+
+If invalidHeader Then
+  AStream.Position := oldPos;
+
 l := TList<PREQUEST_GENERAL>.Create;
 While AStream.Position < AStream.Size Do
   begin
@@ -890,13 +923,13 @@ For rg In l Do
 l.Free;
 end;
 
-Procedure TRequestListModel.LoadFromFile(AFileName:WideString);
+Procedure TRequestListModel.LoadFromFile(AFileName:WideString; ARequireHeader:Boolean = True);
 Var
   F : TFileStream;
 begin
 F := TFileStream.Create(AFileName, fmOpenRead);
 Try
-  LoadFromStream(F);
+  LoadFromStream(F, ARequireHeader);
 Finally
   F.Free;
   end;

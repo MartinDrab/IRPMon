@@ -37,7 +37,8 @@ uses
   FileObjectNameXXXRequest in 'FileObjectNameXXXRequest.pas',
   FillterForm in 'FillterForm.pas' {FilterFrm},
   ProcessXXXRequests in 'ProcessXXXRequests.pas',
-  ConnectorSelectionForm in 'ConnectorSelectionForm.pas' {ConnectorSelectionFrm};
+  ConnectorSelectionForm in 'ConnectorSelectionForm.pas' {ConnectorSelectionFrm},
+  BinaryLogHeader in 'BinaryLogHeader.pas';
 
 {$R *.res}
 
@@ -123,7 +124,7 @@ If err = ERROR_SUCCESS Then
       end;
 
     Application.CreateForm(TMainFrm, MainFrm);
-    MainFrm.ServiceTask := serviceTask;
+  MainFrm.ServiceTask := serviceTask;
     MainFrm.TaskList := taskList;
     MainFrm.ConnectorType := connType;
     Application.Run;
