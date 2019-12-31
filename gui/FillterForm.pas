@@ -151,7 +151,7 @@ If NextFilterComboBox.Visible Then
     If (Assigned(currentRF)) And (rf.Name = currentRF.Name) Then
       Continue;
 
-    If rf.HasPredecessor Then
+    If (rf.HasPredecessor) And (Assigned(currentRF)) And (currentRF.NextFilter <> rf) Then
       Continue;
 
     If (Assigned(selectedRF)) And (selectedRF.Name = rf.Name) Then
