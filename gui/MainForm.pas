@@ -636,15 +636,22 @@ Var
   settings : IRPMNDRV_SETTINGS;
   statusText : WideString;
 begin
-err := IRPMonDllSettingsQuery(settings);
+err := ERROR_SUCCESS;
+If ConnectorType <> ictNone Then
+  err := IRPMonDllSettingsQuery(settings);
+
 If err = ERROR_SUCCESS Then
   begin
-  If settings.ReqQueueConnected Then
-    statusText := 'Monitoring | Requests: '
-  Else statusText := 'Not monitoring | Requests: ';
+  If ConnectorType = ictNone Then
+    statusText := 'Not connected | Requests: '
+  Else begin
+    If settings.ReqQueueConnected Then
+      statusText := statusText + Format('%u queued, (%u paged, %u nonpaged) ', [settings.ReqQueueLength, settings.ReqQueuePagedLength, settings.ReqQueueNonPagedLength]);
 
-  If settings.ReqQueueConnected Then
-    statusText := statusText + Format('%u queued, (%u paged, %u nonpaged) ', [settings.ReqQueueLength, settings.ReqQueuePagedLength, settings.ReqQueueNonPagedLength]);
+    If settings.ReqQueueConnected Then
+      statusText := 'Monitoring | Requests: '
+    Else statusText := 'Not monitoring | Requests: ';
+    end;
 
   statusText := statusText + Format('%u displayed, ', [FModel.RowCount]);
   statusText := statusText + Format('%u total', [FModel.TotalCount]);
