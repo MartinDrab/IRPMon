@@ -5,26 +5,26 @@
 #define MyAppVersion "1.0"
 #define MyAppPublisher "Martin Dráb"
 #define MyAppURL "https://github.com/MartinDrab/IRPMon"
+#define MyAppUpdateURL "https://github.com/MartinDrab/IRPMon/releases"
 
 [Setup]
-; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
-; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
 AppId={{F913732F-475C-46F8-84AA-80FE454CC7ED}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
-;AppVerName={#MyAppName} {#MyAppVersion}
+AppVerName={#MyAppName} {#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
-AppUpdatesURL={#MyAppURL}
+AppUpdatesURL={#MyAppUpdateURL}
 DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
+SignedUninstaller=yes
+SignedUninstallerDir=..\resources
+AppCopyright=Copyright (c) Martin Drab 2015-2020
 LicenseFile=..\LICENSE
-; Uncomment the following line to run in non administrative install mode (install for current user only.)
-;PrivilegesRequired=lowest
 OutputDir=..\bin
-OutputBaseFilename=mysetup
+OutputBaseFilename=irpmon-{#MyAppVersion}-setup
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
@@ -34,18 +34,23 @@ ArchitecturesInstallIn64BitMode=x64
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Files]
-Source: "..\bin\x64\Release\*.dll"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
-Source: "..\bin\x64\Release\*.sys"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
-Source: "..\bin\x64\Release\*.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
-Source: "..\dlls\x64\Release\*.dll"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
-Source: "..\bin\Win32\Release\*.dll"; DestDir: "{app}"; Flags: ignoreversion; Check: not Is64BitInstallMode
-Source: "..\bin\Win32\Release\*.sys"; DestDir: "{app}"; Flags: ignoreversion; Check: not Is64BitInstallMode
-Source: "..\bin\Win32\Release\*.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: not Is64BitInstallMode
-Source: "..\dlls\Win32\Release\*.dll"; DestDir: "{app}"; Flags: ignoreversion; Check: not Is64BitInstallMode
-Source: "..\resources\ioctl.txt"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\resources\ntstatus.txt"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\resources\winerr.txt"; DestDir: "{app}"; Flags: ignoreversion
-; NOTE: Don't use "Flags: ignoreversion" on any shared system files
+Source: "..\bin\x64\Release\*.dll"; DestDir: "{app}\x64"; Flags: ignoreversion;
+Source: "..\bin\x64\Release\*.sys"; DestDir: "{app}\x64"; Flags: ignoreversion;
+Source: "..\bin\x64\Release\*.exe"; DestDir: "{app}\x64"; Flags: ignoreversion;
+Source: "..\dlls\x64\Release\*.dll"; DestDir: "{app}\x64"; Flags: ignoreversion;
+Source: "..\resources\ioctl.txt"; DestDir: "{app}\x64"; Flags: ignoreversion
+Source: "..\resources\ntstatus.txt"; DestDir: "{app}\x64"; Flags: ignoreversion
+Source: "..\resources\winerr.txt"; DestDir: "{app}\x64"; Flags: ignoreversion
+
+Source: "..\bin\Win32\Release\*.dll"; DestDir: "{app}\x86"; Flags: ignoreversion;
+Source: "..\bin\Win32\Release\*.sys"; DestDir: "{app}\x86"; Flags: ignoreversion;
+Source: "..\bin\Win32\Release\IRPMon.exe"; DestDir: "{app}\x86"; Flags: ignoreversion;
+Source: "..\bin\Win32\Release\irpmon-server.exe"; DestDir: "{app}\x86"; Flags: ignoreversion;
+Source: "..\dlls\Win32\Release\*.dll"; DestDir: "{app}\x86"; Flags: ignoreversion;
+Source: "..\bin\Win32\Release\IRPLauncher.exe"; DestDir: "{app}"; Flags: ignoreversion;
+Source: "..\resources\ioctl.txt"; DestDir: "{app}\x86"; Flags: ignoreversion
+Source: "..\resources\ntstatus.txt"; DestDir: "{app}\x86"; Flags: ignoreversion
+Source: "..\resources\winerr.txt"; DestDir: "{app}\x86"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\{cm:ProgramOnTheWeb,{#MyAppName}}"; Filename: "{#MyAppURL}"
