@@ -3,6 +3,8 @@ bin/
 dumps/
 gui/*.bak
 gui/__history
+launcher/.bak
+launcher/__history
 lib/
 tmp/
 *.sdf
