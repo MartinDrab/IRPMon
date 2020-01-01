@@ -470,13 +470,10 @@ end;
 
 Procedure TFilterFrm.OkButtonClick(Sender: TObject);
 Var
-  iniFile : TIniFile;
   fileName : WideString;
 begin
 fileName := ExtractFilePath(Application.ExeName) + 'filters.ini';
-iniFile := TIniFIle.Create(fileName);
-FCancelled := Not TRequestFilter.SaveList(iniFile, FFilterList);
-iniFile.Free;
+FCancelled := Not TRequestFilter.SaveList(fileName, FFilterList);
 If Not FCancelled Then
   begin
   FFilterList.OwnsObjects := False;
