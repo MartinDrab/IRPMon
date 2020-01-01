@@ -56,6 +56,16 @@ static int _Listener(const ADDRINFOA *Address)
 				ret = DevConn_Connect(&_initInfo);
 				memset(&msg, 0, sizeof(msg));
 				msg.Result = ret;
+				if (ret == 0) {
+#if defined(_AMD64_)
+					msg.ControlCode = IOCTL_IRPMON_SERVER_ARCH_64BIT;
+#elif defined(_X86_)
+					msg.ControlCode = IOCTL_IRPMON_SERVER_ARCH_32BIT;
+#else
+#error Unsupported architecture
+#endif
+				}
+
 				bytesReceived = send(acceptSocket, (char *)&msg, sizeof(msg), 0);
 				if (bytesReceived != sizeof(msg)) {
 					ret = WSAGetLastError();

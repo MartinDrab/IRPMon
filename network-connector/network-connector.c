@@ -156,10 +156,28 @@ DWORD NetConn_Connect(const IRPMON_INIT_INFO *Info)
 									if (bytesReceived == sizeof(msg)) {
 										ret = msg.Result;
 										if (ret == ERROR_SUCCESS) {
-											_pindingThreadTerminate = FALSE;
-											_pingingThreadHandle = CreateThread(NULL, 0, _PingingThread, (PVOID)_socket, 0, NULL);
-											if (_pingingThreadHandle == NULL)
-												ret = GetLastError();
+											switch (msg.ControlCode) {
+												case IOCTL_IRPMON_SERVER_ARCH_32BIT:
+#ifdef _AMD64_
+													ret = ERROR_NOT_SUPPORTED;
+#endif
+													break;
+												case IOCTL_IRPMON_SERVER_ARCH_64BIT:
+#ifdef _X86_
+													ret = ERROR_NOT_SUPPORTED;
+#endif
+													break;
+												default:
+													ret = ERROR_INVALID_MESSAGE;
+													break;
+											}
+											
+											if (ret == ERROR_SUCCESS) {
+												_pindingThreadTerminate = FALSE;
+												_pingingThreadHandle = CreateThread(NULL, 0, _PingingThread, (PVOID)_socket, 0, NULL);
+												if (_pingingThreadHandle == NULL)
+													ret = GetLastError();
+											}
 										}
 
 										break;
@@ -181,7 +199,13 @@ DWORD NetConn_Connect(const IRPMON_INIT_INFO *Info)
 
 					FreeAddrInfoW(addrs);
 				}
+
+				if (ret != 0)
+					WSACleanup();
 			} else ret = WSAGetLastError();
+
+			if (ret != 0)
+				DeleteCriticalSection(&_ioctlLock);
 		} else ret = GetLastError();
 	} else ret = ERROR_ALREADY_EXISTS;
 
