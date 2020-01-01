@@ -58,7 +58,7 @@ If IsWow64Process(GetCurrentProcess, wow64) Then
 
     si.cb := SizeOf(si);
     FillChar(pi, SizeOf(pi), 0);
-    If CreateProcessW(PWideChar(targetFile), PWideChar(targetCmdLine), Nil, Nil, False, 0, Nil, Nil, si, pi) Then
+    If CreateProcessW(PWideChar(targetFile), PWideChar(targetCmdLine), Nil, Nil, False, 0, Nil, PWideChar(ExtractFileDir(targetFile)), si, pi) Then
       begin
       CloseHandle(pi.hThread);
       CloseHandle(pi.hProcess);
