@@ -184,6 +184,7 @@
             <Form>ConnectorSelectionFrm</Form>
             <FormType>dfm</FormType>
         </DCCReference>
+        <DCCReference Include="BinaryLogHeader.pas"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>

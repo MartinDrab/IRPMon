@@ -1032,6 +1032,10 @@ object MainFrm: TMainFrm
         Caption = 'Compress'
         OnClick = CompressMenuItemClick
       end
+      object IgnoreLogFileHeadersMenuItem: TMenuItem
+        Caption = 'Ignore log file headers'
+        OnClick = IgnoreLogFileHeadersMenuItemClick
+      end
     end
     object DriverMenuItem: TMenuItem
       Caption = 'Driver'

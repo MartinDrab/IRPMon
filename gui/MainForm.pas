@@ -74,6 +74,7 @@ Type
     ProcessEmulateOnConnectMenuItem: TMenuItem;
     DriverSnapshotOnConnectMenuItem: TMenuItem;
     CompressMenuItem: TMenuItem;
+    IgnoreLogFileHeadersMenuItem: TMenuItem;
     Procedure ClearMenuItemClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure CaptureEventsMenuItemClick(Sender: TObject);
@@ -101,6 +102,7 @@ Type
     procedure DriverSettingsMenuItemClick(Sender: TObject);
     procedure DriverMenuItemExpand(Sender: TObject);
     procedure CompressMenuItemClick(Sender: TObject);
+    procedure IgnoreLogFileHeadersMenuItemClick(Sender: TObject);
   Private
 {$IFDEF FPC}
     FAppEvents: TApplicationProperties;
@@ -353,6 +355,14 @@ begin
 M := Sender As TMenuItem;
 M.Checked := Not M.Checked;
 FModel.FilterDisplayOnly := M.Checked;
+end;
+
+Procedure TMainFrm.IgnoreLogFileHeadersMenuItemClick(Sender: TObject);
+Var
+  M : TMenuItem;
+begin
+M := Sender As TMenuItem;
+M.Checked := Not M.Checked;
 end;
 
 Procedure TMainFrm.IrpMonAppEventsException(Sender: TObject; E: Exception);
@@ -834,7 +844,7 @@ If LogOpenDialog.Execute Then
   If LogOpenDialog.FilterIndex = 1 Then
     fn := ChangeFileExt(fn, '.bin');
 
-  FModel.LoadFromFile(fn);
+  FModel.LoadFromFile(fn, Not IgnoreLogFileHeadersMenuItem.Checked);
   end;
 end;
 
@@ -929,6 +939,7 @@ Try
   iniFile.WriteBool('General', 'CaptureEvents', CaptureEventsMenuItem.Checked);
   iniFile.WriteBool('General', 'filter_display_only', HideExcludedRequestsMenuItem.Checked);
   iniFile.WriteBool('Log', 'compress_requests', CompressMenuItem.Checked);
+  iniFile.WriteBool('Log', 'ignore_headers', IgnoreLogFileHeadersMenuItem.Checked);
   For I := 0 To FModel.ColumnCount - 1 Do
     begin
     c := FModel.Columns[I];
@@ -958,6 +969,7 @@ Try
   UnloadOnExitMenuItem.Checked := iniFIle.ReadBool('Driver', 'unload_on_exit', False);
   UninstallOnExitMenuItem.Checked := iniFIle.ReadBool('Driver', 'uninstall_on_exit', True);
   CompressMenuItem.Checked := iniFIle.ReadBool('Log', 'compress_requests', False);
+  IgnoreLogFileHeadersMenuItem.Checked := iniFile.ReadBool('Log', 'ignore_headers', False);
   If IRPMonDllInitialized Then
     begin
     CaptureEventsMenuItem.Checked := Not iniFile.ReadBool('General', 'CaptureEvents', False);
