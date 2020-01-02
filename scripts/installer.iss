@@ -6,6 +6,7 @@
 #define MyAppPublisher "Martin Dráb"
 #define MyAppURL "https://github.com/MartinDrab/IRPMon"
 #define MyAppUpdateURL "https://github.com/MartinDrab/IRPMon/releases"
+#define ConfigMode "Release"
 
 [Setup]
 AppId={{F913732F-475C-46F8-84AA-80FE454CC7ED}
@@ -34,25 +35,29 @@ ArchitecturesInstallIn64BitMode=x64
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Files]
-Source: "..\bin\x64\Release\*.dll"; DestDir: "{app}\x64"; Flags: ignoreversion;
-Source: "..\bin\x64\Release\*.sys"; DestDir: "{app}\x64"; Flags: ignoreversion;
-Source: "..\bin\x64\Release\*.exe"; DestDir: "{app}\x64"; Flags: ignoreversion;
-Source: "..\dlls\x64\Release\*.dll"; DestDir: "{app}\x64"; Flags: ignoreversion;
+Source: "..\bin\x64\{#ConfigMode}\*.dll"; DestDir: "{app}\x64"; Flags: ignoreversion;
+Source: "..\bin\x64\{#ConfigMode}\*.sys"; DestDir: "{app}\x64"; Flags: ignoreversion;
+Source: "..\bin\x64\{#ConfigMode}\*.exe"; DestDir: "{app}\x64"; Flags: ignoreversion;
+Source: "..\dlls\x64\{#ConfigMode}\*.dll"; DestDir: "{app}\x64"; Flags: ignoreversion;
 Source: "..\resources\ioctl.txt"; DestDir: "{app}\x64"; Flags: ignoreversion
 Source: "..\resources\ntstatus.txt"; DestDir: "{app}\x64"; Flags: ignoreversion
 Source: "..\resources\winerr.txt"; DestDir: "{app}\x64"; Flags: ignoreversion
 
-Source: "..\bin\Win32\Release\*.dll"; DestDir: "{app}\x86"; Flags: ignoreversion;
-Source: "..\bin\Win32\Release\*.sys"; DestDir: "{app}\x86"; Flags: ignoreversion;
-Source: "..\bin\Win32\Release\IRPMon.exe"; DestDir: "{app}\x86"; Flags: ignoreversion;
-Source: "..\bin\Win32\Release\irpmon-server.exe"; DestDir: "{app}\x86"; Flags: ignoreversion;
-Source: "..\dlls\Win32\Release\*.dll"; DestDir: "{app}\x86"; Flags: ignoreversion;
-Source: "..\bin\Win32\Release\IRPLauncher.exe"; DestDir: "{app}"; Flags: ignoreversion;
+Source: "..\bin\Win32\{#ConfigMode}\*.dll"; DestDir: "{app}\x86"; Flags: ignoreversion;
+Source: "..\bin\Win32\{#ConfigMode}\*.sys"; DestDir: "{app}\x86"; Flags: ignoreversion;
+Source: "..\bin\Win32\{#ConfigMode}\IRPMon.exe"; DestDir: "{app}\x86"; Flags: ignoreversion;
+Source: "..\bin\Win32\{#ConfigMode}\irpmon-server.exe"; DestDir: "{app}\x86"; Flags: ignoreversion;
+Source: "..\dlls\Win32\{#ConfigMode}\*.dll"; DestDir: "{app}\x86"; Flags: ignoreversion;
+Source: "..\bin\Win32\{#ConfigMode}\IRPLauncher.exe"; DestDir: "{app}"; Flags: ignoreversion;
 Source: "..\resources\ioctl.txt"; DestDir: "{app}\x86"; Flags: ignoreversion
 Source: "..\resources\ntstatus.txt"; DestDir: "{app}\x86"; Flags: ignoreversion
 Source: "..\resources\winerr.txt"; DestDir: "{app}\x86"; Flags: ignoreversion
 
 [Icons]
+Name: "{userdesktop}\IRPMon 32-Bit"; Filename: "{app}\IRPLauncher.exe"; Parameters: "x86"; Comment: "IRPMon 32-bit"
+Name: "{userdesktop}\IRPMon 64-Bit"; Filename: "{app}\IRPLauncher.exe"; Parameters: "x64"; Comment: "IRPMon 64-bit"
+Name: "{group}\IRPMon 32-Bit"; Filename: "{app}\IRPLauncher.exe"; Parameters: "x86"; Comment: "IRPMon 32-bit"
+Name: "{group}\IRPMon 64-Bit"; Filename: "{app}\IRPLauncher.exe"; Parameters: "x64"; Comment: "IRPMon 64-bit"
 Name: "{group}\{cm:ProgramOnTheWeb,{#MyAppName}}"; Filename: "{#MyAppURL}"
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
 
