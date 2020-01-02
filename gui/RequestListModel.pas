@@ -848,8 +848,12 @@ Var
   I : Integer;
   dr : TDriverRequest;
 begin
-TBinaryLogHeader.Fill(bh);
-AStream.Write(bh, SizeOf(bh));
+If ABinary Then
+  begin
+  TBinaryLogHeader.Fill(bh);
+  AStream.Write(bh, SizeOf(bh));
+  end;
+
 For I := 0 To RowCount - 1 Do
   begin
   dr := _Item(I);
