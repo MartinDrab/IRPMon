@@ -109,8 +109,8 @@ Type
     Function HasPredecessor:Boolean;
 
     Class Function NewInstance(ARequestType:ERequestType):TRequestFilter; Overload;
-    Class Function LoadList(AFile:TIniFile; AList:TList<TRequestFilter>):Boolean;
-    Class Function SaveList(AFile:TIniFIle; AList:TList<TRequestFilter>):Boolean;
+    Class Function LoadList(AFileName:WideString; AList:TList<TRequestFilter>):Boolean;
+    Class Function SaveList(AFileName:WideString; AList:TList<TRequestFilter>):Boolean;
     Class Function GetByName(AName:WideString; AList:TList<TRequestFilter>):TRequestFilter;
     Function Save(AFile:TIniFile):Boolean;
 
@@ -217,7 +217,7 @@ While (tmpName = '') Or (Assigned(AList) And Assigned(GetByName(tmpName, AList))
 FName := tmpName;
 end;
 
-Class Function TRequestFilter.LoadList(AFile:TIniFile; AList:TList<TRequestFilter>):Boolean;
+Class Function TRequestFilter.LoadList(AFileName:WideString; AList:TList<TRequestFilter>):Boolean;
 Var
   names : TStringList;
   rf : TRequestFilter;
@@ -235,77 +235,101 @@ Var
   _color : Cardinal;
   _next : WideString;
   nextNames : TStringList;
+  iniFile : TIniFile;
 begin
 Result := True;
-nextNames := TStringList.Create;
-names := TStringList.Create;
-AFile.ReadSections(names);
-For _name In names Do
-  begin
+iniFile := Nil;
+nextNames := Nil;
+names := Nil;
+Try
+  iniFile := TIniFile.Create(AFileName);
+  nextNames := TStringList.Create;
+  names := TStringList.Create;
   Try
-    _type := ERequestType(AFile.ReadInteger(_name, 'RequestType', -1));
-    _column := ERequestListModelColumnType(AFile.ReadInteger(_name, 'Column', -1));
-    _op := ERequestFilterOperator(AFile.ReadInteger(_name, 'Operator', -1));
-    _value := AFile.ReadString(_name, 'Value', '');
-    _action := EFilterAction(AFile.ReadInteger(_name, 'Action', -1));
-    _enabled := AFile.ReadBool(_name, 'Enabled', True);
-    _negate := AFIle.ReadBool(_name, 'Negate', False);
-    _color := AFile.ReadInteger(_name, 'Color', $FFFFFF);
-    _next := AFile.ReadString(_name, 'Next', '');
-    rf := GetByName(_name, AList);
-    If Assigned(rf) Then
-      Continue;
+    iniFile.ReadSections(names);
+    For _name In names Do
+      begin
+      Try
+        _type := ERequestType(iniFile.ReadInteger(_name, 'RequestType', -1));
+        _column := ERequestListModelColumnType(iniFile.ReadInteger(_name, 'Column', -1));
+        _op := ERequestFilterOperator(iniFile.ReadInteger(_name, 'Operator', -1));
+        _value := iniFile.ReadString(_name, 'Value', '');
+        _action := EFilterAction(iniFile.ReadInteger(_name, 'Action', -1));
+        _enabled := iniFile.ReadBool(_name, 'Enabled', True);
+        _negate := iniFile.ReadBool(_name, 'Negate', False);
+        _color := iniFile.ReadInteger(_name, 'Color', $FFFFFF);
+        _next := iniFile.ReadString(_name, 'Next', '');
+        rf := GetByName(_name, AList);
+        If Assigned(rf) Then
+          Continue;
 
-    rf := TRequestFilter.NewInstance(_type);
-    rf.Name := _name;
-    rf.Enabled := _enabled;
-    rf.Negate := _negate;
-    rf.SetCondition(_column, _op, _value);
-    rf.SetAction(_action, _color);
-    AList.Add(rf);
-    nextNames.Add(_next);
+        rf := TRequestFilter.NewInstance(_type);
+        rf.Name := _name;
+        rf.Enabled := _enabled;
+        rf.Negate := _negate;
+        rf.SetCondition(_column, _op, _value);
+        rf.SetAction(_action, _color);
+        AList.Add(rf);
+        nextNames.Add(_next);
+      Except
+        Result := False;
+        end;
+      end;
+
+    If Result Then
+      begin
+      For I := 0 To AList.Count - 1 Do
+        begin
+        _next := nextNames[I];
+        If _next <> '' Then
+          begin
+          rf := AList[I];
+          tmp := GetByName(_next, AList);
+          If (Assigned(tmp)) And (rf.Action = ffaPassToFilter) THen
+            rf.AddNext(tmp);
+          end;
+        end;
+      end;
   Except
     Result := False;
     end;
+Finally
+  names.Free;
+  nextNames.Free;
+  iniFile.Free;
   end;
-
-names.Free;
-If Result Then
-  begin
-  For I := 0 To AList.Count - 1 Do
-    begin
-    _next := nextNames[I];
-    If _next <> '' Then
-      begin
-      rf := AList[I];
-      tmp := GetByName(_next, AList);
-      If (Assigned(tmp)) And (rf.Action = ffaPassToFilter) THen
-        rf.AddNext(tmp);
-      end;
-    end;
-  end;
-
-nextNames.Free;
 end;
 
-Class Function TRequestFilter.SaveList(AFile:TIniFIle; AList:TList<TRequestFilter>):Boolean;
+Class Function TRequestFilter.SaveList(AFileName:WideString; AList:TList<TRequestFilter>):Boolean;
 Var
   section : WideString;
   names : TStringList;
   rf : TRequestFilter;
+  iniFile : TIniFile;
 begin
 Result := True;
-names := TStringList.Create;
-AFIle.ReadSections(names);
-For section In names Do
-  AFile.EraseSection(section);
+iniFile := Nil;
+names := Nil;
+Try
+  iniFile := TIniFile.Create(AFileName);
+  names := TStringList.Create;
+  Try
+    iniFile.ReadSections(names);
+    For section In names Do
+      iniFile.EraseSection(section);
 
-names.Free;
-For rf  In AList Do
-  begin
-  Result := rf.Save(AFile);
-  If Not Result Then
-    Break;
+    For rf  In AList Do
+      begin
+      Result := rf.Save(iniFile);
+      If Not Result Then
+        Break;
+      end;
+  Except
+    Result := False;
+    end;
+Finally
+  names.Free;
+  iniFile.Free;
   end;
 end;
 

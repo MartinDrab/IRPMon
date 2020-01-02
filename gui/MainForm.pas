@@ -254,18 +254,11 @@ end;
 Procedure TMainFrm.FormCreate(Sender: TObject);
 Var
   fileName : WideString;
-  iniFile : TIniFile;
 begin
 FFilters := TObjectList<TRequestFilter>.Create;
 fileName := ExtractFilePath(Application.ExeName) + 'filters.ini';
-iniFile := Nil;
-Try
-  iniFile := TIniFile.Create(fileName);
-  If Not TRequestFilter.LoadList(iniFile, FFilters) Then
-    FFilters.Clear;
-Finally
-  iniFile.Free;
-  end;
+If Not TRequestFilter.LoadList(fileName, FFilters) Then
+  FFilters.Clear;
 
 RequestListView.DoubleBuffered := True;
 {$IFNDEF FPC}
