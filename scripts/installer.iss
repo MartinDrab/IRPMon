@@ -54,10 +54,10 @@ Source: "..\resources\ntstatus.txt"; DestDir: "{app}\x86"; Flags: ignoreversion
 Source: "..\resources\winerr.txt"; DestDir: "{app}\x86"; Flags: ignoreversion
 
 [Icons]
-Name: "{userdesktop}\IRPMon 32-Bit"; Filename: "{app}\IRPLauncher.exe"; Parameters: "x86"; Comment: "IRPMon 32-bit"
-Name: "{userdesktop}\IRPMon 64-Bit"; Filename: "{app}\IRPLauncher.exe"; Parameters: "x64"; Comment: "IRPMon 64-bit"
-Name: "{group}\IRPMon 32-Bit"; Filename: "{app}\IRPLauncher.exe"; Parameters: "x86"; Comment: "IRPMon 32-bit"
-Name: "{group}\IRPMon 64-Bit"; Filename: "{app}\IRPLauncher.exe"; Parameters: "x64"; Comment: "IRPMon 64-bit"
+Name: "{commondesktop}\IRPMon 32-Bit"; Filename: "{app}\x86\IRPMon.exe"; Comment: "IRPMon 32-bit"
+Name: "{commondesktop}\IRPMon 64-Bit"; Filename: "{app}\x64\IRPMon.exe"; Comment: "IRPMon 64-bit"
+Name: "{group}\IRPMon 32-Bit"; Filename: "{app}\x86\IRPMon.exe"; Comment: "IRPMon 32-bit"
+Name: "{group}\IRPMon 64-Bit"; Filename: "{app}\x64\IRPMon.exe"; Comment: "IRPMon 64-bit"
 Name: "{group}\{cm:ProgramOnTheWeb,{#MyAppName}}"; Filename: "{#MyAppURL}"
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
 
