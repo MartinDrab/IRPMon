@@ -1017,11 +1017,10 @@ For rf In FFilters Do
   matchingRF := rf.Match(ARequest);
   If Assigned(matchingRF) Then
     begin
-    If (matchingRF.Action = ffaInclude) Or (matchingRF.Action = ffaExclude) Then
+    If (noMatch) And ((matchingRF.Action = ffaInclude) Or (matchingRF.Action = ffaExclude)) Then
       begin
       noMatch := False;
-      If Not AStore Then
-        AStore := (matchingRF.Action = ffaInclude);
+      AStore := (matchingRF.Action = ffaInclude);
       end;
 
     If matchingRF.Action <> ffaExclude Then
