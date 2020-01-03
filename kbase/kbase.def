@@ -80,3 +80,4 @@ EXPORTS
 	ProcessEnumerationFree
 	ProcessQueryFullImageName
 	ProcessQueryCommandLine
+	FileNameFromFileObject

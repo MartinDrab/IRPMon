@@ -1234,6 +1234,7 @@ static PIRP_COMPLETION_CONTEXT _HookIRPCompletionRoutine(PIRP Irp, PDRIVER_OBJEC
 
 NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 {
+	UNICODE_STRING uPreCreateFileName;
 	BOOLEAN catchRequest = FALSE;
 	BASIC_CLIENT_INFO clientInfo;
 	BOOLEAN isCleanup = FALSE;
@@ -1246,20 +1247,24 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PREQUEST_FILE_OBJECT_NAME_DELETED rfond = NULL;
+	BOOLEAN openByFileId = FALSE;
 	PIO_STACK_LOCATION irpStack = IoGetCurrentIrpStackLocation(Irp);
 	DEBUG_ENTER_FUNCTION("DeviceObject=0x%p; Irp=0x%p", Deviceobject, Irp);
 
 	driverRecord = DriverHookRecordGet(Deviceobject->DriverObject);
 	if (driverRecord != NULL) {
 		memset(&clientInfo, 0, sizeof(clientInfo));
+		memset(&uPreCreateFileName, 0, sizeof(uPreCreateFileName));
 		deviceRecord = DriverHookRecordGetDevice(driverRecord, Deviceobject);
-
 		catchRequest = (_CatchRequest(driverRecord, deviceRecord, Deviceobject) && deviceRecord == NULL || deviceRecord->IRPMonitorSettings[irpStack->MajorFunction]);
 		if (catchRequest) {
 			isCreate = (irpStack->MajorFunction == IRP_MJ_CREATE);
 			if (isCreate) {
+				openByFileId = (irpStack->Parameters.Create.Options & FILE_OPEN_BY_FILE_ID) != 0;
 				createFileObject = irpStack->FileObject;
 				QueryClientBasicInformation(&clientInfo);
+				if (createFileObject != NULL && KeGetCurrentIrql() < DISPATCH_LEVEL && !openByFileId)
+					FileNameFromFileObject(createFileObject, &uPreCreateFileName);
 			} else if (irpStack->FileObject != NULL) {
 				PFILE_OBJECT_CONTEXT foc = NULL;
 
@@ -1339,11 +1344,12 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 		}
 
 		status = driverRecord->OldMajorFunction[irpStack->MajorFunction](Deviceobject, Irp);
-		if (catchRequest) {
-			if (isCreate && createFileObject != NULL && NT_SUCCESS(status) && KeGetCurrentIrql() < DISPATCH_LEVEL && status != STATUS_PENDING) {
+		if (catchRequest && isCreate && createFileObject != NULL) {
+			PREQUEST_FILE_OBJECT_NAME_ASSIGNED ar = NULL;
+
+			if (NT_SUCCESS(status) && KeGetCurrentIrql() < DISPATCH_LEVEL && status != STATUS_PENDING) {
 				PFLT_FILE_NAME_INFORMATION fi = NULL;
 				NTSTATUS tmpStatus = STATUS_UNSUCCESSFUL;
-				PREQUEST_FILE_OBJECT_NAME_ASSIGNED ar = NULL;
 
 				tmpStatus = FltGetFileNameInformationUnsafe(createFileObject, NULL, FLT_FILE_NAME_NORMALIZED | FLT_FILE_NAME_QUERY_DEFAULT, &fi);
 				if (NT_SUCCESS(tmpStatus)) {
@@ -1375,6 +1381,17 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 
 				if (NT_SUCCESS(status) && status != STATUS_PENDING)
 					FoTableInsert(&_foTable, createFileObject, &clientInfo, sizeof(clientInfo));
+			} else if (uPreCreateFileName.Length > 0) {
+				ar = (PREQUEST_FILE_OBJECT_NAME_ASSIGNED)RequestMemoryAlloc(sizeof(REQUEST_FILE_OBJECT_NAME_ASSIGNED) + uPreCreateFileName.Length);
+				if (ar != NULL) {
+					RequestHeaderInitNoId(&ar->Header, Deviceobject->DriverObject, Deviceobject, ertFileObjectNameAssigned);
+					RequestHeaderSetResult(ar->Header, NTSTATUS, STATUS_SUCCESS);
+					ar->FileObject = createFileObject;
+					ar->NameLength = uPreCreateFileName.Length;
+					memcpy(ar + 1, uPreCreateFileName.Buffer, uPreCreateFileName.Length);
+					_SetRequestFlags(&ar->Header, &clientInfo);
+					RequestQueueInsert(&ar->Header);
+				}
 			}
 		}
 
@@ -1390,6 +1407,9 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 
 		if (rfond != NULL)
 			RequestQueueInsert(&rfond->Header);
+
+		if (uPreCreateFileName.Buffer != NULL)
+			HeapMemoryFree(uPreCreateFileName.Buffer);
 
 		if (deviceRecord != NULL)
 			DeviceHookRecordDereference(deviceRecord);

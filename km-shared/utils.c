@@ -646,3 +646,59 @@ NTSTATUS ProcessQueryCommandLine(HANDLE ProcessHandle, POOL_TYPE PoolType, PUNIC
 	DEBUG_EXIT_FUNCTION("0x%x, CommandLine=\"%wZ\"", status, CommandLine);
 	return status;
 }
+
+
+NTSTATUS FileNameFromFileObject(PFILE_OBJECT FileObject, PUNICODE_STRING Name)
+{
+	USHORT requredLength = 0;
+	UNICODE_STRING uName;
+	wchar_t *tmp = NULL;
+	PFILE_OBJECT currentFileObject = NULL;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION("FileObject=0x%p; Name=0x%p", FileObject, Name);
+
+	status = STATUS_SUCCESS;
+	memset(&uName, 0, sizeof(uName));
+	currentFileObject = FileObject;
+	requredLength += currentFileObject->FileName.Length;
+	if (currentFileObject->RelatedFileObject != NULL) {
+		currentFileObject = currentFileObject->RelatedFileObject;
+		requredLength += currentFileObject->FileName.Length;
+		if (currentFileObject->FileName.Length > 0 &&
+			currentFileObject->FileName.Buffer[currentFileObject->FileName.Length / sizeof(wchar_t) - 1] != L'\\')
+			requredLength += sizeof(wchar_t);
+	}
+
+	uName.Length = requredLength;
+	uName.MaximumLength = uName.Length;
+	if (uName.Length > 0) {
+		uName.Buffer = HeapMemoryAllocPaged(requredLength);
+		if (uName.Buffer != NULL) {
+			tmp = uName.Buffer + uName.Length / sizeof(wchar_t);
+			currentFileObject = FileObject;
+			tmp -= (currentFileObject->FileName.Length / sizeof(wchar_t));
+			memcpy(tmp, currentFileObject->FileName.Buffer, currentFileObject->FileName.Length);
+			if (currentFileObject->RelatedFileObject != NULL) {
+				currentFileObject = currentFileObject->RelatedFileObject;
+				if (currentFileObject->FileName.Length > 0 &&
+					currentFileObject->FileName.Buffer[currentFileObject->FileName.Length / sizeof(wchar_t) - 1] != L'\\') {
+					tmp -= 1;
+					*tmp = L'\\';
+				}
+
+				tmp -= (currentFileObject->FileName.Length / sizeof(wchar_t));
+				memcpy(tmp, currentFileObject->FileName.Buffer, currentFileObject->FileName.Length);
+			}
+		} else status = STATUS_INSUFFICIENT_RESOURCES;
+	}
+
+	if (NT_SUCCESS(status)) {
+		if (uName.Length > 0 && uName.Buffer[uName.Length / sizeof(wchar_t) - 1] == L'\\')
+			uName.Length -= sizeof(wchar_t);
+
+		*Name = uName;
+	}
+
+	DEBUG_EXIT_FUNCTION("0x%x, Name=\"%wZ\"", status, Name);
+	return status;
+}
