@@ -76,6 +76,8 @@ VOID ProcessEnumerationFree(PSYSTEM_PROCESS_INFORMATION_REAL Processes);
 NTSTATUS ProcessQueryFullImageName(HANDLE ProcessHandle, POOL_TYPE PoolType, PUNICODE_STRING Name);
 NTSTATUS ProcessQueryCommandLine(HANDLE ProcessHandle, POOL_TYPE PoolType, PUNICODE_STRING CommandLine);
 
+NTSTATUS FileNameFromFileObject(PFILE_OBJECT FileObject, PUNICODE_STRING Name);
+
 
 
 #endif

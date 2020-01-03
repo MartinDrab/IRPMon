@@ -646,3 +646,39 @@ NTSTATUS ProcessQueryCommandLine(HANDLE ProcessHandle, POOL_TYPE PoolType, PUNIC
 	DEBUG_EXIT_FUNCTION("0x%x, CommandLine=\"%wZ\"", status, CommandLine);
 	return status;
 }
+
+
+NTSTATUS FileNameFromFileObject(PFILE_OBJECT FileObject, PUNICODE_STRING Name)
+{
+	USHORT requredLength = 0;
+	UNICODE_STRING uName;
+	wchar_t *tmp = NULL;
+	PFILE_OBJECT currentFileObject = NULL;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION("FileObject=0x%p; Name=0x%p", FileObject, Name);
+
+	currentFileObject = FileObject;
+	while (currentFileObject != NULL) {
+		requredLength += currentFileObject->FileName.Length;
+		currentFileObject = currentFileObject->RelatedFileObject;
+	}
+
+	uName.Length = requredLength;
+	uName.MaximumLength = uName.Length;
+	uName.Buffer = HeapMemoryAllocPaged(requredLength);
+	if (uName.Buffer != NULL) {
+		tmp = uName.Buffer + uName.Length / sizeof(wchar_t);
+		currentFileObject = FileObject;
+		while (currentFileObject != NULL) {
+			tmp -= (currentFileObject->FileName.Length / sizeof(wchar_t));
+			memcpy(tmp, currentFileObject->FileName.Buffer, currentFileObject->FileName.Length);
+			currentFileObject = currentFileObject->RelatedFileObject;
+		}
+
+		*Name = uName;
+	} else status = STATUS_INSUFFICIENT_RESOURCES;
+
+
+	DEBUG_EXIT_FUNCTION("0x%x, Name=\"%wZ\"", status, Name);
+	return status;
+}
