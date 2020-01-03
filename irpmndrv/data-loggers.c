@@ -81,6 +81,20 @@ void IRPDataLogger(PIRP Irp, PIO_STACK_LOCATION IrpStack, BOOLEAN Completion, PD
 	mode = ExGetPreviousMode();
 	memset(Result, 0, sizeof(DATA_LOGGER_RESULT));
 	switch (IrpStack->MajorFunction) {
+		case IRP_MJ_CREATE: {
+			if (!Completion && IrpStack->Parameters.Create.SecurityContext != NULL) {
+				SIZE_T bufSize = 0;
+				POOL_TYPE pt = (KeGetCurrentIrql() < DISPATCH_LEVEL) ? PagedPool : NonPagedPool;
+
+				bufSize = sizeof(IrpStack->Parameters.Create.SecurityContext->DesiredAccess);
+				Result->Buffer = HeapMemoryAlloc(pt, bufSize);
+				if (Result->Buffer != NULL) {
+					Result->BufferAllocated = TRUE;
+					Result->BufferSize = bufSize;
+					memcpy(Result->Buffer, &IrpStack->Parameters.Create.SecurityContext->DesiredAccess, Result->BufferSize);
+				}
+			}
+		} break;
 		case IRP_MJ_READ: {
 			if (Completion) {
 				if (Irp->MdlAddress != NULL) {
