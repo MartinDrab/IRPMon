@@ -255,11 +255,12 @@ void IRPDataLogger(PIRP Irp, PIO_STACK_LOCATION IrpStack, BOOLEAN Completion, PD
 						Result->BufferSize = 0;
 						fileMask = IrpStack->Parameters.QueryDirectory.FileName;
 						if (fileMask != NULL) {
-							Result->Buffer = HeapMemoryAllocPaged(fileMask->Length);
+							Result->Buffer = HeapMemoryAllocPaged(sizeof(UNICODE_STRING) + fileMask->Length);
 							if (Result->Buffer != NULL) {
 								Result->BufferAllocated = TRUE;
-								Result->BufferSize = fileMask->Length;
-								memcpy(Result->Buffer, fileMask->Buffer, Result->BufferSize);
+								Result->BufferSize = sizeof(UNICODE_STRING) + fileMask->Length;
+								*(PUNICODE_STRING)(Result->Buffer) = *fileMask;
+								memcpy((unsigned char *)Result->Buffer + sizeof(UNICODE_STRING), fileMask->Buffer, Result->BufferSize);
 							}
 						}
 					}
