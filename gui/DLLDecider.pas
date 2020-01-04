@@ -12,14 +12,14 @@ Interface
 
 Uses
   Windows, SysUtils, DataParsers,
-  IRPMonDll, RequestFilter, RequestListModel;
+  IRPMonDll, RequestListModel;
 
 Type
-
   _DLL_DECIDER_DECISION = Record
-    Decided : LongBool;
     Action : EFilterAction;
     HiglightColor : Cardinal;
+    Decided : ByteBool;
+    OverrideFilter : ByteBool;
     end;
   DLL_DECIDER_DECISION = _DLL_DECIDER_DECISION;
   PDLL_DECIDER_DECISION = ^DLL_DECIDER_DECISION;
@@ -40,8 +40,7 @@ Type
     Function Decide(ARequest:TDriverRequest; Var ADecision:DLL_DECIDER_DECISION):Cardinal;
 
     Property ModuleName : WideString Read FModuleName;
-    Property ModuleHandle : THandle Read FModuleHandle;
-    Property DecideRoutine : TDLL_DECIDER_DECIDE_ROUTINE Read FDecideRoutine;
+    Property DecideRoutineName : WideString Read FDecideRoutineName;
   end;
 
 

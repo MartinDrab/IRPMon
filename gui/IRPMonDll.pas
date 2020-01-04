@@ -815,6 +815,26 @@ Type
   IRPMNDRV_SETTINGS = _IRPMNDRV_SETTINGS;
   PIRPMNDRV_SETTINGS = ^IRPMNDRV_SETTINGS;
 
+  ERequestFilterOperator = (
+    rfoEquals,
+    rfoLowerEquals,
+    rfoGreaterEquals,
+    rfoLower,
+    rfoGreater,
+    rfoContains,
+    rfoBegins,
+    rfoEnds,
+    rfoAlwaysTrue,
+    rfoDLLDecider
+  );
+
+  EFilterAction = (
+    ffaHighlight, // If the request is included
+    ffaInclude,
+    ffaExclude,
+    ffaPassToFilter
+  );
+
 
 Function IRPMonDllDriverHooksEnumerate(Var AHookedDrivers:PHOOKED_DRIVER_UMINFO; Var ACount:Cardinal):Cardinal; StdCall;
 Procedure IRPMonDllDriverHooksFree(AHookedDrivers:PHOOKED_DRIVER_UMINFO; ACount:Cardinal); StdCall;

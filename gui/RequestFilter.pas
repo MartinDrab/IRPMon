@@ -8,25 +8,13 @@ Interface
 
 Uses
   Generics.Collections, INIFiles,
-  RequestListModel, IRPMonDll;
+  RequestListModel, IRPMonDll, DLLDecider;
 
 Type
-  ERequestFilterOperator = (
-    rfoEquals,
-    rfoLowerEquals,
-    rfoGreaterEquals,
-    rfoLower,
-    rfoGreater,
-    rfoContains,
-    rfoBegins,
-    rfoEnds,
-    rfoAlwaysTrue
-  );
-
   RequestFilterOperatorSet = Set Of ERequestFilterOperator;
 
 Const
-  RequestFilterOperatorNames : Array [0..Ord(rfoAlwaysTrue)] Of WideString = (
+  RequestFilterOperatorNames : Array [0..Ord(rfoDLLDecider)] Of WideString = (
     '==',
     '<=',
     '>=',
@@ -35,7 +23,8 @@ Const
     'contains',
     'begins',
     'ends',
-    'true'
+    'true',
+    'DLL'
   );
 
   RequestFilterIntegerOperators : RequestFilterOperatorSet = [
@@ -44,7 +33,8 @@ Const
     rfoGreaterEquals,
     rfoLower,
     rfoGreater,
-    rfoAlwaysTrue
+    rfoAlwaysTrue,
+    rfoDLLDecider
   ];
 
   RequestFilterStringOperators : RequestFilterOperatorSet = [
@@ -52,16 +42,9 @@ Const
     rfoContains,
     rfoBegins,
     rfoEnds,
-    rfoAlwaysTrue
+    rfoAlwaysTrue,
+    rfoDLLDecider
   ];
-
-Type
-  EFilterAction = (
-    ffaHighlight, // If the request is included
-    ffaInclude,
-    ffaExclude,
-    ffaPassToFilter
-  );
 
 Const
   RequestFilterActionNames : Array [0..Ord(ffaPassToFilter)] Of WideString = (
@@ -75,6 +58,7 @@ Const
 Type
   TRequestFilter = Class
   Private
+    FDLLDecider : TDLLDecider;
     FHighlightColor : Cardinal;
     FNextFilter : TRequestFilter;
     FPreviousFilter : TRequestFilter;
@@ -101,7 +85,7 @@ Type
     Function GetPossibleValues(ASources:TList<UInt64>; ATargets:TList<WideString>; Var ABitmask:Boolean):Boolean; Virtual;
     Function SupportedOperators:RequestFilterOperatorSet; Virtual;
     Function Copy:TRequestFilter;
-    Function Match(ARequest:TDriverRequest; AChainStart:Boolean = True):TRequestFilter;
+    Function Match(ARequest:TDriverRequest; Var AResultAction:EFilterAction; Var AHiglightColor:Cardinal; AChainStart:Boolean = True):TRequestFilter;
     Function SetAction(AAction:EFilterAction; AHighlightColor:Cardinal = $FFFFFF):Cardinal;
     Function AddNext(AFilter:TRequestFilter):Cardinal;
     Function SetCondition(AColumn:ERequestListModelColumnType; AOperator:ERequestFilterOperator; AValue:UInt64):Boolean; Overload;
@@ -168,6 +152,9 @@ begin
 RemoveFromChain;
 If Assigned(FRequestPrototype) Then
   FRequestPrototype.Free;
+
+If Assigned(FDLLDecider) Then
+  FDLLDecider.Free;
 
 Inherited Destroy;
 end;
@@ -353,7 +340,7 @@ begin
 Result := Assigned(FPreviousFilter);
 end;
 
-Function TRequestFilter.Match(ARequest:TDriverRequest; AChainStart:Boolean = True):TRequestFilter;
+Function TRequestFilter.Match(ARequest:TDriverRequest; Var AResultAction:EFilterAction; Var AHiglightColor:Cardinal; AChainStart:Boolean = True):TRequestFilter;
 Var
   ret : Boolean;
   d : Pointer;
@@ -361,58 +348,89 @@ Var
   iValue : UInt64;
   sValue : WideString;
   stringConstant : WideString;
+  dllDecision : DLL_DECIDER_DECISION;
 begin
+ret := False;
 Result := Nil;
 If (FEnabled) And
     ((Not AChainStart) Or (Not Assigned(FPreviousFIlter))) And
    ((FRequestType = ertUndefined) Or (ARequest.RequestType = FRequestType)) Then
   begin
-  ret := ARequest.GetColumnValueRaw(FField, d, l);
-  If ret Then
+  If FOp = rfoDLLDecider Then
     begin
-    iValue := 0;
-    sValue := '';
-    ret := False;
-    Case RequestListModelColumnValueTypes[Ord(FField)] Of
-      rlmcvtInteger,
-      rlmcvtTime,
-      rlmcvtMajorFunction,
-      rlmcvtMinorFunction,
-      rlmcvtProcessorMode,
-      rlmcvtRequestType,
-      rlmcvtIRQL : begin
-        Move(d^, iValue, l);
-        Case FOp Of
-          rfoEquals: ret := (iValue = FIntValue);
-          rfoLowerEquals: ret := (iValue <= FIntValue);
-          rfoGreaterEquals: ret := (iValue >= FIntValue);
-          rfoLower: ret := (iValue < FIntValue);
-          rfoGreater: ret := (iValue > FIntValue);
-          rfoAlwaysTrue: ret := True;
+    ret := ARequest.GetColumnValueRaw(FField, d, l);
+    If ret Then
+      begin
+      iValue := 0;
+      sValue := '';
+      ret := False;
+      Case RequestListModelColumnValueTypes[Ord(FField)] Of
+        rlmcvtInteger,
+        rlmcvtTime,
+        rlmcvtMajorFunction,
+        rlmcvtMinorFunction,
+        rlmcvtProcessorMode,
+        rlmcvtRequestType,
+        rlmcvtIRQL : begin
+          Move(d^, iValue, l);
+          Case FOp Of
+            rfoEquals: ret := (iValue = FIntValue);
+            rfoLowerEquals: ret := (iValue <= FIntValue);
+            rfoGreaterEquals: ret := (iValue >= FIntValue);
+            rfoLower: ret := (iValue < FIntValue);
+            rfoGreater: ret := (iValue > FIntValue);
+            rfoAlwaysTrue: ret := True;
+            end;
+          end;
+        rlmcvtString : begin
+          sValue := WideUpperCase(WideCharToString(d));
+          stringConstant := WideUpperCase(FStringValue);
+          Case FOp Of
+            rfoEquals: ret := (WideCompareText(sValue, stringConstant) = 0);
+            rfoContains: ret := (Pos(stringConstant, sValue) > 0);
+            rfoBegins: ret := (Pos(stringConstant, sValue) = 1);
+            rfoEnds: ret := (Pos(stringConstant, sValue) = Length(sValue) - Length(stringConstant) + 1);
+            rfoAlwaysTrue: ret := True;
+            end;
           end;
         end;
-      rlmcvtString : begin
-        sValue := WideUpperCase(WideCharToString(d));
-        stringConstant := WideUpperCase(FStringValue);
-        Case FOp Of
-          rfoEquals: ret := (WideCompareText(sValue, stringConstant) = 0);
-          rfoContains: ret := (Pos(stringConstant, sValue) > 0);
-          rfoBegins: ret := (Pos(stringConstant, sValue) = 1);
-          rfoEnds: ret := (Pos(stringConstant, sValue) = Length(sValue) - Length(stringConstant) + 1);
-          rfoAlwaysTrue: ret := True;
-          end;
+
+      If FNegate Then
+        ret := Not ret;
+
+      If ret Then
+        begin
+        AResultAction := FAction;
+        AHiglightColor := FHighlightColor;
         end;
       end;
-
-    If FNegate Then
-      ret := Not ret;
+    end
+  Else begin
+    dllDecision.Action := FAction;
+    dllDecision.HiglightColor := FHighlightColor;
+    dllDecision.Decided := False;
+    dllDecision.OverrideFilter := False;
+    ret := (FDLLDecider.Decide(ARequest, dllDecision) = 0);
+    If ret Then
+      ret := dllDecision.Decided;
 
     If ret Then
       begin
-      Result := Self;
-      If (FAction = ffaPassToFilter) And (Assigned(FNextFilter)) Then
-        Result := FNextFilter.Match(ARequest, False);
+      AResultAction := FAction;
+      AHiglightColor := FHighlightColor;
+      If dllDecision.OverrideFilter Then
+        begin
+        AResultAction := dllDecision.Action;
+        AHiglightColor := dllDecision.HiglightColor;
+        end;
       end;
+    end;
+
+  If ret Then
+    begin
+    Result := Self;
+    If (AResultAction = ffaPassToFilter) And (Assigned(FNextFilter)) Then
+      Result := FNextFilter.Match(ARequest, AResultAction, AHiglightColor, False);
     end;
   end;
 end;
@@ -527,6 +545,11 @@ If Result Then
 end;
 
 Function TRequestFilter.SetCondition(AColumn:ERequestListModelColumnType; AOperator:ERequestFilterOperator; AValue:WideString):Boolean;
+Var
+  tmpDecider : TDLLDecider;
+  dllSeparatorIndex : Integer;
+  modName : WideString;
+  routineName : WideString;
 begin
 Result := False;
 Case RequestListModelColumnValueTypes[Ord(AColumn)] Of
@@ -557,6 +580,26 @@ Case RequestListModelColumnValueTypes[Ord(AColumn)] Of
       FField := AColumn;
       FOp := AOperator;
       FStringValue := AValue;
+      If AOperator = rfoDLLDecider Then
+        begin
+        dllSeparatorIndex := Pos('!', FStringValue);
+        If dllSeparatorIndex >= 1 Then
+          begin
+          modName := System.Copy(FStringValue, 1, dllSeparatorIndex - 1);
+          routineName := System.Copy(FStringValue, dllSeparatorIndex + 1, Length(FStringValue) - dllSeparatorIndex);
+           tmpDecider := TDLLDecider.NewInstance(modName, routineName);
+          end
+        Else tmpDecider := TDLLDecider.NewInstance(FStringValue);
+
+        Result := Assigned(tmpDecider);
+        If Result Then
+          begin
+          If Assigned(FDLLDecider) Then
+            FDLLDecider.Free;
+
+          FDLLDecider := tmpDecider;
+          end;
+        end;
       end;
     end;
   end;
@@ -656,6 +699,8 @@ If Assigned(Result) Then
   Result.FAction := FAction;
   Result.FNegate := FNegate;
   Result.FColumnName := FColumnName;
+  If Assigned(FDLLDecider) Then
+    Result.FDLLDecider := TDLLDecider.NewInstance(FDLLDecider.ModuleName, FDLLDecider.DecideRoutineName);
   end;
 end;
 

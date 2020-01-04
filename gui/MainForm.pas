@@ -1026,6 +1026,8 @@ Var
   allInclusive : Boolean;
   allExclusive : Boolean;
   noMatch : Boolean;
+  action : EFilterAction;
+  hColor : Cardinal;
 begin
 allInclusive := True;
 allExclusive := True;
@@ -1040,19 +1042,19 @@ For rf In FFilters Do
   If rf.Action = ffaExclude Then
     allInclusive := False;
 
-  matchingRF := rf.Match(ARequest);
+  matchingRF := rf.Match(ARequest, action, hColor);
   If Assigned(matchingRF) Then
     begin
-    If (noMatch) And ((matchingRF.Action = ffaInclude) Or (matchingRF.Action = ffaExclude)) Then
+    If (noMatch) And ((action = ffaInclude) Or (action = ffaExclude)) Then
       begin
       noMatch := False;
-      AStore := (matchingRF.Action = ffaInclude);
+      AStore := (action = ffaInclude);
       end;
 
-    If matchingRF.Action <> ffaExclude Then
+    If action <> ffaExclude Then
       begin
-      ARequest.Highlight := (matchingRF.HighlightColor <> $FFFFFF);
-      ARequest.HighlightColor := matchingRF.HighlightColor;
+      ARequest.Highlight := (hColor <> $FFFFFF);
+      ARequest.HighlightColor := hColor;
       end;
     end;
   end;
