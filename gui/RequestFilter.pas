@@ -356,7 +356,7 @@ If (FEnabled) And
     ((Not AChainStart) Or (Not Assigned(FPreviousFIlter))) And
    ((FRequestType = ertUndefined) Or (ARequest.RequestType = FRequestType)) Then
   begin
-  If FOp = rfoDLLDecider Then
+  If FOp <> rfoDLLDecider Then
     begin
     ret := ARequest.GetColumnValueRaw(FField, d, l);
     If ret Then
