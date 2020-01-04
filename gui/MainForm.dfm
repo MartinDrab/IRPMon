@@ -901,10 +901,6 @@ object MainFrm: TMainFrm
       Caption = 'Data Parsers'
       ImageIndex = 1
       OnShow = DataParsersTabSheetShow
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object DataParsersListView: TListView
         Left = 0
         Top = 0
@@ -1087,6 +1083,16 @@ object MainFrm: TMainFrm
       object DriverSnapshotOnConnectMenuItem: TMenuItem
         Tag = 6
         Caption = 'Driver snapshot on connect'
+        OnClick = DriverSettingsMenuItemClick
+      end
+      object StripRequestDataMenuItem: TMenuItem
+        Tag = 7
+        Caption = 'Strip request data'
+        OnClick = DriverSettingsMenuItemClick
+      end
+      object MaxRequestDataSizeMenuItem: TMenuItem
+        Tag = 8
+        Caption = 'Max request data size'
         OnClick = DriverSettingsMenuItemClick
       end
     end
