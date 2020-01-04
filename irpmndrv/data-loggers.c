@@ -238,6 +238,9 @@ void IRPDataLogger(PIRP Irp, PIO_STACK_LOCATION IrpStack, BOOLEAN Completion, PD
 					Result->Buffer = Irp->UserBuffer;
 					Result->BufferSize = Irp->IoStatus.Information;
 					if (!Completion) {
+						PUNICODE_STRING fileMask = NULL;
+						
+						Result->BufferSize = IrpStack->Parameters.QueryDirectory.Length;
 						if (reqMode == UserMode &&
 							Result->BufferSize > 0) {
 							__try {
@@ -250,6 +253,15 @@ void IRPDataLogger(PIRP Irp, PIO_STACK_LOCATION IrpStack, BOOLEAN Completion, PD
 
 						Result->Buffer = NULL;
 						Result->BufferSize = 0;
+						fileMask = IrpStack->Parameters.QueryDirectory.FileName;
+						if (fileMask != NULL) {
+							Result->Buffer = HeapMemoryAllocPaged(fileMask->Length);
+							if (Result->Buffer != NULL) {
+								Result->BufferAllocated = TRUE;
+								Result->BufferSize = fileMask->Length;
+								memcpy(Result->Buffer, fileMask->Buffer, Result->BufferSize);
+							}
+						}
 					}
 					break;
 				case IRP_MN_NOTIFY_CHANGE_DIRECTORY:
