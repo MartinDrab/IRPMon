@@ -38,7 +38,8 @@ uses
   FillterForm in 'FillterForm.pas' {FilterFrm},
   ProcessXXXRequests in 'ProcessXXXRequests.pas',
   ConnectorSelectionForm in 'ConnectorSelectionForm.pas' {ConnectorSelectionFrm},
-  BinaryLogHeader in 'BinaryLogHeader.pas';
+  BinaryLogHeader in 'BinaryLogHeader.pas',
+  DLLDecider in 'DLLDecider.pas';
 
 {$R *.res}
 
