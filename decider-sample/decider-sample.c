@@ -24,7 +24,7 @@ ULONG cdecl DLL_DECIDER_ROUTINE_DEFAULT_NAME(PREQUEST_GENERAL Request, PDP_REQUE
 		Request->RequestTypes.Irp.MajorFunction == IRP_MJ_SET_SECURITY)) {
 		Decision->Action = ffaInclude;
 		Decision->HighlightColor = 0x00ff00;
-		Decision->Decider = TRUE;
+		Decision->Decided = TRUE;
 		Decision->OverrideFilter = TRUE;
 	}
 
@@ -33,7 +33,7 @@ ULONG cdecl DLL_DECIDER_ROUTINE_DEFAULT_NAME(PREQUEST_GENERAL Request, PDP_REQUE
 			Request->RequestTypes.IrpComplete.MajorFunction == IRP_MJ_SET_SECURITY)) {
 		Decision->Action = ffaInclude;
 		Decision->HighlightColor = 0x00ff00;
-		Decision->Decider = TRUE;
+		Decision->Decided = TRUE;
 		Decision->OverrideFilter = TRUE;
 	}
 

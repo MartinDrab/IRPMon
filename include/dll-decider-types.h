@@ -23,7 +23,7 @@ typedef enum _EFilterAction {
 typedef struct _DLL_DECIDER_DECISION {
 	EFilterAction Action;
 	ULONG HighlightColor;
-	BOOLEAN Decider;
+	BOOLEAN Decided;
 	BOOLEAN OverrideFilter;
 } DLL_DECIDER_DECISION, *PDLL_DECIDER_DECISION;
 

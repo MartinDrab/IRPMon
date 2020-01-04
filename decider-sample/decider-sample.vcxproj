@@ -24,6 +24,9 @@
   <ItemGroup>
     <None Include="decider-sample.def" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\include\dll-decider-types.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{CE3539DF-4347-4731-88FF-E8AB4EEDF163}</ProjectGuid>
