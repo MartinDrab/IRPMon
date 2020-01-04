@@ -1141,7 +1141,7 @@ object MainFrm: TMainFrm
       OnClick = PopupFilterClick
     end
     object RPExcludeMenuItem: TMenuItem
-      Caption = #203'xclude'
+      Caption = 'Exclude'
       OnClick = PopupFilterClick
     end
   end
