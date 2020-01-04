@@ -409,6 +409,8 @@ typedef struct _IRPMNDRV_SETTINGS {
 	BOOLEAN DriverSnapshotEventsCollect;
 	BOOLEAN ProcessEmulateOnConnect;
 	BOOLEAN DriverSnapshotOnConnect;
+	ULONG DataStripThreshold;
+	BOOLEAN StripData;
 } IRPMNDRV_SETTINGS, *PIRPMNDRV_SETTINGS;
 
 

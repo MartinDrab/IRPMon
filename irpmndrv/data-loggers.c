@@ -3,6 +3,7 @@
 #include "preprocessor.h"
 #include "allocator.h"
 #include "utils.h"
+#include "driver-settings.h"
 #include "data-loggers.h"
 
 
@@ -11,9 +12,8 @@
 /*               GLOBAL VARIABLES                                       */
 /************************************************************************/
 
-static ULONG _threshold = 1024;
-static BOOLEAN _stripLargeData = TRUE;
 
+static PIRPMNDRV_SETTINGS _driverSettings = NULL;
 
 /************************************************************************/
 /*                    HELPER FUNCTIONS                                  */
@@ -338,8 +338,8 @@ void IRPDataLogger(PIRP Irp, PIO_STACK_LOCATION IrpStack, BOOLEAN Completion, PD
 			break;
 	}
 
-	if (_stripLargeData && Result->BufferSize > _threshold) {
-		Result->BufferSize = _threshold;
+	if (_driverSettings->StripData && Result->BufferSize > _driverSettings->DataStripThreshold) {
+		Result->BufferSize = _driverSettings->DataStripThreshold;
 		Result->Stripped = TRUE;
 	}
 
@@ -366,6 +366,35 @@ void DataLoggerResultRelease(PDATA_LOGGER_RESULT Result)
 
 	if (Result->BufferAllocated)
 		HeapMemoryFree(Result->Buffer);
+
+	DEBUG_EXIT_FUNCTION_VOID();
+	return;
+}
+
+
+/************************************************************************/
+/*                INITIALIZATION AND FINALIZATION                       */
+/************************************************************************/
+
+
+NTSTATUS DataLoggerModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context)
+{
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"; Context=0x%p", DriverObject, RegistryPath, Context);
+
+	_driverSettings = DriverSettingsGet();
+	status = STATUS_SUCCESS;
+
+	DEBUG_EXIT_FUNCTION("0x%x", status);
+	return status;
+}
+
+
+void DataLoggerModuleFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context)
+{
+	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"; Context=0x%p", DriverObject, RegistryPath, Context);
+
+	_driverSettings = NULL;
 
 	DEBUG_EXIT_FUNCTION_VOID();
 	return;

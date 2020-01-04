@@ -14,6 +14,7 @@
 #include "process-events.h"
 #include "req-queue.h"
 #include "regman.h"
+#include "data-loggers.h"
 #include "driver-settings.h"
 #include "driver.h"
 
@@ -378,6 +379,7 @@ static DRIVER_MODULE_ENTRY_PARAMETERS _moduleEntries[] = {
 	{UMServicesModuleInit, UMServicesModuleFinit, NULL},
 	{ProcessEventsModuleInit, ProcessEventsModuleFinit, NULL},
 	{PWDModuleInit, PWDModuleFinit, NULL},
+	{DataLoggerModuleInit, DataLoggerModuleFinit, NULL},
 	{DriverInit, DriverFinit, NULL},
 };
 
