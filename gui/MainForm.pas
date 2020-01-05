@@ -874,7 +874,12 @@ Var
   rf : TRequestFilter;
   M : TMenuItem;
   value : WideString;
+  intValue : UInt64;
   rq : TDriverRequest;
+  d : Pointer;
+  l : Cardinal;
+  ret : Boolean;
+  columnType : ERequestListModelColumnType;
 begin
 invalidButton := False;
 M := Sender As TMenuItem;
@@ -892,7 +897,20 @@ If Not invalidButton Then
   rq := FModel.Selected;
   rf := TRequestFilter.NewInstance(rq.RequestType);
   rf.Enabled := True;
-  If rf.SetCondition(ERequestListModelColumnType(M.Tag), rfoEquals, value) Then
+  columnType := ERequestListModelColumnType(M.Tag);
+  ret := rq.GetColumnValueRaw(columnType, d, l);
+  If ret Then
+    begin
+    If RequestListModelColumnValueTypes[Ord(columnType)] <> rlmcvtString Then
+      begin
+      intValue := 0;
+      Move(d^, intValue, l);
+      ret := rf.SetCondition(columnType, rfoEquals, intValue);
+      end
+    Else ret := rf.SetCondition(columnType, rfoEquals, value);
+    end;
+
+  If ret Then
     begin
     If filterAction = ffaHighlight Then
       begin
