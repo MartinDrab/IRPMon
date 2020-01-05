@@ -45,7 +45,7 @@ static DWORD _ProcessEABuffer(PNV_PAIR Pair, const FILE_FULL_EA_INFORMATION *EAB
 			ret = PBaseAddNameFormat(Pair, L"  Name length", L"%u", EABuffer->EaNameLength);
 
 		if (ret == ERROR_SUCCESS)
-			ret = PBaseAddNameFormat(Pair, L"  Name", L"%s", EABuffer->EaName);
+			ret = PBaseAddNameFormat(Pair, L"  Name", L"%S", EABuffer->EaName);
 
 		if (ret == ERROR_SUCCESS && (!_hideZeroValues || EABuffer->EaValueLength > 0))
 			ret = PBaseAddNameFormat(Pair, L"  Value Size", L"%u", EABuffer->EaValueLength);
@@ -72,7 +72,7 @@ static DWORD _ProcessEAList(PNV_PAIR Pair, const FILE_GET_EA_INFORMATION *EAList
 			ret = PBaseAddNameFormat(Pair, L"  Name length", L"%u", EAList->EaNameLength);
 
 		if (ret == ERROR_SUCCESS)
-			ret = PBaseAddNameFormat(Pair, L"  Name", L"%s", EAList->EaName);
+			ret = PBaseAddNameFormat(Pair, L"  Name", L"%S", EAList->EaName);
 
 		if (EAList->NextEntryOffset == 0)
 			break;
@@ -105,10 +105,12 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 					case IRP_MJ_SET_EA:
 						eaBuffer = (FILE_FULL_EA_INFORMATION *)(irp + 1);
 						ret = _ProcessEABuffer(&p, eaBuffer);
+						parsed = TRUE;
 						break;
 					case IRP_MJ_QUERY_EA:
 						eaList = (FILE_GET_EA_INFORMATION *)(irp + 1);
 						ret = _ProcessEAList(&p, eaList);
+						parsed = TRUE;
 						break;
 				}
 			}
@@ -119,6 +121,7 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 				irpComp->DataSize > 0) {
 				eaBuffer = (FILE_FULL_EA_INFORMATION *)(irpComp + 1);
 				ret = _ProcessEABuffer(&p, eaBuffer);
+				parsed = TRUE;
 			}
 			break;
 	}
