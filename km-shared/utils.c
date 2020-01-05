@@ -668,7 +668,7 @@ NTSTATUS FileNameFromFileObject(PFILE_OBJECT FileObject, PUNICODE_STRING Name)
 		delimited = (uRelatedName.Length > 0 && uRelatedName.Buffer[uRelatedName.Length / sizeof(wchar_t) - 1] != L'\\');
 		Name->Length = uRelatedName.Length + uName.Length;
 		if (delimited)
-			Name->Length =+ sizeof(wchar_t);
+			Name->Length += sizeof(wchar_t);
 
 		Name->MaximumLength = Name->Length;
 		Name->Buffer = HeapMemoryAllocPaged(Name->Length);
