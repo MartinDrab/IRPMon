@@ -35,7 +35,7 @@ static NTSTATUS _LoadFromRegistry(PUNICODE_STRING ServiceKey)
 		InitializeObjectAttributes(&oa, &uName, OBJ_KERNEL_HANDLE | OBJ_CASE_INSENSITIVE, hServiceKey, NULL);
 		status = ZwOpenKey(&hParametersKey, KEY_QUERY_VALUE, &oa);
 		if (NT_SUCCESS(status)) {
-			const wchar_t *valueNames[] = {
+			const wchar_t *booleanValueNames[] = {
 				L"ReqQueueClearOnDisconnect",
 				L"ReqQueueCollectWhenDisconnected",
 				L"ProcessEventsCollect",
@@ -43,8 +43,9 @@ static NTSTATUS _LoadFromRegistry(PUNICODE_STRING ServiceKey)
 				L"DriverSnapshotEventsCollect",
 				L"ProcessEmulateOnConnect",
 				L"DriverSnapshotOnConnect",
+				L"StripData",
 			};
-			BOOLEAN *settingsValues[] = {
+			BOOLEAN *booleanSettingsValues[] = {
 				&_globalSettings.ReqQueueClearOnDisconnect,
 				&_globalSettings.ReqQueueCollectWhenDisconnected,
 				&_globalSettings.ProcessEventsCollect,
@@ -52,12 +53,13 @@ static NTSTATUS _LoadFromRegistry(PUNICODE_STRING ServiceKey)
 				&_globalSettings.DriverSnapshotEventsCollect,
 				&_globalSettings.ProcessEmulateOnConnect,
 				&_globalSettings.DriverSnapshotOnConnect,
+				&_globalSettings.StripData,
 			};
 			ULONG retLength = 0;
 			PKEY_VALUE_FULL_INFORMATION kvfi = NULL;
 
-			for (size_t i = 0; i < sizeof(valueNames) / sizeof(valueNames[0]); ++i) {
-				RtlInitUnicodeString(&uName, valueNames[i]);
+			for (size_t i = 0; i < sizeof(booleanValueNames) / sizeof(booleanValueNames[0]); ++i) {
+				RtlInitUnicodeString(&uName, booleanValueNames[i]);
 				status = ZwQueryValueKey(hParametersKey, &uName, KeyValueFullInformation, NULL, 0, &retLength);
 				if (status == STATUS_BUFFER_TOO_SMALL) {
 					kvfi = ExAllocatePoolWithTag(PagedPool, retLength, 'MPRI');
@@ -66,7 +68,7 @@ static NTSTATUS _LoadFromRegistry(PUNICODE_STRING ServiceKey)
 						status = ZwQueryValueKey(hParametersKey, &uName, KeyValueFullInformation, kvfi, retLength, &retLength);
 						if (NT_SUCCESS(status)) {
 							if (kvfi->Type == REG_DWORD && kvfi->DataLength == sizeof(ULONG))
-								*(settingsValues[i]) = (*(PULONG)((unsigned char *)kvfi + kvfi->DataOffset) != 0);
+								*(booleanSettingsValues[i]) = (*(PULONG)((unsigned char *)kvfi + kvfi->DataOffset) != 0);
 						}
 						
 						ExFreePoolWithTag(kvfi, 'MPRI');
@@ -76,6 +78,37 @@ static NTSTATUS _LoadFromRegistry(PUNICODE_STRING ServiceKey)
 			
 				if (!NT_SUCCESS(status))
 					break;
+			}
+
+			if (NT_SUCCESS(status)) {
+				const wchar_t *ulongValueNames[] = {
+					L"StripDataThreshold",
+				};
+				ULONG *ulongSettingsValues[] = {
+					&_globalSettings.DataStripThreshold,
+				};
+
+				for (size_t i = 0; i < sizeof(ulongValueNames) / sizeof(ulongValueNames[0]); ++i) {
+					RtlInitUnicodeString(&uName, ulongValueNames[i]);
+					status = ZwQueryValueKey(hParametersKey, &uName, KeyValueFullInformation, NULL, 0, &retLength);
+					if (status == STATUS_BUFFER_TOO_SMALL) {
+						kvfi = ExAllocatePoolWithTag(PagedPool, retLength, 'MPRI');
+						if (kvfi != NULL) {
+							memset(kvfi, 0, retLength);
+							status = ZwQueryValueKey(hParametersKey, &uName, KeyValueFullInformation, kvfi, retLength, &retLength);
+							if (NT_SUCCESS(status)) {
+								if (kvfi->Type == REG_DWORD && kvfi->DataLength == sizeof(ULONG))
+									*(ulongSettingsValues[i]) = *(PULONG)((unsigned char *)kvfi + kvfi->DataOffset);
+							}
+
+							ExFreePoolWithTag(kvfi, 'MPRI');
+						} else status = STATUS_INSUFFICIENT_RESOURCES;
+					} else if (status == STATUS_OBJECT_NAME_NOT_FOUND)
+						status = STATUS_SUCCESS;
+
+					if (!NT_SUCCESS(status))
+						break;
+				}
 			}
 
 			ZwClose(hParametersKey);
@@ -107,7 +140,7 @@ static NTSTATUS _SaveToRegistry(PUNICODE_STRING ServiceKey)
 		InitializeObjectAttributes(&oa, &uName, OBJ_KERNEL_HANDLE | OBJ_CASE_INSENSITIVE, hServiceKey, NULL);
 		status = ZwCreateKey(&hParametersKey, KEY_SET_VALUE, &oa, 0, NULL, 0, &keyDisposition);
 		if (NT_SUCCESS(status)) {
-			const wchar_t *valueNames[] = {
+			const wchar_t *booleanValueNames[] = {
 				L"ReqQueueClearOnDisconnect",
 				L"ReqQueueCollectWhenDisconnected",
 				L"ProcessEventsCollect",
@@ -115,8 +148,9 @@ static NTSTATUS _SaveToRegistry(PUNICODE_STRING ServiceKey)
 				L"DriverSnapshotEventsCollect",
 				L"ProcessEmulateOnConnect",
 				L"DriverSnapshotOnConnect",
+				L"StripData",
 			};
-			BOOLEAN *settingsValues[] = {
+			BOOLEAN *booleanSettingsValues[] = {
 				&_globalSettings.ReqQueueClearOnDisconnect,
 				&_globalSettings.ReqQueueCollectWhenDisconnected,
 				&_globalSettings.ProcessEventsCollect,
@@ -124,15 +158,32 @@ static NTSTATUS _SaveToRegistry(PUNICODE_STRING ServiceKey)
 				&_globalSettings.DriverSnapshotEventsCollect,
 				&_globalSettings.ProcessEmulateOnConnect,
 				&_globalSettings.DriverSnapshotOnConnect,
+				&_globalSettings.StripData,
+			};
+			const wchar_t *ulongValueNames[] = {
+				L"StripDataThreshold",
+			};
+			ULONG *ulongSettingsValues[] = {
+				&_globalSettings.DataStripThreshold,
 			};
 			ULONG regValue = 0;
 
-			for (size_t i = 0; i < sizeof(valueNames) / sizeof(valueNames[0]); ++i) {
-				RtlInitUnicodeString(&uName, valueNames[i]);
-				regValue = *(settingsValues[i]);
+			for (size_t i = 0; i < sizeof(booleanValueNames) / sizeof(booleanValueNames[0]); ++i) {
+				RtlInitUnicodeString(&uName, booleanValueNames[i]);
+				regValue = *(booleanSettingsValues[i]);
 				status = ZwSetValueKey(hParametersKey, &uName, 0, REG_DWORD, &regValue, sizeof(regValue));
 				if (!NT_SUCCESS(status))
 					break;
+			}
+
+			if (NT_SUCCESS(status)) {
+				for (size_t i = 0; i < sizeof(ulongValueNames) / sizeof(ulongValueNames[0]); ++i) {
+					RtlInitUnicodeString(&uName, ulongValueNames[i]);
+					regValue = *(ulongSettingsValues[i]);
+					status = ZwSetValueKey(hParametersKey, &uName, 0, REG_DWORD, &regValue, sizeof(regValue));
+					if (!NT_SUCCESS(status))
+						break;
+				}
 			}
 
 			ZwClose(hParametersKey);
@@ -176,6 +227,8 @@ NTSTATUS DriverSettingsSet(const IRPMNDRV_SETTINGS *Settings, BOOLEAN Save)
 	_globalSettings.ProcessEventsCollect = Settings->ProcessEventsCollect;
 	_globalSettings.ReqQueueClearOnDisconnect = Settings->ReqQueueClearOnDisconnect;
 	_globalSettings.ReqQueueCollectWhenDisconnected = Settings->ReqQueueCollectWhenDisconnected;
+	_globalSettings.DataStripThreshold = Settings->DataStripThreshold;
+	_globalSettings.StripData = Settings->StripData;
 	if (Save)
 		status = _SaveToRegistry(&_uServiceKey);
 
@@ -205,6 +258,8 @@ NTSTATUS DriverSettingsInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING Registr
 		_globalSettings.ProcessEventsCollect = TRUE;
 		_globalSettings.ReqQueueClearOnDisconnect = TRUE;
 		_globalSettings.ReqQueueCollectWhenDisconnected = FALSE;
+		_globalSettings.StripData = TRUE;
+		_globalSettings.DataStripThreshold = 1024;
 		status = _LoadFromRegistry(RegistryPath);
 		if (NT_SUCCESS(status))
 			status = _SaveToRegistry(RegistryPath);

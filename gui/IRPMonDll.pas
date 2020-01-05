@@ -809,6 +809,8 @@ Type
 	  DriverSnapshotEventsCollect : ByteBool;
 	  ProcessEmulateOnConnect : ByteBool;
 	  DriverSnapshotOnConnect : ByteBool;
+    DataStripThreshold : Cardinal;
+    StripData : ByteBool;
     end;
   IRPMNDRV_SETTINGS = _IRPMNDRV_SETTINGS;
   PIRPMNDRV_SETTINGS = ^IRPMNDRV_SETTINGS;

@@ -75,6 +75,8 @@ Type
     DriverSnapshotOnConnectMenuItem: TMenuItem;
     CompressMenuItem: TMenuItem;
     IgnoreLogFileHeadersMenuItem: TMenuItem;
+    StripRequestDataMenuItem: TMenuItem;
+    MaxRequestDataSizeMenuItem: TMenuItem;
     Procedure ClearMenuItemClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure CaptureEventsMenuItemClick(Sender: TObject);
@@ -489,6 +491,8 @@ If err = ERROR_SUCCESS Then
   DriverSnapshotEventsCollectMenuItem.Checked := settings.DriverSnapshotEventsCollect;
   ProcessEmulateOnConnectMenuItem.Checked := settings.ProcessEmulateOnConnect;
   DriverSnapshotOnConnectMenuItem.Checked := settings.DriverSnapshotOnConnect;
+  StripRequestDataMenuItem.Checked := settings.StripData;
+  MaxRequestDataSizeMenuItem.Caption := Format('Max request data size: %u', [settings.DataStripThreshold]);
   end;
 end;
 
@@ -497,6 +501,9 @@ Var
   M : TMenuItem;
   err : Cardinal;
   pv : ^ByteBool;
+  puv : PCardinal;
+  puvStr : WideString;
+  tmp : Cardinal;
   settings : IRPMNDRV_SETTINGS;
 begin
 M := Sender As TMenuItem;
@@ -504,6 +511,7 @@ err := IRPMonDllSettingsQuery(settings);
 If err = ERROR_SUCCESS Then
   begin
   pv := Nil;
+  puv := Nil;
   Case M.Tag Of
     0 : pv := @settings.ReqQueueClearOnDisconnect;
     1 : pv := @settings.ReqQueueCollectWhenDisconnected;
@@ -512,10 +520,28 @@ If err = ERROR_SUCCESS Then
     4 : pv := @settings.DriverSnapshotEventsCollect;
     5 : pv := @settings.ProcessEmulateOnConnect;
     6 : pv := @settings.DriverSnapshotOnConnect;
+    7 : pv := @settings.StripData;
+    8 : puv := @settings.DataStripThreshold;
     end;
 
-  M.Checked := Not M.Checked;
-  pv^ := M.Checked;
+  If Assigned(puv) Then
+    begin
+    puvStr := InputBox(M.Caption, '', IntToStr(Int64(puv^)));
+    If puvStr <> '' Then
+      begin
+      Try
+        tmp := StrToInt64(puvStr);
+        puv^ := tmp;
+      Except
+        end;
+      end;
+    end
+  Else If Assigned(pv) Then
+    begin
+    M.Checked := Not M.Checked;
+    pv^ := M.Checked;
+    end;
+
   err := IRPMonDllSettingsSet(settings, True);
   end;
 end;
