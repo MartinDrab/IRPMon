@@ -71,11 +71,11 @@ static SIZE_T _DeviceRelationSize(const DEVICE_RELATIONS *R)
 /************************************************************************/
 
 
-void IRPDataLogger(PIRP Irp, PIO_STACK_LOCATION IrpStack, BOOLEAN Completion, PDATA_LOGGER_RESULT Result)
+void IRPDataLogger(PDEVICE_OBJECT DeviceObject, PIRP Irp, PIO_STACK_LOCATION IrpStack, BOOLEAN Completion, PDATA_LOGGER_RESULT Result)
 {
 	KPROCESSOR_MODE mode;
 	KPROCESSOR_MODE reqMode;
-	DEBUG_ENTER_FUNCTION("Irp=0x%p; IrpStack=0x%p; Completion=%u; Result=0x%p", Irp, IrpStack, Completion, Result);
+	DEBUG_ENTER_FUNCTION("DeviceObject=0x%p; Irp=0x%p; IrpStack=0x%p; Completion=%u; Result=0x%p", DeviceObject, Irp, IrpStack, Completion, Result);
 
 	reqMode = Irp->RequestorMode;
 	mode = ExGetPreviousMode();
@@ -262,16 +262,35 @@ void IRPDataLogger(PIRP Irp, PIO_STACK_LOCATION IrpStack, BOOLEAN Completion, PD
 					break;
 			}
 			break;
-		case IRP_MJ_QUERY_EA:
-			if (Completion) {
-				Result->Buffer = Irp->AssociatedIrp.SystemBuffer;
-				Result->BufferSize = Irp->IoStatus.Information;
-			}
-			break;
-		case IRP_MJ_SET_EA:
+		case IRP_MJ_QUERY_EA: {
 			if (!Completion) {
-				Result->Buffer = Irp->AssociatedIrp.SystemBuffer;
-				Result->BufferSize = IrpStack->Parameters.SetEa.Length;
+				Result->Buffer = IrpStack->Parameters.QueryEa.EaList;
+				Result->BufferSize = IrpStack->Parameters.QueryEa.EaListLength;
+			} else {
+				if (DeviceObject != NULL) {
+					if (DeviceObject->Flags & DO_BUFFERED_IO)
+						Result->Buffer = Irp->AssociatedIrp.SystemBuffer;
+					else if (DeviceObject->Flags & DO_DIRECT_IO) {
+						Result->BufferMdl = Irp->MdlAddress;
+						Result->Buffer = MmGetSystemAddressForMdlSafe(Result->BufferMdl, NormalPagePriority);
+					} else Result->Buffer = Irp->UserBuffer;
+
+					Result->BufferSize = Irp->IoStatus.Information;
+				}
+			}
+		} break;
+		case IRP_MJ_SET_EA:
+			if (Completion) {
+				if (DeviceObject != NULL) {
+					if (DeviceObject->Flags & DO_BUFFERED_IO)
+						Result->Buffer = Irp->AssociatedIrp.SystemBuffer;
+					else if (DeviceObject->Flags & DO_DIRECT_IO) {
+						Result->BufferMdl = Irp->MdlAddress;
+						Result->Buffer = MmGetSystemAddressForMdlSafe(Result->BufferMdl, NormalPagePriority);
+					} else Result->Buffer = Irp->UserBuffer;
+
+					Result->BufferSize = IrpStack->Parameters.SetEa.Length;
+				}
 			}
 			break;
 		case IRP_MJ_PNP: {
