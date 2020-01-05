@@ -1051,7 +1051,7 @@ For rf In FFilters Do
       AStore := (action = ffaInclude);
       end;
 
-    If action <> ffaExclude Then
+    If (action = ffaInclude) Or (action = ffaHighlight) Then
       begin
       ARequest.Highlight := (hColor <> $FFFFFF);
       ARequest.HighlightColor := hColor;
