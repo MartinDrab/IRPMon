@@ -650,53 +650,45 @@ NTSTATUS ProcessQueryCommandLine(HANDLE ProcessHandle, POOL_TYPE PoolType, PUNIC
 
 NTSTATUS FileNameFromFileObject(PFILE_OBJECT FileObject, PUNICODE_STRING Name)
 {
-	USHORT requredLength = 0;
+	BOOLEAN delimited = FALSE;
 	UNICODE_STRING uName;
+	UNICODE_STRING uRelatedName;
 	wchar_t *tmp = NULL;
-	PFILE_OBJECT currentFileObject = NULL;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("FileObject=0x%p; Name=0x%p", FileObject, Name);
 
 	status = STATUS_SUCCESS;
 	memset(&uName, 0, sizeof(uName));
-	currentFileObject = FileObject;
-	requredLength += currentFileObject->FileName.Length;
-	if (currentFileObject->RelatedFileObject != NULL) {
-		currentFileObject = currentFileObject->RelatedFileObject;
-		requredLength += currentFileObject->FileName.Length;
-		if (currentFileObject->FileName.Length > 0 &&
-			currentFileObject->FileName.Buffer[currentFileObject->FileName.Length / sizeof(wchar_t) - 1] != L'\\')
-			requredLength += sizeof(wchar_t);
-	}
-
-	uName.Length = requredLength;
-	uName.MaximumLength = uName.Length;
-	if (uName.Length > 0) {
-		uName.Buffer = HeapMemoryAllocPaged(requredLength);
-		if (uName.Buffer != NULL) {
-			tmp = uName.Buffer + uName.Length / sizeof(wchar_t);
-			currentFileObject = FileObject;
-			tmp -= (currentFileObject->FileName.Length / sizeof(wchar_t));
-			memcpy(tmp, currentFileObject->FileName.Buffer, currentFileObject->FileName.Length);
-			if (currentFileObject->RelatedFileObject != NULL) {
-				currentFileObject = currentFileObject->RelatedFileObject;
-				if (currentFileObject->FileName.Length > 0 &&
-					currentFileObject->FileName.Buffer[currentFileObject->FileName.Length / sizeof(wchar_t) - 1] != L'\\') {
-					tmp -= 1;
-					*tmp = L'\\';
-				}
-
-				tmp -= (currentFileObject->FileName.Length / sizeof(wchar_t));
-				memcpy(tmp, currentFileObject->FileName.Buffer, currentFileObject->FileName.Length);
-			}
-		} else status = STATUS_INSUFFICIENT_RESOURCES;
-	}
+	memset(&uRelatedName, 0, sizeof(uRelatedName));
+	uName = FileObject->FileName;
+	if (FileObject->RelatedFileObject != NULL)
+		status = _GetObjectName(FileObject->RelatedFileObject, &uRelatedName);
 
 	if (NT_SUCCESS(status)) {
-		if (uName.Length > 0 && uName.Buffer[uName.Length / sizeof(wchar_t) - 1] == L'\\')
-			uName.Length -= sizeof(wchar_t);
+		delimited = (uRelatedName.Length > 0 && uRelatedName.Buffer[uRelatedName.Length / sizeof(wchar_t) - 1] != L'\\');
+		Name->Length = uRelatedName.Length + uName.Length;
+		if (delimited)
+			Name->Length =+ sizeof(wchar_t);
 
-		*Name = uName;
+		Name->MaximumLength = Name->Length;
+		Name->Buffer = HeapMemoryAllocPaged(Name->Length);
+		if (Name->Buffer != NULL) {
+			tmp = Name->Buffer;
+			memcpy(tmp, uRelatedName.Buffer, uRelatedName.Length);
+			tmp += (uRelatedName.Length / sizeof(wchar_t));
+			if (delimited) {
+				*tmp = L'\\';
+				++tmp;
+			}
+
+			memcpy(tmp, uName.Buffer, uName.Length);
+		} else status = STATUS_INSUFFICIENT_RESOURCES;
+	
+		if (!NT_SUCCESS(status))
+			memset(Name, 0, sizeof(UNICODE_STRING));
+
+		if (uRelatedName.Buffer != NULL)
+			HeapMemoryFree(uRelatedName.Buffer);
 	}
 
 	DEBUG_EXIT_FUNCTION("0x%x, Name=\"%wZ\"", status, Name);
