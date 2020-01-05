@@ -1044,7 +1044,7 @@ VOID HookHandlerStartIoDispatch(PDEVICE_OBJECT DeviceObject, PIRP Irp)
 
 			memset(&loggedData, 0, sizeof(loggedData));
 			if (driverRecord->MonitorData)
-				IRPDataLogger(Irp, IrpStack, FALSE, &loggedData);
+				IRPDataLogger(DeviceObject, Irp, IrpStack, FALSE, &loggedData);
 			
 			request = (PREQUEST_STARTIO)RequestMemoryAlloc(sizeof(REQUEST_STARTIO) + loggedData.BufferSize);
 			if (request != NULL) {
@@ -1123,7 +1123,7 @@ static NTSTATUS _HookHandlerIRPCompletion(PDEVICE_OBJECT DeviceObject, PIRP Irp,
 	driverRecord = DriverHookRecordGet(cc->DriverObject);
 	if (driverRecord != NULL) {
 		if (driverRecord->MonitorData)
-			IRPDataLogger(Irp, &cc->StackLocation, TRUE, &loggedData);	
+			IRPDataLogger(cc->DeviceObject, Irp, &cc->StackLocation, TRUE, &loggedData);	
 	}
 
 	if (cc->StackLocation.MajorFunction == IRP_MJ_CREATE &&
@@ -1280,7 +1280,7 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 
 				memset(&loggedData, 0, sizeof(loggedData));
 				if (driverRecord->MonitorData)
-					IRPDataLogger(Irp, irpStack, FALSE, &loggedData);
+					IRPDataLogger(Deviceobject, Irp, irpStack, FALSE, &loggedData);
 
 				request = (PREQUEST_IRP)RequestMemoryAlloc(sizeof(REQUEST_IRP) + loggedData.BufferSize);
 				if (request != NULL) {
