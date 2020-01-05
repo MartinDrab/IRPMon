@@ -235,21 +235,22 @@ void IRPDataLogger(PIRP Irp, PIO_STACK_LOCATION IrpStack, BOOLEAN Completion, PD
 		case IRP_MJ_DIRECTORY_CONTROL:
 			switch (IrpStack->MinorFunction) {
 				case IRP_MN_QUERY_DIRECTORY:
-					Result->Buffer = Irp->UserBuffer;
-					Result->BufferSize = Irp->IoStatus.Information;
 					if (!Completion) {
-						if (reqMode == UserMode &&
-							Result->BufferSize > 0) {
-							__try {
-								ProbeForRead(Result->Buffer, Result->BufferSize, 1);
-							} __except (EXCEPTION_EXECUTE_HANDLER) {
-								DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, "DANGEROUS BUFFER: Irp=0x%p; IrpStack=0x%p; Buffer=0x%p; Size=%zu\n", Irp, IrpStack, Result->Buffer, Result->BufferSize);
-								__debugbreak();
+						PUNICODE_STRING fileMask = NULL;
+						
+						fileMask = IrpStack->Parameters.QueryDirectory.FileName;
+						if (fileMask != NULL) {
+							Result->Buffer = HeapMemoryAllocNonPaged(sizeof(UNICODE_STRING) + fileMask->Length);
+							if (Result->Buffer != NULL) {
+								Result->BufferAllocated = TRUE;
+								Result->BufferSize = sizeof(UNICODE_STRING) + fileMask->Length;
+								*(PUNICODE_STRING)(Result->Buffer) = *fileMask;
+								memcpy((unsigned char *)Result->Buffer + sizeof(UNICODE_STRING), fileMask->Buffer, fileMask->Length);
 							}
 						}
-
-						Result->Buffer = NULL;
-						Result->BufferSize = 0;
+					} else {
+						Result->Buffer = Irp->UserBuffer;
+						Result->BufferSize = Irp->IoStatus.Information;
 					}
 					break;
 				case IRP_MN_NOTIFY_CHANGE_DIRECTORY:
