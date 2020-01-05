@@ -1123,7 +1123,7 @@ static NTSTATUS _HookHandlerIRPCompletion(PDEVICE_OBJECT DeviceObject, PIRP Irp,
 	driverRecord = DriverHookRecordGet(cc->DriverObject);
 	if (driverRecord != NULL) {
 		if (driverRecord->MonitorData)
-			IRPDataLogger(DeviceObject, Irp, &cc->StackLocation, TRUE, &loggedData);	
+			IRPDataLogger(cc->DeviceObject, Irp, &cc->StackLocation, TRUE, &loggedData);	
 	}
 
 	if (cc->StackLocation.MajorFunction == IRP_MJ_CREATE &&
