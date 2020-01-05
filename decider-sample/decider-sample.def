@@ -1,0 +1,3 @@
+LIBRARY decider-sample
+EXPORTS
+	DecideRoutine	PRIVATE
