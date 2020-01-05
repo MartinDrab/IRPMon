@@ -552,55 +552,60 @@ Var
   routineName : WideString;
 begin
 Result := False;
-Case RequestListModelColumnValueTypes[Ord(AColumn)] Of
-  rlmcvtInteger,
-  rlmcvtTime,
-  rlmcvtMajorFunction,
-  rlmcvtMinorFunction,
-  rlmcvtProcessorMode,
-  rlmcvtRequestType,
-  rlmcvtIRQL : begin
-    Result := (AOperator In RequestFilterIntegerOperators);
-    If Result Then
-      begin
-      Try
-        FIntValue := StrToInt64(AValue);
-        FstringValue := AValue;
-        FField := AColumn;
-        FOp := AOperator;
-      Except
-        Result := False;
-        end;
-      end;
-    end;
-  rlmcvtString : begin
-    Result := (AOperator In RequestFilterStringOperators);
-    If Result Then
-      begin
-      FField := AColumn;
-      FOp := AOperator;
-      FStringValue := AValue;
-      If AOperator = rfoDLLDecider Then
+If AOperator <> rfoDLLDecider Then
+  begin
+  Case RequestListModelColumnValueTypes[Ord(AColumn)] Of
+    rlmcvtInteger,
+    rlmcvtTime,
+    rlmcvtMajorFunction,
+    rlmcvtMinorFunction,
+    rlmcvtProcessorMode,
+    rlmcvtRequestType,
+    rlmcvtIRQL : begin
+      Result := (AOperator In RequestFilterIntegerOperators);
+      If Result Then
         begin
-        dllSeparatorIndex := Pos('!', FStringValue);
-        If dllSeparatorIndex >= 1 Then
-          begin
-          modName := System.Copy(FStringValue, 1, dllSeparatorIndex - 1);
-          routineName := System.Copy(FStringValue, dllSeparatorIndex + 1, Length(FStringValue) - dllSeparatorIndex);
-           tmpDecider := TDLLDecider.NewInstance(modName, routineName);
-          end
-        Else tmpDecider := TDLLDecider.NewInstance(FStringValue);
-
-        Result := Assigned(tmpDecider);
-        If Result Then
-          begin
-          If Assigned(FDLLDecider) Then
-            FDLLDecider.Free;
-
-          FDLLDecider := tmpDecider;
+        Try
+          FIntValue := StrToInt64(AValue);
+          FstringValue := AValue;
+          FField := AColumn;
+          FOp := AOperator;
+        Except
+          Result := False;
           end;
         end;
       end;
+    rlmcvtString : begin
+      Result := (AOperator In RequestFilterStringOperators);
+      If Result Then
+        begin
+        FField := AColumn;
+        FOp := AOperator;
+        FStringValue := AValue;
+        end;
+      end;
+    end;
+  end
+Else begin
+  FField := AColumn;
+  FOp := AOperator;
+  FStringValue := AValue;
+  dllSeparatorIndex := Pos('!', FStringValue);
+  If dllSeparatorIndex >= 1 Then
+    begin
+    modName := System.Copy(FStringValue, 1, dllSeparatorIndex - 1);
+    routineName := System.Copy(FStringValue, dllSeparatorIndex + 1, Length(FStringValue) - dllSeparatorIndex);
+    tmpDecider := TDLLDecider.NewInstance(modName, routineName);
+    end
+  Else tmpDecider := TDLLDecider.NewInstance(FStringValue);
+
+  Result := Assigned(tmpDecider);
+  If Result Then
+    begin
+    If Assigned(FDLLDecider) Then
+      FDLLDecider.Free;
+
+    FDLLDecider := tmpDecider;
     end;
   end;
 
