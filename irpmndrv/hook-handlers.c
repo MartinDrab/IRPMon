@@ -1256,7 +1256,7 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 		memset(&clientInfo, 0, sizeof(clientInfo));
 		memset(&uPreCreateFileName, 0, sizeof(uPreCreateFileName));
 		deviceRecord = DriverHookRecordGetDevice(driverRecord, Deviceobject);
-		catchRequest = (_CatchRequest(driverRecord, deviceRecord, Deviceobject) && deviceRecord == NULL || deviceRecord->IRPMonitorSettings[irpStack->MajorFunction]);
+		catchRequest = (_CatchRequest(driverRecord, deviceRecord, Deviceobject) && (deviceRecord == NULL || deviceRecord->IRPMonitorSettings[irpStack->MajorFunction]));
 		if (catchRequest) {
 			isCreate = (irpStack->MajorFunction == IRP_MJ_CREATE);
 			if (isCreate) {
