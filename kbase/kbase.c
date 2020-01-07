@@ -5,6 +5,8 @@
 
 
 
+
+
 NTSTATUS DllInitialize(_In_ PUNICODE_STRING RegistryPath)
 {
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
@@ -24,6 +26,18 @@ NTSTATUS DllUnload(void)
 
 	DebugAllocatorModuleFinit();
 	status = STATUS_SUCCESS;
+
+	DEBUG_EXIT_FUNCTION("0x%x", status);
+	return status;
+}
+
+
+NTSTATUS DriverEntry(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath)
+{
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=%wZ", DriverObject, RegistryPath);
+
+	status = DllInitialize(RegistryPath);
 
 	DEBUG_EXIT_FUNCTION("0x%x", status);
 	return status;
