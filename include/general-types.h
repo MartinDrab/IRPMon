@@ -185,6 +185,9 @@ typedef struct _REQUEST_IRP_COMPLETION {
 	ULONG MinorFunction;
 	PVOID Arguments[4];
 	PVOID FileObject;
+	ULONG_PTR RequestorProcessId;
+	UCHAR PreviousMode;
+	UCHAR RequestorMode;
 	ULONG_PTR DataSize;
 	// Data
 } REQUEST_IRP_COMPLETION, *PREQUEST_IRP_COMPLETION;
