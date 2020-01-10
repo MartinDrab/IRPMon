@@ -77,6 +77,9 @@ Type
     IgnoreLogFileHeadersMenuItem: TMenuItem;
     StripRequestDataMenuItem: TMenuItem;
     MaxRequestDataSizeMenuItem: TMenuItem;
+    CopyMenuItem: TMenuItem;
+    CopyVisibleColumnsMenuItem: TMenuItem;
+    CopyWholeLineMenuItem: TMenuItem;
     Procedure ClearMenuItemClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure CaptureEventsMenuItemClick(Sender: TObject);
@@ -105,6 +108,7 @@ Type
     procedure DriverMenuItemExpand(Sender: TObject);
     procedure CompressMenuItemClick(Sender: TObject);
     procedure IgnoreLogFileHeadersMenuItemClick(Sender: TObject);
+    procedure CopyVisibleColumnsMenuItemClick(Sender: TObject);
   Private
 {$IFDEF FPC}
     FAppEvents: TApplicationProperties;
@@ -144,7 +148,7 @@ Implementation
 {$R *.dfm}
 
 Uses
-  IniFiles, ShellAPI,
+  IniFiles, ShellAPI, Clipbrd,
   ListModel, HookProgressForm,
   Utils, TreeForm, RequestDetailsForm, AboutForm,
   ClassWatchAdd, ClassWatch, DriverNameWatchAddForm,
@@ -431,6 +435,35 @@ M := Sender As TMenuItem;
 M.Checked := Not M.Checked;
 end;
 
+Procedure TMainFrm.CopyVisibleColumnsMenuItemClick(Sender: TObject);
+Var
+  t : WideString;
+  value : WideString;
+  selectedIndex : Integer;
+  visibleOnly : Boolean;
+  c : TListModelColumn;
+  I : Integer;
+begin
+t := '';
+selectedIndex := FModel.SelectedIndex;
+visibleOnly := (Sender = CopyVisibleColumnsMenuItem);
+For I := 0 To FModel.ColumnCount - 1 Do
+  begin
+  c := FModel.Columns[I];
+  If (Not visibleOnly) Or (c.Visible) Then
+    begin
+    value := FModel.Item(selectedIndex, I);
+    If value <> '' Then
+      t := t + value + #9;
+    end;
+  end;
+
+If t <> '' Then
+  Delete(t, Length(t), 1);
+
+Clipboard.AsText := t;
+end;
+
 Procedure TMainFrm.DataParsersListViewData(Sender: TObject; Item: TListItem);
 Var
   dp : TDataParser;
@@ -605,9 +638,11 @@ If selectedIndex <> -1 Then
         RPIncludeMenuItem.Caption := Format('Include "%s"', [value]);
         RPHighlightMenuItem.Caption := Format('Highlight "%s"', [value]);
         RPExcludeMenuItem.Caption := Format('IExclude "%s"', [value]);
+        CopyMenuItem.Caption := Format('Copy "%s"', [value]);
         RPHighlightMenuItem.Tag := c.Tag;
         RPIncludeMenuItem.Tag := c.Tag;
         RPExcludeMenuItem.Tag := c.Tag;
+        CopyMenuItem.Tag := c.Tag;
         RequestPopupMenu.Tag := I;
         columnFound := True;
         Break;
@@ -619,11 +654,14 @@ If selectedIndex <> -1 Then
 RPIncludeMenuItem.Enabled := columnFound;
 RPHighlightMenuItem.Enabled := columnFound;
 RPExcludeMenuItem.Enabled := columnFound;
+CopyMenuItem.Enabled := columnFound;
+CopyVisibleColumnsMenuItem.Enabled := (selectedIndex <> -1);
+CopyWholeLineMenuItem.Enabled := (selectedIndex <> -1);
 end;
 
 Procedure TMainFrm.RPDetailsMenuItemClick(Sender: TObject);
 begin
-Self.RequestDetailsMenuItemClick(RequestDetailsMenuItem);
+RequestDetailsMenuItemClick(RequestDetailsMenuItem);
 end;
 
 Procedure TMainFrm.SaveMenuItemClick(Sender: TObject);
@@ -869,6 +907,7 @@ end;
 
 procedure TMainFrm.PopupFilterClick(Sender: TObject);
 Var
+  copyText : Boolean;
   filterAction : EFilterAction;
   invalidButton : Boolean;
   rf : TRequestFilter;
@@ -882,6 +921,7 @@ Var
   columnType : ERequestListModelColumnType;
 begin
 invalidButton := False;
+copyText := False;
 M := Sender As TMenuItem;
 If Sender = RPHighlightMenuItem Then
   filterAction := ffaHighlight
@@ -889,49 +929,55 @@ Else If Sender = RPIncludeMenuItem Then
   filterAction := ffaInclude
 Else If Sender = RPExcludeMenuItem Then
   filterAction := ffaExclude
+Else If Sender = CopyMenuItem Then
+  copyText := True
 Else invalidButton := True;
 
 If Not invalidButton Then
   begin
   value := FModel.Item(FModel.SelectedIndex, RequestPopupMenu.Tag);
-  rq := FModel.Selected;
-  rf := TRequestFilter.NewInstance(rq.RequestType);
-  rf.Enabled := True;
-  columnType := ERequestListModelColumnType(M.Tag);
-  ret := rq.GetColumnValueRaw(columnType, d, l);
-  If ret Then
+  If Not copyText Then
     begin
-    If RequestListModelColumnValueTypes[Ord(columnType)] <> rlmcvtString Then
+    rq := FModel.Selected;
+    rf := TRequestFilter.NewInstance(rq.RequestType);
+    rf.Enabled := True;
+    columnType := ERequestListModelColumnType(M.Tag);
+    ret := rq.GetColumnValueRaw(columnType, d, l);
+    If ret Then
       begin
-      intValue := 0;
-      Move(d^, intValue, l);
-      ret := rf.SetCondition(columnType, rfoEquals, intValue);
-      end
-    Else ret := rf.SetCondition(columnType, rfoEquals, value);
-    end;
-
-  If ret Then
-    begin
-    If filterAction = ffaHighlight Then
-      begin
-      If highlightColorDialog.Execute Then
+      If RequestListModelColumnValueTypes[Ord(columnType)] <> rlmcvtString Then
         begin
-        rf.SetAction(filterAction, highlightColorDialog.Color);
-        rf.GenerateName(FFilters);
-        FFilters.Add(rf);
+        intValue := 0;
+        Move(d^, intValue, l);
+        ret := rf.SetCondition(columnType, rfoEquals, intValue);
         end
-      Else FreeAndNil(rf);
-      end
-    Else begin
-      rf.SetAction(filterAction);
-      rf.GenerateName(FFilters);
-      FFilters.Insert(0, rf);
+      Else ret := rf.SetCondition(columnType, rfoEquals, value);
       end;
 
-    If Assigned(rf) Then
-      FModel.Reevaluate;
+    If ret Then
+      begin
+      If filterAction = ffaHighlight Then
+        begin
+        If highlightColorDialog.Execute Then
+          begin
+          rf.SetAction(filterAction, highlightColorDialog.Color);
+          rf.GenerateName(FFilters);
+          FFilters.Add(rf);
+          end
+        Else FreeAndNil(rf);
+        end
+      Else begin
+        rf.SetAction(filterAction);
+        rf.GenerateName(FFilters);
+        FFilters.Insert(0, rf);
+        end;
+
+      If Assigned(rf) Then
+        FModel.Reevaluate;
+      end
+    Else ErrorMessage('Unable to set filter condition');
     end
-  Else ErrorMessage('Unable to set filter condition');
+  Else Clipboard.AsText := value;
   end;
 end;
 
