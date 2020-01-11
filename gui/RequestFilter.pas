@@ -69,6 +69,7 @@ Type
     FIntValue : UInt64;
     FRequestType : ERequestType;
     FEnabled : Boolean;
+    FEphemeral : Boolean;
     FAction : EFilterAction;
     FNegate : Boolean;
     FColumnName : WideString;
@@ -105,6 +106,7 @@ Type
     Property IntValue : UInt64 Read FIntValue;
     Property RequestType : ERequesttype Read FRequestType;
     Property Enabled : Boolean Read FEnabled Write SetEnable;
+    Property Ephemeral : Boolean Read FEphemeral Write FEphemeral;
     Property Action : EFilterAction Read FAction;
     Property HighlightColor : Cardinal Read FHighlightColor;
     Property Negate : Boolean Read FNegate Write FNegate;
@@ -307,9 +309,12 @@ Try
 
     For rf  In AList Do
       begin
-      Result := rf.Save(iniFile);
-      If Not Result Then
-        Break;
+      If Not rf.Ephemeral Then
+        begin
+        Result := rf.Save(iniFile);
+        If Not Result Then
+          Break;
+        end;
       end;
   Except
     Result := False;
@@ -701,6 +706,7 @@ If Assigned(Result) Then
   Result.FStringValue := FStringValue;
   Result.FIntValue := FIntValue;
   Result.FEnabled := FEnabled;
+  Result.FEphemeral := FEphemeral;
   Result.FAction := FAction;
   Result.FNegate := FNegate;
   Result.FColumnName := FColumnName;
