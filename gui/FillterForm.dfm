@@ -23,6 +23,7 @@ object FilterFrm: TFilterFrm
     Height = 145
     Align = alTop
     TabOrder = 0
+    ExplicitTop = -6
     object Label1: TLabel
       Left = 0
       Top = 13
@@ -199,6 +200,14 @@ object FilterFrm: TFilterFrm
       Caption = 'Apply'
       TabOrder = 14
       OnClick = AddButtonClick
+    end
+    object EphemeralCheckBox: TCheckBox
+      Left = 346
+      Top = 80
+      Width = 73
+      Height = 17
+      Caption = 'Ephemeral'
+      TabOrder = 15
     end
   end
   object LowerPanel: TPanel

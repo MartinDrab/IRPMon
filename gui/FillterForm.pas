@@ -46,6 +46,7 @@ Type
     Label6: TLabel;
     NameEdit: TEdit;
     ApplyButton: TButton;
+    EphemeralCheckBox: TCheckBox;
     Procedure FormCreate(Sender: TObject);
     procedure FilterTypeComboBoxChange(Sender: TObject);
     procedure FilterColumnComboBoxChange(Sender: TObject);
@@ -267,6 +268,9 @@ With FilterListView.Canvas Do
        Font.Color := ClBlack
     Else Font.Color := ClWhite;
     end;
+
+  If f.Ephemeral Then
+    Font.Style := Font.Style + [fsItalic];
   end;
 
 DefaultDraw := True;
@@ -342,6 +346,7 @@ If Assigned(L) Then
   HighlightColorColorBox.Selected := f.HighlightColor;
   NegateCheckBox.Checked := f.Negate;
   EnabledCheckBox.Checked := f.Enabled;
+  EphemeralCheckBox.Checked := f.Ephemeral;
   end;
 end;
 
@@ -607,6 +612,7 @@ Try
     end;
 
   f.Enabled := EnabledCheckBox.Checked;
+  f.Ephemeral := EphemeralCheckBox.Checked;
   FilterListViewData(FilterListView, L);
   f := Nil;
 Finally

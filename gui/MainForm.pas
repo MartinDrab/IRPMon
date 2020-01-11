@@ -897,6 +897,7 @@ If Not invalidButton Then
   rq := FModel.Selected;
   rf := TRequestFilter.NewInstance(rq.RequestType);
   rf.Enabled := True;
+  rf.Ephemeral := True;
   columnType := ERequestListModelColumnType(M.Tag);
   ret := rq.GetColumnValueRaw(columnType, d, l);
   If ret Then
