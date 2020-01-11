@@ -651,6 +651,7 @@ If selectedIndex <> -1 Then
     end;
   end;
 
+RequestDetailsMenuItem.Enabled := (selectedIndex <> -1);
 RPIncludeMenuItem.Enabled := columnFound;
 RPHighlightMenuItem.Enabled := columnFound;
 RPExcludeMenuItem.Enabled := columnFound;
