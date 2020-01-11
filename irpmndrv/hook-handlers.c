@@ -1105,6 +1105,9 @@ typedef struct _IRP_COMPLETION_CONTEXT {
 	volatile PREQUEST_IRP_COMPLETION CompRequest;
 	IO_STACK_LOCATION StackLocation;
 	BASIC_CLIENT_INFO ClientInfo;
+	HANDLE RequestorProcessId;
+	KPROCESSOR_MODE PreviousMode;
+	KPROCESSOR_MODE RequestorMode;
 } IRP_COMPLETION_CONTEXT, *PIRP_COMPLETION_CONTEXT;
 
 
@@ -1141,6 +1144,9 @@ static NTSTATUS _HookHandlerIRPCompletion(PDEVICE_OBJECT DeviceObject, PIRP Irp,
 		memcpy(completionRequest->Arguments, &cc->StackLocation.Parameters.Others, sizeof(completionRequest->Arguments));
 		completionRequest->MajorFunction = cc->StackLocation.MajorFunction;
 		completionRequest->MinorFunction = cc->StackLocation.MinorFunction;
+		completionRequest->PreviousMode = cc->PreviousMode;
+		completionRequest->RequestorMode = cc->RequestorMode;
+		completionRequest->RequestorProcessId = (ULONG_PTR)cc->RequestorProcessId;
 		cc->CompRequest = completionRequest;
 		_SetRequestFlags(&completionRequest->Header, &cc->ClientInfo);
 		IRPDataLoggerSetRequestFlags(&completionRequest->Header, &loggedData);
@@ -1210,6 +1216,9 @@ static PIRP_COMPLETION_CONTEXT _HookIRPCompletionRoutine(PIRP Irp, PDRIVER_OBJEC
 			ret->ReferenceCount = 1;
 			ret->DriverObject = DriverObject;
 			ret->DeviceObject = DeviceObject;
+			ret->PreviousMode = ExGetPreviousMode();
+			ret->RequestorMode = Irp->RequestorMode;
+			ret->RequestorProcessId = (HANDLE)IoGetRequestorProcessId(Irp);
 			irpStack = IoGetCurrentIrpStackLocation(Irp);
 			ret->StackLocation = *irpStack;
 			if (irpStack->CompletionRoutine != NULL) {

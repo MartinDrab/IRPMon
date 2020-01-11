@@ -192,6 +192,9 @@ Type
     FIOSBInformation : NativeUInt;
     FMajorFunction : Cardinal;
     FMinorFunction : Cardinal;
+    FRequestorProcessId : NativeUInt;
+    FPreviousMode : Byte;
+    FRequestorMode : Byte;
   Public
     Constructor Create(Var ARequest:REQUEST_IRP_COMPLETION); Overload;
 
@@ -204,6 +207,9 @@ Type
     Property IOSBInformation : NativeUInt Read FIOSBInformation;
     Property MajorFunction : Cardinal Read FMajorFunction;
     Property MinorFunction : Cardinal Read FMinorFunction;
+    Property RequestorProcessId : NativeUInt Read FRequestorProcessId;
+    Property PreviousMode : Byte Read FPreviousMode;
+    Property RequestorMode : Byte Read FRequestorMode;
   end;
 
   TStartIoRequest = Class (TDriverRequest)
@@ -571,6 +577,9 @@ FIOSBStatus := ARequest.CompletionStatus;
 FIOSBInformation := ARequest.CompletionInformation;
 FMajorFunction := ARequest.MajorFunction;
 FMinorFunction := ARequest.MinorFunction;
+FPreviousMode := ARequest.PreviousMode;
+FRequestorMode := ARequest.RequestorMode;
+FRequestorProcessId := ARequest.RequestorProcessId;
 SetFileObject(ARequest.FileObject);
 end;
 
@@ -596,6 +605,18 @@ Case AColumnType Of
     AValue := @FMinorFunction;
     AValueSize := SizeOf(FMinorFunction);
     end;
+  rlmctPreviousMode: begin
+    AValue := @FPreviousMode;
+    AValueSize := SizeOf(FPreviousMode);
+    end;
+  rlmctRequestorMode: begin
+    AValue := @FRequestorMode;
+    AValueSize := SizeOf(FRequestorMode);
+    end;
+  rlmctRequestorPID: begin
+    AValue := @FRequestorProcessId;
+    AValueSize := SizeOf(FRequestorProcessId);
+    end;
   Else Result := Inherited GetColumnValueRaw(AColumnType, AValue, AValueSize);
   end;
 end;
@@ -610,6 +631,9 @@ Case AColumnType Of
   rlmctIOSBStatusValue : AResult := Format('0x%x', [FIOSBStatus]);
   rlmctIOSBStatusConstant : AResult := Format('%s', [NTSTATUSToString(FIOSBStatus)]);
   rlmctIOSBInformation : AResult := Format('0x%p', [Pointer(IOSBInformation)]);
+  rlmctPreviousMode: AResult := AccessModeToString(FPreviousMode);
+  rlmctRequestorMode: AResult := AccessModeToString(FRequestorMode);
+  rlmctRequestorPID : AResult := Format('%d', [FRequestorProcessId]);
   Else Result := Inherited GetColumnValue(AColumnType, AResult);
   end;
 end;
