@@ -77,6 +77,9 @@ Type
     IgnoreLogFileHeadersMenuItem: TMenuItem;
     StripRequestDataMenuItem: TMenuItem;
     MaxRequestDataSizeMenuItem: TMenuItem;
+    RPIncludeAllMenuItem: TMenuItem;
+    RPHighlightAllMenuItem: TMenuItem;
+    RPExcludeAllMenuItem: TMenuItem;
     Procedure ClearMenuItemClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure CaptureEventsMenuItemClick(Sender: TObject);
@@ -584,6 +587,7 @@ Var
   clientP : TPoint;
   selectedIndex : Integer;
   columnFound : Boolean;
+  requestTypeString : WideString;
 begin
 w := 0;
 value := '';
@@ -601,13 +605,23 @@ If selectedIndex <> -1 Then
       Inc(w, c.Width);
       If clientP.X <= w Then
         begin
+        requestTypeString := TDriverRequest.RequestTypeToString(FModel.Items[selectedIndex].RequestType);
         value := FModel.Item(selectedIndex, I);
-        RPIncludeMenuItem.Caption := Format('Include "%s"', [value]);
-        RPHighlightMenuItem.Caption := Format('Highlight "%s"', [value]);
-        RPExcludeMenuItem.Caption := Format('IExclude "%s"', [value]);
+        RPIncludeMenuItem.Caption := Format('Include "%s" (%s)', [value, requestTypeString]);
+        RPHighlightMenuItem.Caption := Format('Highlight "%s" (%s)...', [value, requestTypeString]);
+        RPExcludeMenuItem.Caption := Format('IExclude "%s" (%s)', [value, requestTypeString]);
+
+        RPIncludeAllMenuItem.Caption := Format('Include "%s" (all requests)', [value]);
+        RPHighlightAllMenuItem.Caption := Format('Highlight "%s" (all requests)...', [value]);
+        RPExcludeAllMenuItem.Caption := Format('IExclude "%s" (all requests)', [value]);
+
         RPHighlightMenuItem.Tag := c.Tag;
         RPIncludeMenuItem.Tag := c.Tag;
         RPExcludeMenuItem.Tag := c.Tag;
+        RPHighlightAllMenuItem.Tag := c.Tag;
+        RPIncludeAllMenuItem.Tag := c.Tag;
+        RPExcludeAllMenuItem.Tag := c.Tag;
+
         RequestPopupMenu.Tag := I;
         columnFound := True;
         Break;
@@ -619,6 +633,9 @@ If selectedIndex <> -1 Then
 RPIncludeMenuItem.Enabled := columnFound;
 RPHighlightMenuItem.Enabled := columnFound;
 RPExcludeMenuItem.Enabled := columnFound;
+RPIncludeAllMenuItem.Enabled := columnFound;
+RPHighlightAllMenuItem.Enabled := columnFound;
+RPExcludeAllMenuItem.Enabled := columnFound;
 end;
 
 Procedure TMainFrm.RPDetailsMenuItemClick(Sender: TObject);
@@ -880,14 +897,18 @@ Var
   l : Cardinal;
   ret : Boolean;
   columnType : ERequestListModelColumnType;
+  filterType : ERequestType;
 begin
 invalidButton := False;
 M := Sender As TMenuItem;
-If Sender = RPHighlightMenuItem Then
+If (Sender = RPHighlightMenuItem) Or
+   (Sender = RPHighlightAllMenuItem) Then
   filterAction := ffaHighlight
-Else If Sender = RPIncludeMenuItem Then
+Else If (Sender = RPIncludeMenuItem) Or
+        (Sender = RPIncludeAllMenuItem) Then
   filterAction := ffaInclude
-Else If Sender = RPExcludeMenuItem Then
+Else If (Sender = RPExcludeMenuItem) Or
+        (Sender = RPExcludeAllMenuItem) Then
   filterAction := ffaExclude
 Else invalidButton := True;
 
@@ -895,7 +916,13 @@ If Not invalidButton Then
   begin
   value := FModel.Item(FModel.SelectedIndex, RequestPopupMenu.Tag);
   rq := FModel.Selected;
-  rf := TRequestFilter.NewInstance(rq.RequestType);
+  filterType := ertUndefined;
+  If (Sender = RPIncludeMenuItem) Or
+     (Sender = RPHighlightMenuItem) Or
+     (Sender = RPExcludeMenuItem) Then
+     filterType := rq.RequestType;
+
+  rf := TRequestFilter.NewInstance(filterType);
   rf.Enabled := True;
   columnType := ERequestListModelColumnType(M.Tag);
   ret := rq.GetColumnValueRaw(columnType, d, l);
