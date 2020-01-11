@@ -1144,6 +1144,18 @@ object MainFrm: TMainFrm
       Caption = 'Exclude'
       OnClick = PopupFilterClick
     end
+    object RPIncludeAllMenuItem: TMenuItem
+      Caption = 'Include'
+      OnClick = PopupFilterClick
+    end
+    object RPHighlightAllMenuItem: TMenuItem
+      Caption = 'Highlight'
+      OnClick = PopupFilterClick
+    end
+    object RPExcludeAllMenuItem: TMenuItem
+      Caption = 'Exclude'
+      OnClick = PopupFilterClick
+    end
   end
   object HighlightColorDialog: TColorDialog
     Left = 300
