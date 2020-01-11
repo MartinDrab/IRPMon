@@ -1156,6 +1156,18 @@ object MainFrm: TMainFrm
       Caption = 'Exclude'
       OnClick = PopupFilterClick
     end
+    object CopyMenuItem: TMenuItem
+      Caption = 'Copy'
+      OnClick = PopupFilterClick
+    end
+    object CopyVisibleColumnsMenuItem: TMenuItem
+      Caption = 'Copy visible columns'
+      OnClick = CopyVisibleColumnsMenuItemClick
+    end
+    object CopyWholeLineMenuItem: TMenuItem
+      Caption = 'Copy whole line'
+      OnClick = CopyVisibleColumnsMenuItemClick
+    end
   end
   object HighlightColorDialog: TColorDialog
     Left = 300

@@ -11,7 +11,7 @@ Uses
   Classes, Graphics,
   Controls, Forms, Dialogs, ExtCtrls, StdCtrls,
   RequestListModel, ComCtrls,
-  Generics.Collections, DataParsers;
+  Generics.Collections, DataParsers, Vcl.Menus;
 
 Type
   TRequestDetailsFrm = Class (TForm)
@@ -20,8 +20,14 @@ Type
     PageControl1: TPageControl;
     HeadersTabSheet: TTabSheet;
     NameValueListView: TListView;
+    HeaderPopupMenu: TPopupMenu;
+    CopyValueMenuItem: TMenuItem;
+    CopyLineMenuItem: TMenuItem;
+    CopyAllMenuItem: TMenuItem;
     Procedure OkButtonClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
+    procedure CopyClick(Sender: TObject);
+    procedure HeaderPopupMenuPopup(Sender: TObject);
   Private
     FRequest : TDriverRequest;
     FParsers : TObjectList<TDataParser>;
@@ -34,7 +40,28 @@ Type
 Implementation
 
 Uses
-  Utils;
+  Clipbrd, Utils;
+
+Procedure TRequestDetailsFrm.CopyClick(Sender: TObject);
+Var
+  L : TListItem;
+  t : WideString;
+begin
+t := '';
+L := NameValueListView.Selected;
+If Sender = CopyValueMenuItem Then
+  t := L.SubItems[0]
+Else If Sender = CopyLineMenuItem Then
+  t := L.Caption + #9 + L.SubItems[0]
+Else If Sender = CopyAllMenuItem Then
+  begin
+  For L In NameValueListView.Items Do
+    t := t + L.Caption + #9 + L.SubItems[0] + #13#10;
+  end;
+
+If t <> '' Then
+  Clipboard.AsText := t;
+end;
 
 Constructor TRequestDetailsFrm.Create(AOwner:TComponent; ARequest:TDriverRequest; AParsers:TObjectList<TDataParser>);
 begin
@@ -118,6 +145,15 @@ With NameValueListVIew.Items.Add Do
 
 If FRequest.DataSize > 0 Then
   ProcessParsers;
+end;
+
+Procedure TRequestDetailsFrm.HeaderPopupMenuPopup(Sender: TObject);
+Var
+  L : TListItem;
+begin
+L := NameValueListView.Selected;
+CopyValueMenuItem.Enabled := Assigned(L);
+CopyLineMenuItem.Enabled := Assigned(L);
 end;
 
 Procedure TRequestDetailsFrm.OkButtonClick(Sender: TObject);
