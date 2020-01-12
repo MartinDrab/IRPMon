@@ -529,6 +529,28 @@ static DWORD _ProcessStandardInformation(PNV_PAIR Pairs, const void *Buffer, ULO
 }
 
 
+static DWORD _ProcessInternalInformation(PNV_PAIR Pairs, const void *Buffer, ULONG Length)
+{
+	DWORD ret = ERROR_GEN_FAILURE;
+	const FILE_INTERNAL_INFORMATION *fii = (PFILE_INTERNAL_INFORMATION)Buffer;
+
+	ret = PBaseAddNameFormat(Pairs, L"INode", L"%llu", fii->IndexNumber.QuadPart);
+
+	return ret;
+}
+
+
+static DWORD _ProcessAccessInformation(PNV_PAIR Pairs, const void *Buffer, ULONG Length)
+{
+	DWORD ret = ERROR_GEN_FAILURE;
+	const FILE_ACCESS_INFORMATION *fai = (PFILE_ACCESS_INFORMATION)Buffer;
+
+	ret = PBaseAddNameFormat(Pairs, L"Access mask", L"0x%x", fai->AccessFlags);
+
+	return ret;
+}
+
+
 static DWORD _ProcessDispositionInformation(PNV_PAIR Pairs, const void *Buffer, ULONG Length)
 {
 	DWORD ret = ERROR_GEN_FAILURE;
@@ -647,6 +669,12 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 				break;
 			case FileStandardInformation:
 				ret = _ProcessStandardInformation(&p, buffer, bufferLength);
+				break;
+			case FileInternalInformation:
+				ret = _ProcessInternalInformation(&p, buffer, bufferLength);
+				break;
+			case FileAccessInformation:
+				ret = _ProcessAccessInformation(&p, buffer, bufferLength);
 				break;
 			case FileDispositionInformation:
 				ret = _ProcessDispositionInformation(&p, buffer, bufferLength);
