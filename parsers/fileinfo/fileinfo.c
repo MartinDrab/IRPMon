@@ -451,9 +451,50 @@ static BOOLEAN _hideZeroValues = TRUE;
 
 
 
+static DWORD _ProcessFileTime(PNV_PAIR Pairs, const wchar_t *Name, const LARGE_INTEGER *Time)
+{
+	SYSTEMTIME st;
+	DWORD ret = ERROR_GEN_FAILURE;
+
+	ret = ERROR_SUCCESS;
+	switch (Time->QuadPart) {
+		case 0:
+			ret = PBaseAddNameValue(Pairs, Name, L"<keep unchanged>");
+			break;
+		case -1:
+			ret = PBaseAddNameValue(Pairs, Name, L"<stop updating>");
+			break;
+		case -2:
+			ret = PBaseAddNameValue(Pairs, Name, L"<start updating>");
+			break;
+		default:
+			if (FileTimeToSystemTime((PFILETIME)Time, &st))
+				ret = PBaseAddNameFormat(Pairs, Name, L"%.4u-%.2u-%.2u %.2u:%.2u:%.2u:%.3u", st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+			else ret = GetLastError();
+			break;
+	}
+
+	return ret;
+}
+
+
 static DWORD _ProcessBasicInformation(PNV_PAIR Pairs, const void *Buffer, ULONG Length)
 {
 	DWORD ret = ERROR_GEN_FAILURE;
+	const FILE_BASIC_INFORMATION *fbi = (PFILE_BASIC_INFORMATION)Buffer;
+
+	ret = _ProcessFileTime(Pairs, L"Created", &fbi->CreationTime);
+	if (ret == ERROR_SUCCESS)
+		ret = _ProcessFileTime(Pairs, L"Last written", &fbi->LastWriteTime);
+	
+	if (ret == ERROR_SUCCESS)
+		ret = _ProcessFileTime(Pairs, L"Last accessed", &fbi->LastAccessTime);
+	
+	if (ret == ERROR_SUCCESS)
+		ret = _ProcessFileTime(Pairs, L"Metadata changed", &fbi->ChangeTime);
+
+	if (ret == ERROR_SUCCESS)
+		ret = PBaseAddNameFormat(Pairs, L"File attributes", L"0x%x", fbi->FileAttributes);
 
 	return ret;
 }
