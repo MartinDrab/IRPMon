@@ -540,6 +540,17 @@ static DWORD _ProcessInternalInformation(PNV_PAIR Pairs, const void *Buffer, ULO
 }
 
 
+static DWORD _ProcessEAInformation(PNV_PAIR Pairs, const void *Buffer, ULONG Length)
+{
+	DWORD ret = ERROR_GEN_FAILURE;
+	const FILE_EA_INFORMATION *feai = (PFILE_EA_INFORMATION)Buffer;
+
+	ret = PBaseAddNameFormat(Pairs, L"EA Size", L"%u", feai->EaSize);
+
+	return ret;
+}
+
+
 static DWORD _ProcessAccessInformation(PNV_PAIR Pairs, const void *Buffer, ULONG Length)
 {
 	DWORD ret = ERROR_GEN_FAILURE;
@@ -672,6 +683,9 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 				break;
 			case FileInternalInformation:
 				ret = _ProcessInternalInformation(&p, buffer, bufferLength);
+				break;
+			case FileEaInformation:
+				ret = _ProcessEAInformation(&p, buffer, bufferLength);
 				break;
 			case FileAccessInformation:
 				ret = _ProcessAccessInformation(&p, buffer, bufferLength);
