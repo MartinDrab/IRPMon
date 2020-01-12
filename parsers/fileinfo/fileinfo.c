@@ -529,6 +529,34 @@ static DWORD _ProcessStandardInformation(PNV_PAIR Pairs, const void *Buffer, ULO
 }
 
 
+static DWORD _ProcessNetworkOpenInformation(PNV_PAIR Pairs, const void *Buffer, ULONG Length)
+{
+	DWORD ret = ERROR_GEN_FAILURE;
+	const FILE_NETWORK_OPEN_INFORMATION *fnoi = (PFILE_NETWORK_OPEN_INFORMATION)Buffer;
+
+	ret = _ProcessFileTime(Pairs, L"Created", &fnoi->CreationTime);
+	if (ret == ERROR_SUCCESS)
+		ret = _ProcessFileTime(Pairs, L"Last written", &fnoi->LastWriteTime);
+
+	if (ret == ERROR_SUCCESS)
+		ret = _ProcessFileTime(Pairs, L"Last accessed", &fnoi->LastAccessTime);
+
+	if (ret == ERROR_SUCCESS)
+		ret = _ProcessFileTime(Pairs, L"Metadata changed", &fnoi->ChangeTime);
+
+	if (ret == ERROR_SUCCESS)
+		ret = PBaseAddNameFormat(Pairs, L"File attributes", L"0x%x", fnoi->FileAttributes);
+
+	if (ret == ERROR_SUCCESS)
+		ret = PBaseAddNameFormat(Pairs, L"Allocation size", L"%llu", fnoi->AllocationSize.QuadPart);
+
+	if (ret == ERROR_SUCCESS)
+		ret = PBaseAddNameFormat(Pairs, L"End of file", L"%llu", fnoi->EndOfFile.QuadPart);
+
+	return ret;
+}
+
+
 static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST_EXTRA_INFO *ExtraInfo, PBOOLEAN Handled, wchar_t ***Names, wchar_t ***Values, size_t *RowCount)
 {
 	NV_PAIR p;
@@ -597,6 +625,9 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 				break;
 			case FileStandardInformation:
 				ret = _ProcessStandardInformation(&p, buffer, bufferLength);
+				break;
+			case FileNetworkOpenInformation:
+				ret = _ProcessNetworkOpenInformation(&p, buffer, bufferLength);
 				break;
 		}
 
