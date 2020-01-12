@@ -529,6 +529,16 @@ static DWORD _ProcessStandardInformation(PNV_PAIR Pairs, const void *Buffer, ULO
 }
 
 
+static DWORD _ProcessDispositionInformation(PNV_PAIR Pairs, const void *Buffer, ULONG Length)
+{
+	DWORD ret = ERROR_GEN_FAILURE;
+	const FILE_DISPOSITION_INFORMATION *fdi = (PFILE_DISPOSITION_INFORMATION)Buffer;
+
+	ret = PBaseAddNameFormat(Pairs, L"DeleteFile", L"%u", fdi->DeleteFileW);
+
+	return ret;
+}
+
 static DWORD _ProcessNetworkOpenInformation(PNV_PAIR Pairs, const void *Buffer, ULONG Length)
 {
 	DWORD ret = ERROR_GEN_FAILURE;
@@ -625,6 +635,9 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 				break;
 			case FileStandardInformation:
 				ret = _ProcessStandardInformation(&p, buffer, bufferLength);
+				break;
+			case FileDispositionInformation:
+				ret = _ProcessDispositionInformation(&p, buffer, bufferLength);
 				break;
 			case FileNetworkOpenInformation:
 				ret = _ProcessNetworkOpenInformation(&p, buffer, bufferLength);
