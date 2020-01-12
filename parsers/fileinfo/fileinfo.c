@@ -503,6 +503,27 @@ static DWORD _ProcessBasicInformation(PNV_PAIR Pairs, const void *Buffer, ULONG 
 static DWORD _ProcessStandardInformation(PNV_PAIR Pairs, const void *Buffer, ULONG Length)
 {
 	DWORD ret = ERROR_GEN_FAILURE;
+	const FILE_STANDARD_INFORMATION *fsi = (PFILE_STANDARD_INFORMATION)Buffer;
+	const FILE_STANDARD_INFORMATION_EX *fsiex = (PFILE_STANDARD_INFORMATION_EX)Buffer;
+
+	ret = PBaseAddNameFormat(Pairs, L"Allocation size", L"%llu", fsiex->AllocationSize.QuadPart);
+	if (ret == ERROR_SUCCESS)
+		ret = PBaseAddNameFormat(Pairs, L"End of file", L"%llu", fsiex->EndOfFile.QuadPart);
+	
+	if (ret == ERROR_SUCCESS)
+		ret = PBaseAddNameFormat(Pairs, L"Number of links", L"%u", fsiex->NumberOfLinks);
+	
+	if (ret == ERROR_SUCCESS)
+		ret = PBaseAddNameFormat(Pairs, L"Delete pending", L"%u", fsiex->DeletePending);
+	
+	if (ret == ERROR_SUCCESS)
+		ret = PBaseAddNameFormat(Pairs, L"Directory", L"%u", fsiex->Directory);
+	
+	if (ret == ERROR_SUCCESS)
+		ret = PBaseAddNameFormat(Pairs, L"Alternate stream", L"%u", fsiex->AlternateStream);
+	
+	if (ret == ERROR_SUCCESS)
+		ret = PBaseAddNameFormat(Pairs, L"Metadata attribute", L"%u", fsiex->MetadataAttribute);
 
 	return ret;
 }
