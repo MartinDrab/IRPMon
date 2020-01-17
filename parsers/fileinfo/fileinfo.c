@@ -12,6 +12,12 @@
 #define IRP_MJ_SET_INFORMATION				0x6
 
 
+typedef struct _UNICODE_STRING {
+	USHORT Length;
+	USHORT MaximumLength;
+	PWSTR  Buffer;
+} UNICODE_STRING, * PUNICODE_STRING;
+
 typedef enum _FILE_INFORMATION_CLASS {
 	FileDirectoryInformation = 1,
 	FileFullDirectoryInformation,                   // 2
@@ -562,6 +568,97 @@ static DWORD _ProcessAccessInformation(PNV_PAIR Pairs, const void *Buffer, ULONG
 }
 
 
+static DWORD _ProcessNameInformation(PNV_PAIR Pairs, const void* Buffer, ULONG Length)
+{
+	UNICODE_STRING uName;
+	DWORD ret = ERROR_GEN_FAILURE;
+	const FILE_NAME_INFORMATION* fni = (PFILE_NAME_INFORMATION)Buffer;
+
+	uName.Length = (USHORT)fni->FileNameLength;
+	if (Length < fni->FileNameLength + FIELD_OFFSET(FILE_NAME_INFORMATION, FileName))
+		uName.Length = (USHORT)(Length - FIELD_OFFSET(FILE_NAME_INFORMATION, FileName));
+
+	uName.MaximumLength = uName.Length;
+	uName.Buffer = (PWCH)fni->FileName;
+	ret = PBaseAddNameFormat(Pairs, L"Name", L"%wZ", &uName);
+
+	return ret;
+}
+
+
+static DWORD _ProcessRenameInformation(PNV_PAIR Pairs, const void* Buffer, ULONG Length)
+{
+	UNICODE_STRING uName;
+	DWORD ret = ERROR_GEN_FAILURE;
+	const FILE_RENAME_INFORMATION* fri = (PFILE_RENAME_INFORMATION)Buffer;
+
+	uName.Length = (USHORT)fri->FileNameLength;
+	if (Length < fri->FileNameLength + FIELD_OFFSET(FILE_RENAME_INFORMATION, FileName))
+		uName.Length = (USHORT)(Length - FIELD_OFFSET(FILE_RENAME_INFORMATION, FileName));
+
+	uName.MaximumLength = uName.Length;
+	uName.Buffer = (PWCH)fri->FileName;
+	ret = PBaseAddNameFormat(Pairs, L"Name", L"%wZ", &uName);
+	if (ret == ERROR_SUCCESS)
+		ret = PBaseAddNameFormat(Pairs, L"Replace existing", L"%u", fri->ReplaceIfExists);
+
+	if (ret == ERROR_SUCCESS)
+		ret = PBaseAddNameFormat(Pairs, L"Root handle", L"0x%p", fri->RootDirectory);
+
+	return ret;
+}
+
+
+static DWORD _ProcessLinkInformation(PNV_PAIR Pairs, const void* Buffer, ULONG Length)
+{
+	UNICODE_STRING uName;
+	DWORD ret = ERROR_GEN_FAILURE;
+	const FILE_LINK_INFORMATION* fli = (PFILE_LINK_INFORMATION)Buffer;
+
+	uName.Length = (USHORT)fli->FileNameLength;
+	if (Length < fli->FileNameLength + FIELD_OFFSET(FILE_LINK_INFORMATION, FileName))
+		uName.Length = (USHORT)(Length - FIELD_OFFSET(FILE_LINK_INFORMATION, FileName));
+	
+	uName.MaximumLength = uName.Length;
+	uName.Buffer = (PWCH)fli->FileName;
+	ret = PBaseAddNameFormat(Pairs, L"Name", L"%wZ", &uName);
+	if (ret == ERROR_SUCCESS)
+		ret = PBaseAddNameFormat(Pairs, L"Replace existing", L"%u", fli->ReplaceIfExists);
+
+	if (ret == ERROR_SUCCESS)
+		ret = PBaseAddNameFormat(Pairs, L"Root handle", L"0x%p", fli->RootDirectory);
+
+	return ret;
+}
+
+
+static DWORD _ProcessNamesInformation(PNV_PAIR Pairs, const void* Buffer, ULONG Length)
+{
+	UNICODE_STRING uName;
+	DWORD ret = ERROR_GEN_FAILURE;
+	const FILE_NAMES_INFORMATION* fnsi = (PFILE_NAMES_INFORMATION)Buffer;
+
+	do {
+		uName.Length = (USHORT)fnsi->FileNameLength;
+		if (Length < fnsi->FileNameLength + FIELD_OFFSET(FILE_NAME_INFORMATION, FileName))
+			uName.Length = (USHORT)(Length - FIELD_OFFSET(FILE_NAME_INFORMATION, FileName));
+
+		uName.MaximumLength = uName.Length;
+		uName.Buffer = (PWCH)fnsi->FileName;
+		ret = PBaseAddNameFormat(Pairs, L"Index", L"%u", fnsi->FileIndex);
+		if (ret == ERROR_SUCCESS)
+			ret = PBaseAddNameFormat(Pairs, L"Name", L"%wZ", &uName);
+		
+		if (fnsi->NextEntryOffset == 0)
+			break;
+
+		fnsi = (PFILE_NAMES_INFORMATION)((unsigned char *)fnsi + fnsi->NextEntryOffset);
+	} while (ret == ERROR_SUCCESS);
+
+	return ret;
+}
+
+
 static DWORD _ProcessDispositionInformation(PNV_PAIR Pairs, const void *Buffer, ULONG Length)
 {
 	DWORD ret = ERROR_GEN_FAILURE;
@@ -689,6 +786,19 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 				break;
 			case FileAccessInformation:
 				ret = _ProcessAccessInformation(&p, buffer, bufferLength);
+				break;
+
+			case FileNameInformation:
+				ret = _ProcessNameInformation(&p, buffer, bufferLength);
+				break;
+			case FileRenameInformation:
+				ret = _ProcessRenameInformation(&p, buffer, bufferLength);
+				break;
+			case FileLinkInformation:
+				ret = _ProcessLinkInformation(&p, buffer, bufferLength);
+				break;
+			case FileNamesInformation:
+				ret = _ProcessNamesInformation(&p, buffer, bufferLength);
 				break;
 			case FileDispositionInformation:
 				ret = _ProcessDispositionInformation(&p, buffer, bufferLength);
