@@ -709,6 +709,46 @@ static DWORD _ProcessNetworkOpenInformation(PNV_PAIR Pairs, const void *Buffer, 
 }
 
 
+typedef struct _FILE_FULL_EA_INFORMATION {
+	ULONG  NextEntryOffset;
+	UCHAR  Flags;
+	UCHAR  EaNameLength;
+	USHORT EaValueLength;
+	CHAR   EaName[1];
+} FILE_FULL_EA_INFORMATION, * PFILE_FULL_EA_INFORMATION;
+
+
+static DWORD _ProcessFullEaInformation(PNV_PAIR Pairs, const void* Buffer, ULONG Length)
+{
+	ULONG index = 0;
+	DWORD ret = ERROR_GEN_FAILURE;
+	const FILE_FULL_EA_INFORMATION* ffeai = (PFILE_FULL_EA_INFORMATION)Buffer;
+
+	do {
+		ret = PBaseAddNameFormat(Pairs, L"Extended attribute", L"%u", index);
+		if (ret == ERROR_SUCCESS)
+			ret = PBaseAddNameFormat(Pairs, L"  Flags", L"0x%x", ffeai->Flags);
+		
+		if (ret == ERROR_SUCCESS)
+			ret = PBaseAddNameFormat(Pairs, L"  Data length", L"%u", ffeai->EaValueLength);
+
+		if (ret == ERROR_SUCCESS)
+			ret = PBaseAddNameFormat(Pairs, L"  Name length", L"%u", ffeai->EaNameLength);
+
+		if (ret == ERROR_SUCCESS)
+			ret = PBaseAddNameFormat(Pairs, L"  Name", L"%as", ffeai->EaName);
+
+		if (ffeai->NextEntryOffset == 0)
+			break;
+
+		ffeai = (PFILE_FULL_EA_INFORMATION)((unsigned char *)ffeai + ffeai->NextEntryOffset);
+		++index;
+	} while (ret == ERROR_SUCCESS);
+
+	return ret;
+}
+
+
 static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST_EXTRA_INFO *ExtraInfo, PBOOLEAN Handled, wchar_t ***Names, wchar_t ***Values, size_t *RowCount)
 {
 	NV_PAIR p;
@@ -787,7 +827,6 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 			case FileAccessInformation:
 				ret = _ProcessAccessInformation(&p, buffer, bufferLength);
 				break;
-
 			case FileNameInformation:
 				ret = _ProcessNameInformation(&p, buffer, bufferLength);
 				break;
@@ -805,6 +844,9 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 				break;
 			case FilePositionInformation:
 				ret = _ProcessPositionInformation(&p, buffer, bufferLength);
+				break;
+			case FileFullEaInformation:
+				ret = _ProcessFullEaInformation(&p, buffer, bufferLength);
 				break;
 			case FileNetworkOpenInformation:
 				ret = _ProcessNetworkOpenInformation(&p, buffer, bufferLength);
