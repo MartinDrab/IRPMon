@@ -11,6 +11,13 @@
 #define IRP_MJ_QUERY_INFORMATION			0x5
 #define IRP_MJ_SET_INFORMATION				0x6
 
+#define FILE_WRITE_THROUGH                      0x00000002
+#define FILE_SEQUENTIAL_ONLY                    0x00000004
+#define FILE_NO_INTERMEDIATE_BUFFERING          0x00000008
+#define FILE_SYNCHRONOUS_IO_ALERT               0x00000010
+#define FILE_SYNCHRONOUS_IO_NONALERT            0x00000020
+#define FILE_DELETE_ON_CLOSE                    0x00001000
+
 
 typedef struct _UNICODE_STRING {
 	USHORT Length;
@@ -749,6 +756,99 @@ static DWORD _ProcessFullEaInformation(PNV_PAIR Pairs, const void* Buffer, ULONG
 }
 
 
+static DWORD _ProcessModeInformation(PNV_PAIR Pairs, const void* Buffer, ULONG Length)
+{
+	ULONG index = 0;
+	DWORD ret = ERROR_GEN_FAILURE;
+	const FILE_MODE_INFORMATION* fmi = (PFILE_MODE_INFORMATION)Buffer;
+	const DWORD flagValues[] = {
+		FILE_WRITE_THROUGH,
+		FILE_SEQUENTIAL_ONLY,
+		FILE_NO_INTERMEDIATE_BUFFERING,
+		FILE_SYNCHRONOUS_IO_ALERT,
+		FILE_SYNCHRONOUS_IO_NONALERT,
+		FILE_DELETE_ON_CLOSE,
+	};
+	const wchar_t* flagNames[] = {
+		L"WriteThrough",
+		L"SequentialOnly",
+		L"NoIntermediateBuffering",
+		L"SynchronousIOAlert",
+		L"SynchronousIONoAlert",
+		L"DeleteOnClose",
+	};
+
+
+	ret = PBaseAddNameFormat(Pairs, L"Value", L"0x%x", fmi->Mode);
+	for (size_t i = 0; i < sizeof(flagValues) / sizeof(flagValues[0]); ++i) {
+		ret = PBaseAddNameFormat(Pairs, flagNames[i], L"%u", (fmi->Mode & flagValues[i]) != 0);
+		if (ret != ERROR_SUCCESS)
+			break;
+	}
+
+	return ret;
+}
+
+
+static DWORD _ProcessAlignmentInformation(PNV_PAIR Pairs, const void* Buffer, ULONG Length)
+{
+	ULONG index = 0;
+	DWORD ret = ERROR_GEN_FAILURE;
+	const FILE_ALIGNMENT_INFORMATION* fai = (PFILE_ALIGNMENT_INFORMATION)Buffer;
+
+	ret = PBaseAddNameFormat(Pairs, L"Alignment", L"%u", fai->AlignmentRequirement);
+
+	return ret;
+}
+
+
+static DWORD _ProcessAllInformation(PNV_PAIR Pairs, const void* Buffer, ULONG Length)
+{
+	ULONG index = 0;
+	DWORD ret = ERROR_GEN_FAILURE;
+	const FILE_ALL_INFORMATION* fai = (PFILE_ALL_INFORMATION)Buffer;
+
+	ret = _ProcessBasicInformation(Pairs, &fai->BasicInformation, sizeof(fai->BasicInformation));
+	if (ret == ERROR_SUCCESS)
+		ret = _ProcessStandardInformation(Pairs, &fai->StandardInformation, sizeof(fai->StandardInformation));
+	
+	if (ret == ERROR_SUCCESS)
+		ret = _ProcessInternalInformation(Pairs, &fai->InternalInformation, sizeof(fai->InternalInformation));
+	
+	if (ret == ERROR_SUCCESS)
+		ret = _ProcessEAInformation(Pairs, &fai->EaInformation, sizeof(fai->EaInformation));
+	
+	if (ret == ERROR_SUCCESS)
+		ret = _ProcessAccessInformation(Pairs, &fai->AccessInformation, sizeof(fai->AccessInformation));
+	
+	if (ret == ERROR_SUCCESS)
+		ret = _ProcessPositionInformation(Pairs, &fai->PositionInformation, sizeof(fai->PositionInformation));
+	
+	if (ret == ERROR_SUCCESS)
+		ret = _ProcessModeInformation(Pairs, &fai->ModeInformation, sizeof(fai->ModeInformation));
+	
+	if (ret == ERROR_SUCCESS)
+		ret = _ProcessAlignmentInformation(Pairs, &fai->AlignmentInformation, sizeof(fai->AlignmentInformation));
+	
+	if (ret == ERROR_SUCCESS)
+		ret = _ProcessNameInformation(Pairs, &fai->NameInformation, Length - FIELD_OFFSET(FILE_ALL_INFORMATION, NameInformation));
+
+	return ret;
+}
+
+
+static DWORD _ProcessAllocationInformation(PNV_PAIR Pairs, const void* Buffer, ULONG Length)
+{
+	ULONG index = 0;
+	DWORD ret = ERROR_GEN_FAILURE;
+	const FILE_ALLOCATION_INFORMATION* fai = (PFILE_ALLOCATION_INFORMATION)Buffer;
+
+	ret = PBaseAddNameFormat(Pairs, L"Allocation size", L"%llu", fai->AllocationSize.QuadPart);
+
+	return ret;
+}
+
+
 static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST_EXTRA_INFO *ExtraInfo, PBOOLEAN Handled, wchar_t ***Names, wchar_t ***Values, size_t *RowCount)
 {
 	NV_PAIR p;
@@ -847,6 +947,18 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 				break;
 			case FileFullEaInformation:
 				ret = _ProcessFullEaInformation(&p, buffer, bufferLength);
+				break;
+			case FileModeInformation:
+				ret = _ProcessModeInformation(&p, buffer, bufferLength);
+				break;
+			case FileAlignmentInformation:
+				ret = _ProcessAlignmentInformation(&p, buffer, bufferLength);
+				break;
+			case FileAllInformation:
+				ret = _ProcessAllInformation(&p, buffer, bufferLength);
+				break;
+			case FileAllocationInformation:
+				ret = _ProcessAllocationInformation(&p, buffer, bufferLength);
 				break;
 			case FileNetworkOpenInformation:
 				ret = _ProcessNetworkOpenInformation(&p, buffer, bufferLength);
