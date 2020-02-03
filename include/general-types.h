@@ -218,6 +218,7 @@ typedef struct _REQUEST_FASTIO {
 	PVOID FileObject;
 	LONG IOSBStatus;
 	ULONG_PTR IOSBInformation;
+	ULONG DataSize;
 } REQUEST_FASTIO, *PREQUEST_FASTIO;
 
 /** Represent an AddDevice event indicating that an AddDevice routine of a
