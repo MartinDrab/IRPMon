@@ -26,6 +26,7 @@
 
 static ERESOURCE _createCloseLock;
 static volatile LONG _openHandles = 0;
+static PDEVICE_OBJECT _controlDeviceObject = NULL;
 
 /************************************************************************/
 /*                            HELPER FUNCTIONS                          */
@@ -73,33 +74,35 @@ NTSTATUS DriverCreateCleanup(PDEVICE_OBJECT DeviceObject, PIRP Irp)
 {
 	PIO_STACK_LOCATION irpStack = NULL;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
-	DEBUG_ENTER_FUNCTION("DeviceObject=0x%p; Irp=0x%p", DeviceObject, Irp);
 
-	UNREFERENCED_PARAMETER(DeviceObject);
+	if (DeviceObject == _controlDeviceObject) {
+		DEBUG_ENTER_FUNCTION("DeviceObject=0x%p; Irp=0x%p", DeviceObject, Irp);
 
-	KeEnterCriticalRegion();
-	ExAcquireResourceExclusiveLite(&_createCloseLock, TRUE);
-	irpStack = IoGetCurrentIrpStackLocation(Irp);
-	if (irpStack->MajorFunction == IRP_MJ_CLEANUP) {
-		UMRequestQueueDisconnect();
-		UMDeleteHandlesForProcess(PsGetCurrentProcess());
-	}
+		KeEnterCriticalRegion();
+		ExAcquireResourceExclusiveLite(&_createCloseLock, TRUE);
+		irpStack = IoGetCurrentIrpStackLocation(Irp);
+		if (irpStack->MajorFunction == IRP_MJ_CLEANUP) {
+			UMRequestQueueDisconnect();
+			UMDeleteHandlesForProcess(PsGetCurrentProcess());
+		}
 
-	ExReleaseResourceLite(&_createCloseLock);
-	KeLeaveCriticalRegion();
-	status = STATUS_SUCCESS;
-	if (irpStack->MajorFunction == IRP_MJ_CREATE) {
+		ExReleaseResourceLite(&_createCloseLock);
+		KeLeaveCriticalRegion();
+		status = STATUS_SUCCESS;
+		if (irpStack->MajorFunction == IRP_MJ_CREATE) {
 #if defined(_AMD64_) || defined(_IA64_)
-		status = _Wow64Check();
+			status = _Wow64Check();
 #endif
-		if (NT_SUCCESS(status))
-			Irp->IoStatus.Information = FILE_OPENED;
-	}
+			if (NT_SUCCESS(status))
+				Irp->IoStatus.Information = FILE_OPENED;
+		}
 
-	Irp->IoStatus.Status = status;
-	IoCompleteRequest(Irp, IO_NO_INCREMENT);
+		Irp->IoStatus.Status = status;
+		IoCompleteRequest(Irp, IO_NO_INCREMENT);
 
-	DEBUG_EXIT_FUNCTION("0x%x", status);
+		DEBUG_EXIT_FUNCTION("0x%x", status);
+	} else status = HookHandlerIRPDisptach(DeviceObject, Irp);
+
 	return status;
 }
 
@@ -227,36 +230,39 @@ NTSTATUS DriverDeviceControl(PDEVICE_OBJECT DeviceObject, PIRP Irp)
 	ULONG outputBufferLength = 0;
 	PIO_STACK_LOCATION irpSp = NULL;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
-	DEBUG_ENTER_FUNCTION("DeviceObject=0x%p; Irp=0x%p", DeviceObject, Irp);
+	
+	if (DeviceObject == _controlDeviceObject) {
+		DEBUG_ENTER_FUNCTION("DeviceObject=0x%p; Irp=0x%p", DeviceObject, Irp);
 
-	UNREFERENCED_PARAMETER(DeviceObject);
-	irpSp = IoGetCurrentIrpStackLocation(Irp);
-	controlCode = irpSp->Parameters.DeviceIoControl.IoControlCode;
-	inputBufferLength = irpSp->Parameters.DeviceIoControl.InputBufferLength;
-	outputBufferLength = irpSp->Parameters.DeviceIoControl.OutputBufferLength;
-	inputBuffer = irpSp->Parameters.DeviceIoControl.Type3InputBuffer;
-	outputBuffer = Irp->UserBuffer;
-	status = _HandleCDORequest(controlCode, inputBuffer, inputBufferLength, outputBuffer, outputBufferLength, &Irp->IoStatus);	
-	IoCompleteRequest(Irp, IO_NO_INCREMENT);
+		irpSp = IoGetCurrentIrpStackLocation(Irp);
+		controlCode = irpSp->Parameters.DeviceIoControl.IoControlCode;
+		inputBufferLength = irpSp->Parameters.DeviceIoControl.InputBufferLength;
+		outputBufferLength = irpSp->Parameters.DeviceIoControl.OutputBufferLength;
+		inputBuffer = irpSp->Parameters.DeviceIoControl.Type3InputBuffer;
+		outputBuffer = Irp->UserBuffer;
+		status = _HandleCDORequest(controlCode, inputBuffer, inputBufferLength, outputBuffer, outputBufferLength, &Irp->IoStatus);
+		IoCompleteRequest(Irp, IO_NO_INCREMENT);
 
-	DEBUG_EXIT_FUNCTION("0x%x", status);
+		DEBUG_EXIT_FUNCTION("0x%x", status);
+	} else status = HookHandlerIRPDisptach(DeviceObject, Irp);
+
 	return status;
 }
 
 BOOLEAN DriverFastIoDeviceControl(PFILE_OBJECT FileObject, BOOLEAN Wait, PVOID InputBuffer, ULONG InputBufferLength, PVOID OutputBuffer, ULONG OutputBufferLength, ULONG ControlCode, PIO_STATUS_BLOCK IoStatusBlock, PDEVICE_OBJECT DeviceObject)
 {
 	BOOLEAN ret = FALSE;
-	DEBUG_ENTER_FUNCTION("FileObject=0x%p; Wait=%u; InputBuffer=0x%p; InputBufferLength=%u; OutputBuffer=0x%p; OutputBufferLength=%u; ControlCode=0x%x; IoStatusBlock=0x%p; DeviceObject=0x%p",
-		FileObject, Wait, InputBuffer, InputBufferLength, OutputBuffer, OutputBufferLength, ControlCode, IoStatusBlock, DeviceObject);
 
-	UNREFERENCED_PARAMETER(FileObject);
-	UNREFERENCED_PARAMETER(DeviceObject);
-	UNREFERENCED_PARAMETER(Wait);
-	
-	_HandleCDORequest(ControlCode, InputBuffer, InputBufferLength, OutputBuffer, OutputBufferLength, IoStatusBlock);
-	ret = TRUE;
+	if (DeviceObject == _controlDeviceObject) {
+		DEBUG_ENTER_FUNCTION("FileObject=0x%p; Wait=%u; InputBuffer=0x%p; InputBufferLength=%u; OutputBuffer=0x%p; OutputBufferLength=%u; ControlCode=0x%x; IoStatusBlock=0x%p; DeviceObject=0x%p",
+			FileObject, Wait, InputBuffer, InputBufferLength, OutputBuffer, OutputBufferLength, ControlCode, IoStatusBlock, DeviceObject);
 
-	DEBUG_EXIT_FUNCTION("%u", ret);
+		_HandleCDORequest(ControlCode, InputBuffer, InputBufferLength, OutputBuffer, OutputBufferLength, IoStatusBlock);
+		ret = TRUE;
+
+		DEBUG_EXIT_FUNCTION("%u", ret);
+	} else ret = HookHandlerFastIoDeviceControl(FileObject, Wait, InputBuffer, InputBufferLength, OutputBuffer, OutputBufferLength, ControlCode, IoStatusBlock, DeviceObject);
+
 	return ret;
 }
 
@@ -278,17 +284,19 @@ VOID DriverUnload(PDRIVER_OBJECT DriverObject)
 NTSTATUS DriverShutdown(PDEVICE_OBJECT DeviceObject, PIRP Irp)
 {
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
-	DEBUG_ENTER_FUNCTION("DeviceObject=0x%p; Irp=0x%p", DeviceObject, Irp);
 
-	UNREFERENCED_PARAMETER(DeviceObject);
+	if (DeviceObject == _controlDeviceObject) {
+		DEBUG_ENTER_FUNCTION("DeviceObject=0x%p; Irp=0x%p", DeviceObject, Irp);
 
-	PDWClassWatchesUnregister();
-	status = STATUS_SUCCESS;
-	Irp->IoStatus.Status = status;
-	Irp->IoStatus.Information = 0;
-	IoCompleteRequest(Irp, IO_NO_INCREMENT);
+		PDWClassWatchesUnregister();
+		status = STATUS_SUCCESS;
+		Irp->IoStatus.Status = status;
+		Irp->IoStatus.Information = 0;
+		IoCompleteRequest(Irp, IO_NO_INCREMENT);
 
-	DEBUG_EXIT_FUNCTION("0x%x", status);
+		DEBUG_EXIT_FUNCTION("0x%x", status);
+	} else status = HookHandlerIRPDisptach(DeviceObject, Irp);
+
 	return status;
 }
 
@@ -327,6 +335,9 @@ NTSTATUS DriverInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, P
 					DriverObject->MajorFunction[IRP_MJ_SHUTDOWN] = DriverShutdown;
 					fastIoDispatch->FastIoDeviceControl = DriverFastIoDeviceControl;
 					status = IoRegisterShutdownNotification(cdo);
+					if (NT_SUCCESS(status))
+						_controlDeviceObject = cdo;
+					
 					if (!NT_SUCCESS(status))
 						IoDeleteSymbolicLink(&uLinkName);
 				}
