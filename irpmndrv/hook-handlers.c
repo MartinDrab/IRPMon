@@ -134,9 +134,8 @@ BOOLEAN HookHandlerFastIoCheckIfPossible(PFILE_OBJECT FileObject, PLARGE_INTEGER
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
+	_GetHookRecords(&DeviceObject, &driverRecord, &deviceRecord);
 	if (driverRecord != NULL) {
-		deviceRecord = DriverHookRecordGetDevice(driverRecord, DeviceObject);
 		if (_CatchRequest(driverRecord, deviceRecord, DeviceObject))
 			request = _CreateFastIoRequest(FastIoCheckIfPossible, DeviceObject->DriverObject, DeviceObject, FileObject, (PVOID)FileOffset->LowPart, (PVOID)FileOffset->HighPart, (PVOID)Length, (PVOID)CheckForReadOperation, (PVOID)Wait, (PVOID)LockKey, NULL);
 
@@ -169,9 +168,8 @@ VOID HookHandlerFastIoDetachDevice(PDEVICE_OBJECT SourceDevice, PDEVICE_OBJECT T
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	driverRecord = DriverHookRecordGet(SourceDevice->DriverObject);
+	_GetHookRecords(&SourceDevice, &driverRecord, &deviceRecord);
 	if (driverRecord != NULL) {
-		deviceRecord = DriverHookRecordGetDevice(driverRecord, SourceDevice);
 		if (_CatchRequest(driverRecord, deviceRecord, SourceDevice))
 			request = _CreateFastIoRequest(FastIoDetachDevice, SourceDevice->DriverObject, SourceDevice, NULL, SourceDevice, TargetDevice, NULL, NULL, NULL, NULL, NULL);
 
@@ -198,9 +196,8 @@ BOOLEAN HookHandlerFastIoDeviceControl(PFILE_OBJECT FileObject, BOOLEAN Wait, PV
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
+	_GetHookRecords(&DeviceObject, &driverRecord, &deviceRecord);
 	if (driverRecord != NULL) {
-		deviceRecord = DriverHookRecordGetDevice(driverRecord, DeviceObject);
 		if (_CatchRequest(driverRecord, deviceRecord, DeviceObject))
 			request = _CreateFastIoRequest(FastIoDeviceControl, DeviceObject->DriverObject, DeviceObject, FileObject, (PVOID)OutputBufferLength, (PVOID)InputBufferLength, (PVOID)ControlCode, (PVOID)Wait, InputBuffer, OutputBuffer, NULL);
 
@@ -234,9 +231,8 @@ BOOLEAN HookHandlerFastIoLock(PFILE_OBJECT FileObject, PLARGE_INTEGER FileOffset
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
+	_GetHookRecords(&DeviceObject, &driverRecord, &deviceRecord);
 	if (driverRecord != NULL) {
-		deviceRecord = DriverHookRecordGetDevice(driverRecord, DeviceObject);
 		if (_CatchRequest(driverRecord, deviceRecord, DeviceObject))
 			request = _CreateFastIoRequest(FastIoLock, DeviceObject->DriverObject, DeviceObject, FileObject, (PVOID)FileOffset->LowPart, (PVOID)FileOffset->HighPart, (PVOID)Length->LowPart, (PVOID)Length->HighPart, (PVOID)(((FailImmediately != 0) << 1) + (Exclusive != 0)), ProcessId, (PVOID)Key);
 
@@ -270,9 +266,8 @@ BOOLEAN HookHandlerFastIoQueryBasicInfo(PFILE_OBJECT FileObject, BOOLEAN Wait, P
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
+	_GetHookRecords(&DeviceObject, &driverRecord, &deviceRecord);
 	if (driverRecord != NULL) {
-		deviceRecord = DriverHookRecordGetDevice(driverRecord, DeviceObject);
 		if (_CatchRequest(driverRecord, deviceRecord, DeviceObject))
 			request = _CreateFastIoRequest(FastIoQueryBasicInfo, DeviceObject->DriverObject, DeviceObject, FileObject, Buffer, (PVOID)Wait, NULL, NULL, NULL, NULL, NULL);
 
@@ -317,9 +312,8 @@ BOOLEAN HookHandlerFastIoQueryNetworkOpenInfo(PFILE_OBJECT FileObject, BOOLEAN W
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
+	_GetHookRecords(&DeviceObject, &driverRecord, &deviceRecord);
 	if (driverRecord != NULL) {
-		deviceRecord = DriverHookRecordGetDevice(driverRecord, DeviceObject);
 		if (_CatchRequest(driverRecord, deviceRecord, DeviceObject))
 			request = _CreateFastIoRequest(FastIoQueryNetworkOpenInfo, DeviceObject->DriverObject, DeviceObject, FileObject, Buffer, (PVOID)Wait, NULL, NULL, NULL, NULL, NULL);
 
@@ -364,9 +358,8 @@ BOOLEAN HookHandlerFastIoQueryOpenInfo(PIRP Irp, PFILE_NETWORK_OPEN_INFORMATION 
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
+	_GetHookRecords(&DeviceObject, &driverRecord, &deviceRecord);
 	if (driverRecord != NULL) {
-		deviceRecord = DriverHookRecordGetDevice(driverRecord, DeviceObject);
 		if (_CatchRequest(driverRecord, deviceRecord, DeviceObject)) {
 			PIO_STACK_LOCATION irpStack = IoGetCurrentIrpStackLocation(Irp);
 			request = _CreateFastIoRequest(FastIoQueryOpen, DeviceObject->DriverObject, DeviceObject, irpStack->FileObject, Irp, Buffer, NULL, NULL, NULL, NULL, NULL);
@@ -408,9 +401,8 @@ BOOLEAN HookHandlerFastIoQueryStandardInfo(PFILE_OBJECT FileObject, BOOLEAN Wait
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
+	_GetHookRecords(&DeviceObject, &driverRecord, &deviceRecord);
 	if (driverRecord != NULL) {
-		deviceRecord = DriverHookRecordGetDevice(driverRecord, DeviceObject);
 		if (_CatchRequest(driverRecord, deviceRecord, DeviceObject))
 			request = _CreateFastIoRequest(FastIoQueryStandardInfo, DeviceObject->DriverObject, DeviceObject, FileObject, Buffer, (PVOID)Wait, NULL, NULL, NULL, NULL, NULL);
 
@@ -455,9 +447,8 @@ BOOLEAN HookHandlerFastIoRead(PFILE_OBJECT FileObject, PLARGE_INTEGER FileOffset
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
+	_GetHookRecords(&DeviceObject, &driverRecord, &deviceRecord);
 	if (driverRecord != NULL) {
-		deviceRecord = DriverHookRecordGetDevice(driverRecord, DeviceObject);
 		if (_CatchRequest(driverRecord, deviceRecord, DeviceObject))
 			request = _CreateFastIoRequest(FastIoRead, DeviceObject->DriverObject, DeviceObject, FileObject, (PVOID)FileOffset->LowPart, (PVOID)FileOffset->HighPart, (PVOID)Length, (PVOID)LockKey, (PVOID)Wait, Buffer, NULL);
 
@@ -491,9 +482,8 @@ BOOLEAN HookHandlerFastIoUnlockAll(PFILE_OBJECT FileObject, PEPROCESS ProcessId,
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
+	_GetHookRecords(&DeviceObject, &driverRecord, &deviceRecord);
 	if (driverRecord != NULL) {
-		deviceRecord = DriverHookRecordGetDevice(driverRecord, DeviceObject);
 		if (_CatchRequest(driverRecord, deviceRecord, DeviceObject))
 			request = _CreateFastIoRequest(FastIoUnlockAll, DeviceObject->DriverObject, DeviceObject, FileObject, ProcessId, NULL, NULL, NULL, NULL, NULL, NULL);
 
@@ -526,9 +516,8 @@ BOOLEAN HookHandlerFastIoUnlockByKey(PFILE_OBJECT FileObject, PVOID ProcessId, U
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
+	_GetHookRecords(&DeviceObject, &driverRecord, &deviceRecord);
 	if (driverRecord != NULL) {
-		deviceRecord = DriverHookRecordGetDevice(driverRecord, DeviceObject);
 		if (_CatchRequest(driverRecord, deviceRecord, DeviceObject))
 			request = _CreateFastIoRequest(FastIoUnlockAllByKey, DeviceObject->DriverObject, DeviceObject, FileObject, ProcessId, (PVOID)Key, NULL, NULL, NULL, NULL, NULL);
 
@@ -562,9 +551,8 @@ BOOLEAN HookHandlerFastIoUnlockSingle(PFILE_OBJECT FileObject, PLARGE_INTEGER Fi
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
+	_GetHookRecords(&DeviceObject, &driverRecord, &deviceRecord);
 	if (driverRecord != NULL) {
-		deviceRecord = DriverHookRecordGetDevice(driverRecord, DeviceObject);
 		if (_CatchRequest(driverRecord, deviceRecord, DeviceObject))
 			request = _CreateFastIoRequest(FastIoUnlockSingle, DeviceObject->DriverObject, DeviceObject, FileObject, (PVOID)FileOffset->LowPart, (PVOID)FileOffset->HighPart, (PVOID)Length->LowPart, (PVOID)Length->HighPart, ProcessId, (PVOID)Key, NULL);
 
@@ -598,9 +586,8 @@ BOOLEAN HookHandlerFastIoWrite(PFILE_OBJECT FileObject, PLARGE_INTEGER FileOffse
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
+	_GetHookRecords(&DeviceObject, &driverRecord, &deviceRecord);
 	if (driverRecord != NULL) {
-		deviceRecord = DriverHookRecordGetDevice(driverRecord, DeviceObject);
 		if (_CatchRequest(driverRecord, deviceRecord, DeviceObject))
 			request = _CreateFastIoRequest(FastIoWrite, DeviceObject->DriverObject, DeviceObject, FileObject, (PVOID)FileOffset->LowPart, (PVOID)FileOffset->HighPart, (PVOID)Length, (PVOID)LockKey, (PVOID)Wait, Buffer, NULL);
 
@@ -635,9 +622,8 @@ BOOLEAN HookHandlerFastIoMdlRead(PFILE_OBJECT FileObject, PLARGE_INTEGER FileOff
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
+	_GetHookRecords(&DeviceObject, &driverRecord, &deviceRecord);
 	if (driverRecord != NULL) {
-		deviceRecord = DriverHookRecordGetDevice(driverRecord, DeviceObject);
 		if (_CatchRequest(driverRecord, deviceRecord, DeviceObject))
 			request = _CreateFastIoRequest(MdlRead, DeviceObject->DriverObject, DeviceObject, FileObject, (PVOID)FileOffset->LowPart, (PVOID)FileOffset->HighPart, (PVOID)Length, (PVOID)LockKey, MdlChain, NULL, NULL);
 
@@ -672,9 +658,8 @@ BOOLEAN HookHandlerFastIoMdlWrite(PFILE_OBJECT FileObject, PLARGE_INTEGER FileOf
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
+	_GetHookRecords(&DeviceObject, &driverRecord, &deviceRecord);
 	if (driverRecord != NULL) {
-		deviceRecord = DriverHookRecordGetDevice(driverRecord, DeviceObject);
 		if (_CatchRequest(driverRecord, deviceRecord, DeviceObject))
 			request = _CreateFastIoRequest(PrepareMdlWrite, DeviceObject->DriverObject, DeviceObject, FileObject, (PVOID)FileOffset->LowPart, (PVOID)FileOffset->HighPart, (PVOID)Length, (PVOID)LockKey, MdlChain, NULL, NULL);
 
@@ -709,9 +694,8 @@ BOOLEAN HookHandlerFastIoMdlReadComplete(PFILE_OBJECT FileObject, PMDL MdlChain,
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
+	_GetHookRecords(&DeviceObject, &driverRecord, &deviceRecord);
 	if (driverRecord != NULL) {
-		deviceRecord = DriverHookRecordGetDevice(driverRecord, DeviceObject);
 		if (_CatchRequest(driverRecord, deviceRecord, DeviceObject))
 			request = _CreateFastIoRequest(MdlReadComplete, DeviceObject->DriverObject, DeviceObject, FileObject, MdlChain, NULL, NULL, NULL, NULL, NULL, NULL);
 
@@ -741,9 +725,8 @@ BOOLEAN HookHandlerFastIoMdlWriteComplete(PFILE_OBJECT FileObject, PLARGE_INTEGE
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
+	_GetHookRecords(&DeviceObject, &driverRecord, &deviceRecord);
 	if (driverRecord != NULL) {
-		deviceRecord = DriverHookRecordGetDevice(driverRecord, DeviceObject);
 		if (_CatchRequest(driverRecord, deviceRecord, DeviceObject))
 			request = _CreateFastIoRequest(MdlWriteComplete, DeviceObject->DriverObject, DeviceObject, FileObject, (PVOID)FileOffset->LowPart, (PVOID)FileOffset->HighPart, MdlChain, NULL, NULL, NULL, NULL);
 
@@ -773,9 +756,8 @@ BOOLEAN HookHandlerFastIoReadCompressed(PFILE_OBJECT FileObject, PLARGE_INTEGER 
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
+	_GetHookRecords(&DeviceObject, &driverRecord, &deviceRecord);
 	if (driverRecord != NULL) {
-		deviceRecord = DriverHookRecordGetDevice(driverRecord, DeviceObject);
 		if (_CatchRequest(driverRecord, deviceRecord, DeviceObject))
 			request = _CreateFastIoRequest(FastIoReadCompressed, DeviceObject->DriverObject, DeviceObject, FileObject, (PVOID)FileOffset->LowPart, (PVOID)FileOffset->HighPart, (PVOID)Length, (PVOID)LockKey, (PVOID)Buffer, (PVOID)CompressedInfoLength, NULL);
 
@@ -815,9 +797,8 @@ BOOLEAN HookHandlerFastIoWriteCompressed(PFILE_OBJECT FileObject, PLARGE_INTEGER
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
+	_GetHookRecords(&DeviceObject, &driverRecord, &deviceRecord);
 	if (driverRecord != NULL) {
-		deviceRecord = DriverHookRecordGetDevice(driverRecord, DeviceObject);
 		if (_CatchRequest(driverRecord, deviceRecord, DeviceObject))
 			request = _CreateFastIoRequest(FastIoWriteCompressed, DeviceObject->DriverObject, DeviceObject, FileObject, (PVOID)FileOffset->LowPart, (PVOID)FileOffset->HighPart, (PVOID)Length, (PVOID)LockKey, Buffer, (PVOID)CompressedInfoLength, NULL);
 
@@ -858,9 +839,8 @@ NTSTATUS HookHandlerFastIoAcquireForModWrite(PFILE_OBJECT FileObject, PLARGE_INT
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 	LARGE_INTEGER offset;
 
-	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
+	_GetHookRecords(&DeviceObject, &driverRecord, &deviceRecord);
 	if (driverRecord != NULL) {
-		deviceRecord = DriverHookRecordGetDevice(driverRecord, DeviceObject);
 		if (_CatchRequest(driverRecord, deviceRecord, DeviceObject)) {
 			offset.QuadPart = -1;
 			if (EndingOffset != NULL)
@@ -898,9 +878,8 @@ NTSTATUS HookHandlerFastIoReleaseForModWrite(PFILE_OBJECT FileObject, PERESOURCE
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
+	_GetHookRecords(&DeviceObject, &driverRecord, &deviceRecord);
 	if (driverRecord != NULL) {
-		deviceRecord = DriverHookRecordGetDevice(driverRecord, DeviceObject);
 		if (_CatchRequest(driverRecord, deviceRecord, DeviceObject))
 			request = _CreateFastIoRequest(ReleaseForModWrite, DeviceObject->DriverObject, DeviceObject, FileObject, ResourceToRelease, NULL, NULL, NULL, NULL, NULL, NULL);
 
@@ -930,9 +909,8 @@ NTSTATUS HookHandlerFastIoAcquireForCcFlush(PFILE_OBJECT FileObject, PDEVICE_OBJ
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
+	_GetHookRecords(&DeviceObject, &driverRecord, &deviceRecord);
 	if (driverRecord != NULL) {
-		deviceRecord = DriverHookRecordGetDevice(driverRecord, DeviceObject);
 		if (_CatchRequest(driverRecord, deviceRecord, DeviceObject))
 			request = _CreateFastIoRequest(AcquireForCcFlush, DeviceObject->DriverObject, DeviceObject, FileObject, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
@@ -962,9 +940,8 @@ NTSTATUS HookHandlerFastIoReleaseForCcFlush(PFILE_OBJECT FileObject, PDEVICE_OBJ
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
+	_GetHookRecords(&DeviceObject, &driverRecord, &deviceRecord);
 	if (driverRecord != NULL) {
-		deviceRecord = DriverHookRecordGetDevice(driverRecord, DeviceObject);
 		if (_CatchRequest(driverRecord, deviceRecord, DeviceObject))
 			request = _CreateFastIoRequest(ReleaseForCcFlush, DeviceObject->DriverObject, DeviceObject, FileObject, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
@@ -994,9 +971,8 @@ BOOLEAN HookHandlerFastIoMdlReadCompleteCompressed(PFILE_OBJECT FileObject, PMDL
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
+	_GetHookRecords(&DeviceObject, &driverRecord, &deviceRecord);
 	if (driverRecord != NULL) {
-		deviceRecord = DriverHookRecordGetDevice(driverRecord, DeviceObject);
 		if (_CatchRequest(driverRecord, deviceRecord, DeviceObject))
 			request = _CreateFastIoRequest(MdlReadCompleteCompressed, DeviceObject->DriverObject, DeviceObject, FileObject, MdlChain, NULL, NULL, NULL, NULL, NULL, NULL);
 
@@ -1026,9 +1002,8 @@ BOOLEAN HookHandlerFastIoMdlWriteCompleteCompressed(PFILE_OBJECT FileObject, PLA
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
 	PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
-	driverRecord = DriverHookRecordGet(DeviceObject->DriverObject);
+	_GetHookRecords(&DeviceObject, &driverRecord, &deviceRecord);
 	if (driverRecord != NULL) {
-		deviceRecord = DriverHookRecordGetDevice(driverRecord, DeviceObject);
 		if (_CatchRequest(driverRecord, deviceRecord, DeviceObject))
 			request = _CreateFastIoRequest(MdlWriteCompleteCompressed, DeviceObject->DriverObject, DeviceObject, FileObject, (PVOID)FileOffset->LowPart, (PVOID)FileOffset->HighPart, MdlChain, NULL, NULL, NULL, NULL);
 
@@ -1287,11 +1262,10 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 	PIO_STACK_LOCATION irpStack = IoGetCurrentIrpStackLocation(Irp);
 	DEBUG_ENTER_FUNCTION("DeviceObject=0x%p; Irp=0x%p", Deviceobject, Irp);
 
-	driverRecord = DriverHookRecordGet(Deviceobject->DriverObject);
+	_GetHookRecords(&Deviceobject, &driverRecord, &deviceRecord);
 	if (driverRecord != NULL) {
 		memset(&clientInfo, 0, sizeof(clientInfo));
 		memset(&uPreCreateFileName, 0, sizeof(uPreCreateFileName));
-		deviceRecord = DriverHookRecordGetDevice(driverRecord, Deviceobject);
 		catchRequest = (_CatchRequest(driverRecord, deviceRecord, Deviceobject) && (deviceRecord == NULL || deviceRecord->IRPMonitorSettings[irpStack->MajorFunction]));
 		if (catchRequest) {
 			isCreate = (irpStack->MajorFunction == IRP_MJ_CREATE);
