@@ -842,7 +842,7 @@ Type
 Function IRPMonDllDriverHooksEnumerate(Var AHookedDrivers:PHOOKED_DRIVER_UMINFO; Var ACount:Cardinal):Cardinal; StdCall;
 Procedure IRPMonDllDriverHooksFree(AHookedDrivers:PHOOKED_DRIVER_UMINFO; ACount:Cardinal); StdCall;
 
-Function IRPMonDllHookDriver(ADriverName:PWideChar; Var AMonitorSettings:DRIVER_MONITOR_SETTINGS; Var ADriverHandle:THandle; Var AObjectId:Pointer):Cardinal; StdCall;
+Function IRPMonDllHookDriver(ADriverName:PWideChar; Var AMonitorSettings:DRIVER_MONITOR_SETTINGS; ADeviceExtensionHook:ByteBool; Var ADriverHandle:THandle; Var AObjectId:Pointer):Cardinal; StdCall;
 Function IRPMonDllDriverStartMonitoring(ADriverhandle:THandle):Cardinal; StdCall;
 Function IRPMonDllDriverStopMonitoring(ADriverhandle:THandle):Cardinal; StdCall;
 Function IRPMonDllDriverSetInfo(ADriverHandle:THandle; Var ASettings:DRIVER_MONITOR_SETTINGS):Cardinal; StdCall;
@@ -902,7 +902,7 @@ Const
 Function IRPMonDllDriverHooksEnumerate(Var AHookedDrivers:PHOOKED_DRIVER_UMINFO; Var ACount:Cardinal):Cardinal; StdCall; External LibraryName;
 Procedure IRPMonDllDriverHooksFree(AHookedDrivers:PHOOKED_DRIVER_UMINFO; ACount:Cardinal); StdCall; External LibraryName;
 
-Function IRPMonDllHookDriver(ADriverName:PWideChar; Var AMonitorSettings:DRIVER_MONITOR_SETTINGS; Var ADriverHandle:THandle; Var AObjectId:Pointer):Cardinal; StdCall; External LibraryName;
+Function IRPMonDllHookDriver(ADriverName:PWideChar; Var AMonitorSettings:DRIVER_MONITOR_SETTINGS; ADeviceExtensionHook:ByteBool; Var ADriverHandle:THandle; Var AObjectId:Pointer):Cardinal; StdCall; External LibraryName;
 Function IRPMonDllDriverStartMonitoring(ADriverhandle:THandle):Cardinal; StdCall; External LibraryName;
 Function IRPMonDllDriverStopMonitoring(ADriverhandle:THandle):Cardinal; StdCall; External LibraryName;
 Function IRPMonDllDriverSetInfo(ADriverHandle:THandle; Var ASettings:DRIVER_MONITOR_SETTINGS):Cardinal; StdCall; External LibraryName;

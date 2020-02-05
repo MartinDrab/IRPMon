@@ -958,6 +958,10 @@ object TreeFrm: TTreeFrm
       Default = True
       OnClick = TreePopupMenuClick
     end
+    object DeviceExtensionMenuItem: TMenuItem
+      Caption = 'Device extension'
+      OnClick = TreePopupMenuClick
+    end
     object N1: TMenuItem
       Caption = '-'
     end

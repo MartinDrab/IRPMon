@@ -34,6 +34,7 @@ Type
     StornoButton: TButton;
     OkButton: TButton;
     DataMenuItem: TMenuItem;
+    DeviceExtensionMenuItem: TMenuItem;
     Procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure DeviceTreeViewPopupMenuPopup(Sender: TObject);
@@ -399,13 +400,11 @@ If Assigned(tn) Then
     begin
     hde := tn.Data;
     FDriverMap.TryGetValue(hde.Driverobject, hdr);
-    HookedMenuItem.Checked := hde.Hooked;
     end
-  Else begin
-    hdr := tn.Data;
-    HookedMenuItem.Checked := hdr.Hooked;
-    end;
+  Else hdr := tn.Data;
 
+  HookedMenuItem.Checked := hdr.Hooked;
+  DeviceExtensionMenuItem.Checked := hdr.DeviceExtensionHook;
   IRPMenuItem.Checked := hdr.Settings.MonitorIRP;
   IRPCompleteMenuItem.Checked := hdr.Settings.MonitorIRPCompletion;
   FastIOMenuItem.Checked := hdr.Settings.MonitorFastIo;
@@ -572,7 +571,7 @@ If Assigned(tn) Then
     end
   Else hdr := tn.Data;
 
-  If M = HookedMenuItem Then
+  If (M = HookedMenuItem) Then
     begin
     ho.Hooked := M.Checked;
     If Assigned(hde) Then
@@ -592,6 +591,8 @@ If Assigned(tn) Then
         end;
       end;
     end
+  Else If M = DeviceExtensionMenuItem Then
+    hdr.DeviceExtensionHook := M.Checked
   Else If M = NewDevicesMenuItem Then
     hdr.Settings.MonitorNewDevices := M.Checked
   Else If M = IRPMenuItem Then
