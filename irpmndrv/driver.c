@@ -331,6 +331,35 @@ NTSTATUS DriverInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, P
 				status = IoCreateSymbolicLink(&uLinkName, &uDeviceName);
 				if (NT_SUCCESS(status)) {
 					DriverObject->DriverUnload = DriverUnload;
+					for (size_t i = 0; i < sizeof(DriverObject->MajorFunction) / sizeof(DriverObject->MajorFunction[0]); ++i)
+						DriverObject->MajorFunction[i] = HookHandlerIRPDisptach;
+
+					fastIoDispatch->AcquireForCcFlush = HookHandlerFastIoAcquireForCcFlush;
+					fastIoDispatch->AcquireForModWrite = HookHandlerFastIoAcquireForModWrite;
+					fastIoDispatch->FastIoCheckIfPossible = HookHandlerFastIoCheckIfPossible;
+					fastIoDispatch->FastIoDetachDevice = HookHandlerFastIoDetachDevice;
+					fastIoDispatch->FastIoDeviceControl = HookHandlerFastIoDeviceControl;
+					fastIoDispatch->FastIoLock = HookHandlerFastIoLock;
+					fastIoDispatch->FastIoQueryBasicInfo = HookHandlerFastIoQueryBasicInfo;
+					fastIoDispatch->FastIoQueryNetworkOpenInfo = HookHandlerFastIoQueryNetworkOpenInfo;
+					fastIoDispatch->FastIoQueryOpen = HookHandlerFastIoQueryOpenInfo;
+					fastIoDispatch->FastIoQueryStandardInfo = HookHandlerFastIoQueryStandardInfo;
+					fastIoDispatch->FastIoRead = HookHandlerFastIoRead;
+					fastIoDispatch->FastIoReadCompressed = HookHandlerFastIoReadCompressed;
+					fastIoDispatch->FastIoUnlockAll = HookHandlerFastIoUnlockAll;
+					fastIoDispatch->FastIoUnlockAllByKey = HookHandlerFastIoUnlockByKey;
+					fastIoDispatch->FastIoUnlockSingle = HookHandlerFastIoUnlockSingle;
+					fastIoDispatch->FastIoWrite = HookHandlerFastIoWrite;
+					fastIoDispatch->FastIoWriteCompressed = HookHandlerFastIoWriteCompressed;
+					fastIoDispatch->MdlRead = HookHandlerFastIoMdlRead;
+					fastIoDispatch->MdlReadComplete = HookHandlerFastIoMdlReadComplete;
+					fastIoDispatch->MdlReadCompleteCompressed = HookHandlerFastIoMdlReadCompleteCompressed;
+					fastIoDispatch->MdlWriteComplete = HookHandlerFastIoMdlWriteComplete;
+					fastIoDispatch->MdlWriteCompleteCompressed = HookHandlerFastIoMdlWriteCompleteCompressed;
+					fastIoDispatch->PrepareMdlWrite = HookHandlerFastIoMdlWrite;
+					fastIoDispatch->ReleaseForCcFlush = HookHandlerFastIoReleaseForCcFlush;
+					fastIoDispatch->ReleaseForModWrite = HookHandlerFastIoReleaseForModWrite;
+					
 					DriverObject->MajorFunction[IRP_MJ_CREATE] = DriverCreateCleanup;
 					DriverObject->MajorFunction[IRP_MJ_CLEANUP] = DriverCreateCleanup;
 					DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL] = DriverDeviceControl;
