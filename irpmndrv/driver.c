@@ -16,6 +16,7 @@
 #include "regman.h"
 #include "data-loggers.h"
 #include "driver-settings.h"
+#include "devext-hooks.h"
 #include "driver.h"
 
 
@@ -387,6 +388,7 @@ static DRIVER_MODULE_ENTRY_PARAMETERS _moduleEntries[] = {
 	{RequestQueueModuleInit, RequestQueueModuleFinit, NULL},
 	{HookModuleInit, HookModuleFinit, NULL},
 	{HookHandlerModuleInit, HookHandlerModuleFinit, NULL},
+	{DevExtHooksModuleInit, DevExtHooksModuleFinit, NULL},
 	{UMServicesModuleInit, UMServicesModuleFinit, NULL},
 	{ProcessEventsModuleInit, ProcessEventsModuleFinit, NULL},
 	{PWDModuleInit, PWDModuleFinit, NULL},

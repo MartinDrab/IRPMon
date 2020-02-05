@@ -46,6 +46,8 @@ typedef struct _DEVICE_HOOK_RECORD {
 	BOOLEAN MonitoringEnabled;
 	/** Determines why the device hook record was created. */
 	EDeviceRecordCreateReason CreateReason;
+	/** Proxy device object used to hook via device extension */
+	PDEVICE_OBJECT ProxyDevice;
 } DEVICE_HOOK_RECORD, *PDEVICE_HOOK_RECORD;
 
 /** Contains information about a hook done on a given driver. */
@@ -94,6 +96,7 @@ typedef struct _DRIVER_HOOK_RECORD {
 	BOOLEAN MonitorIRP;
 	BOOLEAN MonitorIRPCompletion;
 	BOOLEAN MonitorData;
+	BOOLEAN DeviceExtensionHook;
 	UCHAR IRPSettings[IRP_MJ_MAXIMUM_FUNCTION + 1];
 	UCHAR FastIoSettings[FastIoMax];
 	/** Indicates whether the driver actively monitors incoming requests. */
@@ -111,7 +114,7 @@ VOID DeviceHookRecordReference(PDEVICE_HOOK_RECORD Record);
 VOID DeviceHookRecordDereference(PDEVICE_HOOK_RECORD Record);
 BOOLEAN DeviceHookRecordValid(PDEVICE_HOOK_RECORD DeviceRecord);
 
-NTSTATUS HookDriverObject(PDRIVER_OBJECT DriverObject, PDRIVER_MONITOR_SETTINGS MonitorSettings, PDRIVER_HOOK_RECORD *DriverRecord);
+NTSTATUS HookDriverObject(PDRIVER_OBJECT DriverObject, PDRIVER_MONITOR_SETTINGS MonitorSettings, BOOLEAN DeviceExtensionHook, PDRIVER_HOOK_RECORD *DriverRecord);
 NTSTATUS UnhookDriverObject(PDRIVER_HOOK_RECORD DriverRecord);
 NTSTATUS DriverHookRecordSetInfo(PDRIVER_HOOK_RECORD Record, PDRIVER_MONITOR_SETTINGS DriverSettings);
 VOID DriverHookRecordGetInfo(PDRIVER_HOOK_RECORD Record, PDRIVER_MONITOR_SETTINGS DriverSettings, PBOOLEAN Enabled);

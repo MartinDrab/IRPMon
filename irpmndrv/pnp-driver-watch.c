@@ -183,7 +183,7 @@ static NTSTATUS _CheckDriver(PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT DeviceO
 				ExAcquireResourceSharedLite(&_driverNamesLock, TRUE);
 				nameRecord = (PDRIVER_NAME_WATCH_RECORD)StringHashTableGetUnicodeString(_driverNameTable, &oni->Name);
 				if (nameRecord != NULL) {
-					status = HookDriverObject(DriverObject, &nameRecord->MonitorSettings, &hookRecord);
+					status = HookDriverObject(DriverObject, &nameRecord->MonitorSettings, FALSE, &hookRecord);
 					if (NT_SUCCESS(status)) {
 						status = DriverHookRecordEnable(hookRecord, TRUE);
 						if (NT_SUCCESS(status)) {
