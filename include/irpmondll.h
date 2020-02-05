@@ -102,6 +102,8 @@ IRPMONDLL_API VOID WINAPI IRPMonDllDriverHooksFree(PHOOKED_DRIVER_UMINFO HookedD
  *  @param AddDevice Determine whether invocations of driver's AddDevice routine will be monitored.
  *  @param Unload Instructs the IRPMon driver to detect driver unload.
  *  @param StartIo Indicates whether driver's StartIo routine will be monitored.
+ *  @param DeviceExtensionHook Determines whether the IRPMon takes advantage of IRP hooks (FALSE) or device extension
+ *  baed hooks (TRUE).
  *  @param Driverhandle Address of variable that receives a handle representing the hooked driver.
  *  
  *  @return
@@ -119,7 +121,7 @@ IRPMONDLL_API VOID WINAPI IRPMonDllDriverHooksFree(PHOOKED_DRIVER_UMINFO HookedD
  *  Driver names accepted by this function can be obtained from a list of drivers present in the system, returned by the
  *  @link(IRPMonDllSnapshotRetrieve) function.
  */
-IRPMONDLL_API DWORD WINAPI IRPMonDllHookDriver(PWCHAR DriverName, PDRIVER_MONITOR_SETTINGS MonitorSettings, PHANDLE DriverHandle, PVOID *ObjectId);
+IRPMONDLL_API DWORD WINAPI IRPMonDllHookDriver(PWCHAR DriverName, PDRIVER_MONITOR_SETTINGS MonitorSettings, BOOLEAN DeviceExtensionHook, PHANDLE DriverHandle, PVOID *ObjectId);
 
 
 /** Starts monitoring of a driver. 
