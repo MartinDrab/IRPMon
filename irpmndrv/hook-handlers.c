@@ -11,6 +11,7 @@
 #include "data-loggers.h"
 #include "fo-context-table.h"
 #include "request.h"
+#include "devext-hooks.h"
 #include "hook-handlers.h"
 
 
@@ -23,6 +24,7 @@
 
 static IO_REMOVE_LOCK _rundownLock;
 static FO_CONTEXT_TABLE _foTable;
+static PDRIVER_OBJECT _gDriverObject = NULL;
 
 
 /************************************************************************/
@@ -91,6 +93,31 @@ static BOOLEAN _CatchRequest(PDRIVER_HOOK_RECORD DriverHookRecord, PDEVICE_HOOK_
 	return ret;
 }
 
+
+static void _GetHookRecords(PDEVICE_OBJECT *DeviceObject, PDRIVER_HOOK_RECORD *DriverRecord, PDEVICE_HOOK_RECORD *DeviceRecord)
+{
+	PDRIVER_HOOK_RECORD tmpDriverRecord = NULL;
+	PDEVICE_HOOK_RECORD tmpDeviceHookRecord = NULL;
+	PPROXY_DEVICE_EXTENSION ext = NULL;
+	PDRIVER_OBJECT tmpDriverObject = (*DeviceObject)->DriverObject;
+
+	if (tmpDriverObject == _gDriverObject && *DeviceObject != NULL) {
+		ext = (PPROXY_DEVICE_EXTENSION)((*DeviceObject)->DeviceExtension);
+		if (ext->Type == detProxy) {
+			tmpDriverObject = ext->TargetDevice->DriverObject;
+			*DeviceObject = ext->TargetDevice;
+		}
+	}
+
+	tmpDriverRecord = DriverHookRecordGet(tmpDriverObject);
+	if (tmpDriverRecord != NULL)
+		tmpDeviceHookRecord = DriverHookRecordGetDevice(tmpDriverRecord, *DeviceObject);
+
+	*DriverRecord = tmpDriverRecord;
+	*DeviceRecord = tmpDeviceHookRecord;
+
+	return;
+}
 
 #define GetDeviceObject(aFileObject)			\
 	(((aFileObject)->Vpb != NULL) ? (aFileObject)->Vpb->DeviceObject : (aFileObject)->DeviceObject)		\
@@ -1517,9 +1544,15 @@ NTSTATUS HookHandlerModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING Regi
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"; Context=0x%p", DriverObject, RegistryPath, Context);
 
+	ObReferenceObject(DriverObject);
+	_gDriverObject = DriverObject;
 	FoTableInit(&_foTable, NULL);
 	IoInitializeRemoveLock(&_rundownLock, 'LRHH', 0x7FFFFFFF, 0x7FFFFFFF);
 	status = IoAcquireRemoveLock(&_rundownLock, DriverObject);
+	if (!NT_SUCCESS(status)) {
+		ObDereferenceObject(_gDriverObject);
+		_gDriverObject = NULL;
+	}
 
 	DEBUG_EXIT_FUNCTION("0x%x", status);
 	return status;
@@ -1532,6 +1565,8 @@ void HookHandlerModuleFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING Registr
 
 	IoReleaseRemoveLockAndWait(&_rundownLock, DriverObject);
 	FoTableFinit(&_foTable);
+	ObDereferenceObject(_gDriverObject);
+	_gDriverObject = NULL;
 
 	DEBUG_EXIT_FUNCTION_VOID();
 	return;
