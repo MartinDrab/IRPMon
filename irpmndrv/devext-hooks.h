@@ -7,8 +7,15 @@
 #include <ntifs.h>
 
 
+typedef enum _EDeviceExtensionType {
+	detUnknown,
+	detCDO,
+	detProxy,
+	detMax,
+} EDeviceExtensionType, *PEDeviceExtensionType;
 
 typedef struct _PROXY_DEVICE_EXTENSION {
+	EDeviceExtensionType Type;
 	PDEVICE_OBJECT TargetDevice;
 	PDEVICE_OBJECT UpperDevice;
 	PDEVICE_OBJECT *UpdatePlace;

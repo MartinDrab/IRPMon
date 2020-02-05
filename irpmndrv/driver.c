@@ -324,8 +324,9 @@ NTSTATUS DriverInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, P
 		status = ExInitializeResourceLite(&_createCloseLock);
 		if (NT_SUCCESS(status)) {
 			RtlInitUnicodeString(&uDeviceName, IRPMNDRV_DEVICE_NAME);
-			status = IoCreateDevice(DriverObject, 0, &uDeviceName, FILE_DEVICE_UNKNOWN, 0, FALSE, &cdo);
+			status = IoCreateDevice(DriverObject, sizeof(EDeviceExtensionType), &uDeviceName, FILE_DEVICE_UNKNOWN, 0, FALSE, &cdo);
 			if (NT_SUCCESS(status)) {
+				*(PEDeviceExtensionType)(cdo->DeviceExtension) = detCDO;
 				RtlInitUnicodeString(&uLinkName, IRPMNDRV_SYMBOLIC_LINK);
 				status = IoCreateSymbolicLink(&uLinkName, &uDeviceName);
 				if (NT_SUCCESS(status)) {

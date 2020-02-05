@@ -31,6 +31,7 @@ NTSTATUS ProxyDeviceCreate(PDEVICE_OBJECT TargetDevice, PDEVICE_OBJECT *ProxyDev
 		if (NT_SUCCESS(status)) {
 			ext = (PPROXY_DEVICE_EXTENSION)tmpProxy->DeviceExtension;
 			memset(ext, 0, sizeof(PROXY_DEVICE_EXTENSION));
+			ext->Type = detProxy;
 			ext->TargetDevice = TargetDevice;
 			ext->UpperDevice = upperDevice;
 			ext->UpdatePlace = (PDEVICE_OBJECT *)upperDevice->DeviceExtension;
