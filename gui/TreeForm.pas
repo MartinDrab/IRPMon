@@ -403,7 +403,10 @@ If Assigned(tn) Then
     end
   Else hdr := tn.Data;
 
-  HookedMenuItem.Checked := hdr.Hooked;
+  If Not Assigned(hde) Then
+    HookedMenuItem.Checked := hdr.Hooked
+  Else HookedMenuItem.Checked := hde.Hooked;
+
   DeviceExtensionMenuItem.Checked := hdr.DeviceExtensionHook;
   IRPMenuItem.Checked := hdr.Settings.MonitorIRP;
   IRPCompleteMenuItem.Checked := hdr.Settings.MonitorIRPCompletion;
