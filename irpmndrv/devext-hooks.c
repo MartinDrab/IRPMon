@@ -88,6 +88,7 @@ NTSTATUS DevExtHooksModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING Regi
 
 	ObReferenceObject(DriverObject);
 	_driverObject = DriverObject;
+	status = STATUS_SUCCESS;
 
 	DEBUG_EXIT_FUNCTION("0x%x", status);
 	return status;
