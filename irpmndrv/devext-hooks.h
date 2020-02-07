@@ -18,8 +18,9 @@ typedef struct _PROXY_DEVICE_EXTENSION {
 	EDeviceExtensionType Type;
 	PDEVICE_OBJECT TargetDevice;
 	PDEVICE_OBJECT UpperDevice;
-	PDEVICE_OBJECT *UpdatePlace;
 	size_t LowerDeviceOffset;
+	size_t UpperDeviceExtensionSize;
+	size_t LowerDevicePlaceCount;
 } PROXY_DEVICE_EXTENSION, *PPROXY_DEVICE_EXTENSION;
 
 

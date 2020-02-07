@@ -6,6 +6,9 @@
 #include "devext-hooks.h"
 
 
+#undef DEBUG_TRACE_ENABLED
+#define DEBUG_TRACE_ENABLED 0
+
 /************************************************************************/
 /*                        GLOBAL VARIABLE                               */
 /************************************************************************/
@@ -19,6 +22,7 @@ static PDRIVER_OBJECT _driverObject = NULL;
 
 NTSTATUS ProxyDeviceCreate(PDEVICE_OBJECT TargetDevice, PDEVICE_OBJECT *ProxyDevice)
 {
+	PDEVICE_OBJECT *updatePlace = NULL;
 	PDEVICE_OBJECT tmpProxy = NULL;
 	PDEVICE_OBJECT upperDevice = NULL;
 	PPROXY_DEVICE_EXTENSION ext = NULL;
@@ -29,31 +33,40 @@ NTSTATUS ProxyDeviceCreate(PDEVICE_OBJECT TargetDevice, PDEVICE_OBJECT *ProxyDev
 	if (upperDevice != NULL) {
 		status = IoCreateDevice(_driverObject, sizeof(PROXY_DEVICE_EXTENSION), NULL, TargetDevice->DeviceType, TargetDevice->Characteristics, (TargetDevice->Flags & DO_EXCLUSIVE), &tmpProxy);
 		if (NT_SUCCESS(status)) {
+			tmpProxy->StackSize = TargetDevice->StackSize;
+			tmpProxy->AlignmentRequirement = TargetDevice->AlignmentRequirement;
+			tmpProxy->SectorSize = TargetDevice->SectorSize;
+			tmpProxy->AttachedDevice = TargetDevice->AttachedDevice;
 			ext = (PPROXY_DEVICE_EXTENSION)tmpProxy->DeviceExtension;
 			memset(ext, 0, sizeof(PROXY_DEVICE_EXTENSION));
 			ext->Type = detProxy;
+			ObReferenceObject(TargetDevice);
 			ext->TargetDevice = TargetDevice;
+			ObReferenceObject(upperDevice);
 			ext->UpperDevice = upperDevice;
-			ext->UpdatePlace = (PDEVICE_OBJECT *)upperDevice->DeviceExtension;
+			ext->UpperDeviceExtensionSize = upperDevice->Size - sizeof(DEVICE_OBJECT);
+			updatePlace = (PDEVICE_OBJECT *)upperDevice->DeviceExtension;
 			tmpProxy->Flags = TargetDevice->Flags;
 			status = STATUS_NOT_FOUND;
-			for (size_t i = 0; i < 0x1000 / sizeof(PDEVICE_OBJECT); ++i) {
-				if (*ext->UpdatePlace == TargetDevice) {
+			for (size_t i = 0; i < ext->UpperDeviceExtensionSize / sizeof(PDEVICE_OBJECT); ++i) {
+				if (*updatePlace == TargetDevice) {
 					ext->LowerDeviceOffset = i * sizeof(PDEVICE_OBJECT);
-					*ext->UpdatePlace = tmpProxy;
+					++ext->LowerDevicePlaceCount;
+					*updatePlace = tmpProxy;
 					status = STATUS_SUCCESS;
-					break;
 				}
 
-				++ext->UpdatePlace;
+				++updatePlace;
 			}
 
 
 			if (NT_SUCCESS(status))
 				*ProxyDevice = tmpProxy;
 
-			if (!NT_SUCCESS(status))
+			if (!NT_SUCCESS(status)) {
+				tmpProxy->AttachedDevice = NULL;
 				IoDeleteDevice(tmpProxy);
+			}
 		}
 	} else status = STATUS_INVALID_PARAMETER;
 
@@ -64,11 +77,22 @@ NTSTATUS ProxyDeviceCreate(PDEVICE_OBJECT TargetDevice, PDEVICE_OBJECT *ProxyDev
 
 void ProxyDeviceDelete(PDEVICE_OBJECT ProxyDevice)
 {
+	PDEVICE_OBJECT *updatePlace = NULL;
 	PPROXY_DEVICE_EXTENSION ext = NULL;
 	DEBUG_ENTER_FUNCTION("ProxyDevice=0x%p", ProxyDevice);
 
+	ProxyDevice->AttachedDevice = NULL;
 	ext = (PPROXY_DEVICE_EXTENSION)ProxyDevice->DeviceExtension;
-	*ext->UpdatePlace = ext->TargetDevice;
+	updatePlace = (PDEVICE_OBJECT *)ext->UpperDevice->DeviceExtension;
+	for (size_t i = 0; i < ext->UpperDeviceExtensionSize / sizeof(PDEVICE_OBJECT); ++i) {
+		if (*updatePlace == ProxyDevice)
+			*updatePlace = ext->TargetDevice;
+
+		++updatePlace;
+	}
+
+	ObDereferenceObject(ext->UpperDevice);
+	ObDereferenceObject(ext->TargetDevice);
 	IoDeleteDevice(ProxyDevice);
 
 	DEBUG_EXIT_FUNCTION_VOID();
