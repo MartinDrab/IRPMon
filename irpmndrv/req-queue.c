@@ -8,6 +8,9 @@
 #include "driver-settings.h"
 #include "req-queue.h"
 
+#undef DEBUG_TRACE_ENABLED
+#define DEBUG_TRACE_ENABLED 0
+
 
 /************************************************************************/
 /*                            GLOBAL VARIABLES                          */

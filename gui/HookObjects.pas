@@ -106,6 +106,7 @@ Type
 
   TDriverHookObject = Class (THookObject)
   Private
+    FDeviceExtensionHook : Boolean;
     Function Unhook:Cardinal;
     Function Hook:Cardinal;
     Function Change:Cardinal;
@@ -116,6 +117,8 @@ Type
     Settings : DRIVER_MONITOR_SETTINGS;
     Constructor Create(AAddress:Pointer; AName:PWideChar); Reintroduce;
     Function Operation(AOperationType:EHookObjectOperation):Cardinal; Override;
+
+    Property DeviceExtensionHook : Boolean Read FDeviceExtensionHook Write FDeviceExtensionHook;
   end;
 
   TDeviceHookObject = Class (THookObject)
@@ -284,7 +287,7 @@ Function TDriverHookObject.Hook:Cardinal;
 Var
   h : THandle;
 begin
-Result := IRPMonDllHookDriver(PWideChar(FName), Settings, h, FObjectId);
+Result := IRPMonDllHookDriver(PWideChar(FName), Settings, FDeviceExtensionHook, h, FObjectId);
 If Result = ERROR_SUCCESS Then
   IRPMonDllCloseHookedDriverHandle(h);
 end;

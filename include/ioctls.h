@@ -43,7 +43,7 @@ typedef struct _IOCTL_IRPMNDRV_CONNECT_INPUT {
 typedef struct _IOCTL_IRPMNDRV_HOOK_DRIVER_INPUT {
 	DRIVER_MONITOR_SETTINGS MonitorSettings;
 	ULONG DriverNameLength;
-	ULONG Padding;
+	BOOLEAN DeviceExtensionHook;
 	// Driver name length
 } IOCTL_IRPMNDRV_HOOK_DRIVER_INPUT, *PIOCTL_IRPMNDRV_HOOK_DRIVER_INPUT;
 

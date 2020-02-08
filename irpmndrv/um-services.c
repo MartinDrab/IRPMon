@@ -151,7 +151,7 @@ NTSTATUS UMHookDriver(PIOCTL_IRPMNDRV_HOOK_DRIVER_INPUT InputBuffer, ULONG Input
 			if (NT_SUCCESS(status)) {
 				PDRIVER_HOOK_RECORD driverRecord = NULL;
 
-				status = HookDriverObject(targetDriver, &input.MonitorSettings, &driverRecord);
+				status = HookDriverObject(targetDriver, &input.MonitorSettings, input.DeviceExtensionHook, &driverRecord);
 				if (NT_SUCCESS(status)) {
 					status = HandleTableHandleCreate(_driverHandleTable, driverRecord, &output.HookHandle);
 					if (NT_SUCCESS(status)) {

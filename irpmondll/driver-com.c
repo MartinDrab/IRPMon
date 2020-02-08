@@ -257,19 +257,20 @@ VOID DriverComSnapshotFree(PIRPMON_DRIVER_INFO *DriverInfo, ULONG Count)
 	return;
 }
 
-DWORD DriverComHookDriver(PWCHAR DriverName, PDRIVER_MONITOR_SETTINGS MonitorSettings, PHANDLE HookHandle, PVOID *ObjectId)
+DWORD DriverComHookDriver(PWCHAR DriverName, PDRIVER_MONITOR_SETTINGS MonitorSettings, BOOLEAN DeviceExtensionHook, PHANDLE HookHandle, PVOID *ObjectId)
 {
 	DWORD ret = ERROR_GEN_FAILURE;
 	ULONG nameLen = 0;
 	PIOCTL_IRPMNDRV_HOOK_DRIVER_INPUT input = NULL;
 	IOCTL_IRPMNDRV_HOOK_DRIVER_OUTPUT output;
-	DEBUG_ENTER_FUNCTION("DriverName=\"%S\"; MonitorSettings=0x%p; HookHandle=0x%p; ObjectId=0x%p", DriverName, MonitorSettings, HookHandle, ObjectId);
+	DEBUG_ENTER_FUNCTION("DriverName=\"%S\"; MonitorSettings=0x%p; DeviceExtensionHook=%u; HookHandle=0x%p; ObjectId=0x%p", DriverName, MonitorSettings, DeviceExtensionHook, HookHandle, ObjectId);
 
 	nameLen = (ULONG)wcslen(DriverName)*sizeof(wchar_t);
 	input = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IOCTL_IRPMNDRV_HOOK_DRIVER_INPUT) + nameLen);
 	if (input != NULL) {
 		input->DriverNameLength = nameLen;
 		input->MonitorSettings = *MonitorSettings;
+		input->DeviceExtensionHook = DeviceExtensionHook;
 		memcpy(input + 1, DriverName, nameLen);
 		ret = _SynchronousOtherIOCTL(IOCTL_IRPMNDRV_HOOK_DRIVER, input, sizeof(IOCTL_IRPMNDRV_HOOK_DRIVER_INPUT) + nameLen, &output, sizeof(output));
 		if (ret == ERROR_SUCCESS) {
@@ -524,6 +525,7 @@ DWORD DriverComHookedObjectsEnumerate(PHOOKED_DRIVER_UMINFO *Info, PULONG Count)
 				for (SIZE_T i = 0; i < hookedObjects->NumberOfHookedDrivers; ++i) {
 					umDriverEntry->ObjectId = driverEntry->ObjectId;
 					umDriverEntry->DriverObject = driverEntry->DriverObject;
+					umDriverEntry->DeviceExtensionHooks = driverEntry->DeviceExtensionHooks;
 					umDriverEntry->MonitoringEnabled = driverEntry->MonitoringEnabled;
 					umDriverEntry->MonitorSettings = driverEntry->MonitorSettings;
 					umDriverEntry->DriverNameLen = driverEntry->DriverNameLen - sizeof(WCHAR);

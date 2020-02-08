@@ -385,6 +385,9 @@ typedef struct _HOOKED_DRIVER_UMINFO {
 	    driver. If set to TRUE, the information about the events is stored in the
 		IRPMon Event Queue. */
 	BOOLEAN MonitoringEnabled;
+	/** If set to TRUE, device extension-based hooks are used
+	    instead of IRP ones. */
+	BOOLEAN DeviceExtensionHooks;
 	DRIVER_MONITOR_SETTINGS MonitorSettings;
 	/** Number of devices, monitored by the IRPMon driver (not including the new ones). */
 	ULONG NumberOfHookedDevices;

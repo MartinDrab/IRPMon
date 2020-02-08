@@ -54,6 +54,9 @@
     <ClCompile Include="driver-settings.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="devext-hooks.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="driver.h">
@@ -117,6 +120,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="version.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="devext-hooks.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

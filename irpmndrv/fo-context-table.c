@@ -5,6 +5,8 @@
 #include "fo-context-table.h"
 
 
+#undef DEBUG_TRACE_ENABLED
+#define DEBUG_TRACE_ENABLED 0
 
 /************************************************************************/
 /*                HELPER FUNCTIONS                                      */
