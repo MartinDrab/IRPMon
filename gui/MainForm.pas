@@ -44,7 +44,6 @@ Type
     WatchedClassesMenuItem: TMenuItem;
     WatchDriverNameMenuItem: TMenuItem;
     WatchedDriversMenuItem: TMenuItem;
-    SortbyIDMenuItem: TMenuItem;
     DriverMenuItem: TMenuItem;
     UnloadOnExitMenuItem: TMenuItem;
     UninstallOnExitMenuItem: TMenuItem;
@@ -94,7 +93,6 @@ Type
     procedure SaveMenuItemClick(Sender: TObject);
     procedure WatchClassMenuItemClick(Sender: TObject);
     procedure WatchDriverNameMenuItemClick(Sender: TObject);
-    procedure SortbyIDMenuItemClick(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure DriverMenuItemClick(Sender: TObject);
     procedure Documentation1Click(Sender: TObject);
@@ -692,7 +690,6 @@ If LogSaveDialog.Execute Then
     2 : fn := ChangeFIleExt(fn, '.bin');
     end;
 
-  FModel.Sort;
   FModel.SaveToFile(fn, LogSaveDialog.FilterIndex = 2, CompressMenuItem.Checked);
   end;
 end;
@@ -706,11 +703,6 @@ With TTreeFrm.Create(Self) Do
   end;
 
 EnumerateHooks;
-end;
-
-Procedure TMainFrm.SortbyIDMenuItemClick(Sender: TObject);
-begin
-FModel.Sort;
 end;
 
 Procedure TMainFrm.StatusTimerTimer(Sender: TObject);
