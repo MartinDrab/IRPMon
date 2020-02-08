@@ -525,6 +525,7 @@ DWORD DriverComHookedObjectsEnumerate(PHOOKED_DRIVER_UMINFO *Info, PULONG Count)
 				for (SIZE_T i = 0; i < hookedObjects->NumberOfHookedDrivers; ++i) {
 					umDriverEntry->ObjectId = driverEntry->ObjectId;
 					umDriverEntry->DriverObject = driverEntry->DriverObject;
+					umDriverEntry->DeviceExtensionHooks = driverEntry->DeviceExtensionHooks;
 					umDriverEntry->MonitoringEnabled = driverEntry->MonitoringEnabled;
 					umDriverEntry->MonitorSettings = driverEntry->MonitorSettings;
 					umDriverEntry->DriverNameLen = driverEntry->DriverNameLen - sizeof(WCHAR);

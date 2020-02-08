@@ -248,10 +248,11 @@ If err = ERROR_SUCCESS Then
       drh.ObjectId := tmp.ObjectId;
       drh.Hooked := True;
       drh.Settings := tmp.MonitorSettings;
-
+      drh.DeviceExtensionHook := tmp.DeviceExtensionHooks;
       cdr := TDriverHookObject.Create(drh.Address, PWideChar(drh.Name));
       cdr.Hooked := True;
       cdr.Settings := drh.Settings;
+      cdr.DeviceExtensionHook := drh.DeviceExtensionHook;
       FCurrentlyHookedDrivers.Add(cdr);
 
       dei := tmp.HookedDevices;

@@ -57,6 +57,7 @@ typedef struct _HOOKED_DRIVER_INFO {
 	    driver. If set to TRUE, the information about the events is stored in the
 		IRPMon Event Queue. */
 	BOOLEAN MonitoringEnabled;
+	BOOLEAN DeviceExtensionHooks;
 	DRIVER_MONITOR_SETTINGS MonitorSettings;
 	/** Number of devices, monitored by the IRPMon driver (not including the new ones).
 	 *  Each is described by a single @link(HOOKED_DEVICE_INFO) structure. The first

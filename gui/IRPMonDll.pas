@@ -718,6 +718,7 @@ Type
 	    driver. If set to TRUE, the information about the events is stored in the
 		  IRPMon Event Queue. *)
     MonitoringEnabled : ByteBool;
+    DeviceExtensionHooks : ByteBool;
     MonitorSettings : DRIVER_MONITOR_SETTINGS;
 	  (** Number of devices, monitored by the IRPMon driver (not including the new ones). *)
     NumberOfHookedDevices : Cardinal;

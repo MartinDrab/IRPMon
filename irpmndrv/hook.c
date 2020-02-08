@@ -931,6 +931,7 @@ NTSTATUS HookObjectsEnumerate(PVOID Buffer, ULONG BufferLength, PULONG ReturnLen
 				driverInfo->EntrySize = sizeof(HOOKED_DRIVER_INFO) + driverRecord->DriverName.Length + sizeof(WCHAR);
 				driverInfo->DriverObject = driverRecord->DriverObject;
 				driverInfo->MonitoringEnabled = driverRecord->MonitoringEnabled;
+				driverInfo->DeviceExtensionHooks = driverRecord->DeviceExtensionHook;
 				driverInfo->MonitorSettings.MonitorAddDevice = driverRecord->MonitorAddDevice;
 				driverInfo->MonitorSettings.MonitorNewDevices = driverRecord->MonitorNewDevices;
 				driverInfo->MonitorSettings.MonitorStartIo = driverRecord->MonitorStartIo;
