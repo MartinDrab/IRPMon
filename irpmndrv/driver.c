@@ -362,6 +362,7 @@ NTSTATUS DriverInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, P
 					
 					DriverObject->MajorFunction[IRP_MJ_CREATE] = DriverCreateCleanup;
 					DriverObject->MajorFunction[IRP_MJ_CLEANUP] = DriverCreateCleanup;
+					DriverObject->MajorFunction[IRP_MJ_CLOSE] = DriverCreateCleanup;
 					DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL] = DriverDeviceControl;
 					DriverObject->MajorFunction[IRP_MJ_SHUTDOWN] = DriverShutdown;
 					fastIoDispatch->FastIoDeviceControl = DriverFastIoDeviceControl;
