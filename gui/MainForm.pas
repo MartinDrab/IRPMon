@@ -642,11 +642,11 @@ If selectedIndex <> -1 Then
         value := FModel.Item(selectedIndex, I);
         RPIncludeMenuItem.Caption := Format('Include "%s" (%s)', [value, requestTypeString]);
         RPHighlightMenuItem.Caption := Format('Highlight "%s" (%s)...', [value, requestTypeString]);
-        RPExcludeMenuItem.Caption := Format('IExclude "%s" (%s)', [value, requestTypeString]);
+        RPExcludeMenuItem.Caption := Format('Exclude "%s" (%s)', [value, requestTypeString]);
 
         RPIncludeAllMenuItem.Caption := Format('Include "%s" (all requests)', [value]);
         RPHighlightAllMenuItem.Caption := Format('Highlight "%s" (all requests)...', [value]);
-        RPExcludeAllMenuItem.Caption := Format('IExclude "%s" (all requests)', [value]);
+        RPExcludeAllMenuItem.Caption := Format('Exclude "%s" (all requests)', [value]);
 
         CopyMenuItem.Caption := Format('Copy "%s"', [value]);
         RPHighlightMenuItem.Tag := c.Tag;
