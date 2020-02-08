@@ -10,6 +10,9 @@
 #include "hook.h"
 
 
+#undef DEBUG_TRACE_ENABLED
+#define DEBUG_TRACE_ENABLED 0
+
 #pragma warning( disable : 4152 55 )
 
 /************************************************************************/
