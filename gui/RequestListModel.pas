@@ -254,7 +254,7 @@ Implementation
 Uses
   SysUtils, NameTables, IRPRequest, FastIoRequest,
   XXXDetectedRequests, FileObjectNameXXXRequest,
-  ProcessXXXRequests, Utils, BinaryLogHeader;
+  ProcessXXXRequests, Utils, BinaryLogHeader, ImageLoadRequest;
 
 
 (** TDriverRequest **)
@@ -274,6 +274,7 @@ Case AType Of
   ertFileObjectNameDeleted : Result := TFileObjectNameDeletedRequest.Create;
   ertProcessCreated : Result := TProcessCreatedRequest.Create;
   ertProcessExitted : Result := TProcessExittedRequest.Create;
+  ertImageLoad : Result := TImageLoadRequest.Create;
   Else Result := TDriverRequest.Create;
   end;
 end;
@@ -730,9 +731,8 @@ If Assigned(UpdateRequest) Then
 
           FProcessMap.Add(Cardinal(dr.DriverObject), dr.DriverName);
           end;
-        ertProcessExitted : begin
-          dr := TProcessExittedRequest.Create(tmpUR.ProcessExitted);
-          end;
+        ertProcessExitted : dr := TProcessExittedRequest.Create(tmpUR.ProcessExitted);
+        ertImageLoad : dr := TImageLoadRequest.Create(tmpUR.ImageLoad);
         Else dr := TDriverRequest.Create(tmpUR.Header);
         end;
 

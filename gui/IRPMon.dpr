@@ -39,7 +39,8 @@ uses
   ProcessXXXRequests in 'ProcessXXXRequests.pas',
   ConnectorSelectionForm in 'ConnectorSelectionForm.pas' {ConnectorSelectionFrm},
   BinaryLogHeader in 'BinaryLogHeader.pas',
-  DLLDecider in 'DLLDecider.pas';
+  DLLDecider in 'DLLDecider.pas',
+  ImageLoadRequest in 'ImageLoadRequest.pas';
 
 {$R *.res}
 

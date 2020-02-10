@@ -194,6 +194,7 @@
         </DCCReference>
         <DCCReference Include="BinaryLogHeader.pas"/>
         <DCCReference Include="DLLDecider.pas"/>
+        <DCCReference Include="ImageLoadRequest.pas"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>
@@ -247,6 +248,12 @@
                 </Excluded_Packages>
             </Delphi.Personality>
             <Deployment Version="3">
+                <DeployFile LocalName="..\bin\Win32\Debug\IRPMon.exe" Configuration="Debug" Class="ProjectOutput">
+                    <Platform Name="Win32">
+                        <RemoteName>IRPMon.exe</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
                 <DeployFile LocalName="..\bin\x64\Debug\IRPMon.exe" Configuration="Debug" Class="ProjectOutput">
                     <Platform Name="Win64">
                         <RemoteName>IRPMon.exe</RemoteName>
