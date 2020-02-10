@@ -155,6 +155,7 @@
     <ClCompile Include="fo-context-table.c" />
     <ClCompile Include="hook-handlers.c" />
     <ClCompile Include="hook.c" />
+    <ClCompile Include="image-load.c" />
     <ClCompile Include="modules.c" />
     <ClCompile Include="pnp-driver-watch.c" />
     <ClCompile Include="process-context-table.c" />
@@ -175,6 +176,7 @@
     <ClInclude Include="fo-context-table.h" />
     <ClInclude Include="hook-handlers.h" />
     <ClInclude Include="hook.h" />
+    <ClInclude Include="image-load.h" />
     <ClInclude Include="modules.h" />
     <ClInclude Include="pnp-driver-watch.h" />
     <ClInclude Include="process-context-table.h" />
