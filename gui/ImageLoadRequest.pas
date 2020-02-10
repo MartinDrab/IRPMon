@@ -44,9 +44,14 @@ Uses
   SysUtils;
 
 Constructor TImageLoadRequest.Create(Var ARequest:REQUEST_IMAGE_LOAD);
+Var
+  tmp : WideString;
+  rawReq : PREQUEST_IMAGE_LOAD;
 begin
 Inherited Create(ARequest.Header);
-AssignData(Pointer(NativeUInt(@ARequest) + SizeOf(REQUEST_IMAGE_LOAD)), ARequest.DataSize);
+rawReq := PREQUEST_IMAGE_LOAD(FRaw);
+AssignData(Pointer(PByte(rawReq) + SizeOf(REQUEST_IMAGE_LOAD)), rawReq.DataSize);
+SetFileObject(ARequest.FileObject);
 FImageBase := ARequest.ImageBase;
 FImageSize := ARequest.ImageSize;
 FSigningLevel := ARequest.SignatureLevel;
@@ -55,7 +60,9 @@ FKernelDriver := ARequest.KernelDriver;
 FMappedToAllPids := ARequest.MappedToAllPids;
 FExtraInfo := ARequest.ExtraInfo;
 FPartialMap := ARequest.PartialMap;
-SetFileObject(ARequest.FileObject);
+SetLength(tmp, FDataSize Div SIzeOf(WideChar));
+Move(FData^, PWideChar(tmp)^, FDataSize);
+SetFileName(tmp);
 end;
 
 Function TImageLoadRequest.GetColumnName(AColumnType:ERequestListModelColumnType):WideString;
@@ -100,6 +107,7 @@ end;
 
 Function TImageLoadRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
 begin
+Result := True;
 Case AColumnType Of
   rlmctDeviceObject,
   rlmctDeviceName,

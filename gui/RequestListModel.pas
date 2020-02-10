@@ -732,7 +732,13 @@ If Assigned(UpdateRequest) Then
           FProcessMap.Add(Cardinal(dr.DriverObject), dr.DriverName);
           end;
         ertProcessExitted : dr := TProcessExittedRequest.Create(tmpUR.ProcessExitted);
-        ertImageLoad : dr := TImageLoadRequest.Create(tmpUR.ImageLoad);
+        ertImageLoad : begin
+          dr := TImageLoadRequest.Create(tmpUR.ImageLoad);
+          If FFileMap.ContainsKey(dr.FileObject) Then
+            FFileMap.Remove(dr.FileObject);
+
+          FFileMap.Add(dr.FileObject, dr.FileName);
+          end;
         Else dr := TDriverRequest.Create(tmpUR.Header);
         end;
 
