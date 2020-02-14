@@ -13,7 +13,7 @@
 #define IRP_MJ_SET_SECURITY			0x15
 
 
-static DWORD _PrintSid(PNV_PAIR Pair, const wchar_t *Name, BOOLEAN InAce, PSID Sid)
+static DWORD _PrintSid(PNV_PAIR Pair, const wchar_t *Name, BOOLEAN InAce, const SID *Sid)
 {
 	SID_NAME_USE sidType;
 	DWORD ret = ERROR_GEN_FAILURE;
@@ -53,13 +53,13 @@ static DWORD _PrintSid(PNV_PAIR Pair, const wchar_t *Name, BOOLEAN InAce, PSID S
 	} else ret = PBaseAddNameValue(Pair, L"    SID", L"");
 
 	if (ret == ERROR_SUCCESS) {
-		if (ConvertSidToStringSid(Sid, &stringSid)) {
+		if (ConvertSidToStringSid((PSID)Sid, &stringSid)) {
 			ret = PBaseAddNameValue(Pair, sidNameConst, stringSid);
 			LocalFree(stringSid);
 		}
 	}
 
-	if (LookupAccountSidW(NULL, Sid, accountName, &accountNameLen, domainName, &domainNameLen, &sidType)) {
+	if (LookupAccountSidW(NULL, (PSID)Sid, accountName, &accountNameLen, domainName, &domainNameLen, &sidType)) {
 		sidTypeName = sidTypeNames[0];
 		if (sidType <= SidTypeLabel)
 			sidTypeName = sidTypeNames[sidType];
@@ -111,38 +111,38 @@ static DWORD _PrintACL(PNV_PAIR Pair, const wchar_t *Name, const ACL *Acl)
 
 			if (ret == ERROR_SUCCESS) {
 				for (DWORD i = 0; i < Acl->AceCount; ++i) {
-					if (GetAce(Acl, i, (PVOID *)&aceHeader)) {
+					if (GetAce((PACL)Acl, i, (PVOID *)&aceHeader)) {
 						PBaseAddNameFormat(Pair, L"  ACE", L"%u", i);
 						PBaseAddNameFormat(Pair, L"    Flags", L"0x%x", aceHeader->AceFlags);
 						PBaseAddNameFormat(Pair, L"    Type", L"%u", aceHeader->AceType);
 						switch (aceHeader->AceType) {
 						case ACCESS_ALLOWED_ACE_TYPE:
 							aaa = CONTAINING_RECORD(aceHeader, ACCESS_ALLOWED_ACE, Header);
-							ret = _PrintSid(Pair, L"SID", TRUE, &aaa->SidStart);
+							ret = _PrintSid(Pair, L"SID", TRUE, (PSID)&aaa->SidStart);
 							if (ret == ERROR_SUCCESS)
 								ret = _PrintMask(Pair, aaa->Mask);
 							break;
 						case ACCESS_DENIED_ACE_TYPE:
 							ada = CONTAINING_RECORD(aceHeader, ACCESS_DENIED_ACE, Header);
-							ret = _PrintSid(Pair, L"SID", TRUE, &ada->SidStart);
+							ret = _PrintSid(Pair, L"SID", TRUE, (PSID)&ada->SidStart);
 							if (ret == ERROR_SUCCESS)
 								ret = _PrintMask(Pair, ada->Mask);
 							break;
 						case SYSTEM_AUDIT_ACE_TYPE:
 							saua = CONTAINING_RECORD(aceHeader, SYSTEM_AUDIT_ACE, Header);
-							ret = _PrintSid(Pair, L"SID", TRUE, &saua->SidStart);
+							ret = _PrintSid(Pair, L"SID", TRUE, (PSID)&saua->SidStart);
 							if (ret == ERROR_SUCCESS)
 								ret = _PrintMask(Pair, saua->Mask);
 							break;
 						case SYSTEM_ALARM_ACE_TYPE:
 							sala = CONTAINING_RECORD(aceHeader, SYSTEM_ALARM_ACE, Header);
-							ret = _PrintSid(Pair, L"SID", TRUE, &sala->SidStart);
+							ret = _PrintSid(Pair, L"SID", TRUE, (PSID)&sala->SidStart);
 							if (ret == ERROR_SUCCESS)
 								ret = _PrintMask(Pair, sala->Mask);
 							break;
 						case SYSTEM_MANDATORY_LABEL_ACE_TYPE:
 							smla = CONTAINING_RECORD(aceHeader, SYSTEM_MANDATORY_LABEL_ACE, Header);
-							ret = _PrintSid(Pair, L"SID", TRUE, &smla->SidStart);
+							ret = _PrintSid(Pair, L"SID", TRUE, (PSID)&smla->SidStart);
 							if (ret == ERROR_SUCCESS)
 								ret = _PrintMask(Pair, smla->Mask);
 							break;
@@ -177,7 +177,7 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 		case ertIRP:
 			irp = CONTAINING_RECORD(Request, REQUEST_IRP, Header);
 			if (irp->MajorFunction == IRP_MJ_SET_SECURITY) {
-				si = (SECURITY_INFORMATION)irp->Arg1;
+				si = (SECURITY_INFORMATION)(UINT_PTR)irp->Arg1;
 				data = (SECURITY_DESCRIPTOR *)(irp + 1);
 				length = irp->DataSize;
 				ret = ERROR_SUCCESS;
@@ -186,7 +186,7 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 		case ertIRPCompletion:
 			irpComp = CONTAINING_RECORD(Request, REQUEST_IRP_COMPLETION, Header);
 			if (irpComp->MajorFunction == IRP_MJ_QUERY_SECURITY) {
-				si = (SECURITY_INFORMATION)irpComp->Arguments[0];
+				si = (SECURITY_INFORMATION)(UINT_PTR)irpComp->Arguments[0];
 				data = (SECURITY_DESCRIPTOR *)(irpComp + 1);
 				length = irpComp->DataSize;
 				ret = ERROR_SUCCESS;
@@ -197,21 +197,21 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 	}
 
 	if (ret == ERROR_SUCCESS) {
-		if (IsValidSecurityDescriptor(data)) {
+		if (IsValidSecurityDescriptor((PSECURITY_DESCRIPTOR)data)) {
 			ret = PBaseAddNameFormat(&p, L"Revision", L"%u", data->Revision);
 			if (ret == ERROR_SUCCESS)
 				ret = PBaseAddNameFormat(&p, L"Control", L"%u", data->Control);
 
-			if (ret == ERROR_SUCCESS && GetSecurityDescriptorOwner(data, &binarySid, &defaulted))
+			if (ret == ERROR_SUCCESS && GetSecurityDescriptorOwner((PSECURITY_DESCRIPTOR)data, &binarySid, &defaulted))
 				ret = _PrintSid(&p, L"Owner", FALSE, binarySid);
 			
-			if (ret == ERROR_SUCCESS && GetSecurityDescriptorGroup(data, &binarySid, &defaulted))
+			if (ret == ERROR_SUCCESS && GetSecurityDescriptorGroup((PSECURITY_DESCRIPTOR)data, &binarySid, &defaulted))
 				ret = _PrintSid(&p, L"Group", FALSE, binarySid);
 
-			if (ret == ERROR_SUCCESS && GetSecurityDescriptorDacl(data, &present, &acl, &defaulted) && present)
+			if (ret == ERROR_SUCCESS && GetSecurityDescriptorDacl((PSECURITY_DESCRIPTOR)data, &present, &acl, &defaulted) && present)
 				ret = _PrintACL(&p, L"DACL", acl);
 
-			if (ret == ERROR_SUCCESS && GetSecurityDescriptorSacl(data, &present, &acl, &defaulted) && present)
+			if (ret == ERROR_SUCCESS && GetSecurityDescriptorSacl((PSECURITY_DESCRIPTOR)data, &present, &acl, &defaulted) && present)
 				ret = _PrintACL(&p, L"SACL", acl);
 		} else ret = ERROR_INVALID_PARAMETER;
 
