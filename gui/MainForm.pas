@@ -488,11 +488,9 @@ end;
 Procedure TMainFrm.Documentation1Click(Sender: TObject);
 Var
   appDirectory : WideString;
-  helpFileName : WideString;
 begin
 appDirectory := ExtractFileDir(Application.ExeName);
-helpFileName := ExtractFilePath(Application.ExeName) + 'IRPMon.chm';
-ShellExecuteW(0, 'open', PWideChar(helpFileName), '', PWideChar(AppDirectory), SW_NORMAL);
+ShellExecuteW(0, 'open', 'https://github.com/MartinDrab/IRPMon/wiki', '', PWideChar(AppDirectory), SW_NORMAL);
 end;
 
 Procedure TMainFrm.DriverMenuItemClick(Sender: TObject);
