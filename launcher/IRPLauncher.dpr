@@ -13,7 +13,6 @@ Var
   si : STARTUPINFOW;
   pi : PROCESS_INFORMATION;
   I : Integer;
-  bitnessStr : WideString;
   bitness : Cardinal;
   targetFile : WideString;
   targetCmdLine : WideString;
@@ -65,12 +64,12 @@ If IsWow64Process(GetCurrentProcess, wow64) Then
       end
     Else begin
       err := GetLastError;
-      MessageBoxW(0, PWIdeChar(Format('%s (%u)', [SysErrorMessage(GetLastError), GetLastError])), 'Error', MB_OK Or MB_ICONERROR);
+      MessageBoxW(0, PWIdeChar(Format('%s (%u)', [SysErrorMessage(err), err])), 'Error', MB_OK Or MB_ICONERROR);
       end;
     end
   Else begin
     err := GetLastError;
-    MessageBoxW(0, PWIdeChar(Format('%s (%u)', [SysErrorMessage(GetLastError), GetLastError])), 'Error', MB_OK Or MB_ICONERROR);
+    MessageBoxW(0, PWIdeChar(Format('%s (%u)', [SysErrorMessage(err), err])), 'Error', MB_OK Or MB_ICONERROR);
     end;
   end;
 End.
