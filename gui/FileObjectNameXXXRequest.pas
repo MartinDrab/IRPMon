@@ -64,7 +64,6 @@ end;
 
 Function TFileObjectNameAssignedRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
 begin
-Result := True;
 Case AColumnType Of
   rlmctDeviceObject,
   rlmctDeviceName,
@@ -100,7 +99,6 @@ end;
 
 Function TFileObjectNameDeletedRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
 begin
-Result := True;
 Case AColumnType Of
   rlmctDeviceObject,
   rlmctDeviceName,

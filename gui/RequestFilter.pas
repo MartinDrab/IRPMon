@@ -93,7 +93,7 @@ Type
     Function SetCondition(AColumn:ERequestListModelColumnType; AOperator:ERequestFilterOperator; AValue:WideString):Boolean; Overload;
     Function HasPredecessor:Boolean;
 
-    Class Function NewInstance(ARequestType:ERequestType):TRequestFilter; Overload;
+    Class Function NewInstance(ARequestType:ERequestType):TRequestFilter; Reintroduce; Overload;
     Class Function LoadList(AFileName:WideString; AList:TList<TRequestFilter>):Boolean;
     Class Function SaveList(AFileName:WideString; AList:TList<TRequestFilter>):Boolean;
     Class Function GetByName(AName:WideString; AList:TList<TRequestFilter>):TRequestFilter;
@@ -211,7 +211,6 @@ Var
   names : TStringList;
   rf : TRequestFilter;
   tmp : TRequestFilter;
-  nextF : TRequestFilter;
   I : Integer;
   _name : WideString;
   _enabled : Boolean;
@@ -355,7 +354,6 @@ Var
   stringConstant : WideString;
   dllDecision : DLL_DECIDER_DECISION;
 begin
-ret := False;
 Result := Nil;
 If (FEnabled) And
     ((Not AChainStart) Or (Not Assigned(FPreviousFIlter))) And
@@ -686,7 +684,6 @@ end;
 
 Class Function TRequestFilter.NewInstance(ARequestType:ERequestType):TRequestFilter;
 begin
-Result := Nil;
 Case ARequestType Of
   ertUndefined: Result := TRequestFilter.Create('', ARequestType);
   ertIRP: Result := TIRPRequestFilter.Create('');

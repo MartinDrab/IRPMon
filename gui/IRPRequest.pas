@@ -549,7 +549,6 @@ end;
 
 Function TZeroArgIRPRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
 begin
-Result := True;
 Case AColumnType Of
   rlmctArg1,
   rlmctArg2,
@@ -806,7 +805,6 @@ end;
 
 Function TPowerSequenceRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
 begin
-Result := True;
 Case AColumnType Of
   rlmctArg1,
   rlmctArg2,
@@ -845,7 +843,6 @@ end;
 
 Function TCloseCleanupRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
 begin
-Result := True;
 Case AColumnType Of
   rlmctArg1,
   rlmctArg2,

@@ -86,6 +86,7 @@ Implementation
 {$R *.DFM}
 
 Uses
+  UITypes,
   IniFiles,
   IRPMonDll, IRPRequest, FastIoRequest, Utils,
   FileObjectNameXxxRequest, XXXDetectedRequests;
@@ -173,6 +174,7 @@ begin
 L := FilterListView.Selected;
 If Assigned(L) Then
   begin
+  index2 := -1;
   If Sender = UpButton Then
     index2 := L.Index - 1
   Else If Sender = DownButton Then
@@ -393,7 +395,6 @@ c := (Sender As TComboBox);
 EnableComboBox(fctColumn, c.ItemIndex <> -1);
 If FilterColumnComboBox.Enabled Then
   begin
-  dr := Nil;
   rt := ERequestType(c.Items.Objects[c.ItemIndex]);
   dr := TDriverRequest.CreatePrototype(rt);
   FilterColumnComboBox.Clear;
@@ -504,6 +505,7 @@ Var
   newName : WideString;
 begin
 f := Nil;
+L := Nil;
 modifyFilter := (Sender = ApplyButton);
 If modifyFilter Then
   begin

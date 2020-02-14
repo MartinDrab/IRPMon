@@ -48,10 +48,6 @@ Uses
   SysUtils, Utils;
 
 
-Function Compare(const Left, Right: TWatchableClass): Integer;
-begin
-end;
-
 (** TWatchableClass **)
 
 Constructor TWatchableClass.Create(AGuid:WideString; AName:WideString; AUpperFilter:Boolean);

@@ -61,7 +61,6 @@ Case AOperation Of
   hooUnhook: ;
   hooStart: driverStarted := (AStatus = ERROR_SUCCESS);
   hooStop: ;
-  Else Result := ERROR_NOT_SUPPORTED;
   end;
 
 Result := AStatus;
@@ -106,6 +105,7 @@ If err = ERROR_SUCCESS Then
   If Not connectorForm.Cancelled Then
     begin
     initInfo.ConnectionType := connType;
+    hScm := 0;
     If connType = ictDevice Then
       hScm := OpenSCManagerW(Nil, Nil, scmAccess);
 

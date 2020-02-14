@@ -384,8 +384,6 @@ end;
 
 Procedure TMainFrm.IrpMonAppEventsMessage(var Msg: tagMSG;
   Var Handled: Boolean);
-Var
-  rq : PREQUEST_GENERAL;
 begin
 If Msg.message = FRequestMsgCode Then
   begin
@@ -575,6 +573,8 @@ If err = ERROR_SUCCESS Then
     end;
 
   err := IRPMonDllSettingsSet(settings, True);
+  If err <> ERROR_SUCCESS THen
+    WinErrorMessage('Unable to change the driver settings', err);
   end;
 end;
 
@@ -740,7 +740,6 @@ Var
   err : Cardinal;
   mCaption : WideString;
 begin
-err := ERROR_SUCCESS;
 With TClassWatchAddFrm.Create(Self) Do
   begin
   ShowModal;
@@ -927,6 +926,7 @@ Var
   columnType : ERequestListModelColumnType;
   filterType : ERequestType;
 begin
+filterAction := ffaHighlight;
 invalidButton := False;
 copyText := False;
 M := Sender As TMenuItem;
@@ -1032,6 +1032,7 @@ Var
   iniCOlumnName : WideString;
   iniFile : TIniFile;
 begin
+iniFile := Nil;
 Try
   iniFile := TIniFile.Create(ChangeFileExt(Application.ExeName, '.ini'));
   iniFIle.WriteBool('Driver', 'unload_on_exit', UnloadOnExitMenuItem.Checked);
@@ -1064,6 +1065,7 @@ Var
   iniCOlumnName : WideString;
   iniFile : TIniFile;
 begin
+iniFIle := Nil;
 Try
   iniFile := TIniFile.Create(ChangeFileExt(Application.ExeName, '.ini'));
   UnloadOnExitMenuItem.Checked := iniFIle.ReadBool('Driver', 'unload_on_exit', False);

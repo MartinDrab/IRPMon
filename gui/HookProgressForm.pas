@@ -87,7 +87,7 @@ end;
 
 Procedure THookProgressThread.Execute;
 Var
-  I : Integer;
+  I : Cardinal;
   p : TPair<EHookObjectOperation, TTaskObject>;
 begin
 FreeOnTerminate := False;
@@ -142,7 +142,7 @@ FSuccessCount := 0;
 FErrorCount := 0;
 FWarningCount := 0;
 FThread.OnTerminate := OnThreadTerminated;
-FThread.Resume;
+FThread.Start;
 end;
 
 Procedure THookProgressFrm.ProgressListViewAdvancedCustomDrawItem(
