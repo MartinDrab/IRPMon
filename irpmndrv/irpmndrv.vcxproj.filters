@@ -57,6 +57,9 @@
     <ClCompile Include="devext-hooks.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="image-load.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="driver.h">
@@ -123,6 +126,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="devext-hooks.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="image-load.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

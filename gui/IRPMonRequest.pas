@@ -60,6 +60,8 @@ Type
     Class Function IRQLToString(AValue:Byte):WideString;
     Class Function MajorFunctionToString(AMajor:Byte):WideString;
     Class Function MinorFunctionToString(AMajor:Byte; AMinor:Byte):WideString;
+    Class Function ImageSignatureTypeToString(AType:EImageSignatureType):WideString;
+    Class Function ImageSigningLevelToString(ALevel:EImageSigningLevel):WideString;
 
     Property Id : Cardinal Read FId;
     Property DriverName : WideString Read FDriverName Write SetDriverName;
@@ -362,6 +364,7 @@ Case ARequestType Of
   ertFileObjectNameDeleted : Result := 'FONameDeleted';
   ertProcessCreated : Result := 'ProcessCreate';
   ertProcessExitted : Result := 'ProcessExit';
+  ertImageLoad : Result := 'ImageLoad';
   Else Result := Format('<unknown> (%u)', [Ord(ARequestType)]);
   end;
 end;
@@ -417,6 +420,43 @@ Case AMode Of
   0 : Result := 'KernelMode';
   1 : Result := 'UserMode';
   Else Result := Format('<unknown> (%u)', [AMode]);
+  end;
+end;
+
+Class Function TGeneralRequest.ImageSignatureTypeToString(AType:EImageSignatureType):WideString;
+begin
+Result := '';
+Case AType Of
+  istNone: Result := 'None';
+  istEmbedded: Result := 'Embedded';
+  istCache: Result := 'Cached';
+  istCatalogCached: Result := 'Catalog cached';
+  istCatalogNotCached: Result := 'Catalog';
+  istCatalogHint: Result := 'Catalog hint';
+  istPackageCatalog: Result := 'Catalog package';
+  end;
+end;
+
+Class Function TGeneralRequest.ImageSigningLevelToString(ALevel:EImageSigningLevel):WideString;
+begin
+Result := '';
+Case ALevel Of
+  islUnchecked: Result := 'Unchecked';
+  islUnsigned: Result := 'Unsigned';
+  islEnterprise: Result := 'Enterprise';
+  islDeveloper: Result := 'Developer';
+  islAuthenticode: Result := 'Authenticode';
+  islCustom2: Result := 'Custom2';
+  islStore: Result := 'Store';
+  islAntiMalware: Result := 'Anti-malware';
+  islMicrosoft: Result := 'Microsoft';
+  islCustom4: Result := 'Custom4';
+  islCustom5: Result := 'Custom5';
+  islDynamicCode: Result := 'DynamicCode';
+  islWindows: Result := 'Windows';
+  islCustom7: Result := 'Custom7';
+  islWindowsTCB: Result := 'Windows TCB';
+  islCustom6: Result := 'Custom6';
   end;
 end;
 

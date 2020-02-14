@@ -678,6 +678,7 @@ Case RequestListModelColumnValueTypes[Ord(FField)] Of
     AddMapping(ASources, ATargets, Ord(ertFileObjectNameDeleted), 'FONameDeleted');
     AddMapping(ASources, ATargets, Ord(ertProcessCreated), 'ProcessCreate');
     AddMapping(ASources, ATargets, Ord(ertProcessExitted), 'ProcessExit');
+    AddMapping(ASources, ATargets, Ord(ertImageLoad), 'ImageLoad');
     end;
   Else Result := False;
   end;

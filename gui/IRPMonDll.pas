@@ -386,7 +386,8 @@ Type
     (** Last handle to a file object has been closed (IRP_MJ_CLEANUP) **)
     ertFileObjectNameDeleted,
     ertProcessCreated,
-    ertProcessExitted
+    ertProcessExitted,
+    ertImageLoad
   );
   ERequesttype = _ERequestType;
   PERequesttype = ^ERequesttype;
@@ -626,6 +627,53 @@ Type
   REQUEST_PROCESS_EXITTED = _REQUEST_PROCESS_EXITTED;
   PREQUEST_PROCESS_EXITTED = ^REQUEST_PROCESS_EXITTED;
 
+  _EImageSignatureType = (
+	  istNone,
+	  istEmbedded,
+	  istCache,
+	  istCatalogCached,
+	  istCatalogNotCached,
+	  istCatalogHint,
+	  istPackageCatalog);
+  EImageSignatureType = _EImageSignatureType;
+  PEImageSignatureType = ^EImageSignatureType;
+
+  _EImageSigningLevel = (
+	  islUnchecked,
+	  islUnsigned,
+	  islEnterprise,
+	  islDeveloper,
+	  islAuthenticode,
+	  islCustom2,
+	  islStore,
+	  islAntiMalware,
+	  islMicrosoft,
+	  islCustom4,
+	  islCustom5,
+	  islDynamicCode,
+	  islWindows,
+	  islCustom7,
+	  islWindowsTCB,
+	  islCustom6);
+  EImageSigningLevel = _EImageSigningLevel;
+  PEImageSigningLevel = ^EImageSigningLevel;
+
+  _REQUEST_IMAGE_LOAD = Record
+    Header : REQUEST_HEADER;
+	  ImageBase : Pointer;
+    ImageSize : NativeUInt;
+	  FileObject : Pointer;
+    SignatureLevel : EImageSigningLevel;
+    SignatureType : EImageSignatureType;
+    DataSize : Cardinal;
+    KernelDriver : ByteBool;
+    MappedToAllPids : ByteBool;
+    ExtraInfo : ByteBool;
+	  PartialMap : ByteBool;
+    end;
+  REQUEST_IMAGE_LOAD = _REQUEST_IMAGE_LOAD;
+  PREQUEST_IMAGE_LOAD = ^REQUEST_IMAGE_LOAD;
+
 
   _REQUEST_GENERAL = Record
     Case ERequestType Of
@@ -641,7 +689,8 @@ Type
       ertFileObjectNameAssigned : (FileObjectNameAssigned : REQUEST_FILE_OBJECT_NAME_ASSIGNED);
       ertFileObjectNameDeleted : (FileObjectNameDeleted : REQUEST_FILE_OBJECT_NAME_DELETED);
       ertProcessCreated : (ProcessCreated : REQUEST_PROCESS_CREATED);
-      ertProcessExitted : (ProcessExitted : REQUEST_PROCESS_EXITTED)
+      ertProcessExitted : (ProcessExitted : REQUEST_PROCESS_EXITTED);
+      ertImageLoad : (ImageLoad : REQUEST_IMAGE_LOAD)
     end;
   REQUEST_GENERAL = _REQUEST_GENERAL;
   PREQUEST_GENERAL = ^REQUEST_GENERAL;
