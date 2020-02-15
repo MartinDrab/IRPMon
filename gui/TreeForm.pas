@@ -124,10 +124,8 @@ Var
   pdei : PPIRPMON_DEVICE_INFO;
   dei : PIRPMON_DEVICE_INFO;
   tnDriver : TTreeNode;
-  tndevice : TTreeNode;
   hdr : TDriverHookObject;
   hde : TDeviceHookObject;
-  hdeTmp : TDeviceHookObject;
   p, p2 : TPair<Pointer, TDeviceHookObject>;
   isLowest : Boolean;
 begin
@@ -465,7 +463,6 @@ end;
 
 Procedure TTreeFrm.OkButtonClick(Sender: TObject);
 Var
-  ho : THookObject;
   cdr : TDriverHookObject;
   cde : TDeviceHookObject;
   dr : TDriverHookObject;
@@ -553,7 +550,6 @@ end;
 Procedure TTreeFrm.TreePopupMenuClick(Sender: TObject);
 Var
   M : TMenuItem;
-  I : Integer;
   tn : TTreeNode;
   ho : THookObject;
   hde : TDeviceHookObject;
@@ -561,7 +557,6 @@ Var
 begin
 hdr := Nil;
 hde := Nil;
-ho := Nil;
 tn := DeviceTreeView.Selected;
 If Assigned(tn) Then
   begin

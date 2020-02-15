@@ -33,7 +33,7 @@ Type
     FDecideRoutineName : WideString;
     FDecideRoutine : TDLL_DECIDER_DECIDE_ROUTINE;
   Public
-    Class Function NewInstance(ALibraryName:WideString; ARoutineName:WideString = 'DecideRoutine'):TDLLDecider;
+    Class Function NewInstance(ALibraryName:WideString; ARoutineName:WideString = 'DecideRoutine'):TDLLDecider; Reintroduce;
 
     Destructor Destroy; Override;
 

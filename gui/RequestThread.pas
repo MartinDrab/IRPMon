@@ -17,7 +17,9 @@ Type
     FEvent : THandle;
     FMsgCode : Cardinal;
     FCurrentList : TList<PREQUEST_GENERAL>;
+{$IFDEF FPC}
     Procedure PortablePostMessage;
+{$ENDIF}
     Procedure PostRequestList;
     Function ProcessRequest(AList:TList<PREQUEST_GENERAL>):Cardinal;
   Protected
@@ -34,10 +36,12 @@ Implementation
 Uses
   Forms, MainForm;
 
+{$IFDEF FPC}
 Procedure TRequestThread.PortablePostMessage;
 begin
 MainFrm.OnRequest(FCurrentList);
 end;
+{$ENDIF}
 
 Procedure TRequestThread.PostRequestList;
 begin
@@ -127,7 +131,6 @@ Constructor TRequestThread.Create(ACreateSuspended:Boolean; AMsgCode:Cardinal);
 Var
   err : Cardinal;
 begin
-Inherited Create(True);
 FConnected := False;
 FEvent := 0;
 FMsgCode := AMsgCode;
@@ -140,8 +143,7 @@ If err <> ERROR_SUCCESS Then
   Raise Exception.Create(Format('IRPMonDllConnect: %u', [err]));
 
 FConnected := True;
-If Not ACreateSuspended Then
-  Resume;
+Inherited Create(ACreateSuspended);
 end;
 
 Destructor TRequestTHread.Destroy;

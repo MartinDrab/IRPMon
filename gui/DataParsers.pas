@@ -155,7 +155,6 @@ If lh <> 0 Then
 
 If Assigned(initRoutine) Then
   begin
-  initRoutine := Nil;
   lh := LoadLibraryW(PWideChar(ALibraryName));
   If lh <> 0 Then
     begin

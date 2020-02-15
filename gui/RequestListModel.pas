@@ -526,7 +526,6 @@ end;
 
 Function TDriverUnloadRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
 begin
-Result := True;
 Case AColumnType Of
   rlmctDeviceObject,
   rlmctDeviceName,
@@ -887,7 +886,6 @@ Procedure TRequestListModel.LoadFromStream(AStream:TStream; ARequireHeader:Boole
 Var
   reqSize : Cardinal;
   rg : PREQUEST_GENERAL;
-  tmp : PREQUEST_GENERAL;
   l : TList<PREQUEST_GENERAL>;
   bh : TBinaryLogHeader;
   oldPos : Int64;

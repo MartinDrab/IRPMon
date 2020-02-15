@@ -117,11 +117,6 @@ end;
 
 Procedure TRequestDetailsFrm.FormCreate(Sender: TObject);
 Var
-  d : PByte;
-  hexLine : WideString;
-  dispLine : WideString;
-  I : Integer;
-  index : Integer;
   value : WideString;
   ct : ERequestListModelColumnType;
 begin

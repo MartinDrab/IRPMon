@@ -27,10 +27,11 @@ Class Function TBinaryLogHeader.ArchitectureSupported(Var AHeader:TBinaryLogHead
 Var
   arch : Cardinal;
 begin
+{$IFDEF WIN32}
 arch := LOGHEADER_ARCHITECTURE_X86;
-If SizeOf(Pointer) = 8 Then
-  arch := LOGHEADER_ARCHITECTURE_X64;
-
+{$ELSE}
+arch := LOGHEADER_ARCHITECTURE_X64;
+{$ENDIF}
 Result := (arch = AHeader.Architecture);
 end;
 
@@ -45,10 +46,11 @@ Var
 begin
 AHeader.Signature := LOGHEADER_SIGNATURE;
 AHeader.Version := LOGHEADER_VERSION;
+{$IFDEF WIN32}
 arch := LOGHEADER_ARCHITECTURE_X86;
-If SizeOf(Pointer) = 8 Then
-  arch := LOGHEADER_ARCHITECTURE_X64;
-
+{$ELSE}
+arch := LOGHEADER_ARCHITECTURE_X64;
+{$ENDIF}
 AHeader.Architecture := arch;
 end;
 
