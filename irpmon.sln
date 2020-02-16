@@ -66,7 +66,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "network-connector", "networ
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "irpmon-server", "irpmon-server\irpmon-server.vcxproj", "{BE315922-05FB-4951-81ED-75B30F320CD6}"
 	ProjectSection(ProjectDependencies) = postProject
-		{59868606-0068-49D8-A54D-25F5F30D793C} = {59868606-0068-49D8-A54D-25F5F30D793C}
+		{493AD1AA-B7E0-49A3-B382-A3D67E257262} = {493AD1AA-B7E0-49A3-B382-A3D67E257262}
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DLL Deciders", "DLL Deciders", "{0226C8E5-66D5-4A41-9D0C-347F4367FF4A}"
