@@ -887,6 +887,7 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 		case ertFastIo:
 			fastIo = CONTAINING_RECORD(Request, REQUEST_FASTIO, Header);
 			buffer = (fastIo + 1);
+			bufferLength = fastIo->DataSize;
 			switch (fastIo->FastIoType) {
 				case FastIoQueryBasicInfo:
 					infoClass = FileBasicInformation;
@@ -964,13 +965,13 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 				ret = _ProcessNetworkOpenInformation(&p, buffer, bufferLength);
 				break;
 		}
+	}
 
-		if (ret == ERROR_SUCCESS) {
-			*Handled = parsed;
-			*RowCount = p.Count;
-			*Names = p.Names;
-			*Values = p.Values;
-		}
+	if (ret == ERROR_SUCCESS) {
+		*Handled = parsed;
+		*RowCount = p.Count;
+		*Names = p.Names;
+		*Values = p.Values;
 	}
 
 	if (ret != ERROR_SUCCESS) {
@@ -1011,8 +1012,7 @@ DWORD cdecl DP_INIT_ROUTINE_NAME(uint32_t RequestedVersion, PIRPMON_DATA_PARSER 
 			tmpParser->FreeRoutine = _FreeRoutine;
 			*Parser = tmpParser;
 		}
-	}
-	else ret = ERROR_NOT_SUPPORTED;
+	} else ret = ERROR_NOT_SUPPORTED;
 
 	return ret;
 }
