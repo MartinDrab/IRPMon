@@ -48,7 +48,6 @@ Source: "..\bin\Win32\{#ConfigMode}\*.sys"; DestDir: "{app}\x86"; Flags: ignorev
 Source: "..\bin\Win32\{#ConfigMode}\IRPMon.exe"; DestDir: "{app}\x86"; Flags: ignoreversion;
 Source: "..\bin\Win32\{#ConfigMode}\irpmon-server.exe"; DestDir: "{app}\x86"; Flags: ignoreversion;
 Source: "..\dlls\Win32\{#ConfigMode}\*.dll"; DestDir: "{app}\x86"; Flags: ignoreversion;
-Source: "..\bin\Win32\{#ConfigMode}\IRPLauncher.exe"; DestDir: "{app}"; Flags: ignoreversion;
 Source: "..\resources\ioctl.txt"; DestDir: "{app}\x86"; Flags: ignoreversion
 Source: "..\resources\ntstatus.txt"; DestDir: "{app}\x86"; Flags: ignoreversion
 Source: "..\resources\winerr.txt"; DestDir: "{app}\x86"; Flags: ignoreversion
