@@ -64,7 +64,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "device-connector", "device-
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "network-connector", "network-connector\network-connector.vcxproj", "{E3D35568-6399-4251-A2AB-0FA5D1751FDF}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "irpmon-server", "irpmon-server\irpmon-server.vcxproj", "{BE315922-05FB-4951-81ED-75B30F320CD6}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "server-app", "irpmon-server\irpmon-server.vcxproj", "{BE315922-05FB-4951-81ED-75B30F320CD6}"
 	ProjectSection(ProjectDependencies) = postProject
 		{493AD1AA-B7E0-49A3-B382-A3D67E257262} = {493AD1AA-B7E0-49A3-B382-A3D67E257262}
 	EndProjectSection
@@ -81,6 +81,11 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libserver", "libserver\libserver.vcxproj", "{493AD1AA-B7E0-49A3-B382-A3D67E257262}"
 	ProjectSection(ProjectDependencies) = postProject
 		{59868606-0068-49D8-A54D-25F5F30D793C} = {59868606-0068-49D8-A54D-25F5F30D793C}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "server-svc", "server-svc\server-svc.vcxproj", "{22EE73A9-C35A-4185-9224-6EFD8C2AEF07}"
+	ProjectSection(ProjectDependencies) = postProject
+		{493AD1AA-B7E0-49A3-B382-A3D67E257262} = {493AD1AA-B7E0-49A3-B382-A3D67E257262}
 	EndProjectSection
 EndProject
 Global
@@ -323,6 +328,18 @@ Global
 		{493AD1AA-B7E0-49A3-B382-A3D67E257262}.Release|Win32.Build.0 = Release|Win32
 		{493AD1AA-B7E0-49A3-B382-A3D67E257262}.Release|x64.ActiveCfg = Release|x64
 		{493AD1AA-B7E0-49A3-B382-A3D67E257262}.Release|x64.Build.0 = Release|x64
+		{22EE73A9-C35A-4185-9224-6EFD8C2AEF07}.Debug|ARM.ActiveCfg = Debug|Win32
+		{22EE73A9-C35A-4185-9224-6EFD8C2AEF07}.Debug|ARM64.ActiveCfg = Debug|Win32
+		{22EE73A9-C35A-4185-9224-6EFD8C2AEF07}.Debug|Win32.ActiveCfg = Debug|Win32
+		{22EE73A9-C35A-4185-9224-6EFD8C2AEF07}.Debug|Win32.Build.0 = Debug|Win32
+		{22EE73A9-C35A-4185-9224-6EFD8C2AEF07}.Debug|x64.ActiveCfg = Debug|x64
+		{22EE73A9-C35A-4185-9224-6EFD8C2AEF07}.Debug|x64.Build.0 = Debug|x64
+		{22EE73A9-C35A-4185-9224-6EFD8C2AEF07}.Release|ARM.ActiveCfg = Release|Win32
+		{22EE73A9-C35A-4185-9224-6EFD8C2AEF07}.Release|ARM64.ActiveCfg = Release|Win32
+		{22EE73A9-C35A-4185-9224-6EFD8C2AEF07}.Release|Win32.ActiveCfg = Release|Win32
+		{22EE73A9-C35A-4185-9224-6EFD8C2AEF07}.Release|Win32.Build.0 = Release|Win32
+		{22EE73A9-C35A-4185-9224-6EFD8C2AEF07}.Release|x64.ActiveCfg = Release|x64
+		{22EE73A9-C35A-4185-9224-6EFD8C2AEF07}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -346,6 +363,7 @@ Global
 		{CE3539DF-4347-4731-88FF-E8AB4EEDF163} = {0226C8E5-66D5-4A41-9D0C-347F4367FF4A}
 		{4700F69A-25E3-4029-9A5B-269C06650646} = {6A0129AE-1EF9-4105-94AA-10D899F59BAD}
 		{493AD1AA-B7E0-49A3-B382-A3D67E257262} = {E22735F3-939B-4EC2-8761-33B38B315EDF}
+		{22EE73A9-C35A-4185-9224-6EFD8C2AEF07} = {E22735F3-939B-4EC2-8761-33B38B315EDF}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1780A1EC-E35B-4BB5-BC92-97AA7E63D2AE}
