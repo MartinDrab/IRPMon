@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="DEF Files">
+      <UniqueIdentifier>{6f71da7b-2cdf-4542-b8cb-dd026d8fc256}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="libserver.c">
@@ -23,5 +26,10 @@
     <ClInclude Include="..\include\libserver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="libserver.def">
+      <Filter>DEF Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
