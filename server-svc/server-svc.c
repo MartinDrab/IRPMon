@@ -93,13 +93,15 @@ int main(int argc, char *argv[])
 	int ret = 0;
 	SERVICE_TABLE_ENTRYW svcTable[2];
 
-	_argc = argc - 1;
-	_argv = argv + 1;
-	memset(svcTable, 0, sizeof(svcTable));
-	svcTable[0].lpServiceName = L"IRPMonSvc";
-	svcTable[0].lpServiceProc = ServiceMain;
-	if (!StartServiceCtrlDispatcherW(svcTable))
-		ret = GetLastError();
+	if (argc == 3) {
+		_argc = argc - 1;
+		_argv = argv + 1;
+		memset(svcTable, 0, sizeof(svcTable));
+		svcTable[0].lpServiceName = L"IRPMonSvc";
+		svcTable[0].lpServiceProc = ServiceMain;
+		if (!StartServiceCtrlDispatcherW(svcTable))
+			ret = GetLastError();
+	} else ret = ERROR_INVALID_PARAMETER;
 
 	return ret;
 }
