@@ -75,12 +75,195 @@ Source: "..\resources\winerr.txt"; DestDir: "{app}\x86"; Flags: ignoreversion; C
 Source: "..\dlls\Win32\{#ConfigMode}\*.dll"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: Runtime;
 Source: "..\dlls\x64\{#ConfigMode}\*.dll"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Runtime;
 
+[Tasks]
+Name: DriverInstall; Description: "Install IRPMon driver service"; Components: Kernel; GroupDescription: "Monitoring driver";
+Name: DriverAuto; Description: "Run IRPMon driver on startup"; Components: Kernel; GroupDescription: "Monitoring driver";
+Name: ServerInstall; Description: "Install IRPMon server service"; Components: Server and Kernel; GroupDescription: "Server service";
+Name: ServerAuto; Description: "Run IRPMon server on startup"; Components: Server and Kernel; GroupDescription: "Server service";
+Name: AppDesktop; Description: "Create Desktop shortcuts"; Components: Application; GroupDescription: "GUI Application";
+Name: AppStartMenu; Description: "Create Start Menu shortcuts"; Components: Application; GroupDescription: "GUI Application";
 
 [Icons]
-Name: "{commondesktop}\IRPMon 32-Bit"; Filename: "{app}\x86\IRPMon.exe"; Comment: "IRPMon 32-bit"
-Name: "{commondesktop}\IRPMon 64-Bit"; Filename: "{app}\x64\IRPMon.exe"; Comment: "IRPMon 64-bit"
-Name: "{group}\IRPMon 32-Bit"; Filename: "{app}\x86\IRPMon.exe"; Comment: "IRPMon 32-bit"
-Name: "{group}\IRPMon 64-Bit"; Filename: "{app}\x64\IRPMon.exe"; Comment: "IRPMon 64-bit"
-Name: "{group}\{cm:ProgramOnTheWeb,{#MyAppName}}"; Filename: "{#MyAppURL}"
-Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
+Name: "{commondesktop}\IRPMon 32-Bit"; Tasks: AppDesktop; Filename: "{app}\x86\IRPMon.exe"; Comment: "IRPMon 32-bit"
+Name: "{commondesktop}\IRPMon 64-Bit"; Tasks: AppDesktop; Filename: "{app}\x64\IRPMon.exe"; Comment: "IRPMon 64-bit"
+Name: "{group}\IRPMon 32-Bit"; Tasks: AppStartMenu; Filename: "{app}\x86\IRPMon.exe"; Comment: "IRPMon 32-bit"
+Name: "{group}\IRPMon 64-Bit"; Tasks: AppStartMenu; Filename: "{app}\x64\IRPMon.exe"; Comment: "IRPMon 64-bit"
+Name: "{group}\{cm:ProgramOnTheWeb,{#MyAppName}}"; Tasks: AppStartMenu; Filename: "{#MyAppURL}"
+Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Tasks: AppStartMenu; Filename: "{uninstallexe}"
+
+[Code]
+Const
+  DriverServiceName = 'irpmndrv';
+	DriverServiceDisplayName = 'IRPMon Driver';
+  ServerServiceName = 'IRPMonSvc';
+	ServerServiceDisplayName = 'IRPMon Server';
+
+Var
+  DriverInstall : Boolean;
+  DriverAuto : Boolean;
+  ServiceInstall : Boolean;
+  ServiceAuto : Boolean;
+
+function ShouldSkipPage(PageID: Integer): Boolean;
+begin
+Result := False;
+If PageID = wpSelectProgramGroup Then
+  Result := True;
+end;
+
+
+Const
+	ERROR_SERVICE_EXISTS = $431;
+  ERROR_SERVICE_ALREADY_RUNNING = $420;
+	
+	
+	SC_MANAGER_CREATE_SERVICE	=	$0002;
+  SC_MANAGER_CONNECT = $0001;
+	
+	SERVICE_DELETE = $10000;
+	SERVICE_START = $10;
+	SERVICE_STOP = $20;
+	
+	SERVICE_ERROR_NORMAL = 0;
+	
+	SERVICE_BOOT_START = 0;
+	SERVICE_SYSTEM_START = 1;
+	SERVICE_AUTO_START = 2;
+	SERVICE_DEMAND_START = 3;
+	SERVICE_DISABLED = 4;
+	
+	SERVICE_KERNEL_DRIVER = $1;
+	SERVICE_WIN32_OWN_PROCESS = $10;
+	
+	SERVICE_CONTROL_STOP = $1;
+	
+Type
+  SC_HANDLE = THandle;
+  SERVICE_STATUS = Record
+		dwServiceType : cardinal;
+    dwCurrentState : cardinal;
+    dwControlsAccepted : cardinal;
+    dwWin32ExitCode : cardinal;
+    dwServiceSpecificExitCode : cardinal;
+    dwCheckPoint : cardinal;
+    dwWaitHint : cardinal;
+    end;
+	
+Function GetLastError:Cardinal; External 'GetLastError@Kernel32.dll';
+Function OpenSCManager(lpMachineName:PAnsiChar; lpDatabaseName:PAnsiChar; dwDesiredAccess:Cardinal):SC_HANDLE; External 'OpenSCManagerA@advapi32.dll';
+Function CloseServiceHandle(hSCObject:SC_HANDLE):LongBool; External 'CloseServiceHandle@advapi32.dll';
+Function OpenService(hSCManager:SC_HANDLE; lpServiceName:PAnsiChar; dwDesiredAccess:Cardinal):SC_HANDLE; External 'OpenServiceA@advapi32.dll';
+Function CreateService(hSCManager:SC_HANDLE; lpServiceName:PAnsiChar; lpDisplayName:PAnsiChar; dwDesiredAccess:Cardinal; dwServiceType:Cardinal; dwStartType:Cardinal; dwErrorControl:Cardinal; lpBinaryPathName:PAnsiChar; lpLoadOrderGroup:PAnsiChar; lpdwTagId:Cardinal; lpDependencies:Cardinal; lpServiceStartName:PAnsiChar; lpPassword:PAnsiChar):SC_HANDLE; External 'CreateServiceA@advapi32.dll';
+Function StartService(hService:SC_HANDLE; dwNumServiceArgs:Cardinal; lpServiceArgVectors:PAnsiChar):LongBool; External 'StartServiceA@advapi32.dll';
+Function ControlService(hService:SC_HANDLE; dwControl:Cardinal; Var lpServiceStatus:SERVICE_STATUS):LongBool; External 'ControlService@advapi32.dll';
+Function DeleteService(hService:SC_HANDLE):LongBool; External 'DeleteService@advapi32.dll';
+
+
+Function InstallService(AName:PAnsiChar; ADisplayName:PAnsiChar; AType:Cardinal; AStart:Cardinal; AFileName:PAnsiChar):Cardinal;
+Var
+	hScm : SC_HANDLE;
+	hService : SC_HANDLE;
+begin
+Result := 0;
+hScm := OpenSCManager('', '', SC_MANAGER_CREATE_SERVICE);
+If hScm <> 0 Then
+	begin				
+	hService := CreateService(hScm, AName, ADisplayName, SERVICE_START, AType, AStart, SERVICE_ERROR_NORMAL, AFileName, '', 0, '', '', '');
+				
+				
+	If hService = 0 Then
+		begin
+		Result := GetLastError;
+		If Result = ERROR_SERVICE_EXISTS Then
+			begin
+			Result := 0;
+			hService := OpenService(hScm, AName, SERVICE_START Or SERVICE_DELETE);
+			If hService = 0 Then
+				Result := GetLastError;
+			end;
+
+		If Result = 0 Then
+			begin
+			If Not StartService(hService, 0, '') Then
+				Result := GetLastError;
+			
+			If Result = ERROR_SERVICE_ALREADY_RUNNING Then
+				Result := 0;
+					
+			If Result <> 0 Then
+				DeleteService(hService);
+				
+			CloseServiceHandle(hService);
+			end;
+		end;
+				
+	CloseServiceHandle(hScm);
+	end
+Else Result := GetLastError;
+end;
+
+Function UninstallService(AName:PAnsiChar):Cardinal;
+Var
+	ss : SERVICE_STATUS;
+	hScm : SC_HANDLE;
+	hService : SC_HANDLE;
+begin
+Result := 0;
+hScm := OpenSCManager('', '', SC_MANAGER_CONNECT);
+If hScm <> 0 Then
+	begin
+	hService := OpenService(hScm, AName, SERVICE_STOP Or SERVICE_DELETE);
+	If hService <> 0 Then
+		begin
+		If Not ControlService(hService, SERVICE_CONTROL_STOP, ss) Then
+			Result := GetLastError;
+		
+		If Not DeleteService(hService) Then
+			Result := GetLastError;
+		
+		CloseServiceHandle(hService);
+		end
+	Else Result := GetLastError;
+		
+	CloseServiceHandle(hScm);
+	end
+Else Result := GetLastError;
+end;
+
+function NextButtonClick(CurPageID: Integer): Boolean;
+Var
+  err : Cardinal;
+	serviceStartType : Cardinal;
+begin
+Result := True;
+Case CurPageID Of
+  wpSelectTasks : begin
+    DriverInstall := WizardForm.TasksList.Checked[0];
+    DriverAuto := WizardForm.TasksList.Checked[1];
+    ServiceInstall := WizardForm.TasksList.Checked[3];
+    ServiceAuto := WizardForm.TasksList.Checked[4];
+    end;
+  wpInstalling : begin
+    If DriverInstall Then
+      begin
+			serviceStartType := SERVICE_DEMAND_START;
+			If DriverAuto Then
+				serviceStartType := SERVICE_AUTO_START;
+
+			err := InstallService(DriverServiceName, DriverServiceDisplayName, SERVICE_KERNEL_DRIVER, serviceStartType, '');
+			end;
+			
+    If ServiceInstall Then
+      begin
+			serviceStartType := SERVICE_DEMAND_START;
+			If ServiceAuto Then
+				serviceStartType := SERVICE_AUTO_START;
+
+			err := InstallService(ServerServiceName, ServerServiceDisplayName, SERVICE_WIN32_OWN_PROCESS, serviceStartType, '');
+			If (err <> 0) And (DriverInstall) Then
+				UninstallService(DriverServiceName);
+			end;		
+    end;
+  end;
+end;
 
