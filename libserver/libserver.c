@@ -22,7 +22,7 @@ static IRPMON_INIT_INFO _initInfo;
 /*                 HELPER FUNCTIONS                                     */
 /************************************************************************/
 
-static int _Listener(const ADDRINFOA *Address)
+static int _Listener(const ADDRINFOA *Address, HANDLE ExitEvent)
 {
 	int ret = 0;
 	uint32_t timeout = 10000;
@@ -32,6 +32,8 @@ static int _Listener(const ADDRINFOA *Address)
 	int bytesReceived = 0;
 	SOCKET acceptSocket = INVALID_SOCKET;
 	SOCKET listenSocket = INVALID_SOCKET;
+	WSAPOLLFD fds;
+	BOOLEAN terminated = FALSE;
 
 	listenSocket = socket(Address->ai_family, SOCK_STREAM, IPPROTO_TCP);
 	if (listenSocket == INVALID_SOCKET) {
@@ -51,9 +53,31 @@ static int _Listener(const ADDRINFOA *Address)
 		goto DestroySocket;
 	}
 
+	fds.events = POLLIN;
+	fds.revents = 0;
+	fds.fd = listenSocket;
 	do {
-		acceptSocket = accept(listenSocket, NULL, NULL);
+		acceptSocket = INVALID_SOCKET;
+		if (ExitEvent != NULL) {
+			ret = WaitForSingleObject(ExitEvent, 0);
+			if (ret == WAIT_OBJECT_0) {
+				terminated = TRUE;
+				break;
+			}
+		}
+
+		ret = WSAPoll(&fds, 1, 1000);
+		if (ret > 0) {
+			if (fds.revents & POLLERR)
+				ret = WSAGetLastError();
+			else if (fds.revents & POLLIN)
+				acceptSocket = accept(listenSocket, NULL, NULL);
+		
+			fds.revents = 0;
+		}
+
 		if (acceptSocket != INVALID_SOCKET) {
+			terminated = FALSE;
 			ret = setsockopt(acceptSocket, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout));
 			if (ret == 0) {
 				memset(&_initInfo, 0, sizeof(_initInfo));
@@ -129,7 +153,16 @@ static int _Listener(const ADDRINFOA *Address)
 							if (ret == ERROR_SUCCESS)
 								break;
 						}
-					} while (ret == 0);
+
+						if (ret == 0 && ExitEvent != NULL) {
+							ret = WaitForSingleObject(ExitEvent, 0);
+							if (ret == WAIT_OBJECT_0)
+								terminated = TRUE;
+
+							ret = 0;
+						}
+
+					} while (ret == 0 && !terminated);
 
 					DevConn_Disconnect();
 				}
@@ -138,8 +171,8 @@ static int _Listener(const ADDRINFOA *Address)
 			shutdown(acceptSocket, SD_BOTH);
 			closesocket(acceptSocket);
 		}
-		else ret = WSAGetLastError();
-	} while (1);
+	} while (!terminated);
+
 DestroySocket:
 	closesocket(listenSocket);
 Exit:
@@ -152,7 +185,7 @@ Exit:
 /************************************************************************/
 
 
-DWORD IRPMonServerStart(const char *Address, const char *Port)
+DWORD IRPMonServerStart(const char *Address, const char *Port, HANDLE ExitEvent)
 {
 	int ret = 0;
 	WSADATA wsaData;
@@ -176,7 +209,7 @@ DWORD IRPMonServerStart(const char *Address, const char *Port)
 		goto Cleanup;
 	}
 
-	ret = _Listener(addrs);
+	ret = _Listener(addrs, ExitEvent);
 	freeaddrinfo(addrs);
 Cleanup:
 	WSACleanup();

@@ -71,7 +71,7 @@ void WINAPI ServiceMain(DWORD argc, LPWSTR *argv)
 			_statusRecord.dwCurrentState = SERVICE_RUNNING;
 			_statusRecord.dwControlsAccepted = SERVICE_ACCEPT_STOP;
 			SetServiceStatus(_statusHandle, &_statusRecord);
-			dwError = IRPMonServerStart(args[0], args[1]);
+			dwError = IRPMonServerStart(args[0], args[1], _exitEventHandle);
 			WaitForSingleObject(_exitEventHandle, INFINITE);
 			_statusRecord.dwCurrentState = SERVICE_STOPPED;
 			SetServiceStatus(_statusHandle, &_statusRecord);

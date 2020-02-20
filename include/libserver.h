@@ -8,7 +8,7 @@
 
 
 
-DWORD IRPMonServerStart(const char *Address, const char *Port);
+DWORD IRPMonServerStart(const char *Address, const char *Port, HANDLE ExitEvent);
 
 
 

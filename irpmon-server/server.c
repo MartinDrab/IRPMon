@@ -21,7 +21,7 @@ int main(int argc, char **argv)
 		goto Exit;
 	}
 
-	ret = IRPMonServerStart(argv[1], argv[2]);
+	ret = IRPMonServerStart(argv[1], argv[2], NULL);
 	if (ret != 0) {
 		fprintf(stderr, "[ERROR]: Unable to start the server: %u\n", ret);
 		goto Exit;
