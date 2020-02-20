@@ -34,23 +34,47 @@ ArchitecturesInstallIn64BitMode=x64
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
-[Files]
-Source: "..\bin\x64\{#ConfigMode}\*.dll"; DestDir: "{app}\x64"; Flags: ignoreversion;
-Source: "..\bin\x64\{#ConfigMode}\*.sys"; DestDir: "{app}\x64"; Flags: ignoreversion;
-Source: "..\bin\x64\{#ConfigMode}\*.exe"; DestDir: "{app}\x64"; Flags: ignoreversion;
-Source: "..\dlls\x64\{#ConfigMode}\*.dll"; DestDir: "{app}\x64"; Flags: ignoreversion;
-Source: "..\resources\ioctl.txt"; DestDir: "{app}\x64"; Flags: ignoreversion
-Source: "..\resources\ntstatus.txt"; DestDir: "{app}\x64"; Flags: ignoreversion
-Source: "..\resources\winerr.txt"; DestDir: "{app}\x64"; Flags: ignoreversion
+[Types]
+Name: "full"; Description: "Full installation"
+Name: "custom"; Description: "Custom installation"; Flags: iscustom
 
-Source: "..\bin\Win32\{#ConfigMode}\*.dll"; DestDir: "{app}\x86"; Flags: ignoreversion;
-Source: "..\bin\Win32\{#ConfigMode}\*.sys"; DestDir: "{app}\x86"; Flags: ignoreversion;
-Source: "..\bin\Win32\{#ConfigMode}\IRPMon.exe"; DestDir: "{app}\x86"; Flags: ignoreversion;
-Source: "..\bin\Win32\{#ConfigMode}\irpmon-server.exe"; DestDir: "{app}\x86"; Flags: ignoreversion;
-Source: "..\dlls\Win32\{#ConfigMode}\*.dll"; DestDir: "{app}\x86"; Flags: ignoreversion;
-Source: "..\resources\ioctl.txt"; DestDir: "{app}\x86"; Flags: ignoreversion
-Source: "..\resources\ntstatus.txt"; DestDir: "{app}\x86"; Flags: ignoreversion
-Source: "..\resources\winerr.txt"; DestDir: "{app}\x86"; Flags: ignoreversion
+[Components]
+Name: "Runtime"; Description: "Microsoft runtime libraries required by the program"; Types: full custom; Flags: fixed
+Name: "Libraries"; Description: "Libraries implementing basic IRPMon functionality"; Types: full custom; Flags: fixed
+Name: "Kernel"; Description: "Kernel driver for monitoring device driver requests"; Types: full custom;
+Name: "Application"; Description: "Application for setting up the monitoring, browsing log files and managing IRPMon as a whole"; Types: full custom;
+Name: "Server"; Description: "Console application and service for receiving commands accross the network"; Types: full custom;
+Name: "Parsers"; Description: "Libraries customizing data parsing mechanisms of the IRPMon application"; Types: full custom;
+
+[Files]
+Source: "..\bin\x64\{#ConfigMode}\server\*.exe"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Server;
+Source: "..\bin\x64\{#ConfigMode}\server\*.dll"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Server;
+Source: "..\bin\Win32\{#ConfigMode}\server\*.exe"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: Server;
+Source: "..\bin\Win32\{#ConfigMode}\server\*.dll"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: Server;
+
+Source: "..\bin\x64\{#ConfigMode}\parser\*.dll"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Server;
+Source: "..\bin\Win32\{#ConfigMode}\parser\*.dll"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: Server;
+
+Source: "..\bin\x64\{#ConfigMode}\IRPMon.exe"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Application;
+Source: "..\bin\Win32\{#ConfigMode}\IRPMon.exe"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: Application;
+
+Source: "..\bin\x64\{#ConfigMode}\kernel\*.dll"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Kernel;
+Source: "..\bin\x64\{#ConfigMode}\kernel\*.sys"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Kernel;
+Source: "..\bin\Win32\{#ConfigMode}\kernel\*.dll"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: Kernel;
+Source: "..\bin\Win32\{#ConfigMode}\kernel\*.sys"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: Kernel;
+
+Source: "..\bin\x64\{#ConfigMode}\dlls\*.dll"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Libraries;
+Source: "..\bin\Win32\{#ConfigMode}\dlls\*.dll"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: Libraries;
+Source: "..\resources\ioctl.txt"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Libraries;
+Source: "..\resources\ntstatus.txt"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Libraries;
+Source: "..\resources\winerr.txt"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Libraries;
+Source: "..\resources\ioctl.txt"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: Libraries;
+Source: "..\resources\ntstatus.txt"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: Libraries;
+Source: "..\resources\winerr.txt"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: Libraries;
+
+Source: "..\dlls\Win32\{#ConfigMode}\*.dll"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: Runtime;
+Source: "..\dlls\x64\{#ConfigMode}\*.dll"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Runtime;
+
 
 [Icons]
 Name: "{commondesktop}\IRPMon 32-Bit"; Filename: "{app}\x86\IRPMon.exe"; Comment: "IRPMon 32-bit"
