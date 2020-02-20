@@ -21,6 +21,12 @@
   <ItemGroup>
     <ClCompile Include="server-svc.c" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="version.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\resources\version.rc" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{22EE73A9-C35A-4185-9224-6EFD8C2AEF07}</ProjectGuid>
