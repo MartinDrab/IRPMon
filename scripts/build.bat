@@ -6,7 +6,7 @@ if errorlevel 1 goto failure
 MSBuild ..\irpmon.sln /Property:Configuration=%CONFIG% /Property:Platform=x64
 if errorlevel 1 goto failure
 call rsvars
-MSBuild ../irpmon.groupproj /t:Build /p:config=%CONFIG% /p:platform=Win32
+MSBuild ../gui/irpmon.dproj /t:Build /p:config=%CONFIG% /p:platform=Win32
 if errorlevel 1 goto failure
 MSBuild ../gui/irpmon.dproj /t:Build /p:config=%CONFIG% /p:platform=Win64
 if errorlevel 1 goto failure
