@@ -1055,7 +1055,6 @@ Var
   settingsDir : WideString;
   settingsFile : WideString;
 begin
-iniFile := Nil;
 settingsFile := ChangeFileExt(ExtractFileName(Application.ExeName), '.ini');
 settingsDir := ExtractFilePath(Application.ExeName);
 Try
