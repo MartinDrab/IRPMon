@@ -475,16 +475,9 @@ FFilterList.Free;
 end;
 
 Procedure TFilterFrm.OkButtonClick(Sender: TObject);
-Var
-  fileName : WideString;
 begin
-fileName := ExtractFilePath(Application.ExeName) + 'filters.ini';
-FCancelled := Not TRequestFilter.SaveList(fileName, FFilterList);
-If Not FCancelled Then
-  begin
-  FFilterList.OwnsObjects := False;
-  Close;
-  end;
+FFilterList.OwnsObjects := False;
+Close;
 end;
 
 Procedure TFilterFrm.AddButtonClick(Sender: TObject);

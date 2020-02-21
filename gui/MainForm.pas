@@ -217,6 +217,7 @@ end;
 
 Procedure TMainFrm.FiltersMenuItemClick(Sender: TObject);
 Var
+  filtersDir : WideString;
   rf : TRequestFilter;
 begin
 With TFilterFrm.Create(Application, FFilters) Do
@@ -227,6 +228,14 @@ With TFilterFrm.Create(Application, FFilters) Do
     FFilters.Clear;
     For rf In FilterList Do
       FFilters.Add(rf);
+
+    filtersDir := ExtractFilePath(Application.ExeName);
+    If Not TRequestFilter.SaveList(filtersDir + 'filters.ini', FFilters) Then
+      begin
+      filtersDir := GetLocalSettingsDirectory;
+      If Not TRequestFilter.SaveList(filtersDir + 'filters.ini', FFilters) Then
+        ErrorMessage('Unable to save request filters to a file');
+      end;
 
     FModel.Reevaluate;
     end;
@@ -263,11 +272,21 @@ end;
 Procedure TMainFrm.FormCreate(Sender: TObject);
 Var
   fileName : WideString;
-begin
+  filtersLoaded : Boolean;
+  begin
 FFilters := TObjectList<TRequestFilter>.Create;
-fileName := ExtractFilePath(Application.ExeName) + 'filters.ini';
-If Not TRequestFilter.LoadList(fileName, FFilters) Then
-  FFilters.Clear;
+filtersLoaded := False;
+fileName := GetLocalSettingsDirectory + 'filters.ini';
+If FileExists(fileName) Then
+  filtersLoaded := TRequestFilter.LoadList(fileName, FFilters);
+
+If Not filtersLoaded Then
+  begin
+  fileName := ExtractFilePath(Application.ExeName) + 'filters.ini';
+  filtersLoaded := TRequestFilter.LoadList(fileName, FFilters);
+  If Not FiltersLoaded Then
+    FFilters.Clear;
+  end;
 
 RequestListView.DoubleBuffered := True;
 {$IFNDEF FPC}
