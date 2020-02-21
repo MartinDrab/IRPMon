@@ -163,11 +163,18 @@ Function InstallService(AName:PAnsiChar; ADisplayName:PAnsiChar; AType:Cardinal;
 Var
 	hScm : SC_HANDLE;
 	hService : SC_HANDLE;
+	fileNamePrefix : PAnsiChar;
 begin
 Result := 0;
 hScm := OpenSCManager('', '', SC_MANAGER_CREATE_SERVICE);
 If hScm <> 0 Then
-	begin				
+	begin
+	fileNamePrefix := ExpandConstant('{app}');
+	If IsWin64 Then
+		fileNamePrefix := fileNamePrefix + '\x64\'
+	Else fileNamePrefix := fileNamePrefix + '\x86\';
+	
+	AFileName := fileNamePrefix + AFileName;			
 	hService := CreateService(hScm, AName, ADisplayName, SERVICE_START, AType, AStart, SERVICE_ERROR_NORMAL, AFileName, '', 0, '', '', '');
 				
 				
@@ -233,6 +240,7 @@ end;
 function NextButtonClick(CurPageID: Integer): Boolean;
 Var
   err : Cardinal;
+	serviceFileName : PAnsiChar;
 	serviceStartType : Cardinal;
 begin
 Result := True;
@@ -246,20 +254,22 @@ Case CurPageID Of
   wpInstalling : begin
     If DriverInstall Then
       begin
+			serviceFileName := 'irpmondrv.sys';
 			serviceStartType := SERVICE_DEMAND_START;
 			If DriverAuto Then
 				serviceStartType := SERVICE_AUTO_START;
 
-			err := InstallService(DriverServiceName, DriverServiceDisplayName, SERVICE_KERNEL_DRIVER, serviceStartType, '');
+			err := InstallService(DriverServiceName, DriverServiceDisplayName, SERVICE_KERNEL_DRIVER, serviceStartType, serviceFileName);
 			end;
 			
     If ServiceInstall Then
       begin
+			serviceFileName := 'server-svc.exe';
 			serviceStartType := SERVICE_DEMAND_START;
 			If ServiceAuto Then
 				serviceStartType := SERVICE_AUTO_START;
 
-			err := InstallService(ServerServiceName, ServerServiceDisplayName, SERVICE_WIN32_OWN_PROCESS, serviceStartType, '');
+			err := InstallService(ServerServiceName, ServerServiceDisplayName, SERVICE_WIN32_OWN_PROCESS, serviceStartType, serviceFileName);
 			If (err <> 0) And (DriverInstall) Then
 				UninstallService(DriverServiceName);
 			end;		
