@@ -1233,6 +1233,51 @@ typedef struct _IRP_COMPLETION_CONTEXT {
 } IRP_COMPLETION_CONTEXT, *PIRP_COMPLETION_CONTEXT;
 
 
+static NTSTATUS _CaptureRenameEvent(PIRP Irp, PREQUEST_FILE_OBJECT_NAME_ASSIGNED *Request)
+{
+	PFLT_FILE_NAME_INFORMATION fi = NULL;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	PREQUEST_FILE_OBJECT_NAME_ASSIGNED ar = NULL;
+	const FILE_RENAME_INFORMATION* fri = NULL;
+	PIO_STACK_LOCATION irpStack = NULL;
+
+	irpStack = IoGetCurrentIrpStackLocation(Irp);
+	if (irpStack->MajorFunction == IRP_MJ_SET_INFORMATION &&
+		(irpStack->Parameters.SetFile.FileInformationClass == FileRenameInformation ||
+		irpStack->Parameters.SetFile.FileInformationClass == FileRenameInformationEx)) {
+		fri = (FILE_RENAME_INFORMATION*)Irp->AssociatedIrp.SystemBuffer;
+		status = FltGetFileNameInformationUnsafe(createFileObject, NULL, FLT_FILE_NAME_NORMALIZED | FLT_FILE_NAME_QUERY_DEFAULT, &fi);
+		if (NT_SUCCESS(status)) {
+			status = FltParseFileNameInformation(fi);
+			if (NT_SUCCESS(status)) {
+				UNICODE_STRING uFileName;
+
+				uFileName = fi->Name;
+				if (fi->Volume.Length > 0 && fi->Volume.Length <= fi->Name.Length) {
+					uFileName.Length -= fi->Volume.Length;
+					uFileName.MaximumLength = uFileName.Length;
+					uFileName.Buffer += fi->Volume.Length / sizeof(wchar_t);
+				}
+
+				ar = (PREQUEST_FILE_OBJECT_NAME_ASSIGNED)RequestMemoryAlloc(sizeof(REQUEST_FILE_OBJECT_NAME_ASSIGNED) + uFileName.Length);
+				if (ar != NULL) {
+					RequestHeaderInitNoId(&ar->Header, Deviceobject->DriverObject, Deviceobject, ertFileObjectNameAssigned);
+					RequestHeaderSetResult(ar->Header, NTSTATUS, STATUS_SUCCESS);
+					ar->FileObject = createFileObject;
+					ar->NameLength = uFileName.Length;
+					memcpy(ar + 1, uFileName.Buffer, uFileName.Length);
+					_SetRequestFlags(&ar->Header, &clientInfo);
+					RequestQueueInsert(&ar->Header);
+				} else status = STATUS_INSUFFICIENT_RESOURCES;
+			}
+
+			FltReleaseFileNameInformation(fi);
+		}
+	}
+
+	return status;
+}
+
 static NTSTATUS _HookHandlerIRPCompletion(PDEVICE_OBJECT DeviceObject, PIRP Irp, PVOID Context)
 {
 	PDRIVER_HOOK_RECORD driverRecord = NULL;
