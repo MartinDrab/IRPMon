@@ -277,3 +277,8 @@ Case CurPageID Of
   end;
 end;
 
+Procedure InitializeUninstallProgressForm();
+begin
+UninstallService(ServerServiceName);
+UninstallService(DriverServiceName);
+end;
