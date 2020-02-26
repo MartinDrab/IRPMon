@@ -237,6 +237,11 @@ If hScm <> 0 Then
 Else Result := GetLastError;
 end;
 
+Procedure ErrorMessage(AMsg:string);
+begin
+MsgBox(AMsg, mbError, MB_OK);
+end;
+
 function NextButtonClick(CurPageID: Integer): Boolean;
 Var
   err : Cardinal;
@@ -252,6 +257,7 @@ Case CurPageID Of
     ServiceAuto := WizardForm.TasksList.Checked[4];
     end;
   wpInstalling : begin
+		err := 0;
     If DriverInstall Then
       begin
 			serviceFileName := 'irpmondrv.sys';
@@ -260,9 +266,11 @@ Case CurPageID Of
 				serviceStartType := SERVICE_AUTO_START;
 
 			err := InstallService(DriverServiceName, DriverServiceDisplayName, SERVICE_KERNEL_DRIVER, serviceStartType, serviceFileName);
+			If err <> 0 Then
+				ErrorMessage('Unable to install the IRPMon driver: ' + IntToStr(err));
 			end;
 			
-    If ServiceInstall Then
+    If (err = 0) Or (ServiceInstall) Then
       begin
 			serviceFileName := 'server-svc.exe';
 			serviceStartType := SERVICE_DEMAND_START;
@@ -270,8 +278,13 @@ Case CurPageID Of
 				serviceStartType := SERVICE_AUTO_START;
 
 			err := InstallService(ServerServiceName, ServerServiceDisplayName, SERVICE_WIN32_OWN_PROCESS, serviceStartType, serviceFileName);
-			If (err <> 0) And (DriverInstall) Then
-				UninstallService(DriverServiceName);
+			If err <> 0 Then
+				begin
+				If DriverInstall Then
+					UninstallService(DriverServiceName);
+
+				ErrorMessage('Unable to install the Server service' + IntToStr(err));
+				end;
 			end;		
     end;
   end;
