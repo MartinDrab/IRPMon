@@ -66,15 +66,53 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllQueueClear(void)
 }
 
 
-/// <summary>
-/// 
+/// <summary>Given name of its object, the routine hooks a driver in order to monitor requests serviced by its devices.
 /// </summary>
-/// <param name="DriverName"></param>
-/// <param name="MonitorSettings"></param>
-/// <param name="DeviceExtensionHook"></param>
-/// <param name="DriverHandle"></param>
-/// <param name="ObjectId"></param>
-/// <returns></returns>
+/// <param name="DriverName">
+/// Name of the driver object to hook.The name usually starts with the "\Driver\" or "\FileSystem\" prefix.
+/// </param>
+/// <param name="MonitorSettings">
+/// Defines types of events being monitored on the given driver object
+/// and its devices.
+/// </param>
+/// <param name="DeviceExtensionHook">
+/// Determines whether the IRPMon takes advantage of IRP hooks(FALSE) or device extension
+/// based hooks(TRUE).
+/// </param>
+/// <param name="DriverHandle">
+/// Address of variable that receives a handle representing the hooked driver.
+/// </param>
+/// <param name="ObjectId">
+/// Address of variable that receives globally unique ID of the hooked driver object.
+/// This parameter is optional and can be <c>NULL</c>.
+/// </param>
+/// <returns>
+/// The function may return one of the following error codes:
+/// <list type="table">
+/// <listheader>
+///   <term>Value</term>
+///   <description>Description</description>
+/// </listheader>
+/// <item>
+///   <term>ERROR_SUCCESS</term>
+///   <description>The hook operation has succeeded.The hook handle is stored in the <paramref name="Driverhandle"/> parameter.</description>
+/// </item>
+/// <item>
+///   <term>Other</term>
+///   <description>An error occurred.</description>
+/// </item>
+/// </list>
+/// </returns>
+/// <remarks>
+/// <para>This routine instructs the IRPMon driver to prepare to monitor a given driver.The monitoring itself,
+/// however, must be activated by a call to the <see cref="IRPMonDllDriverStartMonitoring"/> routine.The IRPMon driver just remembers which requests
+/// will be monitored for the given driver and saves also a list of its devices in order to be able to distinguish
+/// them from new ones(devices created after the IRPMonDllHookDriver returns).
+/// </para>
+/// <para>Driver names accepted by this function can be obtained from a list of drivers present in the system, returned by the
+/// <see cref="IRPMonDllSnapshotRetrieve"/> function.
+/// </para>
+/// </remarks>
 IRPMONDLL_API DWORD WINAPI IRPMonDllHookDriver(PWCHAR DriverName, PDRIVER_MONITOR_SETTINGS MonitorSettings, BOOLEAN DeviceExtensionHook, PHANDLE DriverHandle, PVOID *ObjectId)
 {
 	return DriverComHookDriver(DriverName, MonitorSettings, DeviceExtensionHook, DriverHandle, ObjectId);

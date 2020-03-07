@@ -64,37 +64,6 @@
 
 IRPMONDLL_API DWORD WINAPI IRPMonDllDriverHooksEnumerate(PHOOKED_DRIVER_UMINFO *HookedDrivers, PULONG Count);
 IRPMONDLL_API VOID WINAPI IRPMonDllDriverHooksFree(PHOOKED_DRIVER_UMINFO HookedDrivers, ULONG Count);
-
-
-/** Given name of its object, the routine hooks a driver in order to monitor requests serviced by
- *  its devices.
- *
- *  @param DriverName Name of the driver object to hook. The name usually starts with the "\Driver\" or
- *  "\FileSystem\" prefix.
- *  @param MonitorNewDevices Indicates whether requests directed at device objects created by the driver
- *  some time after the call to this function will be automatically monitored by IRPMon. 
- *  @param AddDevice Determine whether invocations of driver's AddDevice routine will be monitored.
- *  @param Unload Instructs the IRPMon driver to detect driver unload.
- *  @param StartIo Indicates whether driver's StartIo routine will be monitored.
- *  @param DeviceExtensionHook Determines whether the IRPMon takes advantage of IRP hooks (FALSE) or device extension
- *  baed hooks (TRUE).
- *  @param Driverhandle Address of variable that receives a handle representing the hooked driver.
- *  
- *  @return
- *  The function may return one of the following error codes:
- *  @value ERROR_SUCCESS The hook operation has succeeded. The hook handle is stored in the 
- *  Driverhandle parameter.
- *  @value Other An error occurred.
- *
- *  @remark
- *  This routine instructs the IRPMon driver to prepare to monitor a given driver. The monitoring itself,
- *  however, must be activated by a call to the @link(IRPMonDllDriverStartMonitoring) routine. The IRPMon driver just remembers which requests
- *  will be monitored for the given driver and saves also a list of its devices in order to be able to distinguish
- *  them from new ones (devices created after the IRPMonDllHookDriver returns).
- *
- *  Driver names accepted by this function can be obtained from a list of drivers present in the system, returned by the
- *  @link(IRPMonDllSnapshotRetrieve) function.
- */
 IRPMONDLL_API DWORD WINAPI IRPMonDllHookDriver(PWCHAR DriverName, PDRIVER_MONITOR_SETTINGS MonitorSettings, BOOLEAN DeviceExtensionHook, PHANDLE DriverHandle, PVOID *ObjectId);
 
 
