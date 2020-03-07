@@ -281,24 +281,52 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllCloseHookedDeviceHandle(HANDLE Handle)
 /************************************************************************/
 
 
-/// <summary>
-/// 
+/// <summary> Retrieves information about drivers and devices hooked by the IRPMon driver.
+/// <para>
+/// Individual drivers and their devices are identified by their addresses, and names.
+/// </para>
 /// </summary>
-/// <param name="HookedDrivers"></param>
-/// <param name="Count"></param>
-/// <returns></returns>
+/// <param name="HookedDrivers">
+/// Address of variable that receives an array of  @link(HOOKED_DRIVER_UMINFO) structures. Each structure represents one driver monitored by IRPMonand includes also information about its hooked devices.
+/// </param>
+/// <param name="Count">
+/// Address of variable that receives number of structures in the HookedDrivers array.
+/// </param>
+/// <returns>
+/// The function can return one of the following error codes:
+/// <list type="table">
+/// <listheader>
+///   <term>Value</term>
+///   <description>Description</description>
+/// </listheader>
+/// <item>
+///   <term>ERROR_SUCCESS</term>
+///   <description>The operation completed successfully.</description>
+/// </item>
+/// <item>
+///   <term>ERROR_NOT_ENOUGH_MEMORY</term>
+///   <description>There is not enough available free memory to perform the operation. </description>
+/// </item>
+/// </list>
+/// </returns>
+/// <remarks>
+/// When the caller no longer needs the retrieved information, it must free it by calling
+/// the <see cref="IRPMonDllDriverHooksFree"/> procedure.
+/// </remarks>
 IRPMONDLL_API DWORD WINAPI IRPMonDllDriverHooksEnumerate(PHOOKED_DRIVER_UMINFO *HookedDrivers, PULONG Count)
 {
 	return DriverComHookedObjectsEnumerate(HookedDrivers, Count);
 }
 
 
-/// <summary>
-/// 
+/// <summary>Frees information returned by the <see cref="IRPMonDllDriverHooksEnumerate"/> function
 /// </summary>
-/// <param name="HookedDrivers"></param>
-/// <param name="Count"></param>
-/// <returns></returns>
+/// <param name="HookedDrivers">
+/// Address of an array of  <see cref="HOOKED_DRIVER_UMINFO"/> structures.The array is returned in the first argument in a call to the <see cref="IRPMonDllDriverHooksEnumerate"/> function.
+/// </param>
+/// <param name="Count">
+/// Number of elements in the array.
+/// </param>
 IRPMONDLL_API VOID WINAPI IRPMonDllDriverHooksFree(PHOOKED_DRIVER_UMINFO HookedDrivers, ULONG Count)
 {
 

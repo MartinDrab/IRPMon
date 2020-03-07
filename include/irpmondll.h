@@ -62,33 +62,7 @@
 
 
 
-/** Retrieves information about drivers and devices hooked by the IRPMon driver.
- *
- *  Individual drivers and their devices are identified by their addresses, and names.
- *
- *  @param HookedDrivers Address of variable that receives an array of  @link(HOOKED_DRIVER_UMINFO) structures.
- *  Each structure represents one driver monitored by IRPMon and includes also information about its hooked devices.
- *  @param Count Address of variable that receives number of structures in the HookedDrivers array.
- *
- *  @return
- *  The function can return one of the following error codes:
- *  @value ERROR_SUCCESS The operation completed successfully.
- *  @value ERROR_NOT_ENOUGH_MEMORY There is not enough available free memory to
- *  perform the operation.
- *
- *  @remark
- *  When the caller no longer needs the retrieved information, it must free it by calling
- *  the @link(IRPMonDllDriverHooksFree) procedure.
- */
 IRPMONDLL_API DWORD WINAPI IRPMonDllDriverHooksEnumerate(PHOOKED_DRIVER_UMINFO *HookedDrivers, PULONG Count);
-
-
-/** Frees information returned by the @link(IRPMonDllDriverHooksEnumerate) function.
- *
- *  @param HookedDrivers Address of an array of  @link(HOOKED_DRIVER_UMINFO) structures. The array is returned
- *  in the first argument in a call to the @link(IRPMonDllDriverHooksEnumerate) function.
- *  @param Count Number of elements in the array.
- */
 IRPMONDLL_API VOID WINAPI IRPMonDllDriverHooksFree(PHOOKED_DRIVER_UMINFO HookedDrivers, ULONG Count);
 
 

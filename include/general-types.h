@@ -378,25 +378,25 @@ typedef struct _REQUEST_CREATE_IRP_ETRA_PARAMETERS {
 /************************************************************************/
 
 
-/** Contains information about one device monitored by the IRPMon driver. */
+/// Contains information about one device monitored by the IRPMon driver.
 typedef struct _HOOKED_DEVICE_UMINFO {
-	/** ID of the object, used within the IRPMon driver. */
+	/// ID of the object, used within the IRPMon driver.
 	PVOID ObjectId;
-	/** Address of device's DEVICE_OBJECT structure. */
+	/// Address of device's DEVICE_OBJECT structure.
 	PVOID DeviceObject;
-	/** Name of the hooked device. Can never be NULL. */
+	/// Name of the hooked device. Can never be NULL.
 	PWCHAR DeviceName;
-	/** Length of the device name, in bytes. The value does not include the
-	    terminating null character. */
+	/// Length of the device name, in bytes. The value does not include the
+	/// terminating null character.
 	ULONG DeviceNameLen;
-	/** Indicates which types of fast I/O requests are monitored. THe exact
-	   meaning of each entry is still undefined. */
+	/// Indicates which types of fast I/O requests are monitored. THe exact
+	/// meaning of each entry is still undefined.
 	UCHAR FastIoSettings[FastIoMax];
-	/** Indicates which types of IRP requests are monitored. THe exact
-	   meaning of each entry is still undefined. 
-	   NOTE: 0x1b = IRP_MJ_MAXIMUM_FUNCTION. */
+	/// Indicates which types of IRP requests are monitored. THe exact
+	///   meaning of each entry is still undefined. 
+	///   NOTE: 0x1b = IRP_MJ_MAXIMUM_FUNCTION.
 	UCHAR IRPSettings[0x1b + 1];
-	/** Indicates whether the monitoring is active for the device. */
+	/// Indicates whether the monitoring is active for the device.
 	BOOLEAN MonitoringEnabled;
 } HOOKED_DEVICE_UMINFO, *PHOOKED_DEVICE_UMINFO;
 
@@ -409,35 +409,34 @@ typedef struct _DRIVER_MONITOR_SETTINGS {
 	BOOLEAN MonitorIRP;
 	BOOLEAN MonitorIRPCompletion;
 	BOOLEAN MonitorData;
-	/** IRPSettings for newly hooked devices. */
+	/// IRPSettings for newly hooked devices.
 	UCHAR IRPSettings[0x1b + 1];
-	/** FastIoSettings for newly hooked devices. */
+	/// FastIoSettings for newly hooked devices.
 	UCHAR FastIoSettings[FastIoMax];
 } DRIVER_MONITOR_SETTINGS, *PDRIVER_MONITOR_SETTINGS;
 
-/** Contains information about one driver hooked by the IRPMon driver. */
+/// Contains information about one driver hooked by the IRPMon driver.
 typedef struct _HOOKED_DRIVER_UMINFO {
-	/** ID of the object, used within the IRPMon driver. */
+	/// ID of the object, used within the IRPMon driver.
 	PVOID ObjectId;
-	/** Address of driver's DRIVER_OBJECT structure. */
+	/// Address of driver's DRIVER_OBJECT structure.
 	PVOID DriverObject;
-	/** Name of the driver. Cannot be NULL. */
+	/// Name of the driver. Cannot be <c>NULL</c>.
 	PWCHAR DriverName;
-	/* Length of the driver name, in bytes. The value does not include the
-	   terminating null-character. */
+	/// Length of the driver name, in bytes. The value does not include the terminating null-character.
 	ULONG DriverNameLen;
-	/** Indicates whether the IRPMon driver monitors events related to the target
-	    driver. If set to TRUE, the information about the events is stored in the
-		IRPMon Event Queue. */
+	/// Indicates whether the IRPMon driver monitors events related to the target
+	/// driver. If set to TRUE, the information about the events is stored in the
+	///	IRPMon Event Queue.
 	BOOLEAN MonitoringEnabled;
-	/** If set to TRUE, device extension-based hooks are used
-	    instead of IRP ones. */
+	/// If set to TRUE, device extension-based hooks are used
+	/// instead of IRP ones. */
 	BOOLEAN DeviceExtensionHooks;
 	DRIVER_MONITOR_SETTINGS MonitorSettings;
-	/** Number of devices, monitored by the IRPMon driver (not including the new ones). */
+	/// Number of devices, monitored by the IRPMon driver (not including the new ones).
 	ULONG NumberOfHookedDevices;
-	/** An array of @link(HOOKED_DEVICE_UMINFO) structures, each representing one
-	   monitored device. */
+	/// An array of @link(HOOKED_DEVICE_UMINFO) structures, each representing one
+	/// monitored device.
 	PHOOKED_DEVICE_UMINFO HookedDevices;
 } HOOKED_DRIVER_UMINFO, *PHOOKED_DRIVER_UMINFO;
 
