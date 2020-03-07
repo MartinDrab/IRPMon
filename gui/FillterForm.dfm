@@ -23,7 +23,6 @@ object FilterFrm: TFilterFrm
     Height = 145
     Align = alTop
     TabOrder = 0
-    ExplicitTop = -6
     object Label1: TLabel
       Left = 0
       Top = 13

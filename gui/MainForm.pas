@@ -133,6 +133,7 @@ Type
     Procedure IrpMonAppEventsException(Sender: TObject; E: Exception);
     Procedure WriteSettings;
     Procedure ReadSettings;
+    Function GetLocalSettingsDirectory:WideString;
     Procedure OnRequestProcessed(ARequest:TDriverRequest; Var AStore:Boolean);
   Public
     ConnectorType : EIRPMonConnectorType;
@@ -149,6 +150,7 @@ Implementation
 {$R *.dfm}
 
 Uses
+  IOUtils,
   IniFiles, ShellAPI, Clipbrd,
   ListModel, HookProgressForm,
   Utils, TreeForm, RequestDetailsForm, AboutForm,
@@ -215,6 +217,7 @@ end;
 
 Procedure TMainFrm.FiltersMenuItemClick(Sender: TObject);
 Var
+  filtersDir : WideString;
   rf : TRequestFilter;
 begin
 With TFilterFrm.Create(Application, FFilters) Do
@@ -225,6 +228,14 @@ With TFilterFrm.Create(Application, FFilters) Do
     FFilters.Clear;
     For rf In FilterList Do
       FFilters.Add(rf);
+
+    filtersDir := ExtractFilePath(Application.ExeName);
+    If Not TRequestFilter.SaveList(filtersDir + 'filters.ini', FFilters) Then
+      begin
+      filtersDir := GetLocalSettingsDirectory;
+      If Not TRequestFilter.SaveList(filtersDir + 'filters.ini', FFilters) Then
+        ErrorMessage('Unable to save request filters to a file');
+      end;
 
     FModel.Reevaluate;
     end;
@@ -261,11 +272,21 @@ end;
 Procedure TMainFrm.FormCreate(Sender: TObject);
 Var
   fileName : WideString;
-begin
+  filtersLoaded : Boolean;
+  begin
 FFilters := TObjectList<TRequestFilter>.Create;
-fileName := ExtractFilePath(Application.ExeName) + 'filters.ini';
-If Not TRequestFilter.LoadList(fileName, FFilters) Then
-  FFilters.Clear;
+filtersLoaded := False;
+fileName := GetLocalSettingsDirectory + 'filters.ini';
+If FileExists(fileName) Then
+  filtersLoaded := TRequestFilter.LoadList(fileName, FFilters);
+
+If Not filtersLoaded Then
+  begin
+  fileName := ExtractFilePath(Application.ExeName) + 'filters.ini';
+  filtersLoaded := TRequestFilter.LoadList(fileName, FFilters);
+  If Not FiltersLoaded Then
+    FFilters.Clear;
+  end;
 
 RequestListView.DoubleBuffered := True;
 {$IFNDEF FPC}
@@ -1031,10 +1052,29 @@ Var
   c : TListModelColumn;
   iniCOlumnName : WideString;
   iniFile : TIniFile;
+  settingsDir : WideString;
+  settingsFile : WideString;
 begin
-iniFile := Nil;
+settingsFile := ChangeFileExt(ExtractFileName(Application.ExeName), '.ini');
+settingsDir := ExtractFilePath(Application.ExeName);
 Try
-  iniFile := TIniFile.Create(ChangeFileExt(Application.ExeName, '.ini'));
+  iniFile := TIniFile.Create(settingsDir + settingsFile);
+Except
+  iniFile := Nil;
+  End;
+
+If Not Assigned(iniFile) Then
+  begin
+  settingsDir := GetLocalSettingsDirectory;
+  Try
+    iniFile := TIniFile.Create(settingsDir + settingsFile);
+  Except
+    iniFile := Nil;
+    End;
+  end;
+
+If Assigned(iniFile) Then
+  begin
   iniFIle.WriteBool('Driver', 'unload_on_exit', UnloadOnExitMenuItem.Checked);
   iniFIle.WriteBool('Driver', 'uninstall_on_exit', UninstallOnExitMenuItem.Checked);
   iniFile.WriteBool('General', 'CaptureEvents', CaptureEventsMenuItem.Checked);
@@ -1053,9 +1093,7 @@ Try
 
     iniFile.WriteBool('Columns', iniColumnName, c.Visible);
     end;
-Finally
-  iniFile.Free;
-  End;
+  end;
 end;
 
 Procedure TMainFrm.ReadSettings;
@@ -1064,42 +1102,59 @@ Var
   c : TListModelColumn;
   iniCOlumnName : WideString;
   iniFile : TIniFile;
+  settingsFile : WideString;
+  settingsDir : WideString;
 begin
 iniFIle := Nil;
-Try
-  iniFile := TIniFile.Create(ChangeFileExt(Application.ExeName, '.ini'));
-  UnloadOnExitMenuItem.Checked := iniFIle.ReadBool('Driver', 'unload_on_exit', False);
-  UninstallOnExitMenuItem.Checked := iniFIle.ReadBool('Driver', 'uninstall_on_exit', True);
-  CompressMenuItem.Checked := iniFIle.ReadBool('Log', 'compress_requests', False);
-  IgnoreLogFileHeadersMenuItem.Checked := iniFile.ReadBool('Log', 'ignore_headers', False);
-  If IRPMonDllInitialized Then
-    begin
-    CaptureEventsMenuItem.Checked := Not iniFile.ReadBool('General', 'CaptureEvents', False);
-    If Not CaptureEventsMenuItem.Checked Then
-      CaptureEventsMenuItemClick(CaptureEventsMenuItem)
-    Else CaptureEventsMenuItem.Checked := False;
-    end;
+settingsFile := ChangeFileExt(ExtractFileName(Application.ExeName), '.ini');
+settingsDir := GetLocalSettingsDirectory;
+If Not FileExists(settingsDir + settingsFile) Then
+  settingsDir := ExtractFilePath(Application.ExeName);
 
-  FModel.FilterDisplayOnly := iniFile.ReadBool('General', 'filter_display_only', False);
-  HideExcludedRequestsMenuItem.Checked := FModel.FilterDisplayOnly;
-  FModel.ColumnUpdateBegin;
-  For I := 0 To FModel.ColumnCount - 1 Do
-    begin
-    c := FModel.Columns[I];
-    iniColumnName := c.Caption;
-    For J := 1 To Length(iniColumnName) Do
+If FileExists(settingsDir + settingsFile) Then
+  begin
+  Try
+    iniFile := TIniFile.Create(settingsDir + settingsFile);
+    UnloadOnExitMenuItem.Checked := iniFIle.ReadBool('Driver', 'unload_on_exit', False);
+    UninstallOnExitMenuItem.Checked := iniFIle.ReadBool('Driver', 'uninstall_on_exit', True);
+    CompressMenuItem.Checked := iniFIle.ReadBool('Log', 'compress_requests', False);
+    IgnoreLogFileHeadersMenuItem.Checked := iniFile.ReadBool('Log', 'ignore_headers', False);
+    If IRPMonDllInitialized Then
       begin
-      If (iniColumnName[J] = ' ') Then
-        iniColumnName[J] := '_';
+      CaptureEventsMenuItem.Checked := Not iniFile.ReadBool('General', 'CaptureEvents', False);
+      If Not CaptureEventsMenuItem.Checked Then
+        CaptureEventsMenuItemClick(CaptureEventsMenuItem)
+      Else CaptureEventsMenuItem.Checked := False;
       end;
 
-    FModel.ColumnSetVisible(I, iniFile.ReadBool('Columns', iniColumnName, True));
-    end;
+    FModel.FilterDisplayOnly := iniFile.ReadBool('General', 'filter_display_only', False);
+    HideExcludedRequestsMenuItem.Checked := FModel.FilterDisplayOnly;
+    FModel.ColumnUpdateBegin;
+    For I := 0 To FModel.ColumnCount - 1 Do
+      begin
+      c := FModel.Columns[I];
+      iniColumnName := c.Caption;
+      For J := 1 To Length(iniColumnName) Do
+        begin
+        If (iniColumnName[J] = ' ') Then
+          iniColumnName[J] := '_';
+        end;
 
-  FModel.ColumnUpdateEnd;
-Finally
-  iniFile.Free;
-  End;
+      FModel.ColumnSetVisible(I, iniFile.ReadBool('Columns', iniColumnName, True));
+      end;
+
+    FModel.ColumnUpdateEnd;
+  Finally
+    iniFIle.Free;
+    End;
+  end;
+end;
+
+Function TMainFrm.GetLocalSettingsDirectory:WideString;
+begin
+Result := Format('%s\IRPMon', [TPath.GetHomePath]);
+ForceDirectories(Result);
+Result := Result + '\';
 end;
 
 Procedure TMainFrm.OnRequestProcessed(ARequest:TDriverRequest; Var AStore:Boolean);
