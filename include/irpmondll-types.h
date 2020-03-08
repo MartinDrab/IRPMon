@@ -60,21 +60,45 @@ typedef struct _DRIVER_NAME_WATCH_RECORD {
 /*              LIBRARY INITIALIZATION DATA TYPES                       */
 /************************************************************************/
 
+/// Defines how the IRPMon library should connect
+/// to the driver instance.
 typedef enum _EIRPMonConnectorType {
+	/// This value should never be used.
 	ictNone,
+	/// Connect to device object of the locally installed IRPMon driver.
 	ictDevice,
+	/// Connect to an IRPMon instance running on a remote computer.
 	ictNetwork,
 } EConnectorType, *PEConnectorType;
 
+/// Information required to initialize the IRPMon library.
 typedef struct _IRPMON_INIT_INFO {
+	/// Defines how to connect to the driver instance.
 	EConnectorType ConnectorType;
 	union {
-		struct {
+		struct _IRPMON_DEVICE_INIT_INFO  {
+			/// Specifies name of the device object belonging to the
+			/// local IRPMon driver.
 			wchar_t *DeviceName;
 		} Device;
-		struct {
+		struct _IRPMON_NETWORK_INIT_INFO  {
+			/// Domain or IP address where the remote IRPMon instance
+			/// is running.
 			wchar_t *Address;
+			/// Port number (in its string form) at which the instance listens.
 			wchar_t *Service;
+			/// Version of IP protocol used to establish the connection.
+			/// <list type="bullets">
+			/// <item>
+			///   <term>AF_UNSPEC</term>
+			/// </item>
+			/// <item>
+			///   <term>AF_INET</term>
+			/// </item>
+			/// <item>
+			///   <term>AF_INET6</term>
+			/// </item>
+			/// </list>
 			uint16_t AddressFamily;
 		} Network;
 	};

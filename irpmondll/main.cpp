@@ -1082,10 +1082,35 @@ IRPMONDLL_API BOOL WINAPI IRPMonDllInitialized(VOID)
 
 
 /// <summary>
-/// 
+/// Initializes the IRPMon library and connects the current process to the
+/// IRPMon driver.
 /// </summary>
-/// <param name="Info"></param>
-/// <returns></returns>
+/// <param name="Info">
+/// Determines how to connect to an IRPMon driver instance. The library
+/// can connect etiher to a locally installed IRPMon driver, or to an
+/// IRPMon server instance running on remote machine.
+/// </param>
+/// <returns>
+/// One of the following values may be returned:
+/// <list type="table">
+/// <listheader>
+///   <term>Value</term>
+///   <description>Description</description>
+/// </listheader>
+/// <item>
+///   <term>ERROR_SUCCESS</term>
+///   <description>The initialization was successful.</description>
+/// </item>
+/// <item>
+///   <term>Other</term>
+///   <description>An error occurred.</description>
+/// </item>
+/// </list>
+/// </returns>
+/// <remarks>
+/// This routine must be successfully called before any other routine exported
+/// by the library.
+/// </remarks>
 IRPMONDLL_API DWORD WINAPI IRPMonDllInitialize(const IRPMON_INIT_INFO *Info)
 {
 	DWORD ret = ERROR_GEN_FAILURE;

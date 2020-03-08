@@ -122,27 +122,10 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllSettingsSet(PIRPMNDRV_SETTINGS Settings, BOO
 /*           INITIALIZATION AND FINALIZATION                            */
 /************************************************************************/
 
-
 IRPMONDLL_API BOOL WINAPI IRPMonDllInitialized(VOID);
-
-
-/** Initializes the IRPMon library and connects the current process to the
- *  IRPMon driver.
- *
- *  @return
- *  Returns one of the following error codes:
- *  @value ERROR_SUCCESS The operation succeeded.
- *  @value Other The initialization failed. No other library functions may be
- *  called.
- *
- *  @remark
- *  This routine must be successfully called before any other routine exported
- *  by the library.
- */
 IRPMONDLL_API DWORD WINAPI IRPMonDllInitialize(const IRPMON_INIT_INFO *Info);
-
-
 IRPMONDLL_API VOID WINAPI IRPMonDllFinalize(VOID);
+
 
 
 #endif 
