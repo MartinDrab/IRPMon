@@ -277,11 +277,43 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllDriverStartMonitoring(HANDLE Driverhandle)
 }
 
 
-/// <summary>
-/// 
+/// <summary>Stops monitoring events related to a given driver.
 /// </summary>
-/// <param name="Driverhandle"></param>
-/// <returns></returns>
+/// <param name="Driverhandle">
+/// Handle to the hooked driver (returned by a call to the <see cref="IRPMonDllHookDriver"/> routine).
+/// </param>
+/// <returns>
+/// The function can return the following error codes :
+/// <list type="table">
+/// <listheader>
+///   <term>Value</term>
+///   <description>Description</description>
+/// </listheader>
+/// <item>
+///   <term>ERROR_SUCCESS</term>
+///   <description> The monitoring has been successfully stopped for the given driver.</description>
+/// </item>
+/// <item>
+///   <term>ERROR_INVALID_HANDLE</term>
+///   <description>The handle supplied in the parameter is not valid.</description>
+/// </item>
+/// <item>
+///   <term>Other</term>
+///   <description>An error has occurred.</description>
+/// </item>
+/// </list>
+/// </returns>
+/// <remarks>
+/// <para>
+/// This routine does exactly the opposite of the <see cref="IRPMonDllDriverStartMonitoring"/> function.
+/// </para>
+/// <para>
+/// The routine removes all hooks placed on driver's DRIVER_OBJECT structure, so no events related
+/// to the driver are detected any longer. Howerver, the driver is still remembered as being hooked;
+/// its record remains in data structures of the IRPMon driver.To remove the "hooked" label from the
+/// driver, use the <see cref="IRPMonDllUnhookDriver"/> function.
+/// </para>
+/// </remarks>
 IRPMONDLL_API DWORD WINAPI IRPMonDllDriverStopMonitoring(HANDLE Driverhandle)
 {
 	return DriverComHookedDriverActivate(Driverhandle, FALSE);

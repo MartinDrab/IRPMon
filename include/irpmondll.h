@@ -66,27 +66,6 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllDriverHooksEnumerate(PHOOKED_DRIVER_UMINFO *
 IRPMONDLL_API VOID WINAPI IRPMonDllDriverHooksFree(PHOOKED_DRIVER_UMINFO HookedDrivers, ULONG Count);
 IRPMONDLL_API DWORD WINAPI IRPMonDllHookDriver(PWCHAR DriverName, PDRIVER_MONITOR_SETTINGS MonitorSettings, BOOLEAN DeviceExtensionHook, PHANDLE DriverHandle, PVOID *ObjectId);
 IRPMONDLL_API DWORD WINAPI IRPMonDllDriverStartMonitoring(HANDLE Driverhandle);
-
-
-/** Stops monitoring events related to a given driver.
- *
- *  @param DriverHandle Handle to the hooked driver (returned by a call to the @Link(IRPMonDllHookDriver) routine).
- *
- *  @return
- *  The function can return the following error codes:
- *  @value ERROR_SUCCESS The monitoring has been successfully stopped for the given
- *  driver. 
- *  @value ERROR_INVALID_HANDLE The handle supplied in the parameter is not valid.
- *  @value Other An error occurred.
- *
- *  @remark
- *  This routine does exactly the opposite of the @Link(IRPMonDllDriverStartMonitoring) function.
- *
- *  The routine removes all hooks placed on driver's DRIVER_OBJECT structure, so no events related
- *  to the driver are detected any longer. Howerver, the driver is still remembered as being hooked;
- *  its record remains in data structures of the IRPMon driver. To remove the "hooked" label from the
- *  driver, use the @Link(IRPMonDllUnhookDriver) function.
- */
 IRPMONDLL_API DWORD WINAPI IRPMonDllDriverStopMonitoring(HANDLE Driverhandle);
 
 
