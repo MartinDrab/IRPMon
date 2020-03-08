@@ -1060,10 +1060,15 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllSettingsSet(PIRPMNDRV_SETTINGS Settings, BOO
 /************************************************************************/
 
 
-/// <summary>
-/// 
+/// <summary>Checks whether the IRPMon library is initialized.
 /// </summary>
-/// <returns></returns>
+/// <returns>
+/// Returns a boolean value indicating whether the library is initialized.
+/// </returns>
+/// <remarks>
+/// The library is considered initialized if and only if a connection to the IRPMon
+/// driver device object is established (locally or remotely).
+/// </remarks>
 IRPMONDLL_API BOOL WINAPI IRPMonDllInitialized(VOID)
 {
 	BOOL ret = FALSE;
