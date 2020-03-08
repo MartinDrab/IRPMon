@@ -119,11 +119,46 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllHookDriver(PWCHAR DriverName, PDRIVER_MONITO
 }
 
 
-/// <summary>
-/// 
+/// <summary>Unhooks a given driver.
 /// </summary>
-/// <param name="HookHandle"></param>
-/// <returns></returns>
+/// <param name="HookHandle">Handle to the hooked driver.
+/// </param>
+/// <returns>
+/// One of the following error codes may be returned:
+/// <list type="table">
+/// <listheader>
+///   <term>Value</term>
+///   <description>Description</description>
+/// </listheader>
+/// <item>
+///   <term>ERROR_SUCCESS</term>
+///   <description>The driver has been unhooked successfully.</description>
+/// </item>
+/// <item>
+///   <term>ERROR_INVALID_HANDLE</term>
+///   <description>The handle specified in the <paramref name="DriverHandle" /> parameter is invalid.</description>
+/// </item>
+/// <item>
+///   <term>Other</term>
+///   <description>An error occurred.</description>
+/// </item>
+/// </list>
+/// </returns>
+/// <remark>
+/// <para>
+/// If the monitoring is active for the given driver, the routine fails. The monitoring
+/// must be stopped by a call to the <see cref="IRPMonDllDriverStopMonitoring"/> functiion first.
+/// </para>
+/// <para>
+/// The routine causes the IRPMon driver to forget all information about the given hooked
+/// driver which makes it being no longer hooked. The actual unhooking (removing hooks from
+///	driver's DRIVER_OBJECT structure) is done by the <see cref="IRPMonDllDriverStopMonitoring"/> routine.
+/// </para>
+/// <para>
+///	After the successful call to this routine, the handle passed in the <paramref name="DriverHandle"/> argument to the call
+///	becomes invalid.
+/// </para>
+/// </remark>
 IRPMONDLL_API DWORD WINAPI IRPMonDllUnhookDriver(HANDLE HookHandle)
 {
 	return DriverComUnhookDriver(HookHandle);
