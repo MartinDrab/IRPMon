@@ -1098,10 +1098,13 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllInitialize(const IRPMON_INIT_INFO *Info)
 }
 
 
-/// <summary>
-/// 
+/// <summary>Disconnects the current process from the IRPMon driver and cleans up
+/// resources used by the library.
 /// </summary>
-/// <returns></returns>
+/// <remarks>
+/// After calling this routine, no other routine exported by the library can
+/// be successfully invoked.
+/// </remarks>
 IRPMONDLL_API VOID WINAPI IRPMonDllFinalize(VOID)
 {
 	DEBUG_ENTER_FUNCTION_NO_ARGS();

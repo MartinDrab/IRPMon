@@ -142,13 +142,6 @@ IRPMONDLL_API BOOL WINAPI IRPMonDllInitialized(VOID);
 IRPMONDLL_API DWORD WINAPI IRPMonDllInitialize(const IRPMON_INIT_INFO *Info);
 
 
-/** Disconnects the current process from the IRPMon driver and cleans up
- *  resources used by the library.
- *
- *  @remark
- *  After calling this routine, no other routine exported by the library can
- *  be successfully invoked.
- */
 IRPMONDLL_API VOID WINAPI IRPMonDllFinalize(VOID);
 
 
