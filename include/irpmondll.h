@@ -80,37 +80,7 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllQueueClear(void);
 IRPMONDLL_API DWORD WINAPI IRPMonDllGetRequest(PREQUEST_HEADER Request, DWORD Size);
 IRPMONDLL_API size_t WINAPI IRPMonDllGetRequestSize(const REQUEST_HEADER *Request);
 IRPMONDLL_API DWORD WINAPI IRPMonDllOpenHookedDriver(PVOID ObjectId, PHANDLE Handle);
-
-
-/** Closes a handle to a given driver monitored by the IRPMon.
- *
- *  @param Handle The handle to close.
- *
- *  @return
- *  The routine should always return ERROR-SUCCESS. If it does not, the bug is
- 9  in caller's code, not in the code of the library or driver.
- */
 IRPMONDLL_API DWORD WINAPI IRPMonDllCloseHookedDriverHandle(HANDLE Handle);
-
-
-/** Open a handle to a given device monitored by the IRPMon driver.
- *
- *  @param ObjectId ID of the target device. IDs can be obtained from the
- *  'ObjectId' member of the @link(HOOKED_DEVICE_UMINFO) structure retrieved
- *  by the @link(IRPMonDllDriverHooksEnumerate) function.
- *  @param Handle Address of variable that receives the newly opened handle. The
- *  handle can be then used to control the hooked device.
- *
- *  @return
- *  The function may return one of the following values:
- *    @value ERROR-SUCCESS The handle has been created successfully.
- *    @value Other An error occurred.
- *
- *  @remark
- *  When no longer needed, the handle should be closed via the @link(IRPMonDllCloseHookedDeviceHandle)
- *  function. Alternatively, the @link(IRPMonDllUnhookDevice) routine may also be used to close the
- *  handle, however, it also unhooks the device represented by the handle.
- */
 IRPMONDLL_API DWORD WINAPI IRPMonDllOpenHookedDevice(PVOID ObjectId, PHANDLE Handle);
 
 

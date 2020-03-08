@@ -635,23 +635,54 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllOpenHookedDriver(PVOID ObjectId, PHANDLE Han
 }
 
 
-/// <summary>
-/// 
+/// <summary>Closes a handle to a given driver monitored by the IRPMon.
 /// </summary>
-/// <param name="Handle"></param>
-/// <returns></returns>
+/// <param name="Handle">
+/// The handle to close.
+/// </param>
+/// <returns>
+/// The routine should always return ERROR_SUCCESS.I f it does not, the bug is
+/// caller's code, not in the code of the library or driver.
+/// TODO: Use the table
+/// </returns>
 IRPMONDLL_API DWORD WINAPI IRPMonDllCloseHookedDriverHandle(HANDLE Handle)
 {
 	return DriverComDriverHandleClose(Handle);
 }
 
 
-/// <summary>
-/// 
+/// <summary>Open a handle to a given device monitored by the IRPMon driver.
 /// </summary>
-/// <param name="ObjectId"></param>
-/// <param name="Handle"></param>
-/// <returns></returns>
+/// <param name="ObjectId">
+/// ID of the target device. IDs can be obtained from the
+/// 'ObjectId' member of the <see cref="_HOOKED_DEVICE_UMINFO"/> structure retrieved
+/// by the <see cref="IRPMonDllDriverHooksEnumerate"/> function.
+/// </param>
+/// <param name="Handle">
+/// Address of variable that receives the newly opened handle. The
+/// handle can be then used to control the hooked device.
+/// </param>
+/// <returns>
+/// <list type="table">
+/// <listheader>
+///   <term>Value</term>
+///   <description>Description</description>
+/// </listheader>
+/// <item>
+///   <term>ERROR_SUCCESS</term>
+///   <description>The handle has been successfully created.</description>
+/// </item>
+/// <item>
+///   <term>Other</term>
+///   <description>An error occurred</description>
+/// </item>
+/// </list>
+/// </returns>
+/// <remarks>
+/// When no longer needed, the handle should be closed via the <see cref="IRPMonDllCloseHookedDeviceHandle"/>
+/// function. Alternatively, the <see cref="IRPMonDllUnhookDevice"/> routine may also be used to close the
+/// handle, however, it also unhooks the device represented by the handle.
+/// </remarks>
 IRPMONDLL_API DWORD WINAPI IRPMonDllOpenHookedDevice(PVOID ObjectId, PHANDLE Handle)
 {
 	return DriverComDeviceOpen(ObjectId, Handle);
