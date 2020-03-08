@@ -13,12 +13,46 @@
 /************************************************************************/
 
 
-/// <summary>
-/// 
+/// <summary>Removes a request from the IRPMon Event Queue and copies it to a given buffer.
 /// </summary>
-/// <param name="Request"></param>
-/// <param name="Size"></param>
-/// <returns></returns>
+/// <param name="Request">
+/// Address of buffer to which the request data will be copied.
+/// </param>
+/// <param name="Size">
+/// Size of the buffer, in bytes.
+/// </param>
+/// <returns>
+/// The function returns one of the following error codes :
+/// <list type="table">
+/// <listheader>
+///   <term>Value</term>
+///   <description>Description</description>
+/// </listheader>
+/// <item>
+///   <term>ERROR_SUCCESS</term>
+///   <description>
+///   A request has been successfully removed from the queue and
+///   copied to the given buffer.
+///  </description>
+/// </item>
+/// <item>
+///   <term>ERROR_INSUFFICIENT_BUFFER</term>
+///   <description>
+///   The given buffer is not large enough to
+///   hold all the request data. The caller needs to specify a larger buffer.
+///   The request remains in the queue.
+///   </description>
+/// </item>
+/// <item>
+///   <term>Other</term>
+///   <description>An error occurred.</description>
+/// </item>
+/// </list>
+/// </returns>
+/// <remarks>
+/// The calling thread must be connected to the IRPMon Event Queue.Otherwise,
+/// the function fails.
+/// </remarks>
 IRPMONDLL_API DWORD WINAPI IRPMonDllGetRequest(PREQUEST_HEADER Request, DWORD Size)
 {
 	return DriverComGetRequest(Request, Size);

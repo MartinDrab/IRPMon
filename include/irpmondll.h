@@ -77,26 +77,6 @@ IRPMONDLL_API VOID WINAPI IRPMonDllSnapshotFree(PIRPMON_DRIVER_INFO *DriverInfo,
 IRPMONDLL_API DWORD WINAPI IRPMonDllConnect(void);
 IRPMONDLL_API DWORD WINAPI IRPMonDllDisconnect(VOID);
 IRPMONDLL_API DWORD WINAPI IRPMonDllQueueClear(void);
-
-/** Removes a request from the IRPMon Event Queue and copies it to a given
- *  buffer.
- *
- *  @param Request Address of buffer to which the request data will be copied.
- *  @param Size Size of the buffer, in bytes.
- *
- *  @return
- *  Returns one of the following values:
- *  @value ERROR_SUCCESS The request was successfully removed from the queue and
- *  copied to the given buffer. 
- *  @value ERROR_INSUFFICIENT_BUFFER The given buffer is not large enough to 
- *  hold all the request data. Because all types of requests are of fixed size,
- *  hence using a buffer large enough to hold the largest request type will avoid
- *  this error completely.
- *
- *  @remark
- *  The calling thread must be connected to the IRPMon Event Queue. Otherwise,
- *  the function fails.
- */
 IRPMONDLL_API DWORD WINAPI IRPMonDllGetRequest(PREQUEST_HEADER Request, DWORD Size);
 
 
