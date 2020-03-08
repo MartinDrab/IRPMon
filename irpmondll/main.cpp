@@ -59,11 +59,15 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllGetRequest(PREQUEST_HEADER Request, DWORD Si
 }
 
 
-/// <summary>
-/// 
+/// <summary>Gets size of a request, in bytes.
 /// </summary>
-/// <param name="Request"></param>
-/// <returns></returns>
+/// <param name="Request">
+/// Pointer to the request retrieved via <see cref="IRPMonDllGetRequest"/>.
+/// </param>
+/// <returns>
+/// If successful, returns the request size, in bytes.
+/// On error, zero is returned.
+/// </returns>
 IRPMONDLL_API size_t WINAPI IRPMonDllGetRequestSize(const REQUEST_HEADER *Request)
 {
 	return RequestGetSize(Request);
