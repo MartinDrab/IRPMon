@@ -597,12 +597,38 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllDriverSetInfo(HANDLE DriverHandle, PDRIVER_M
 }
 
 
-/// <summary>
-/// 
+/// <summary>Open a handle to a given driver monitored by the IRPMon driver.
 /// </summary>
-/// <param name="ObjectId"></param>
-/// <param name="Handle"></param>
-/// <returns></returns>
+/// <param name="ObjectId">
+/// ID of the target driver. IDs can be obtained from the
+/// 'ObjectId' member of the <see cref="_HOOKED_DRIVER_UMINFO"/> structure retrieved
+/// by the <see cref="IRPMonDllDriverHooksEnumerate"/> function.
+/// </param>
+/// <param name="Handle">
+/// Address of variable that receives the newly opened handle. The
+/// handle can be then used to control the hooked driver.
+/// </param>
+/// <returns>
+/// <list type="table">
+/// <listheader>
+///   <term>Value</term>
+///   <description>Description</description>
+/// </listheader>
+/// <item>
+///   <term>ERROR_SUCCESS</term>
+///   <description>The handle has been successfully created.</description>
+/// </item>
+/// <item>
+///   <term>Other</term>
+///   <description>An error occurred</description>
+/// </item>
+/// </list>
+/// </returns>
+/// <remarks>
+/// When no longer needed, the handle should be closed via the <see cref="IRPMonDllCloseHookedDriverHandle"/>
+/// function. Alternatively, the <see cref="IRPMonDllUnhookDriver"/> routine may also be used to close the
+/// handle, however, it also unhooks the driver represented by the handle.
+/// </remarks>
 IRPMONDLL_API DWORD WINAPI IRPMonDllOpenHookedDriver(PVOID ObjectId, PHANDLE Handle)
 {
 	return DriverComDriverOpen(ObjectId, Handle);
