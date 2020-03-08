@@ -72,26 +72,6 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllUnhookDriver(HANDLE DriverHandle);
 IRPMONDLL_API DWORD WINAPI IRPMonDllHookDeviceByName(PWCHAR DeviceName, PHANDLE HookHandle, PVOID *ObjectId);
 IRPMONDLL_API DWORD WINAPI IRPMonDllHookDeviceByAddress(PVOID DeviceObject, PHANDLE HookHandle, PVOID *ObjectId);
 IRPMONDLL_API DWORD WINAPI IRPMonDllUnhookDevice(HANDLE HookHandle);
-
-
-/** Retrieves information about driver and device objects currently present
- *  in the system.
- *
- *  @param DriverInfo Address of variable that receives address of an array of
- *  pointers to IRPMON_DRIVER_INFO structures, each containing information about
- *  one driver and its devices.
- *  @param Count Address of variable that receives the number of structures in the 
- *  array.
- *
- *  @return
- *  The routine may return one of the following values:
- *  @value ERROR_SUCCESS The snapshot has been retrieved successfully.
- *  @value Other An error occurred.
- *
- *  @remark
- *  When the caller no longer needs the information retrieved by the routine,
- *  it must free it by calling the @link(IRPMonDllSnapshotFree) procedure.
- */
 IRPMONDLL_API DWORD WINAPI IRPMonDllSnapshotRetrieve(PIRPMON_DRIVER_INFO **DriverInfo, PULONG Count);
 
 

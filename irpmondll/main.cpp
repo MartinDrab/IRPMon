@@ -165,12 +165,37 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllUnhookDriver(HANDLE HookHandle)
 }
 
 
-/// <summary>
-/// 
+/// <summary>Retrieves information about driver and device objects currently present in the system.
 /// </summary>
-/// <param name="DriverInfo"></param>
-/// <param name="InfoCount"></param>
-/// <returns></returns>
+/// <param name="DriverInfo">
+/// Address of variable that receives address of an array of
+/// pointers to <see cref="_IRPMON_DRIVER_INFO"/> structures, each containing information about
+/// one driver and its devices.
+/// </param>
+/// <param name="InfoCount">
+/// Address of variable that receives the number of structures in the array.
+/// </param>
+/// <returns>
+/// The routine may return one of the following values:
+/// <list type="table">
+/// <listheader>
+///   <term>Value</term>
+///   <description>Description</description>
+/// </listheader>
+/// <item>
+///   <term>ERROR_SUCCESS</term>
+///   <description>The snapshot has been retrieved successfully.</description>
+/// </item>
+/// <item>
+///   <term>Other</term>
+///   <description>An error occurred.</description>
+/// </item>
+/// </list>
+/// </returns>
+/// <remarks>
+/// When the caller no longer needs the information retrieved by the routine,
+/// it must free it by calling the <see cref="IRPMonDllSnapshotFree"/> procedure.
+/// </remarks>
 IRPMONDLL_API DWORD WINAPI IRPMonDllSnapshotRetrieve(PIRPMON_DRIVER_INFO **DriverInfo, PULONG InfoCount)
 {
 	return DriverComSnapshotRetrieve(DriverInfo, InfoCount);
