@@ -40,10 +40,19 @@ typedef struct _IRPMON_DRIVER_INFO {
 /*                  CLASS WATCHES                                       */
 /************************************************************************/
 
+
+/// Contains information about one device setup class watched by the
+/// IRPMon driver.
 typedef struct _CLASS_WATCH_RECORD {
+	/// CLass GUID, in its binary form.
 	GUID ClassGuid;
+	/// Class GUID, in its string form.
 	PWCHAR ClassGuidString;
+	/// Indicates whether the driver installed itself as an upper filter
+	/// (<c>TRUE</c>) or lower filter (<c>FALSE</c>) for the class.
 	BOOLEAN UpperFilter;
+	/// Determines whether the driver is installed as the first (<c>TRUE</c>)
+	/// or last (<c>FALSE</c>) filter driver in the filter list.
 	BOOLEAN Beginning;
 } CLASS_WATCH_RECORD, *PCLASS_WATCH_RECORD;
 
