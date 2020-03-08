@@ -233,13 +233,42 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllHookDeviceByName(PWCHAR DeviceName, PHANDLE 
 }
 
 
-/// <summary>
-/// 
+/// <summary>Starts monitoring events related to a given device, identified by its device object address.
 /// </summary>
-/// <param name="DeviceObject"></param>
-/// <param name="HookHandle"></param>
-/// <param name="ObjectId"></param>
-/// <returns></returns>
+/// <param name="DeviceObject">
+/// Address of the device object to be monitored. It can be obtained from
+/// a snapshot of drivers and devices currently present in the system, retrieved by a call
+/// to the <see cref="IRPMonDllSnapshotRetrieve"/> function.
+/// </param>
+/// <param name="HookHandle">
+/// Address of variable that receives a handle representing the device being monitored.
+/// </param>
+/// <param name="ObjectId">
+/// Address of variable that receives globally unique ID of the target device object.
+/// This parameter is optional and can be <c>NULL</c>.
+/// </param>
+/// <returns>
+/// The following error codes may be returned:
+/// <list type="table">
+/// <listheader>
+///   <term>Value</term>
+///   <description>Description</description>
+/// </listheader>
+/// <item>
+///   <term>ERROR_SUCCESS</term>
+///   <description>The operation has succeeded. The device is now being monitored.</description>
+/// </item>
+/// <item>
+///   <term>Other</term>
+///   <description>An error occurred</description>
+/// </item>
+/// </list>
+/// </returns>
+/// <remarks>
+/// Before a call to this routine, the driver to which the device belongs must
+/// be hooked. Otherwise, the function fails. Drivers can be hooked by a call to the
+/// <see cref="IRPMonDllHookDriver"/> routine.
+/// </remarks>
 IRPMONDLL_API DWORD WINAPI IRPMonDllHookDeviceByAddress(PVOID DeviceObject, PHANDLE HookHandle, PVOID *ObjectId)
 {
 	return DriverComHookDeviceByAddress(DeviceObject, HookHandle, ObjectId);
