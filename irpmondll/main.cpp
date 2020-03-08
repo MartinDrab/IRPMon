@@ -689,11 +689,16 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllOpenHookedDevice(PVOID ObjectId, PHANDLE Han
 }
 
 
-/// <summary>
-/// 
+/// <summary>Closes a handle to a given device monitored by the IRPMon.
 /// </summary>
-/// <param name="Handle"></param>
-/// <returns></returns>
+/// <param name="Handle">
+/// The handle to close.
+/// </param>
+/// <returns>
+/// The routine should always return ERROR_SUCCESS.I f it does not, the bug is
+/// caller's code, not in the code of the library or driver.
+/// TODO: Use the table
+/// </returns>
 IRPMONDLL_API DWORD WINAPI IRPMonDllCloseHookedDeviceHandle(HANDLE Handle)
 {
 	return DriverComDeviceHandleClose(Handle);

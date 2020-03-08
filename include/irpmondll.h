@@ -82,16 +82,6 @@ IRPMONDLL_API size_t WINAPI IRPMonDllGetRequestSize(const REQUEST_HEADER *Reques
 IRPMONDLL_API DWORD WINAPI IRPMonDllOpenHookedDriver(PVOID ObjectId, PHANDLE Handle);
 IRPMONDLL_API DWORD WINAPI IRPMonDllCloseHookedDriverHandle(HANDLE Handle);
 IRPMONDLL_API DWORD WINAPI IRPMonDllOpenHookedDevice(PVOID ObjectId, PHANDLE Handle);
-
-
-/** Closes a handle to a given device monitored by the IRPMon.
- *
- *  @param Handle The handle to close.
- *
- *  @return
- *  The routine should always return ERROR-SUCCESS. If it does not, the bug is
- 9  in caller's code, not in the code of the library or driver.
- */
 IRPMONDLL_API DWORD WINAPI IRPMonDllCloseHookedDeviceHandle(HANDLE Handle);
 
 
