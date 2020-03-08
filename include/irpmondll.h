@@ -65,27 +65,6 @@
 IRPMONDLL_API DWORD WINAPI IRPMonDllDriverHooksEnumerate(PHOOKED_DRIVER_UMINFO *HookedDrivers, PULONG Count);
 IRPMONDLL_API VOID WINAPI IRPMonDllDriverHooksFree(PHOOKED_DRIVER_UMINFO HookedDrivers, ULONG Count);
 IRPMONDLL_API DWORD WINAPI IRPMonDllHookDriver(PWCHAR DriverName, PDRIVER_MONITOR_SETTINGS MonitorSettings, BOOLEAN DeviceExtensionHook, PHANDLE DriverHandle, PVOID *ObjectId);
-
-
-/** Starts monitoring of a driver. 
- *
- *  @param DriverHandle Handle to the hooked driver, returned by a call to the
- *  @link(IRPMonDllHookDriver) function. 
- *
- *  @remark
- *  The function can return the following error codes:
- *  @value ERROR_SUCCESS The monitoring has successfully started. Events detected by the
- *  IRPMon driver are being stored into the event queue.
- *  @value ERROR_INVALID_HANDLE The handle supplied in the parameter is not valid.
- *  @value Other An error has occurred.
- *
- *  @remark
- *  The routine effectively hooks the driver which means it places hooks inside its DRIVER_OBJECT
- *  structure. From this time, the IRPMon driver starts receiving notifications from these hooks.
- *
- *  Monitoring, enabled by this routine, can be stopped by a call to the @link(IRPMonDllDriverStopMonitoring)
- *  function..
- */
 IRPMONDLL_API DWORD WINAPI IRPMonDllDriverStartMonitoring(HANDLE Driverhandle);
 
 

@@ -234,11 +234,43 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllUnhookDevice(HANDLE HookHandle)
 }
 
 
-/// <summary>
-/// 
+/// <summary>Starts monitoring of a driver.
 /// </summary>
-/// <param name="Driverhandle"></param>
-/// <returns></returns>
+/// <param name="Driverhandle">
+/// Handle to the hooked driver, returned by a call to the
+/// <see cref="IRPMonDllHookDriver"/> function.
+/// </param>
+/// <returns>
+/// The function can return the following error codes:
+/// <list type="table">
+/// <listheader>
+///   <term>Value</term>
+///   <description>Description</description>
+/// </listheader>
+/// <item>
+///   <term>ERROR_SUCCESS</term>
+///   <description>The monitoring has successfully started.Events detected by the IRPMon driver are being stored into the event queue.</description>
+/// </item>
+/// <item>
+///   <term>ERROR_INVALID_HANDLE</term>
+///   <description>The handle supplied in the parameter is not valid.</description>
+/// </item>
+/// <item>
+///   <term>Other</term>
+///   <description>An error has occurred.</description>
+/// </item>
+/// </list>
+/// </returns>
+/// <remarks>
+/// <para>
+/// The routine effectively hooks the driver which means it places hooks inside its DRIVER_OBJECT
+/// structure. From this time, the IRPMon driver starts receiving notifications from these hooks.
+/// </para>
+/// <para>
+/// Monitoring, enabled by this routine, can be stopped by a call to the <see cref="IRPMonDllDriverStopMonitoring"/>
+/// function..
+/// </para>
+/// </remarks>
 IRPMONDLL_API DWORD WINAPI IRPMonDllDriverStartMonitoring(HANDLE Driverhandle)
 {
 	return DriverComHookedDriverActivate(Driverhandle, TRUE);
