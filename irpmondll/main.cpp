@@ -67,10 +67,25 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllConnect(void)
 }
 
 
-/// <summary>
-/// 
+/// <summary>Disconnects the current thread from the IRPMon Event Queue.
 /// </summary>
-/// <returns></returns>
+/// <returns>
+/// The function returns one of the following error codes :
+/// <list type="table">
+/// <listheader>
+///   <term>Value</term>
+///   <description>Description</description>
+/// </listheader>
+/// <item>
+///   <term>ERROR_SUCCESS</term>
+///   <description>The thread successfully disconnected from the queue.</description>
+/// </item>
+/// <item>
+///   <term>Other</term>
+///   <description>An error occurred.</description>
+/// </item>
+/// </list>
+/// </returns>
 IRPMONDLL_API DWORD WINAPI IRPMonDllDisconnect(VOID)
 {
 	return DriverComDisconnect();

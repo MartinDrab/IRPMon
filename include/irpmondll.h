@@ -75,15 +75,6 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllUnhookDevice(HANDLE HookHandle);
 IRPMONDLL_API DWORD WINAPI IRPMonDllSnapshotRetrieve(PIRPMON_DRIVER_INFO **DriverInfo, PULONG Count);
 IRPMONDLL_API VOID WINAPI IRPMonDllSnapshotFree(PIRPMON_DRIVER_INFO *DriverInfo, ULONG Count);
 IRPMONDLL_API DWORD WINAPI IRPMonDllConnect(void);
-
-
-/** Disconnects the current thread from the IRPMon Event Queue.
- *
- *  @return
- *  ne of the following error codes may be returned:
- *  @value ERROR_SUCCESS The thread successfully disconnected from the queue.
- *  @value Other An error occurred.
- */
 IRPMONDLL_API DWORD WINAPI IRPMonDllDisconnect(VOID);
 
 
