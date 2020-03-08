@@ -202,12 +202,18 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllSnapshotRetrieve(PIRPMON_DRIVER_INFO **Drive
 }
 
 
-/// <summary>
-/// 
+/// <summary> Frees a given snapshot of drivers and their devices.
 /// </summary>
-/// <param name="DriverInfo"></param>
-/// <param name="Count"></param>
-/// <returns></returns>
+/// <param name="DriverInfo">
+/// An array of pointers to <see cref="_IRPMON_DRIVER_INFO"/> structures, each
+/// containing information about one driver and its devices. Address of the array
+/// is returned in the first parameter of a call to the <see cref="IRPMonDllSnapshotRetrieve"/>
+/// function.
+/// </param>
+/// <param name="Count">
+/// Number of entries in the array. This value is returned in the second parameter
+/// of the <see cref="IRPMonDllSnapshotRetrieve"/> call.
+/// </param>
 IRPMONDLL_API VOID WINAPI IRPMonDllSnapshotFree(PIRPMON_DRIVER_INFO *DriverInfo, ULONG Count)
 {
 	DriverComSnapshotFree(DriverInfo, Count);
