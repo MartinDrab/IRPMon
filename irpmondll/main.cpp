@@ -316,11 +316,35 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllHookedDriverGetInfo(HANDLE Handle, PDRIVER_M
 }
 
 
-/// <summary>
-/// 
+/// <summary>Stops monitoring events related to a given device object.
 /// </summary>
-/// <param name="HookHandle"></param>
-/// <returns></returns>
+/// <param name="HookHandle">
+///  *  A handle representing the device object being monitored.
+/// </param>
+/// <returns>
+/// The routine can return one of the following values :
+/// <list type="table">
+/// <listheader>
+///   <term>Value</term>
+///   <description>Description</description>
+/// </listheader>
+/// <item>
+///   <term>ERROR_SUCCESS</term>
+///   <description>
+///   The operation has succeeded. The devices is not being
+///   monitored any more. The handle given in the argument is not valid any longer.
+///   </description>
+/// </item>
+/// <item>
+///   <term>ERROR_INVALID_HANDLE</term>
+///   <description>The given handle is invalid.</description>
+/// </item>
+/// </list>
+/// </returns>
+/// <remarks>
+/// If the whole driver to which the device belongs is unhooked (see <see cref="IRPMonDllUnhookDriver"/>), this
+/// routine needs not to be called since the device handle is automatically invalidated.
+/// </remarks>
 IRPMONDLL_API DWORD WINAPI IRPMonDllUnhookDevice(HANDLE HookHandle)
 {
 	return DriverComUnhookDevice(HookHandle);

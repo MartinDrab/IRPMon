@@ -71,22 +71,6 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllDriverSetInfo(HANDLE DriverHandle, PDRIVER_M
 IRPMONDLL_API DWORD WINAPI IRPMonDllUnhookDriver(HANDLE DriverHandle);
 IRPMONDLL_API DWORD WINAPI IRPMonDllHookDeviceByName(PWCHAR DeviceName, PHANDLE HookHandle, PVOID *ObjectId);
 IRPMONDLL_API DWORD WINAPI IRPMonDllHookDeviceByAddress(PVOID DeviceObject, PHANDLE HookHandle, PVOID *ObjectId);
-
-
-/** Stops monitoring events related to a given device object.
- *
- *  @param HookHandle A handle representing the device object being monitored.
- *
- *  @return
- *  The routine can return one of the following values:
- *  @value ERROR_SUCCESS The operation has succeeded. The devices is not being
- *  monitored any more. The handle given in the argument is not valid any longer.
- *  @value ERROR_INVALID_HANDLE The given handle is invalid.
- *
- *  @remark
- *  If the whole driver to which the device belongs is unhooked (see @link(IRPMonDllUnhookDriver)), this
- *  routine needs not to be called since the device handle is automatically invalidated.
- */
 IRPMONDLL_API DWORD WINAPI IRPMonDllUnhookDevice(HANDLE HookHandle);
 
 
