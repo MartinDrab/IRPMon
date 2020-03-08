@@ -74,20 +74,6 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllHookDeviceByAddress(PVOID DeviceObject, PHAN
 IRPMONDLL_API DWORD WINAPI IRPMonDllUnhookDevice(HANDLE HookHandle);
 IRPMONDLL_API DWORD WINAPI IRPMonDllSnapshotRetrieve(PIRPMON_DRIVER_INFO **DriverInfo, PULONG Count);
 IRPMONDLL_API VOID WINAPI IRPMonDllSnapshotFree(PIRPMON_DRIVER_INFO *DriverInfo, ULONG Count);
-
-
-/** Connects the current thread (the calling one) to the queue
- *  of events detected by the IRPMon driver.
- *
- *  @return
- *  The function returns one of the following error codes:
- *  @value ERROR_SUCCESS The thread successfully connected to the queue.
- *  @value Other An error occurred.
- *
- *  @remark
- *  At most one thread can be connected to the IRPMon Event Queue at any
- *  moment of time.
- */
 IRPMONDLL_API DWORD WINAPI IRPMonDllConnect(void);
 
 

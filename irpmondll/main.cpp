@@ -37,9 +37,30 @@ IRPMONDLL_API size_t WINAPI IRPMonDllGetRequestSize(const REQUEST_HEADER *Reques
 
 
 /// <summary>
-/// 
+/// Connects the current thread (the calling one) to the queue
+/// of events detected by the IRPMon driver.
 /// </summary>
-/// <returns></returns>
+/// <returns>
+/// The function returns one of the following error codes :
+/// <list type="table">
+/// <listheader>
+///   <term>Value</term>
+///   <description>Description</description>
+/// </listheader>
+/// <item>
+///   <term>ERROR_SUCCESS</term>
+///   <description>The thread successfully connected to the queue.</description>
+/// </item>
+/// <item>
+///   <term>Other</term>
+///   <description>An error occurred.</description>
+/// </item>
+/// </list>
+/// </returns>
+/// <remarks>
+/// At most one thread can be connected to the IRPMon Event Queue at any
+/// moment of time.
+/// </remarks>
 IRPMONDLL_API DWORD WINAPI IRPMonDllConnect(void)
 {
 	return DriverComConnect();
