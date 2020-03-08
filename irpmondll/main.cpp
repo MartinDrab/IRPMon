@@ -92,10 +92,25 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllDisconnect(VOID)
 }
 
 
-/// <summary>
-/// 
+/// <summary>Discards all requests stored in the IRPMon Event Queue.
 /// </summary>
-/// <returns></returns>
+/// <returns>
+/// The function returns one of the following error codes :
+/// <list type="table">
+/// <listheader>
+///   <term>Value</term>
+///   <description>Description</description>
+/// </listheader>
+/// <item>
+///   <term>ERROR_SUCCESS</term>
+///   <description>The queue has been successfully cleared.</description>
+/// </item>
+/// <item>
+///   <term>Other</term>
+///   <description>An error occurred.</description>
+/// </item>
+/// </list>
+/// </returns>
 IRPMONDLL_API DWORD WINAPI IRPMonDllQueueClear(void)
 {
 	return DriverComQueueClear();

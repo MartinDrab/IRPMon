@@ -76,8 +76,6 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllSnapshotRetrieve(PIRPMON_DRIVER_INFO **Drive
 IRPMONDLL_API VOID WINAPI IRPMonDllSnapshotFree(PIRPMON_DRIVER_INFO *DriverInfo, ULONG Count);
 IRPMONDLL_API DWORD WINAPI IRPMonDllConnect(void);
 IRPMONDLL_API DWORD WINAPI IRPMonDllDisconnect(VOID);
-
-
 IRPMONDLL_API DWORD WINAPI IRPMonDllQueueClear(void);
 
 /** Removes a request from the IRPMon Event Queue and copies it to a given
