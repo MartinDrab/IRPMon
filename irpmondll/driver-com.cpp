@@ -266,7 +266,7 @@ DWORD DriverComHookDriver(PWCHAR DriverName, PDRIVER_MONITOR_SETTINGS MonitorSet
 	DEBUG_ENTER_FUNCTION("DriverName=\"%S\"; MonitorSettings=0x%p; DeviceExtensionHook=%u; HookHandle=0x%p; ObjectId=0x%p", DriverName, MonitorSettings, DeviceExtensionHook, HookHandle, ObjectId);
 
 	nameLen = (ULONG)wcslen(DriverName)*sizeof(wchar_t);
-	input = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IOCTL_IRPMNDRV_HOOK_DRIVER_INPUT) + nameLen);
+	input = (PIOCTL_IRPMNDRV_HOOK_DRIVER_INPUT)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IOCTL_IRPMNDRV_HOOK_DRIVER_INPUT) + nameLen);
 	if (input != NULL) {
 		input->DriverNameLength = nameLen;
 		input->MonitorSettings = *MonitorSettings;
@@ -399,7 +399,7 @@ DWORD DriverComHookDeviceByName(PWCHAR DeviceName, PHANDLE HookHandle, PVOID *Ob
 	DEBUG_ENTER_FUNCTION("DeviceName=\"%S\"; HookHandle=0x%p; ObjectId=0x%p", DeviceName, HookHandle, ObjectId);
 
 	nameLen = (ULONG)wcslen(DeviceName)*sizeof(WCHAR);
-	input = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IOCTL_IRPMNDRV_HOOK_ADD_DEVICE_INPUT) + nameLen);
+	input = (PIOCTL_IRPMNDRV_HOOK_ADD_DEVICE_INPUT)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IOCTL_IRPMNDRV_HOOK_ADD_DEVICE_INPUT) + nameLen);
 	if (input != NULL) {
 		input->HookByName = TRUE;
 		input->IRPSettingsSpecified = FALSE;
@@ -511,7 +511,7 @@ DWORD DriverComHookedObjectsEnumerate(PHOOKED_DRIVER_UMINFO *Info, PULONG Count)
 	DWORD ret = ERROR_GEN_FAILURE;
 	DEBUG_ENTER_FUNCTION("Info=0x%p; Count=0x%p", Info, Count);
 
-	ret = _SynchronousVariableOutputIOCTL(IOCTL_IRPMONDRV_HOOK_GET_INFO, NULL, 0, hoLen, &hookedObjects, &hoLen);
+	ret = _SynchronousVariableOutputIOCTL(IOCTL_IRPMONDRV_HOOK_GET_INFO, NULL, 0, hoLen, (PVOID *)&hookedObjects, &hoLen);
 	if (ret == ERROR_SUCCESS) {
 		PHOOKED_DRIVER_UMINFO tmpInfo = NULL;
 
@@ -755,7 +755,7 @@ DWORD DriverComClassWatchEnum(PCLASS_WATCH_RECORD *Array, PULONG Count)
 	DWORD ret = ERROR_GEN_FAILURE;
 	DEBUG_ENTER_FUNCTION("Array=0x%p; Count=0x%p", Array, Count);
 
-	ret = _SynchronousVariableOutputIOCTL(IOCTL_IRPMNDRV_CLASS_WATCH_ENUM, NULL, 0, outputSize, &output, &outputSize);
+	ret = _SynchronousVariableOutputIOCTL(IOCTL_IRPMNDRV_CLASS_WATCH_ENUM, NULL, 0, outputSize, (PVOID *)&output, &outputSize);
 	if (ret == ERROR_SUCCESS) {
 		if (output->Count > 0) {
 			tmpArray = (PCLASS_WATCH_RECORD)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, output->Count*sizeof(CLASS_WATCH_RECORD));
@@ -893,7 +893,7 @@ DWORD DriverComDriverNameWatchEnum(PDRIVER_NAME_WATCH_RECORD *Array, PULONG Coun
 	DWORD ret = ERROR_GEN_FAILURE;
 	DEBUG_ENTER_FUNCTION("Array=0x%p; Count=0x%p", Array, Count);
 
-	ret = _SynchronousVariableOutputIOCTL(IOCTL_IRPMNDRV_DRIVER_WATCH_ENUM, NULL, 0, outputSize, &output, &outputSize);
+	ret = _SynchronousVariableOutputIOCTL(IOCTL_IRPMNDRV_DRIVER_WATCH_ENUM, NULL, 0, outputSize, (PVOID *)&output, &outputSize);
 	if (ret == ERROR_SUCCESS) {
 		if (output->Count > 0) {
 			tmpArray = (PDRIVER_NAME_WATCH_RECORD)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, output->Count*sizeof(CLASS_WATCH_RECORD));

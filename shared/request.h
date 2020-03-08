@@ -27,6 +27,9 @@
 
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 
 size_t RequestGetSize(const REQUEST_HEADER *Header);
@@ -48,6 +51,10 @@ void _SetRequestFlags(PREQUEST_HEADER Request, const BASIC_CLIENT_INFO *Info);
 
 PREQUEST_HEADER RequestMemoryAlloc(size_t Size);
 void RequestMemoryFree(PREQUEST_HEADER Request);
+
+#ifdef __cplusplus
+}
+#endif
 
 
 
