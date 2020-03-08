@@ -69,27 +69,6 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllDriverStartMonitoring(HANDLE Driverhandle);
 IRPMONDLL_API DWORD WINAPI IRPMonDllDriverStopMonitoring(HANDLE Driverhandle);
 IRPMONDLL_API DWORD WINAPI IRPMonDllDriverSetInfo(HANDLE DriverHandle, PDRIVER_MONITOR_SETTINGS Settings);
 IRPMONDLL_API DWORD WINAPI IRPMonDllUnhookDriver(HANDLE DriverHandle);
-
-
-/** Starts monitoring events related to a given device, identified by its object name.
- *
- *  @param DeviceName Name of the device object to be monitored. It can be obtained from
- *  a snapshot of drivers and devices currently present in the system, retrieved by a call
- *  to the @Link(IRPMonDllSnapshotRetrieve) function.
- *  @param HookHandle Address of variable that receives a handle representing the device
- *  being monitored.
- *
- *  @return
- *  The following error codes may be returned:
- *  @value ERROR_SUCCESS The operation has succeeded. The device is now being
- *  monitored.
- *  @value Other An error occurred.
- *
- *  @remark
- *  Before a call to this routine, the driver to which the device belongs must
- *  be hooked. Otherwise, the function fails. Drivers can be hooked by a call to the
- *  @link(IRPMonDllHookDriver) routine.
- */
 IRPMONDLL_API DWORD WINAPI IRPMonDllHookDeviceByName(PWCHAR DeviceName, PHANDLE HookHandle, PVOID *ObjectId);
 
 
