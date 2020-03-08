@@ -320,12 +320,40 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllDriverStopMonitoring(HANDLE Driverhandle)
 }
 
 
-/// <summary>
-/// 
+/// <summary>Changes monitoring settings for a given driver and its devices.
 /// </summary>
-/// <param name="DriverHandle"></param>
-/// <param name="Settings"></param>
-/// <returns></returns>
+/// <param name="DriverHandle">
+/// Handle to the hooked driver the settings of which needs to be changed.
+/// </param>
+/// <param name="Settings">
+/// New values of the monitoring settings for the given driver.
+/// </param>
+/// <returns>
+/// Returns one of the following error codes:
+/// <list type="table">
+/// <listheader>
+///   <term>Value</term>
+///   <description>Description</description>
+/// </listheader>
+/// <item>
+///   <term>ERROR_SUCCESS</term>
+///   <description>The settings for the given hooked driver has been successfully changed to the new values.</description>
+/// </item>
+/// <item>
+///   <term>ERROR_INVALID_HANDLE</term>
+///   <description>The handle supplied in the parameter is not valid.</description>
+/// </item>
+/// <item>
+///   <term>Other</term>
+///   <description>An error has occurred.</description>
+/// </item>
+/// </list>
+/// </returns>
+/// <remarks>
+/// If the IRPMon driver is currently monitoring activity related to the given driver,
+/// only the value stored in the <see cref="_DRIVER_MONITOR_SETTINGS:MonitorNewDevices"/> field
+/// passed in the <paramref name="Settings"/> parameter takes effect.
+/// </remarks>
 IRPMONDLL_API DWORD WINAPI IRPMonDllDriverSetInfo(HANDLE DriverHandle, PDRIVER_MONITOR_SETTINGS Settings)
 {
 	return DriverComHookedDriverSetInfo(DriverHandle, Settings);

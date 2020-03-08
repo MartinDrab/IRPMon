@@ -67,26 +67,6 @@ IRPMONDLL_API VOID WINAPI IRPMonDllDriverHooksFree(PHOOKED_DRIVER_UMINFO HookedD
 IRPMONDLL_API DWORD WINAPI IRPMonDllHookDriver(PWCHAR DriverName, PDRIVER_MONITOR_SETTINGS MonitorSettings, BOOLEAN DeviceExtensionHook, PHANDLE DriverHandle, PVOID *ObjectId);
 IRPMONDLL_API DWORD WINAPI IRPMonDllDriverStartMonitoring(HANDLE Driverhandle);
 IRPMONDLL_API DWORD WINAPI IRPMonDllDriverStopMonitoring(HANDLE Driverhandle);
-
-
-/** Changes monitoring settings for a given driver and its devices.
- *
- *  @param DriverHandle Handle to the hooked driver the settings of which needs to
- *  be changed. 
- *  @param Settings New values of the monitoring settings for the given driver.
- *
- *  @return
- *  Returns one of the following error codes:
- *  @value ERROR_SUCCESS The settings for the given hooked driver has been successfully
- *  changed to the new values.
- *  @value ERROR_INVALID_HANDLE The handle supplied in the first parameter is not valid.
- *  @value Other An error has occurred.
- *
- *  @remark
- *  If the IRPMon driver is currently monitoring activity related to the given driver,
- *  only the value stored in the MonitorNewDevices member of the DRIVER_MONITOR_SETTINGS
- *  structure passed in the Settings parameter takes effect.
- */
 IRPMONDLL_API DWORD WINAPI IRPMonDllDriverSetInfo(HANDLE DriverHandle, PDRIVER_MONITOR_SETTINGS Settings);
 
 

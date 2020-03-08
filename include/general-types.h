@@ -400,14 +400,24 @@ typedef struct _HOOKED_DEVICE_UMINFO {
 	BOOLEAN MonitoringEnabled;
 } HOOKED_DEVICE_UMINFO, *PHOOKED_DEVICE_UMINFO;
 
+/// Defines driver monitoring settings
 typedef struct _DRIVER_MONITOR_SETTINGS {
+	/// Automatically start monitoring newly created devices.
 	BOOLEAN MonitorNewDevices;
+	/// Report calls to driver's AddDevice routine.
 	BOOLEAN MonitorAddDevice;
+	/// Report calls to driver's StartIo routine.
 	BOOLEAN MonitorStartIo;
+	/// Report driver unload.
 	BOOLEAN MonitorUnload;
+	/// Monitor Fast I/O requests server by the target driver.
 	BOOLEAN MonitorFastIo;
+	/// Monitor IRPs targetted to one of the monitored device objects
+	/// of the driver.
 	BOOLEAN MonitorIRP;
+	/// Report IRP completions.
 	BOOLEAN MonitorIRPCompletion;
+	/// Collect additional data for intercepted requests.
 	BOOLEAN MonitorData;
 	/// IRPSettings for newly hooked devices.
 	UCHAR IRPSettings[0x1b + 1];
