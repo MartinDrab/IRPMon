@@ -813,13 +813,34 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllClassWatchRegister(PWCHAR ClassGuid, BOOLEAN
 }
 
 
-/// <summary>
-/// 
+/// <summary>Stops watching a given device setup class from specific filter position.
 /// </summary>
-/// <param name="ClassGuid"></param>
-/// <param name="UpperFilter"></param>
-/// <param name="Beginning"></param>
-/// <returns></returns>
+/// <param name="ClassGuid">
+/// GUID of the device setup class, in its string form. Must match the value specified during registration.
+/// </param>
+/// <param name="UpperFilter">
+/// Type of the filter to uninstall. Must match the value specified during registration.
+/// </param>
+/// <param name="Beginning">
+/// Position of the filter to uninstall. Must match the value specified during registration.
+/// </param>
+/// <returns>
+/// Returns one of the following values:
+/// <list type="table">
+/// <item>
+///   <term>ERROR_SUCCESS</term>
+///   <description>The specified filter has been uninstalled successfully.</description>
+/// </item>
+/// <item>
+///   <term>Other</term>
+///   <description>An error occurred.</description>
+/// </item>
+/// </list>
+/// </returns>
+/// <remarks>
+/// Look at the Remarks section for <see cref="IRPMonDllClassWatchRegister"/> to get more details
+/// about the usefulness of class watching. 
+/// </remarks>
 IRPMONDLL_API DWORD WINAPI IRPMonDllClassWatchUnregister(PWCHAR ClassGuid, BOOLEAN UpperFilter, BOOLEAN Beginning)
 {
 	return DriverComClassWatchUnregister(ClassGuid, UpperFilter, Beginning);
