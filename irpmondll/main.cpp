@@ -899,12 +899,42 @@ IRPMONDLL_API VOID WINAPI IRPMonDllClassWatchEnumFree(PCLASS_WATCH_RECORD Array,
 /************************************************************************/
 
 
-/// <summary>
-/// 
+/// <summary>Instructs the IRPMon driver to automatically start monitoring
+/// a driver with the given name when its presence is detected.
 /// </summary>
-/// <param name="DriverName"></param>
-/// <param name="MonitorSettings"></param>
-/// <returns></returns>
+/// <param name="DriverName">
+/// Full name of the target driver object.
+/// </param>
+/// <param name="MonitorSettings">
+/// Defines which types of requests should be monitored and logged.
+/// </param>
+/// <returns>
+/// One of the following values may be returned:
+/// <list type="table">
+/// <item>
+///   <term>ERROR_SUCCESS</term>
+///   <description>The IRPMon driver is now watching for the given driver.</description>
+/// </item>
+/// <item>
+///   <term>Other</term>
+///   <description>An error occurred.</description>
+/// </item>
+/// </list>
+/// </returns>
+/// <remarks>
+/// <para>
+/// The driver name specified in the <paramref name="DriverName"/> must be an absolute name
+/// in the Object Manager namespace. In other words, it should usually contain the \Driver\ or
+/// \FileSystem\ prefix.
+/// </para>
+/// <para>
+/// Watching for drivers with specific names makes sense especially with
+/// device setup class watching, see <see cref="IRPMonDllClassWatchRegister"/> for more details.
+/// </para>
+/// <para>
+/// Use <see cref="IRPMonDllDriverNameWatchUnregister"/> to stop watching for the given driver.
+/// </para>
+/// </remarks>
 IRPMONDLL_API DWORD WINAPI IRPMonDllDriverNameWatchRegister(PWCHAR DriverName, PDRIVER_MONITOR_SETTINGS MonitorSettings)
 {
 	return DriverComDriverNameWatchRegister(DriverName, MonitorSettings);
