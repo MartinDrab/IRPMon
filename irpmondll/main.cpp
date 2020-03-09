@@ -857,12 +857,14 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllClassWatchEnum(PCLASS_WATCH_RECORD *Array, P
 }
 
 
-/// <summary>
-/// 
+/// <summary>Releases array of watched classes returned by the <see cref="IRPMonDllClassWatchEnum"/> routine.
 /// </summary>
-/// <param name="Array"></param>
-/// <param name="Count"></param>
-/// <returns></returns>
+/// <param name="Array">
+/// Address of the array returned in the first argument of the <see cref="IRPMonDllClassWatchEnum"/> function.
+/// </param>
+/// <param name="Count">
+/// Number of elements in the array.
+/// </param>
 IRPMONDLL_API VOID WINAPI IRPMonDllClassWatchEnumFree(PCLASS_WATCH_RECORD Array, ULONG Count)
 {
 	DriverComClassWatchEnumFree(Array, Count);
