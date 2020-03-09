@@ -826,12 +826,31 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllClassWatchUnregister(PWCHAR ClassGuid, BOOLE
 }
 
 
-/// <summary>
-/// 
+/// <summary>Enumerates device setup classes watched by the IRPMon driver.
 /// </summary>
-/// <param name="Array"></param>
-/// <param name="Count"></param>
-/// <returns></returns>
+/// <param name="Array">
+/// Address of variable that receives an array of <see cref="_CLASS_WATCH_RECORD"/> structures.
+/// </param>
+/// <param name="Count">
+/// Address of variable that receives number of elements returned 
+/// in the *<paramref name="Array"/> array.
+/// </param>
+/// <returns>
+/// One of the following values may be returned:
+/// <list type="table">
+/// <item>
+///   <term>ERROR_SUCCESS</term>
+///   <description>The <paramref name="Array"/> and <paramref name="Count"/> arguments contain information about watched classes.</description>
+/// </item>
+/// <item>
+///   <term>Other</term>
+///   <description>An error occurred.</description>
+/// </item>
+/// </list>
+/// </returns>
+/// <remarks>
+/// Use <see cref="IRPMonDllClassWatchEnumFree"/> to release the array retrieved by this routine.
+/// </remarks>
 IRPMONDLL_API DWORD WINAPI IRPMonDllClassWatchEnum(PCLASS_WATCH_RECORD *Array, PULONG Count)
 {
 	return DriverComClassWatchEnum(Array, Count);
