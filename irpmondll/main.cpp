@@ -1169,7 +1169,7 @@ IRPMONDLL_API PREQUEST_HEADER WINAPI IRPMonDllRequestDecompress(const REQUEST_HE
 /// <returns></returns>
 IRPMONDLL_API DWORD WINAPI IRPMonDllEmulateDriverDevices(void)
 {
-	return DriverComEmulateProcesses();
+	return DriverComEmulateDriverDevices();
 }
 
 
