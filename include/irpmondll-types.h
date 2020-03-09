@@ -60,8 +60,12 @@ typedef struct _CLASS_WATCH_RECORD {
 /*                DRIVER NAME WATCHES                                   */
 /************************************************************************/
 
+/// Contains information about one watched driver name.
 typedef struct _DRIVER_NAME_WATCH_RECORD {
+	/// Monitoring settings to apply when the driver with the specified
+	/// name is detected.
 	DRIVER_MONITOR_SETTINGS MonitorSettings;
+	/// Name of the driver object, in absolute format (Object Manager namespace).
 	PWCHAR DriverName;
 } DRIVER_NAME_WATCH_RECORD, *PDRIVER_NAME_WATCH_RECORD;
 

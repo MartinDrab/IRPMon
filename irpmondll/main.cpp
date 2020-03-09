@@ -975,12 +975,32 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllDriverNameWatchUnregister(PWCHAR DriverName)
 }
 
 
-/// <summary>
-/// 
+/// <summary>Enumerates names of drivers on the watch list.
 /// </summary>
-/// <param name="Array"></param>
-/// <param name="Count"></param>
-/// <returns></returns>
+/// <param name="Array">
+/// Address of variable that receives an array of <see cref="_DRIVER_NAME_WATCH_RECORD"/> structures,
+/// each containing information about one watched driver name.
+/// </param>
+/// <param name="Count">
+/// Address of variable that receives number of elements in the array.
+/// </param>
+/// <returns>
+/// One of the following values may be returned:
+/// <list type="table">
+/// <item>
+///   <term>ERROR_SUCCESS</term>
+///   <description>The <paramref name="Array"/> and <paramref name="Count"/> arguments contain information about watched driver names.</description>
+/// </item>
+/// <item>
+///   <term>Other</term>
+///   <description>An error occurred.</description>
+/// </item>
+/// </list>
+/// </returns>
+/// <remarks>
+/// Release the array returned by this routine by calling
+/// the <see cref="IRPMonDllDriverNameWatchEnumFree"/> routine.
+/// </remarks>
 IRPMONDLL_API DWORD WINAPI IRPMonDllDriverNameWatchEnum(PDRIVER_NAME_WATCH_RECORD *Array, PULONG Count)
 {
 	return DriverComDriverNameWatchEnum(Array, Count);
