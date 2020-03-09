@@ -770,13 +770,43 @@ IRPMONDLL_API VOID WINAPI IRPMonDllDriverHooksFree(PHOOKED_DRIVER_UMINFO HookedD
 /************************************************************************/
 
 
-/// <summary>
-/// 
+/// <summary>Starts watching for devices (and their drivers) belonging to a given device setup class.
+/// <para>
+/// The IRPMon driver install itself as a lower or upper filter to the specified class. Thus,
+/// its AddDevice routine will be invoked when a new device of that class appears in the system.
+/// </para>
 /// </summary>
-/// <param name="ClassGuid"></param>
-/// <param name="UpperFilter"></param>
-/// <param name="Beginning"></param>
-/// <returns></returns>
+/// <param name="ClassGuid">
+/// GUID of the device setup class to monitor, in its string form.
+/// </param>
+/// <param name="UpperFilter">
+/// A boolean valu indicating whether the IRPMon driver should be installed
+/// as a lower or upper filter.
+/// </param>
+/// <param name="Beginning">
+/// Determines whether the IRPMon driver is installed as the first or the last
+/// of the class filters.
+/// </param>
+/// <returns>
+/// Returns one of the following values:
+/// <list type="table">
+/// <item>
+///   <term>ERROR_SUCCESS</term>
+///   <description>The registration was successful</description>
+/// </item>
+/// <item>
+///   <term>Other</term>
+///   <description>An error occurred.</description>
+/// </item>
+/// </list>
+/// </returns>
+/// <remarks>
+/// The ability to watch for new devices and drivers of certain device setup class
+/// can be useful when tracking requests sent to a device shortly after its appearance.
+/// Use <see cref="IRPMonDllDriverNameWatchRegister"/> to automatically start monitoring a
+/// driver with specific name immediately after one of its devices is created and detected
+/// by the class watching capability of the IRPMon driver.
+/// </remarks>
 IRPMONDLL_API DWORD WINAPI IRPMonDllClassWatchRegister(PWCHAR ClassGuid, BOOLEAN UpperFilter, BOOLEAN Beginning)
 {
 	return DriverComClassWatchRegister(ClassGuid, UpperFilter, Beginning);
