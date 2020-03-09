@@ -941,11 +941,34 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllDriverNameWatchRegister(PWCHAR DriverName, P
 }
 
 
-/// <summary>
-/// 
+/// <summary>Stops watching for driver with given name.
 /// </summary>
-/// <param name="DriverName"></param>
-/// <returns></returns>
+/// <param name="DriverName">
+/// Name of the driver that should not be watched for anymore.
+/// </param>
+/// <returns>
+/// One of the following values may be returned:
+/// <list type="table">
+/// <item>
+///   <term>ERROR_SUCCESS</term>
+///   <description>The IRPMon driver is no longer watching for the given driver.</description>
+/// </item>
+/// <item>
+///   <term>Other</term>
+///   <description>An error occurred.</description>
+/// </item>
+/// </list>
+/// </returns>
+/// <remarks>
+/// <para>
+/// The driver name specified in the <paramref name="DriverName"/> must be an absolute name
+/// in the Object Manager namespace. In other words, it should usually contain the \Driver\ or
+/// \FileSystem\ prefix.
+/// </para>
+/// <para>
+/// This routine is exact opposite to <see cref="IRPMonDllDriverNameWatchRegister"/> one.
+/// </para>
+/// </remarks>
 IRPMONDLL_API DWORD WINAPI IRPMonDllDriverNameWatchUnregister(PWCHAR DriverName)
 {
 	return DriverComDriverNameWatchUnregister(DriverName);
