@@ -1007,12 +1007,14 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllDriverNameWatchEnum(PDRIVER_NAME_WATCH_RECOR
 }
 
 
-/// <summary>
-/// 
+/// <summary>Releases array of watched classes returned by the <see cref="IRPMonDllDriverNameWatchEnum"/> routine.
 /// </summary>
-/// <param name="Array"></param>
-/// <param name="Count"></param>
-/// <returns></returns>
+/// <param name="Array">
+/// Address of the array returned in the first argument of the <see cref="IRPMonDllDriverNameWatchEnum"/> function.
+/// </param>
+/// <param name="Count">
+/// Number of elements in the array.
+/// </param>
 IRPMONDLL_API VOID WINAPI IRPMonDllDriverNameWatchEnumFree(PDRIVER_NAME_WATCH_RECORD Array, ULONG Count)
 {
 	DriverComDriverNameWatchEnumFree(Array, Count);
@@ -1020,6 +1022,10 @@ IRPMONDLL_API VOID WINAPI IRPMonDllDriverNameWatchEnumFree(PDRIVER_NAME_WATCH_RE
 	return;
 }
 
+
+/************************************************************************/
+/*                  REQUEST EMULATION                                   */
+/************************************************************************/
 
 /// <summary>
 /// 
