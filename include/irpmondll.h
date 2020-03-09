@@ -1,46 +1,4 @@
-
-/**
- * @file
- *
- * Exports an interface to the irpmondll.dll library. The library forms an user
- * mode part of the system for monitoring various driver and device-related events.
- *
- *  HOW TO USE
- *
- *  *  Initialize the library by a call to the @link(IRPMonDllInitialize) routine.
- *     The current process is connected to the IRPMon driver and the library is now 
- *     ready to work.
- *  *  Retrieve information about drivers and devices currently present in the system
- *     (@link(IRPMonDllSnapshotRetrieve)). The retrieved data must be released by the
- *     @link(IRPMonDllSnapshotFree) procedure when no longer needed.
- *  *  Retrieve the list of drivers and devices currently monitored (and hooked) by the
- *     IRPMon driver. The @link(IRPMonDllDriverHooksEnumerate) does this. Free the returned
- *     information by using the @link(IRPMonDllDriverHooksFree) procedure. The "HookHandle"
- *     member of the structures describing the hooked objects can be used in library functions
- *     described below.
- *  *  Hook a new driver by specifying its name to the @link(IRPMonDllHookDriver) function. This
- *     call instructs the IRPMon driver to store information about the target driver within its
- *     data structures. The actual monitoring must be started by the @link(IRPMonDllDriverStartMonitoring) 
- *     function. @link(IRPMonDllDriverStopMonitoring) stops the monitoring. 
- *  *  Unhook a given driver by passing its hook handle to the @link(IRPMonDllUnhookDriver) function.
- *     The monitoring must not be active. Otherwise, the function fails. 
- *  *  Use the @link(IRPMonDllDriverSetInfo) to change monitoring settings of a hooked driver. If the monitoring
- *     is active, only the value of the MonitorNewDevices setting is propagated to the IRPMon driver.
- *  *  Determine which device objects of a driver should be monitored. Use @link(IRPMonDllHookDeviceByName),
- *     @link(IRPMonDllHookDeviceByAddress) and @link(IRPMonDllUnhookDevice) to tell this to the IRPMon driver.
- * 
- *   COLLECTIONG EVENTS
- *
- *   * Use the @link(IRPMonDllConnect) to connect the current process to the IRPMon Event Queue. You can supply
- *     a semaphore object the counter of which is increased by the IRPMon driver every time an event is added to
- *     the queue. During initialization of the connection, the driver increments the counter by a number of events
- *     currently stored in the queue. 
- *     At most one process can be connected to the queue at any moment of time.
- *   * Disconnect the process by calling the @link(IRPMonDllDisconnect) function.
- *   * Retrieve individual events from the queue via the @link(IRPMonDllGetRequest)
- *     function.
- */
-
+ 
 #ifndef __IRPMONDLL_H__
 #define __IRPMONDLL_H__
 
