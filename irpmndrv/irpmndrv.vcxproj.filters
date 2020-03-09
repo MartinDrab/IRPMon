@@ -39,9 +39,6 @@
     <ClCompile Include="data-loggers.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\shared\request.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="process-events.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -58,6 +55,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="image-load.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\request.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

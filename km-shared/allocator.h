@@ -18,25 +18,25 @@
 #define BLOCK_FOOTER_SIGNATURE         0xf00defdf
 
 
-/** Structure of the header of memory block allocated by the allocator. */
+/// Structure of the header of memory block allocated by the allocator.
 typedef struct {
-   /** Used to store the block within list of allocated blocks. */
+   /// Used to store the block within list of allocated blocks.
    LIST_ENTRY Entry;
-   /** Name of function that allocated the block. */
+   /// Name of function that allocated the block. */
    PCHAR Function;
-   /** Line of code where the allocation occurred. */
+   /// Line of code where the allocation occurred.
    ULONG Line;
-   /** Type of memory pool the block is allocated from. */
+   /// Type of memory pool the block is allocated from.
    POOL_TYPE PoolType;
-   /** Size of the block, in bytes (without the header and the footer). */
+   /// Size of the block, in bytes (without the header and the footer).
    SIZE_T NumberOfBytes;
-   /** Header signature */
+   /// Header signature
    ULONG Signature;
 } DEBUG_BLOCK_HEADER, *PDEBUG_BLOCK_HEADER;
 
-/** Structure of the footer of memory block allocated by the allocator. */
+/// Structure of the footer of memory block allocated by the allocator.
 typedef struct {
-   /** Signature of the footer. */
+   /// Signature of the footer.
    ULONG Signature;
 } DEBUG_BLOCK_FOOTER, *PDEBUG_BLOCK_FOOTER;
 

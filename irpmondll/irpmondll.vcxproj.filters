@@ -50,13 +50,13 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.c">
+    <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="driver-com.c">
+    <ClCompile Include="..\shared\request.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\shared\request.c">
+    <ClCompile Include="driver-com.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

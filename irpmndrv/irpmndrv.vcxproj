@@ -147,7 +147,7 @@
     <FilesToPackage Include="$(TargetPath)" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\shared\request.c" />
+    <ClCompile Include="..\shared\request.cpp" />
     <ClCompile Include="data-loggers.c" />
     <ClCompile Include="devext-hooks.c" />
     <ClCompile Include="driver-settings.c" />

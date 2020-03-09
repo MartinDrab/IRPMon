@@ -8,6 +8,11 @@
 #include "irpmondll-types.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 DWORD DriverComHookDriver(PWCHAR DriverName, PDRIVER_MONITOR_SETTINGS MonitorSettings, BOOLEAN DeviceExtensionHook, PHANDLE HookHandle, PVOID *ObjectId);
 DWORD DriverComHookedDriverSetInfo(HANDLE Driverhandle, PDRIVER_MONITOR_SETTINGS Settings);
 DWORD DriverComHookedDriverGetInfo(HANDLE Driverhandle, PDRIVER_MONITOR_SETTINGS Settings, PBOOLEAN MonitoringEnabled);
@@ -62,6 +67,10 @@ DWORD DriverComModuleInit(const IRPMON_INIT_INFO *Info);
 VOID DriverComModuleFinit(VOID);
 BOOL DriverComDeviceConnected(VOID);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 
 

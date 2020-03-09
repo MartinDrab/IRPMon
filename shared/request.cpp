@@ -435,7 +435,7 @@ PREQUEST_HEADER RequestMemoryAlloc(size_t Size)
 	POOL_TYPE pt;
 
 	pt = (KeGetCurrentIrql() < DISPATCH_LEVEL) ? PagedPool : NonPagedPool;
-	ret = HeapMemoryAlloc(pt, Size);
+	ret = (PREQUEST_HEADER)HeapMemoryAlloc(pt, Size);
 	if (ret != NULL) {
 		memset(ret, 0, Size);
 		switch (pt) {
@@ -449,7 +449,7 @@ PREQUEST_HEADER RequestMemoryAlloc(size_t Size)
 	}
 
 #else
-	ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, Size);
+	ret = (PREQUEST_HEADER)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, Size);
 #endif
 
 	return ret;
