@@ -16,7 +16,6 @@ EXPORTS
 	IRPMonDllDisconnect
 	IRPMonDllQueueClear
 	IRPMonDllGetRequest
-	IRPMonDllGetRequestSize
 	IRPMonDllOpenHookedDriver
 	IRPMonDllCloseHookedDriverHandle
 	IRPMonDllOpenHookedDevice
@@ -32,15 +31,6 @@ EXPORTS
 	IRPMonDllDriverNameWatchUnregister
 	IRPMonDllDriverNameWatchEnum
 	IRPMonDllDriverNameWatchEnumFree
-	IRPMonDllRequestEmulateDriverDetected
-	IRPMonDllRequestEmulateDeviceDetected
-	IRPMonDllRequestEmulateFileNameAssigned
-	IRPMonDllRequestEmulateFileNameDeleted
-	IRPMonDllRequestEmulateProcessCreated
-	IRPMonDllRequestEmulateProcessExitted
-	IRPMonDllRequestCopy
-	IRPMonDllRequestMemoryAlloc
-	IRPMonDllRequestMemoryFree
 	IRPMonDllEmulateDriverDevices
 	IRPMonDllEmulateProcesses
 	IRPMonDllInitialized

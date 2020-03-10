@@ -909,7 +909,6 @@ Procedure IRPMonDllSnapshotFree(ADriverInfo:PPIRPMON_DRIVER_INFO; ACount:Cardina
 Function IRPMonDllConnect:Cardinal; StdCall;
 Function IRPMonDllDisconnect:Cardinal; StdCall;
 Function IRPMonDllGetRequest(ARequest:PREQUEST_HEADER; ASize:Cardinal):Cardinal; StdCall;
-Function IRPMonDllGetRequestSize(ARequest:PREQUEST_HEADER):Cardinal; StdCall;
 
 Function IRPMonDllOpenHookedDriver(AObjectId:Pointer; Var AHandle:THandle):Cardinal; StdCall;
 Function IRPMonDllCloseHookedDriverHandle(AHandle:THandle):Cardinal; StdCall;
@@ -926,15 +925,16 @@ Function IRPMonDllDriverNameWatchUnregister(ADriverName:PWideChar):Cardinal; Std
 Function IRPMonDllDriverNameWatchEnum(Var AArray:PDRIVER_NAME_WATCH_RECORD; Var ACount:Cardinal):Cardinal; StdCall;
 Procedure IRPMonDllDriverNameWatchEnumFree(AArray:PDRIVER_NAME_WATCH_RECORD; ACount:Cardinal); StdCall;
 
-Function IRPMonDllRequestCopy(AHeader:PREQUEST_HEADER):PREQUEST_HEADER; StdCall;
-Function IRPMonDllRequestMemoryAlloc(ASize:NativeUInt):PREQUEST_HEADER; StdCall;
-Procedure IRPMonDllRequestMemoryFree(AHeader:PREQUEST_HEADER); StdCall;
-
 Function IRPMonDllEmulateDriverDevices:Cardinal; StdCall;
 Function IRPMonDllEmulateProcesses:Cardinal; StdCall;
 
 Function IRPMonDllSettingsQuery(Var ASettings:IRPMNDRV_SETTINGS):Cardinal; StdCall;
 Function IRPMonDllSettingsSet(Var ASettings:IRPMNDRV_SETTINGS; ASave:ByteBool):Cardinal; StdCall;
+
+Function RequestCopy(AHeader:PREQUEST_HEADER):PREQUEST_HEADER; Cdecl;
+Function RequestMemoryAlloc(ASize:NativeUInt):PREQUEST_HEADER; Cdecl;
+Procedure RequestMemoryFree(AHeader:PREQUEST_HEADER); Cdecl;
+Function RequestGetSize(ARequest:PREQUEST_HEADER):Cardinal; Cdecl;
 
 Function IRPMonDllInitialized:LongBool; StdCall;
 Function IRPMonDllInitialize(Var AInfo:IRPMON_INIT_INFO):Cardinal; StdCall;
@@ -944,6 +944,7 @@ Implementation
 
 Const
   LibraryName = 'irpmondll.dll';
+  RequestsLibraryName = 'requests.dll';
 
 
 Function IRPMonDllDriverHooksEnumerate(Var AHookedDrivers:PHOOKED_DRIVER_UMINFO; Var ACount:Cardinal):Cardinal; StdCall; External LibraryName;
@@ -967,7 +968,6 @@ Procedure IRPMonDllSnapshotFree(ADriverInfo:PPIRPMON_DRIVER_INFO; ACount:Cardina
 Function IRPMonDllConnect:Cardinal; StdCall; External LibraryName;
 Function IRPMonDllDisconnect:Cardinal; StdCall; External LibraryName;
 Function IRPMonDllGetRequest(ARequest:PREQUEST_HEADER; ASize:Cardinal):Cardinal; StdCall; External LibraryName;
-Function IRPMonDllGetRequestSize(ARequest:PREQUEST_HEADER):Cardinal; StdCall; External LibraryName;
 
 Function IRPMonDllOpenHookedDriver(AObjectId:Pointer; Var AHandle:THandle):Cardinal; StdCall; External LibraryName;
 Function IRPMonDllCloseHookedDriverHandle(AHandle:THandle):Cardinal; StdCall; External LibraryName;
@@ -984,15 +984,16 @@ Function IRPMonDllDriverNameWatchUnregister(ADriverName:PWideChar):Cardinal; Std
 Function IRPMonDllDriverNameWatchEnum(Var AArray:PDRIVER_NAME_WATCH_RECORD; Var ACount:Cardinal):Cardinal; StdCall; External LibraryName;
 Procedure IRPMonDllDriverNameWatchEnumFree(AArray:PDRIVER_NAME_WATCH_RECORD; ACount:Cardinal); StdCall; External LibraryName;
 
-Function IRPMonDllRequestCopy(AHeader:PREQUEST_HEADER):PREQUEST_HEADER; StdCall; External LibraryName;
-Function IRPMonDllRequestMemoryAlloc(ASize:NativeUInt):PREQUEST_HEADER; StdCall; External LibraryName;
-Procedure IRPMonDllRequestMemoryFree(AHeader:PREQUEST_HEADER); StdCall; External LibraryName;
-
 Function IRPMonDllEmulateDriverDevices:Cardinal; StdCall; External LibraryName;
 Function IRPMonDllEmulateProcesses:Cardinal; StdCall; External LibraryName;
 
 Function IRPMonDllSettingsQuery(Var ASettings:IRPMNDRV_SETTINGS):Cardinal; StdCall; External LibraryName;
 Function IRPMonDllSettingsSet(Var ASettings:IRPMNDRV_SETTINGS; ASave:ByteBool):Cardinal; StdCall; External LibraryName;
+
+Function RequestCopy(AHeader:PREQUEST_HEADER):PREQUEST_HEADER; Cdecl; External RequestsLibraryName;
+Function RequestMemoryAlloc(ASize:NativeUInt):PREQUEST_HEADER; Cdecl; External RequestsLibraryName;
+Procedure RequestMemoryFree(AHeader:PREQUEST_HEADER); Cdecl; External RequestsLibraryName;
+Function RequestGetSize(ARequest:PREQUEST_HEADER):Cardinal; Cdecl; External RequestsLibraryName;
 
 Function IRPMonDllInitialized:LongBool; StdCall; External LibraryName;
 Function IRPMonDllInitialize(Var AInfo:IRPMON_INIT_INFO):Cardinal; StdCall; External LibraryName;

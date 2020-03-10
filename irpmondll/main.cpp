@@ -1,9 +1,76 @@
 
+/// <summary>
+/// Exports an interface to the irpmondll.dll library. The library forms an user
+/// mode part of the system for monitoring various driver and device-related events.
+///
+/// <h2>How to Use</h2>
+///
+/// <list type="bullets">
+/// <item>
+///   Initialize the library by a call to the <see cref="IRPMonDllInitialize"/> routine.
+/// </item>
+/// <item> 
+///   The current process is connected to the IRPMon driver and the library is now
+///   ready to work.
+/// </item>
+/// <item>
+///   Retrieve information about drivers and devices currently present in the system
+///   (<see cref="IRPMonDllSnapshotRetrieve"/>). The retrieved data must be released by the
+///   <see cref="IRPMonDllSnapshotFree"/> procedure when no longer needed.
+/// </item>
+/// <item> 
+///   Retrieve the list of drivers and devices currently monitored (and hooked) by the
+///   IRPMon driver. The <see cref="IRPMonDllDriverHooksEnumerate"/> does this. Free the returned
+///   information by using the <see cref="IRPMonDllDriverHooksFree"/> procedure. The "HookHandle"
+///   member of the structures describing the hooked objects can be used in library functions
+///   described below.
+/// </item>
+/// <item>
+///   Hook a new driver by specifying its name to the <see cref="IRPMonDllHookDriver"/> function. This
+///   call instructs the IRPMon driver to store information about the target driver within its
+///   data structures. The actual monitoring must be started by the <see cref="IRPMonDllDriverStartMonitoring"/>
+///   function. <see cref="IRPMonDllDriverStopMonitoring"/> stops the monitoring.
+/// </item>
+/// <item>
+///   Unhook a given driver by passing its hook handle to the <see cref="IRPMonDllUnhookDriver"/> function.
+///   The monitoring must not be active. Otherwise, the function fails.
+/// </item>
+/// <item>
+///   Use the <see cref="IRPMonDllDriverSetInfo"/> to change monitoring settings of a hooked driver. If the monitoring
+///   is active, only the value of the MonitorNewDevices setting is propagated to the IRPMon driver.
+/// </item>
+/// <item>
+///   Determine which device objects of a driver should be monitored. Use <see cref="IRPMonDllHookDeviceByName"/>,
+///   <see cref="IRPMonDllHookDeviceByAddress"/> and <see cref="IRPMonDllUnhookDevice"/> to tell this to the IRPMon driver.
+/// </item>
+/// </list>
+///
+/// <h2>Collecting Events</h2>
+///
+/// <list type="bullets">
+/// <item>
+///   Use the <see cref="IRPMonDllConnect"/> to connect the current process to the IRPMon Event Queue. You can supply
+///   a semaphore object the counter of which is increased by the IRPMon driver every time an event is added to
+///   the queue. During initialization of the connection, the driver increments the counter by a number of events
+///   currently stored in the queue.
+/// </item>
+/// <item>
+///   At most one process can be connected to the queue at any moment of time.
+/// </item>
+/// <item>
+///   Disconnect the process by calling the <see cref="IRPMonDllDisconnect"/> function.
+/// </item>
+/// <item>
+///   Retrieve individual events from the queue via the <see cref="IRPMonDllGetRequest"/>.
+///   function.
+/// </item>
+/// </list>
+/// </summary>
+
 #include <windows.h>
 #include "debug.h"
 #include "irpmondll-types.h"
 #include "driver-com.h"
-#include "request.h"
 #include "irpmondll.h"
 
 
@@ -56,21 +123,6 @@
 IRPMONDLL_API DWORD WINAPI IRPMonDllGetRequest(PREQUEST_HEADER Request, DWORD Size)
 {
 	return DriverComGetRequest(Request, Size);
-}
-
-
-/// <summary>Gets size of a request, in bytes.
-/// </summary>
-/// <param name="Request">
-/// Pointer to the request retrieved via <see cref="IRPMonDllGetRequest"/>.
-/// </param>
-/// <returns>
-/// If successful, returns the request size, in bytes.
-/// On error, zero is returned.
-/// </returns>
-IRPMONDLL_API size_t WINAPI IRPMonDllGetRequestSize(const REQUEST_HEADER *Request)
-{
-	return RequestGetSize(Request);
 }
 
 
@@ -1018,124 +1070,6 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllDriverNameWatchEnum(PDRIVER_NAME_WATCH_RECOR
 IRPMONDLL_API VOID WINAPI IRPMonDllDriverNameWatchEnumFree(PDRIVER_NAME_WATCH_RECORD Array, ULONG Count)
 {
 	DriverComDriverNameWatchEnumFree(Array, Count);
-
-	return;
-}
-
-
-/************************************************************************/
-/*                  REQUEST EMULATION                                   */
-/************************************************************************/
-
-/// <summary>
-/// 
-/// </summary>
-/// <param name="DriverObject"></param>
-/// <param name="DriverName"></param>
-/// <param name="Request"></param>
-/// <returns></returns>
-IRPMONDLL_API DWORD WINAPI IRPMonDllRequestEmulateDriverDetected(void *DriverObject, const wchar_t *DriverName, PREQUEST_DRIVER_DETECTED *Request)
-{
-	return RequestEmulateDriverDetected(DriverObject, DriverName, Request);
-}
-
-
-/// <summary>
-/// 
-/// </summary>
-/// <param name="DriverObject"></param>
-/// <param name="DeviceObject"></param>
-/// <param name="DeviceName"></param>
-/// <param name="Request"></param>
-/// <returns></returns>
-IRPMONDLL_API DWORD WINAPI IRPMonDllRequestEmulateDeviceDetected(void *DriverObject, void *DeviceObject, const wchar_t *DeviceName, PREQUEST_DEVICE_DETECTED *Request)
-{
-	return RequestEmulateDeviceDetected(DriverObject, DeviceObject, DeviceName, Request);
-}
-
-
-/// <summary>
-/// 
-/// </summary>
-/// <param name="FileObject"></param>
-/// <param name="FileName"></param>
-/// <param name="Request"></param>
-/// <returns></returns>
-IRPMONDLL_API DWORD WINAPI IRPMonDllRequestEmulateFileNameAssigned(void *FileObject, const wchar_t *FileName, PREQUEST_FILE_OBJECT_NAME_ASSIGNED *Request)
-{
-	return RequestEmulateFileNameAssigned(FileObject, FileName, Request);
-}
-
-
-/// <summary>
-/// 
-/// </summary>
-/// <param name="FileObject"></param>
-/// <param name="Request"></param>
-/// <returns></returns>
-IRPMONDLL_API DWORD WINAPI IRPMonDllRequestEmulateFileNameDeleted(void *FileObject, PREQUEST_FILE_OBJECT_NAME_DELETED *Request)
-{
-	return RequestEmulateFileNameDeleted(FileObject, Request);
-}
-
-
-/// <summary>
-/// 
-/// </summary>
-/// <param name="ProcessId"></param>
-/// <param name="ParentId"></param>
-/// <param name="ImageName"></param>
-/// <param name="CommandLine"></param>
-/// <param name="Request"></param>
-/// <returns></returns>
-IRPMONDLL_API DWORD WINAPI IRPMonDllRequestEmulateProcessCreated(HANDLE ProcessId, HANDLE ParentId, const wchar_t *ImageName, const wchar_t *CommandLine, PREQUEST_PROCESS_CREATED *Request)
-{
-	return RequestEmulateProcessCreated(ProcessId, ParentId, ImageName, CommandLine, Request);
-}
-
-
-/// <summary>
-/// 
-/// </summary>
-/// <param name="ProcessId"></param>
-/// <param name="Request"></param>
-/// <returns></returns>
-IRPMONDLL_API DWORD WINAPI IRPMonDllRequestEmulateProcessExitted(HANDLE ProcessId, PREQUEST_PROCESS_EXITTED *Request)
-{
-	return RequestEmulateProcessExitted(ProcessId, Request);
-}
-
-
-/// <summary>
-/// 
-/// </summary>
-/// <param name="Header"></param>
-/// <returns></returns>
-IRPMONDLL_API PREQUEST_HEADER WINAPI IRPMonDllRequestCopy(const REQUEST_HEADER *Header)
-{
-	return RequestCopy(Header);
-}
-
-
-/// <summary>
-/// 
-/// </summary>
-/// <param name="Size"></param>
-/// <returns></returns>
-IRPMONDLL_API PREQUEST_HEADER WINAPI IRPMonDllRequestMemoryAlloc(size_t Size)
-{
-	return RequestMemoryAlloc(Size);
-}
-
-
-/// <summary>
-/// 
-/// </summary>
-/// <param name="Header"></param>
-/// <returns></returns>
-IRPMONDLL_API void WINAPI IRPMonDllRequestMemoryFree(PREQUEST_HEADER Header)
-{
-	RequestMemoryFree(Header);
 
 	return;
 }

@@ -112,11 +112,11 @@ FThreadId := ARequest.ThreadId;
 FIRQL := ARequest.Irql;
 FData := Nil;
 FDataSize := 0;
-FRaw := IRPMonDllRequestCopy(@ARequest);
+FRaw := RequestCopy(@ARequest);
 If Not Assigned(FRaw) THen
   Raise Exception.Create('Not enough memory');
 
-FRawSize := IRPMonDllGetRequestSize(FRaw);
+FRawSize := RequestGetSize(FRaw);
 If FRawSize = 0 Then
   Raise Exception.Create('Request raw size is zero');
 
@@ -132,7 +132,7 @@ end;
 Destructor TGeneralRequest.Destroy;
 begin
 If Assigned(FRaw) Then
-  IRPMonDllRequestMemoryFree(FRaw);
+  RequestMemoryFree(FRaw);
 
 If FDataBufferAllocated Then
   FreeMem(FData);

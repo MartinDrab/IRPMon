@@ -347,18 +347,18 @@ Else begin
   tmp := FRaw;
   If ACompress Then
     begin
-    tmp := IRPMonDllRequestCopy(FRaw);
+    tmp := RequestCopy(FRaw);
     If Not Assigned(tmp) Then
       Raise Exception.Create('Not enough memory');
     end;
 
   Try
-    reqSize := IRPMonDllGetRequestSize(tmp);
+    reqSize := RequestGetSize(tmp);
     AStream.Write(reqSize, SizeOf(reqSize));
     AStream.Write(tmp^, reqSize);
   Finally
     If ACompress Then
-      IRPMonDllRequestMemoryFree(tmp);
+      RequestMemoryFree(tmp);
     end;
   end;
 end;
@@ -766,7 +766,7 @@ If Assigned(UpdateRequest) Then
       If Not Assigned(tmpUR.Header.Next) Then
         Break;
 
-      tmpUR := PREQUEST_GENERAL(NativeUInt(tmpUR) + IRPMonDllGetRequestSize(@tmpUR.Header));
+      tmpUR := PREQUEST_GENERAL(NativeUInt(tmpUR) + RequestGetSize(@tmpUR.Header));
       end;
     end;
 

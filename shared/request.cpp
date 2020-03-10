@@ -67,6 +67,15 @@ void _SetRequestFlags(PREQUEST_HEADER Request, const BASIC_CLIENT_INFO *Info)
 #endif
 
 
+/// <summary>Gets size of a request, in bytes.
+/// </summary>
+/// <param name="Request">
+/// Pointer to the request retrieved via <see cref="IRPMonDllGetRequest"/>.
+/// </param>
+/// <returns>
+/// If successful, returns the request size, in bytes.
+/// On error, zero is returned.
+/// </returns>
 size_t RequestGetSize(const REQUEST_HEADER *Header)
 {
 	size_t ret = 0;
