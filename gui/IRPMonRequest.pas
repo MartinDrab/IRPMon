@@ -112,7 +112,7 @@ FThreadId := ARequest.ThreadId;
 FIRQL := ARequest.Irql;
 FData := Nil;
 FDataSize := 0;
-FRaw := IRPMonDllRequestDecompress(@ARequest);
+FRaw := IRPMonDllRequestCopy(@ARequest);
 If Not Assigned(FRaw) THen
   Raise Exception.Create('Not enough memory');
 

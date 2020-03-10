@@ -410,7 +410,6 @@ Const
   REQUEST_FLAG_IMPERSONATED        = $8;
   REQUEST_FLAG_IMPERSONATED_ADMIN  = $10;
   REQUEST_FLAG_NEXT_AVAILABLE      = $20;
-  REQUEST_FLAG_COMPRESSED          = $40;
   REQUEST_FLAG_PAGED					     = $80;
   REQUEST_FLAG_NONPAGED				     = $100;
 
@@ -927,8 +926,6 @@ Function IRPMonDllDriverNameWatchUnregister(ADriverName:PWideChar):Cardinal; Std
 Function IRPMonDllDriverNameWatchEnum(Var AArray:PDRIVER_NAME_WATCH_RECORD; Var ACount:Cardinal):Cardinal; StdCall;
 Procedure IRPMonDllDriverNameWatchEnumFree(AArray:PDRIVER_NAME_WATCH_RECORD; ACount:Cardinal); StdCall;
 
-Function IRPMonDllRequestCompress(AHeader:PREQUEST_HEADER):ByteBool; StdCall;
-Function IRPMonDllRequestDecompress(AHeader:PREQUEST_HEADER):PREQUEST_HEADER; StdCall;
 Function IRPMonDllRequestCopy(AHeader:PREQUEST_HEADER):PREQUEST_HEADER; StdCall;
 Function IRPMonDllRequestMemoryAlloc(ASize:NativeUInt):PREQUEST_HEADER; StdCall;
 Procedure IRPMonDllRequestMemoryFree(AHeader:PREQUEST_HEADER); StdCall;
@@ -987,8 +984,6 @@ Function IRPMonDllDriverNameWatchUnregister(ADriverName:PWideChar):Cardinal; Std
 Function IRPMonDllDriverNameWatchEnum(Var AArray:PDRIVER_NAME_WATCH_RECORD; Var ACount:Cardinal):Cardinal; StdCall; External LibraryName;
 Procedure IRPMonDllDriverNameWatchEnumFree(AArray:PDRIVER_NAME_WATCH_RECORD; ACount:Cardinal); StdCall; External LibraryName;
 
-Function IRPMonDllRequestCompress(AHeader:PREQUEST_HEADER):ByteBool; StdCall; External LibraryName;
-Function IRPMonDllRequestDecompress(AHeader:PREQUEST_HEADER):PREQUEST_HEADER; StdCall; External LibraryName;
 Function IRPMonDllRequestCopy(AHeader:PREQUEST_HEADER):PREQUEST_HEADER; StdCall; External LibraryName;
 Function IRPMonDllRequestMemoryAlloc(ASize:NativeUInt):PREQUEST_HEADER; StdCall; External LibraryName;
 Procedure IRPMonDllRequestMemoryFree(AHeader:PREQUEST_HEADER); StdCall; External LibraryName;

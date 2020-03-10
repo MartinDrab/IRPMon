@@ -1144,28 +1144,6 @@ IRPMONDLL_API void WINAPI IRPMonDllRequestMemoryFree(PREQUEST_HEADER Header)
 /// <summary>
 /// 
 /// </summary>
-/// <param name="Header"></param>
-/// <returns></returns>
-IRPMONDLL_API BOOLEAN WINAPI IRPMonDllRequestCompress(PREQUEST_HEADER Header)
-{
-	return RequestCompress(Header);
-}
-
-
-/// <summary>
-/// 
-/// </summary>
-/// <param name="Header"></param>
-/// <returns></returns>
-IRPMONDLL_API PREQUEST_HEADER WINAPI IRPMonDllRequestDecompress(const REQUEST_HEADER *Header)
-{
-	return RequestDecompress(Header);
-}
-
-
-/// <summary>
-/// 
-/// </summary>
 /// <returns></returns>
 IRPMONDLL_API DWORD WINAPI IRPMonDllEmulateDriverDevices(void)
 {
