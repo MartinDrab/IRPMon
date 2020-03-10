@@ -350,8 +350,6 @@ Else begin
     tmp := IRPMonDllRequestCopy(FRaw);
     If Not Assigned(tmp) Then
       Raise Exception.Create('Not enough memory');
-
-    IRPMonDllRequestCompress(tmp);
     end;
 
   Try

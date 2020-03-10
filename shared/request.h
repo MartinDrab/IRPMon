@@ -34,8 +34,6 @@ extern "C" {
 
 size_t RequestGetSize(const REQUEST_HEADER *Header);
 
-BOOLEAN RequestCompress(PREQUEST_HEADER Header);
-PREQUEST_HEADER RequestDecompress(const REQUEST_HEADER *Header);
 PREQUEST_HEADER RequestCopy(const REQUEST_HEADER *Header);
 
 ERROR_TYPE RequestEmulateDriverDetected(void *DriverObject, const wchar_t *DriverName, PREQUEST_DRIVER_DETECTED *Request);
