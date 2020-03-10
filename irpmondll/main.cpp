@@ -71,7 +71,6 @@
 #include "debug.h"
 #include "irpmondll-types.h"
 #include "driver-com.h"
-#include "request.h"
 #include "irpmondll.h"
 
 
@@ -124,21 +123,6 @@
 IRPMONDLL_API DWORD WINAPI IRPMonDllGetRequest(PREQUEST_HEADER Request, DWORD Size)
 {
 	return DriverComGetRequest(Request, Size);
-}
-
-
-/// <summary>Gets size of a request, in bytes.
-/// </summary>
-/// <param name="Request">
-/// Pointer to the request retrieved via <see cref="IRPMonDllGetRequest"/>.
-/// </param>
-/// <returns>
-/// If successful, returns the request size, in bytes.
-/// On error, zero is returned.
-/// </returns>
-IRPMONDLL_API size_t WINAPI IRPMonDllGetRequestSize(const REQUEST_HEADER *Request)
-{
-	return RequestGetSize(Request);
 }
 
 
@@ -1086,124 +1070,6 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllDriverNameWatchEnum(PDRIVER_NAME_WATCH_RECOR
 IRPMONDLL_API VOID WINAPI IRPMonDllDriverNameWatchEnumFree(PDRIVER_NAME_WATCH_RECORD Array, ULONG Count)
 {
 	DriverComDriverNameWatchEnumFree(Array, Count);
-
-	return;
-}
-
-
-/************************************************************************/
-/*                  REQUEST EMULATION                                   */
-/************************************************************************/
-
-/// <summary>
-/// 
-/// </summary>
-/// <param name="DriverObject"></param>
-/// <param name="DriverName"></param>
-/// <param name="Request"></param>
-/// <returns></returns>
-IRPMONDLL_API DWORD WINAPI IRPMonDllRequestEmulateDriverDetected(void *DriverObject, const wchar_t *DriverName, PREQUEST_DRIVER_DETECTED *Request)
-{
-	return RequestEmulateDriverDetected(DriverObject, DriverName, Request);
-}
-
-
-/// <summary>
-/// 
-/// </summary>
-/// <param name="DriverObject"></param>
-/// <param name="DeviceObject"></param>
-/// <param name="DeviceName"></param>
-/// <param name="Request"></param>
-/// <returns></returns>
-IRPMONDLL_API DWORD WINAPI IRPMonDllRequestEmulateDeviceDetected(void *DriverObject, void *DeviceObject, const wchar_t *DeviceName, PREQUEST_DEVICE_DETECTED *Request)
-{
-	return RequestEmulateDeviceDetected(DriverObject, DeviceObject, DeviceName, Request);
-}
-
-
-/// <summary>
-/// 
-/// </summary>
-/// <param name="FileObject"></param>
-/// <param name="FileName"></param>
-/// <param name="Request"></param>
-/// <returns></returns>
-IRPMONDLL_API DWORD WINAPI IRPMonDllRequestEmulateFileNameAssigned(void *FileObject, const wchar_t *FileName, PREQUEST_FILE_OBJECT_NAME_ASSIGNED *Request)
-{
-	return RequestEmulateFileNameAssigned(FileObject, FileName, Request);
-}
-
-
-/// <summary>
-/// 
-/// </summary>
-/// <param name="FileObject"></param>
-/// <param name="Request"></param>
-/// <returns></returns>
-IRPMONDLL_API DWORD WINAPI IRPMonDllRequestEmulateFileNameDeleted(void *FileObject, PREQUEST_FILE_OBJECT_NAME_DELETED *Request)
-{
-	return RequestEmulateFileNameDeleted(FileObject, Request);
-}
-
-
-/// <summary>
-/// 
-/// </summary>
-/// <param name="ProcessId"></param>
-/// <param name="ParentId"></param>
-/// <param name="ImageName"></param>
-/// <param name="CommandLine"></param>
-/// <param name="Request"></param>
-/// <returns></returns>
-IRPMONDLL_API DWORD WINAPI IRPMonDllRequestEmulateProcessCreated(HANDLE ProcessId, HANDLE ParentId, const wchar_t *ImageName, const wchar_t *CommandLine, PREQUEST_PROCESS_CREATED *Request)
-{
-	return RequestEmulateProcessCreated(ProcessId, ParentId, ImageName, CommandLine, Request);
-}
-
-
-/// <summary>
-/// 
-/// </summary>
-/// <param name="ProcessId"></param>
-/// <param name="Request"></param>
-/// <returns></returns>
-IRPMONDLL_API DWORD WINAPI IRPMonDllRequestEmulateProcessExitted(HANDLE ProcessId, PREQUEST_PROCESS_EXITTED *Request)
-{
-	return RequestEmulateProcessExitted(ProcessId, Request);
-}
-
-
-/// <summary>
-/// 
-/// </summary>
-/// <param name="Header"></param>
-/// <returns></returns>
-IRPMONDLL_API PREQUEST_HEADER WINAPI IRPMonDllRequestCopy(const REQUEST_HEADER *Header)
-{
-	return RequestCopy(Header);
-}
-
-
-/// <summary>
-/// 
-/// </summary>
-/// <param name="Size"></param>
-/// <returns></returns>
-IRPMONDLL_API PREQUEST_HEADER WINAPI IRPMonDllRequestMemoryAlloc(size_t Size)
-{
-	return RequestMemoryAlloc(Size);
-}
-
-
-/// <summary>
-/// 
-/// </summary>
-/// <param name="Header"></param>
-/// <returns></returns>
-IRPMONDLL_API void WINAPI IRPMonDllRequestMemoryFree(PREQUEST_HEADER Header)
-{
-	RequestMemoryFree(Header);
 
 	return;
 }

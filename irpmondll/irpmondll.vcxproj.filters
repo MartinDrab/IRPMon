@@ -39,9 +39,6 @@
     <ClInclude Include="..\include\general-types.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\shared\request.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -51,9 +48,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\shared\request.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="driver-com.cpp">
