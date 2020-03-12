@@ -103,7 +103,9 @@ Var
   DriverAuto : Boolean;
   ServiceInstall : Boolean;
   ServiceAuto : Boolean;
-
+  Succeeded : Boolean;
+	ServicesInstalled : Boolean;
+	
 function ShouldSkipPage(PageID: Integer): Boolean;
 begin
 Result := False;
@@ -150,20 +152,20 @@ Type
     end;
 	
 Function GetLastError:Cardinal; External 'GetLastError@Kernel32.dll';
-Function OpenSCManager(lpMachineName:PAnsiChar; lpDatabaseName:PAnsiChar; dwDesiredAccess:Cardinal):SC_HANDLE; External 'OpenSCManagerA@advapi32.dll';
+Function OpenSCManager(lpMachineName:string; lpDatabaseName:string; dwDesiredAccess:Cardinal):SC_HANDLE; External 'OpenSCManagerW@advapi32.dll';
 Function CloseServiceHandle(hSCObject:SC_HANDLE):LongBool; External 'CloseServiceHandle@advapi32.dll';
-Function OpenService(hSCManager:SC_HANDLE; lpServiceName:PAnsiChar; dwDesiredAccess:Cardinal):SC_HANDLE; External 'OpenServiceA@advapi32.dll';
-Function CreateService(hSCManager:SC_HANDLE; lpServiceName:PAnsiChar; lpDisplayName:PAnsiChar; dwDesiredAccess:Cardinal; dwServiceType:Cardinal; dwStartType:Cardinal; dwErrorControl:Cardinal; lpBinaryPathName:PAnsiChar; lpLoadOrderGroup:PAnsiChar; lpdwTagId:Cardinal; lpDependencies:Cardinal; lpServiceStartName:PAnsiChar; lpPassword:PAnsiChar):SC_HANDLE; External 'CreateServiceA@advapi32.dll';
-Function StartService(hService:SC_HANDLE; dwNumServiceArgs:Cardinal; lpServiceArgVectors:PAnsiChar):LongBool; External 'StartServiceA@advapi32.dll';
+Function OpenService(hSCManager:SC_HANDLE; lpServiceName:string; dwDesiredAccess:Cardinal):SC_HANDLE; External 'OpenServiceW@advapi32.dll';
+Function CreateService(hSCManager:SC_HANDLE; lpServiceName:string; lpDisplayName:string; dwDesiredAccess:Cardinal; dwServiceType:Cardinal; dwStartType:Cardinal; dwErrorControl:Cardinal; lpBinaryPathName:string; lpLoadOrderGroup:string; lpdwTagId:string; lpDependencies:string; lpServiceStartName:string; lpPassword:string):SC_HANDLE; External 'CreateServiceW@advapi32.dll';
+Function StartService(hService:SC_HANDLE; dwNumServiceArgs:Cardinal; lpServiceArgVectors:PAnsiChar):LongBool; External 'StartServiceW@advapi32.dll';
 Function ControlService(hService:SC_HANDLE; dwControl:Cardinal; Var lpServiceStatus:SERVICE_STATUS):LongBool; External 'ControlService@advapi32.dll';
 Function DeleteService(hService:SC_HANDLE):LongBool; External 'DeleteService@advapi32.dll';
 
 
-Function InstallService(AName:PAnsiChar; ADisplayName:PAnsiChar; AType:Cardinal; AStart:Cardinal; AFileName:PAnsiChar):Cardinal;
+Function InstallService(AName:string; ADisplayName:string; AType:Cardinal; AStart:Cardinal; AFileName:string):Cardinal;
 Var
 	hScm : SC_HANDLE;
 	hService : SC_HANDLE;
-	fileNamePrefix : PAnsiChar;
+	fileNamePrefix : string;
 begin
 Result := 0;
 hScm := OpenSCManager('', '', SC_MANAGER_CREATE_SERVICE);
@@ -175,7 +177,7 @@ If hScm <> 0 Then
 	Else fileNamePrefix := fileNamePrefix + '\x86\';
 	
 	AFileName := fileNamePrefix + AFileName;			
-	hService := CreateService(hScm, AName, ADisplayName, SERVICE_START, AType, AStart, SERVICE_ERROR_NORMAL, AFileName, '', 0, '', '', '');
+	hService := CreateService(hScm, AName, ADisplayName, SERVICE_START, AType, AStart, SERVICE_ERROR_NORMAL, AFileName, '', '', '', '', '');
 				
 				
 	If hService = 0 Then
@@ -190,18 +192,7 @@ If hScm <> 0 Then
 			end;
 
 		If Result = 0 Then
-			begin
-			If Not StartService(hService, 0, '') Then
-				Result := GetLastError;
-			
-			If Result = ERROR_SERVICE_ALREADY_RUNNING Then
-				Result := 0;
-					
-			If Result <> 0 Then
-				DeleteService(hService);
-				
 			CloseServiceHandle(hService);
-			end;
 		end;
 				
 	CloseServiceHandle(hScm);
@@ -209,7 +200,7 @@ If hScm <> 0 Then
 Else Result := GetLastError;
 end;
 
-Function UninstallService(AName:PAnsiChar):Cardinal;
+Function UninstallService(AName:string):Cardinal;
 Var
 	ss : SERVICE_STATUS;
 	hScm : SC_HANDLE;
@@ -245,18 +236,19 @@ end;
 function NextButtonClick(CurPageID: Integer): Boolean;
 Var
   err : Cardinal;
-	serviceFileName : PAnsiChar;
+	serviceFileName : string;
 	serviceStartType : Cardinal;
 begin
+err := 0;
 Result := True;
 Case CurPageID Of
-  wpSelectTasks : begin
-    DriverInstall := WizardForm.TasksList.Checked[0];
-    DriverAuto := WizardForm.TasksList.Checked[1];
-    ServiceInstall := WizardForm.TasksList.Checked[3];
-    ServiceAuto := WizardForm.TasksList.Checked[4];
+  wpSelectTasks : begin  
+    DriverInstall := IsTaskSelected('DriverInstall');
+    DriverAuto := IsTaskSelected('DriverAuto');
+    ServiceInstall := IsTaskSelected('ServerInstall');
+    ServiceAuto := IsTaskSelected('ServerAuto');
     end;
-  wpInstalling : begin
+  wpReady : begin
 		err := 0;
     If DriverInstall Then
       begin
@@ -285,9 +277,30 @@ Case CurPageID Of
 
 				ErrorMessage('Unable to install the Server service' + IntToStr(err));
 				end;
-			end;		
+			end;
+			
+		servicesInstalled := (err = 0);	
     end;
   end;
+	
+Result := (err = 0);
+end;
+
+Procedure DeinitializeSetup();
+begin
+If (Not Succeeded) And (servicesInstalled) Then
+	begin
+	If ServiceInstall Then
+		UninstallService(ServerServiceName);
+  
+	If DriverInstall Then
+		UninstallService(DriverServiceName);
+	end;
+end;
+
+Procedure CurStepChanged(CurStep: TSetupStep);
+begin
+Succeeded := (CurStep = ssDone);
 end;
 
 Procedure InitializeUninstallProgressForm();
