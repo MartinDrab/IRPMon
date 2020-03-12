@@ -83,6 +83,11 @@ Name: ServerAuto; Description: "Run IRPMon server on startup"; Components: Serve
 Name: AppDesktop; Description: "Create Desktop shortcuts"; Components: Application; GroupDescription: "GUI Application";
 Name: AppStartMenu; Description: "Create Start Menu shortcuts"; Components: Application; GroupDescription: "GUI Application";
 
+[Run]
+Filename: "sc.exe"; Parameters: "start IRPMonDrv"; Description: "Start IRPMon driver"; Flags: postinstall shellexec unchecked;
+Filename: "sc.exe"; Parameters: "start IRPMonSvc"; Description: "Start tIRPMon server service"; Flags: postinstall shellexec unchecked;
+Filename: "{app}\README.md"; Description: "View documentation"; Flags: skipifsilent postinstall shellexec unchecked;
+
 [Icons]
 Name: "{commondesktop}\IRPMon 32-Bit"; Tasks: AppDesktop; Filename: "{app}\x86\IRPMon.exe"; Comment: "IRPMon 32-bit"
 Name: "{commondesktop}\IRPMon 64-Bit"; Tasks: AppDesktop; Filename: "{app}\x64\IRPMon.exe"; Comment: "IRPMon 64-bit"
@@ -252,7 +257,7 @@ Case CurPageID Of
 		err := 0;
     If DriverInstall Then
       begin
-			serviceFileName := 'irpmondrv.sys';
+			serviceFileName := 'irpmndrv.sys';
 			serviceStartType := SERVICE_DEMAND_START;
 			If DriverAuto Then
 				serviceStartType := SERVICE_AUTO_START;
