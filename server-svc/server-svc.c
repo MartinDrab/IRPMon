@@ -7,6 +7,10 @@
 /*                      GLOBAL VARIABLES                                */
 /************************************************************************/
 
+#define DEFAULT_SERVER_ADDRESS		"0.0.0.0"
+#define DEFAULT_SERVER_PORT			"1234"
+
+
 static SERVICE_STATUS _statusRecord;
 static SERVICE_STATUS_HANDLE _statusHandle = NULL;
 static HANDLE _exitEventHandle = NULL;
@@ -87,26 +91,27 @@ int main(int argc, char *argv[])
 	int ret = 0;
 	SERVICE_TABLE_ENTRYW svcTable[2];
 
-	switch (argc) {
-		case 2:
-			_address = strdup(argv[1]);
-			if (_address == NULL)
-				ret = ENOMEM;
-		case 3:
-			if (ret == 0) {
-				_port = strdup(argv[2]);
-				if (_port == 0)
-					ret = ENOMEM;
-			}
-			break;
+	_address = strdup(argc >= 2 ? argv[1] : DEFAULT_SERVER_ADDRESS);
+	if (_address == NULL)
+		ret = ENOMEM;
+
+	if (ret == 0) {
+		_port = strdup(argc == 3 ? argv[2] : DEFAULT_SERVER_PORT);
+		if (_port == NULL) {
+			free(_address);
+			ret = ENOMEM;
+		}
 	}
 
-	if (argc == 3) {
+	if (ret == 0) {
 		memset(svcTable, 0, sizeof(svcTable));
 		svcTable[0].lpServiceName = L"IRPMonSvc";
 		svcTable[0].lpServiceProc = ServiceMain;
 		if (!StartServiceCtrlDispatcherW(svcTable))
 			ret = GetLastError();
+	
+		free(_port);
+		free(_address);
 	}
 
 	return ret;

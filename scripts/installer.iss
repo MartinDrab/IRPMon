@@ -34,29 +34,282 @@ ArchitecturesInstallIn64BitMode=x64
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
-[Files]
-Source: "..\bin\x64\{#ConfigMode}\*.dll"; DestDir: "{app}\x64"; Flags: ignoreversion;
-Source: "..\bin\x64\{#ConfigMode}\*.sys"; DestDir: "{app}\x64"; Flags: ignoreversion;
-Source: "..\bin\x64\{#ConfigMode}\*.exe"; DestDir: "{app}\x64"; Flags: ignoreversion;
-Source: "..\dlls\x64\{#ConfigMode}\*.dll"; DestDir: "{app}\x64"; Flags: ignoreversion;
-Source: "..\resources\ioctl.txt"; DestDir: "{app}\x64"; Flags: ignoreversion
-Source: "..\resources\ntstatus.txt"; DestDir: "{app}\x64"; Flags: ignoreversion
-Source: "..\resources\winerr.txt"; DestDir: "{app}\x64"; Flags: ignoreversion
+[Types]
+Name: "full"; Description: "Full installation"
+Name: "custom"; Description: "Custom installation"; Flags: iscustom
 
-Source: "..\bin\Win32\{#ConfigMode}\*.dll"; DestDir: "{app}\x86"; Flags: ignoreversion;
-Source: "..\bin\Win32\{#ConfigMode}\*.sys"; DestDir: "{app}\x86"; Flags: ignoreversion;
-Source: "..\bin\Win32\{#ConfigMode}\IRPMon.exe"; DestDir: "{app}\x86"; Flags: ignoreversion;
-Source: "..\bin\Win32\{#ConfigMode}\irpmon-server.exe"; DestDir: "{app}\x86"; Flags: ignoreversion;
-Source: "..\dlls\Win32\{#ConfigMode}\*.dll"; DestDir: "{app}\x86"; Flags: ignoreversion;
-Source: "..\resources\ioctl.txt"; DestDir: "{app}\x86"; Flags: ignoreversion
-Source: "..\resources\ntstatus.txt"; DestDir: "{app}\x86"; Flags: ignoreversion
-Source: "..\resources\winerr.txt"; DestDir: "{app}\x86"; Flags: ignoreversion
+[Components]
+Name: "Runtime"; Description: "Microsoft runtime libraries required by the program"; Types: full custom; Flags: fixed
+Name: "Libraries"; Description: "Libraries implementing basic IRPMon functionality"; Types: full custom; Flags: fixed
+Name: "Kernel"; Description: "Kernel driver for monitoring device driver requests"; Types: full custom;
+Name: "Application"; Description: "Application for setting up the monitoring, browsing log files and managing IRPMon as a whole"; Types: full custom;
+Name: "Server"; Description: "Console application and service for receiving commands accross the network"; Types: full custom;
+Name: "Parsers"; Description: "Libraries customizing data parsing mechanisms of the IRPMon application"; Types: full custom;
+
+[Files]
+Source: "..\bin\x64\{#ConfigMode}\server\*.exe"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Server;
+Source: "..\bin\x64\{#ConfigMode}\server\*.dll"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Server;
+Source: "..\bin\Win32\{#ConfigMode}\server\*.exe"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: Server;
+Source: "..\bin\Win32\{#ConfigMode}\server\*.dll"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: Server;
+
+Source: "..\bin\x64\{#ConfigMode}\parser\*.dll"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Server;
+Source: "..\bin\Win32\{#ConfigMode}\parser\*.dll"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: Server;
+
+Source: "..\bin\x64\{#ConfigMode}\IRPMon.exe"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Application;
+Source: "..\bin\Win32\{#ConfigMode}\IRPMon.exe"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: Application;
+
+Source: "..\bin\x64\{#ConfigMode}\kernel\*.dll"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Kernel;
+Source: "..\bin\x64\{#ConfigMode}\kernel\*.sys"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Kernel;
+Source: "..\bin\Win32\{#ConfigMode}\kernel\*.dll"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: Kernel;
+Source: "..\bin\Win32\{#ConfigMode}\kernel\*.sys"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: Kernel;
+
+Source: "..\bin\x64\{#ConfigMode}\dlls\*.dll"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Libraries;
+Source: "..\bin\Win32\{#ConfigMode}\dlls\*.dll"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: Libraries;
+Source: "..\resources\ioctl.txt"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Libraries;
+Source: "..\resources\ntstatus.txt"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Libraries;
+Source: "..\resources\winerr.txt"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Libraries;
+Source: "..\resources\ioctl.txt"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: Libraries;
+Source: "..\resources\ntstatus.txt"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: Libraries;
+Source: "..\resources\winerr.txt"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: Libraries;
+
+Source: "..\dlls\Win32\{#ConfigMode}\*.dll"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: Runtime;
+Source: "..\dlls\x64\{#ConfigMode}\*.dll"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Runtime;
+
+[Tasks]
+Name: DriverInstall; Description: "Install IRPMon driver service"; Components: Kernel; GroupDescription: "Monitoring driver";
+Name: DriverAuto; Description: "Run IRPMon driver on startup"; Components: Kernel; GroupDescription: "Monitoring driver";
+Name: ServerInstall; Description: "Install IRPMon server service"; Components: Server and Kernel; GroupDescription: "Server service";
+Name: ServerAuto; Description: "Run IRPMon server on startup"; Components: Server and Kernel; GroupDescription: "Server service";
+Name: AppDesktop; Description: "Create Desktop shortcuts"; Components: Application; GroupDescription: "GUI Application";
+Name: AppStartMenu; Description: "Create Start Menu shortcuts"; Components: Application; GroupDescription: "GUI Application";
+
+[Run]
+Filename: "sc.exe"; Parameters: "start IRPMonDrv"; Description: "Start IRPMon driver"; Flags: postinstall shellexec unchecked;
+Filename: "sc.exe"; Parameters: "start IRPMonSvc"; Description: "Start tIRPMon server service"; Flags: postinstall shellexec unchecked;
+Filename: "{app}\README.md"; Description: "View documentation"; Flags: skipifsilent postinstall shellexec unchecked;
 
 [Icons]
-Name: "{commondesktop}\IRPMon 32-Bit"; Filename: "{app}\x86\IRPMon.exe"; Comment: "IRPMon 32-bit"
-Name: "{commondesktop}\IRPMon 64-Bit"; Filename: "{app}\x64\IRPMon.exe"; Comment: "IRPMon 64-bit"
-Name: "{group}\IRPMon 32-Bit"; Filename: "{app}\x86\IRPMon.exe"; Comment: "IRPMon 32-bit"
-Name: "{group}\IRPMon 64-Bit"; Filename: "{app}\x64\IRPMon.exe"; Comment: "IRPMon 64-bit"
-Name: "{group}\{cm:ProgramOnTheWeb,{#MyAppName}}"; Filename: "{#MyAppURL}"
-Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
+Name: "{commondesktop}\IRPMon 32-Bit"; Tasks: AppDesktop; Filename: "{app}\x86\IRPMon.exe"; Comment: "IRPMon 32-bit"
+Name: "{commondesktop}\IRPMon 64-Bit"; Tasks: AppDesktop; Filename: "{app}\x64\IRPMon.exe"; Comment: "IRPMon 64-bit"
+Name: "{group}\IRPMon 32-Bit"; Tasks: AppStartMenu; Filename: "{app}\x86\IRPMon.exe"; Comment: "IRPMon 32-bit"
+Name: "{group}\IRPMon 64-Bit"; Tasks: AppStartMenu; Filename: "{app}\x64\IRPMon.exe"; Comment: "IRPMon 64-bit"
+Name: "{group}\{cm:ProgramOnTheWeb,{#MyAppName}}"; Tasks: AppStartMenu; Filename: "{#MyAppURL}"
+Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Tasks: AppStartMenu; Filename: "{uninstallexe}"
 
+[Code]
+Const
+  DriverServiceName = 'irpmndrv';
+	DriverServiceDisplayName = 'IRPMon Driver';
+  ServerServiceName = 'IRPMonSvc';
+	ServerServiceDisplayName = 'IRPMon Server';
+
+Var
+  DriverInstall : Boolean;
+  DriverAuto : Boolean;
+  ServiceInstall : Boolean;
+  ServiceAuto : Boolean;
+  Succeeded : Boolean;
+	ServicesInstalled : Boolean;
+	
+function ShouldSkipPage(PageID: Integer): Boolean;
+begin
+Result := False;
+If PageID = wpSelectProgramGroup Then
+  Result := True;
+end;
+
+
+Const
+	ERROR_SERVICE_EXISTS = $431;
+  ERROR_SERVICE_ALREADY_RUNNING = $420;
+	
+	
+	SC_MANAGER_CREATE_SERVICE	=	$0002;
+  SC_MANAGER_CONNECT = $0001;
+	
+	SERVICE_DELETE = $10000;
+	SERVICE_START = $10;
+	SERVICE_STOP = $20;
+	
+	SERVICE_ERROR_NORMAL = 0;
+	
+	SERVICE_BOOT_START = 0;
+	SERVICE_SYSTEM_START = 1;
+	SERVICE_AUTO_START = 2;
+	SERVICE_DEMAND_START = 3;
+	SERVICE_DISABLED = 4;
+	
+	SERVICE_KERNEL_DRIVER = $1;
+	SERVICE_WIN32_OWN_PROCESS = $10;
+	
+	SERVICE_CONTROL_STOP = $1;
+	
+Type
+  SC_HANDLE = THandle;
+  SERVICE_STATUS = Record
+		dwServiceType : cardinal;
+    dwCurrentState : cardinal;
+    dwControlsAccepted : cardinal;
+    dwWin32ExitCode : cardinal;
+    dwServiceSpecificExitCode : cardinal;
+    dwCheckPoint : cardinal;
+    dwWaitHint : cardinal;
+    end;
+	
+Function GetLastError:Cardinal; External 'GetLastError@Kernel32.dll';
+Function OpenSCManager(lpMachineName:string; lpDatabaseName:string; dwDesiredAccess:Cardinal):SC_HANDLE; External 'OpenSCManagerW@advapi32.dll';
+Function CloseServiceHandle(hSCObject:SC_HANDLE):LongBool; External 'CloseServiceHandle@advapi32.dll';
+Function OpenService(hSCManager:SC_HANDLE; lpServiceName:string; dwDesiredAccess:Cardinal):SC_HANDLE; External 'OpenServiceW@advapi32.dll';
+Function CreateService(hSCManager:SC_HANDLE; lpServiceName:string; lpDisplayName:string; dwDesiredAccess:Cardinal; dwServiceType:Cardinal; dwStartType:Cardinal; dwErrorControl:Cardinal; lpBinaryPathName:string; lpLoadOrderGroup:string; lpdwTagId:string; lpDependencies:string; lpServiceStartName:string; lpPassword:string):SC_HANDLE; External 'CreateServiceW@advapi32.dll';
+Function StartService(hService:SC_HANDLE; dwNumServiceArgs:Cardinal; lpServiceArgVectors:PAnsiChar):LongBool; External 'StartServiceW@advapi32.dll';
+Function ControlService(hService:SC_HANDLE; dwControl:Cardinal; Var lpServiceStatus:SERVICE_STATUS):LongBool; External 'ControlService@advapi32.dll';
+Function DeleteService(hService:SC_HANDLE):LongBool; External 'DeleteService@advapi32.dll';
+
+
+Function InstallService(AName:string; ADisplayName:string; AType:Cardinal; AStart:Cardinal; AFileName:string):Cardinal;
+Var
+	hScm : SC_HANDLE;
+	hService : SC_HANDLE;
+	fileNamePrefix : string;
+begin
+Result := 0;
+hScm := OpenSCManager('', '', SC_MANAGER_CREATE_SERVICE);
+If hScm <> 0 Then
+	begin
+	fileNamePrefix := ExpandConstant('{app}');
+	If IsWin64 Then
+		fileNamePrefix := fileNamePrefix + '\x64\'
+	Else fileNamePrefix := fileNamePrefix + '\x86\';
+	
+	AFileName := fileNamePrefix + AFileName;			
+	hService := CreateService(hScm, AName, ADisplayName, SERVICE_START, AType, AStart, SERVICE_ERROR_NORMAL, AFileName, '', '', '', '', '');
+				
+				
+	If hService = 0 Then
+		begin
+		Result := GetLastError;
+		If Result = ERROR_SERVICE_EXISTS Then
+			begin
+			Result := 0;
+			hService := OpenService(hScm, AName, SERVICE_START Or SERVICE_DELETE);
+			If hService = 0 Then
+				Result := GetLastError;
+			end;
+
+		If Result = 0 Then
+			CloseServiceHandle(hService);
+		end;
+				
+	CloseServiceHandle(hScm);
+	end
+Else Result := GetLastError;
+end;
+
+Function UninstallService(AName:string):Cardinal;
+Var
+	ss : SERVICE_STATUS;
+	hScm : SC_HANDLE;
+	hService : SC_HANDLE;
+begin
+Result := 0;
+hScm := OpenSCManager('', '', SC_MANAGER_CONNECT);
+If hScm <> 0 Then
+	begin
+	hService := OpenService(hScm, AName, SERVICE_STOP Or SERVICE_DELETE);
+	If hService <> 0 Then
+		begin
+		If Not ControlService(hService, SERVICE_CONTROL_STOP, ss) Then
+			Result := GetLastError;
+		
+		If Not DeleteService(hService) Then
+			Result := GetLastError;
+		
+		CloseServiceHandle(hService);
+		end
+	Else Result := GetLastError;
+		
+	CloseServiceHandle(hScm);
+	end
+Else Result := GetLastError;
+end;
+
+Procedure ErrorMessage(AMsg:string);
+begin
+MsgBox(AMsg, mbError, MB_OK);
+end;
+
+function NextButtonClick(CurPageID: Integer): Boolean;
+Var
+  err : Cardinal;
+	serviceFileName : string;
+	serviceStartType : Cardinal;
+begin
+err := 0;
+Result := True;
+Case CurPageID Of
+  wpSelectTasks : begin  
+    DriverInstall := IsTaskSelected('DriverInstall');
+    DriverAuto := IsTaskSelected('DriverAuto');
+    ServiceInstall := IsTaskSelected('ServerInstall');
+    ServiceAuto := IsTaskSelected('ServerAuto');
+    end;
+  wpReady : begin
+		err := 0;
+    If DriverInstall Then
+      begin
+			serviceFileName := 'irpmndrv.sys';
+			serviceStartType := SERVICE_DEMAND_START;
+			If DriverAuto Then
+				serviceStartType := SERVICE_AUTO_START;
+
+			err := InstallService(DriverServiceName, DriverServiceDisplayName, SERVICE_KERNEL_DRIVER, serviceStartType, serviceFileName);
+			If err <> 0 Then
+				ErrorMessage('Unable to install the IRPMon driver: ' + IntToStr(err));
+			end;
+			
+    If (err = 0) Or (ServiceInstall) Then
+      begin
+			serviceFileName := 'server-svc.exe';
+			serviceStartType := SERVICE_DEMAND_START;
+			If ServiceAuto Then
+				serviceStartType := SERVICE_AUTO_START;
+
+			err := InstallService(ServerServiceName, ServerServiceDisplayName, SERVICE_WIN32_OWN_PROCESS, serviceStartType, serviceFileName);
+			If err <> 0 Then
+				begin
+				If DriverInstall Then
+					UninstallService(DriverServiceName);
+
+				ErrorMessage('Unable to install the Server service' + IntToStr(err));
+				end;
+			end;
+			
+		servicesInstalled := (err = 0);	
+    end;
+  end;
+	
+Result := (err = 0);
+end;
+
+Procedure DeinitializeSetup();
+begin
+If (Not Succeeded) And (servicesInstalled) Then
+	begin
+	If ServiceInstall Then
+		UninstallService(ServerServiceName);
+  
+	If DriverInstall Then
+		UninstallService(DriverServiceName);
+	end;
+end;
+
+Procedure CurStepChanged(CurStep: TSetupStep);
+begin
+Succeeded := (CurStep = ssDone);
+end;
+
+Procedure InitializeUninstallProgressForm();
+begin
+UninstallService(ServerServiceName);
+UninstallService(DriverServiceName);
+end;
