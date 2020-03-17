@@ -69,6 +69,7 @@
 
 #include <windows.h>
 #include "debug.h"
+#include "general-types.h"
 #include "irpmondll-types.h"
 #include "driver-com.h"
 #include "irpmondll.h"
@@ -117,7 +118,7 @@
 /// </list>
 /// </returns>
 /// <remarks>
-/// The calling thread must be connected to the IRPMon Event Queue.Otherwise,
+/// The calling thread must be connected to the IRPMon Event Queue. Otherwise,
 /// the function fails.
 /// </remarks>
 IRPMONDLL_API DWORD WINAPI IRPMonDllGetRequest(PREQUEST_HEADER Request, DWORD Size)
@@ -768,7 +769,7 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllCloseHookedDeviceHandle(HANDLE Handle)
 /// </para>
 /// </summary>
 /// <param name="HookedDrivers">
-/// Address of variable that receives an array of  @link(HOOKED_DRIVER_UMINFO) structures. Each structure represents one driver monitored by IRPMonand includes also information about its hooked devices.
+/// Address of variable that receives an array of  <see cref="_HOOKED_DRIVER_UMINFO"/> structures. Each structure represents one driver monitored by IRPMonand includes also information about its hooked devices.
 /// </param>
 /// <param name="Count">
 /// Address of variable that receives number of structures in the HookedDrivers array.
@@ -803,7 +804,7 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllDriverHooksEnumerate(PHOOKED_DRIVER_UMINFO *
 /// <summary>Frees information returned by the <see cref="IRPMonDllDriverHooksEnumerate"/> function
 /// </summary>
 /// <param name="HookedDrivers">
-/// Address of an array of  <see cref="HOOKED_DRIVER_UMINFO"/> structures.The array is returned in the first argument in a call to the <see cref="IRPMonDllDriverHooksEnumerate"/> function.
+/// Address of an array of  <see cref="_HOOKED_DRIVER_UMINFO"/> structures.The array is returned in the first argument in a call to the <see cref="IRPMonDllDriverHooksEnumerate"/> function.
 /// </param>
 /// <param name="Count">
 /// Number of elements in the array.
