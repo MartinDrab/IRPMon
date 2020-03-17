@@ -248,7 +248,7 @@ public:
 					err = (mit == methods_.cend());
 					aDescription = methodName;
 					if (!err)
-						aTarget = "Function_" + methodName + ".md";
+						aTarget = "Function_" + methodName;
 				} break;
 				case 'T': {
 					auto typeName = aLinkValue.substr(2);
@@ -256,7 +256,7 @@ public:
 					err = (tit == types_.cend());
 					aDescription = typeName;
 					if (!err)
-						aTarget = "Type_" + typeName + ".md";
+						aTarget = "Type_" + typeName;
 				} break;
 				case 'F': {
 					auto fullName = aLinkValue.substr(2);
@@ -264,33 +264,31 @@ public:
 					if (l == std::string::npos)
 						l = fullName.size();
 
-					
 					auto typeName = fullName.substr(0, l);
 					auto tit = types_.find(typeName);
 					err = (tit == types_.cend());
 					aDescription = fullName;
 					if (!err)
-						aTarget = "Type_" + typeName + ".md";
+						aTarget = "Type_" + typeName;
 				} break;
 				case '!': {
 					auto name = aLinkValue.substr(2);
 					auto mit = methods_.find(name);
 					if (mit != methods_.cend()) {
 						aDescription = name;
-						aTarget = "Function_" + name + ".md";
+						aTarget = "Function_" + name;
 					} else {
 						auto fullName = name;
 						auto l = fullName.find_first_of('.');
 						if (l == std::string::npos)
 							l = fullName.size();
 
-
 						auto typeName = fullName.substr(0, l);
 						auto tit = types_.find(typeName);
 						err = (tit == types_.cend());
 						aDescription = fullName;
 						if (!err)
-							aTarget = "Type_" + typeName + ".md";
+							aTarget = "Type_" + typeName;
 					}
 
 				} break;
@@ -366,7 +364,7 @@ public:
 
 		f = fopen(fileName.c_str(), "w");
 		if (f != NULL) {
-			fprintf(f, "# %s\n function\n\n", aMethod.getName().c_str());
+			fprintf(f, "# %s function\n\n", aMethod.getName().c_str());
 			tmp = OutputText(aMethod.getSummary(), seeList);
 			fprintf(f, "## Summary\n\n%s\n\n", tmp.c_str());
 			fprintf(f, "## Definition\n\n```c\n");
@@ -417,7 +415,7 @@ public:
 			if (seeList.size() > 0) {
 				fprintf(f, "## See also\n\n");
 				for (auto& i : seeList) {
-					fprintf(f, "[%s](%s)\n", i.first.c_str(), i.second.c_str());
+					fprintf(f, "* [%s](%s)\n", i.first.c_str(), i.second.c_str());
 				}
 
 				fprintf(f, "\n");
@@ -462,7 +460,7 @@ public:
 			if (seeList.size() > 0) {
 				fprintf(f, "## See also\n\n");
 				for (auto& i : seeList) {
-					fprintf(f, "[%s](%s)\n", i.first.c_str(), i.second.c_str());
+					fprintf(f, "* [%s](%s)\n", i.first.c_str(), i.second.c_str());
 				}
 
 				fprintf(f, "\n");
@@ -483,7 +481,7 @@ public:
 		if (f != NULL) {
 			fprintf(f, "# Function list\n\n");
 			for (auto& m : methods_)
-				fprintf(f, "* [%s function](Function_%s.md)\n", m.first.c_str(), m.first.c_str());
+				fprintf(f, "* [%s](Function_%s)\n", m.first.c_str(), m.first.c_str());
 
 			fclose(f);
 		}
@@ -500,10 +498,33 @@ public:
 		if (f != NULL) {
 			fprintf(f, "# Type list\n\n");
 			for (auto& t : types_)
-				fprintf(f, "* [%s type](Type_%s.md)\n", t.first.c_str(), t.first.c_str());
+				fprintf(f, "* [%s](Type_%s)\n", t.first.c_str(), t.first.c_str());
 
 			fclose(f);
 		}
+
+		return ret;
+	}
+	int OutputSidebar(void)
+	{
+		int ret = 0;
+		FILE* f = NULL;
+		std::string fileName = outDir_ + "\\_Sidebar.md";
+
+		f = fopen(fileName.c_str(), "w");
+		if (f != NULL) {
+			fprintf(f, "  * Functions\n");
+			for (auto& m : methods_)
+				fprintf(f, "    * [%s](Function_%s)\n", m.first.c_str(), m.first.c_str());
+
+			fprintf(f, "  * Types\n");
+			for (auto& t : types_)
+				fprintf(f, "    * [%s](Type_%s)\n", t.first.c_str(), t.first.c_str());
+
+			fclose(f);
+		}
+
+		return ret;
 
 		return ret;
 	}
@@ -566,8 +587,7 @@ int main(int argc, char* argv[])
 		outMd.OutputType(*t.second);
 	}
 
-	outMd.OutputMethodList();
-	outMd.OutputTypeList();
+	outMd.OutputSidebar();
 
 	return ret;
 }
