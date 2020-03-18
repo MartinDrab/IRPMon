@@ -363,10 +363,10 @@ public:
 				if (stricmp(listType, "table") == 0) {
 					auto header = ch.child("listheader");
 					if (!header.empty()) {
-						auto hv = OutputText(header.child("tem"), aSeeLinks);
+						auto hv = OutputText(header.child("term"), aSeeLinks);
 						auto hd = OutputText(header.child("description"), aSeeLinks);
 					
-						ret = "\n| " + hv + " | " + hd + " \n|";
+						ret = "\n| " + hv + " | " + hd + " |\n";
 					} else {
 						ret += "\n| Value | Description |\n";
 					}
