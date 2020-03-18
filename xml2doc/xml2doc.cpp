@@ -54,7 +54,38 @@ static std::string _XMLSubDocument(const pugi::xml_node& aNode)
 }
 
 
-class CMethodArgument {
+class CElement {
+public:
+	std::string getSourceFile(void) const { return sourceFile_; }
+	int getSourceLine(void) const { return sourceLine_; }
+	std::string getLibrary(void) const { return library_; }
+	std::string getDLL(void) const { return DLL_; }
+	void setSourcePosition(const std::string& aFile, int aLine) 
+	{
+		sourceLine_ = aLine;		
+		auto l = aFile.find_last_of('\\');
+		if (l == std::string::npos)
+			l = -1;
+
+		sourceFile_ = aFile.substr(l + 1);
+
+		return;
+	}
+	void setLinkRequirements(const std::string& aLibary, const std::string& aDLL)
+	{
+		library_ = aLibary;
+		DLL_ = aDLL;
+
+		return;
+	}
+private:
+	int sourceLine_;
+	std::string sourceFile_;
+	std::string library_;
+	std::string DLL_;
+};
+
+class CMethodArgument : public CElement {
 public:
 	CMethodArgument(const std::string& aName, const std::string& aType, const pugi::xml_node & aText)
 		: name_(aName), type_(aType), text_(aText), indirections_(0) { 
@@ -90,7 +121,7 @@ private:
 	size_t indirections_;
 };
 
-class CMethod {
+class CMethod : public CElement {
 public:
 	CMethod(const pugi::xml_node& aNode, const std::string & aName)
 		: returnType_("void")
@@ -150,7 +181,7 @@ private:
 	std::vector<CMethodArgument> args_;
 };
 
-class CStructField {
+class CStructField : public CElement {
 public:
 	CStructField(const std::string& aName, const std::string& aType, const pugi::xml_node& aText)
 		: name_(aName), type_(aType), text_(aText) { }
@@ -163,7 +194,7 @@ private:
 	pugi::xml_node text_;
 };
 
-class CType {
+class CType : public CElement {
 public:
 	CType(const pugi::xml_node& aNode, const std::string & aName)
 	{
@@ -254,7 +285,7 @@ public:
 					auto typeName = aLinkValue.substr(2);
 					auto tit = types_.find(typeName);
 					err = (tit == types_.cend());
-					aDescription = typeName;
+					aDescription = typeName.substr(1);
 					if (!err)
 						aTarget = "Type_" + typeName;
 				} break;
@@ -267,7 +298,7 @@ public:
 					auto typeName = fullName.substr(0, l);
 					auto tit = types_.find(typeName);
 					err = (tit == types_.cend());
-					aDescription = fullName;
+					aDescription = fullName.substr(1);
 					if (!err)
 						aTarget = "Type_" + typeName;
 				} break;
@@ -286,7 +317,7 @@ public:
 						auto typeName = fullName.substr(0, l);
 						auto tit = types_.find(typeName);
 						err = (tit == types_.cend());
-						aDescription = fullName;
+						aDescription = fullName.substr(1);
 						if (!err)
 							aTarget = "Type_" + typeName;
 					}
@@ -421,6 +452,12 @@ public:
 				fprintf(f, "\n");
 			}
 
+			fprintf(f, "\n## Requirements\n\n");
+			fprintf(f, "| Header | %s |\n", aMethod.getSourceFile().c_str());
+			fprintf(f, "| Library | %s |\n", aMethod.getLibrary().c_str());
+			fprintf(f, "| DLL | %s |\n", aMethod.getDLL().c_str());
+			fprintf(f, "\n");
+
 			fclose(f);
 		} else ret = errno;
 
@@ -465,6 +502,10 @@ public:
 
 				fprintf(f, "\n");
 			}
+
+			fprintf(f, "\n## Requirements\n\n");
+			fprintf(f, "| Header | %s |\n", aType.getSourceFile().c_str());
+			fprintf(f, "\n");
 
 			fclose(f);
 		} else ret = errno;
@@ -513,13 +554,13 @@ public:
 
 		f = fopen(fileName.c_str(), "w");
 		if (f != NULL) {
-			fprintf(f, "  * Functions\n");
+			fprintf(f, "### Functions\n");
 			for (auto& m : methods_)
-				fprintf(f, "    * [%s](Function_%s)\n", m.first.c_str(), m.first.c_str());
+				fprintf(f, "* [%s](Function_%s)\n", m.first.c_str(), m.first.c_str());
 
-			fprintf(f, "  * Types\n");
+			fprintf(f, "\n### Types\n");
 			for (auto& t : types_)
-				fprintf(f, "    * [%s](Type_%s)\n", t.first.c_str(), t.first.c_str());
+				fprintf(f, "* [%s](Type_%s)\n", t.first.c_str(), t.first.c_str());
 
 			fclose(f);
 		}
@@ -535,38 +576,38 @@ private:
 };
 
 
-int main(int argc, char* argv[])
+static std::string libraryName;
+static std::string DLLName;
+static std::map<std::string, CMethod*> methods;
+static std::map<std::string, CType*> types;
+static std::map<std::string, pugi::xml_document*> docs_;
+
+static int _processXMLFile(const pugi::xml_document & aDoc)
 {
 	int ret = 0;
-	pugi::xml_document doc;
-	std::string assemblyName;
+	CMethod* m = NULL;
+	CType* t = NULL;
 	std::string nodeName;
 	std::string itemName;
-	CMethod* m = NULL;
-	std::map<std::string, CMethod*> methods;
-	CType* t = NULL;
-	std::map<std::string, CType*> types;
+	std::string sourceFile;
+	int sourceLine = 0;
 
-	if (argc < 2)
-		return -1;
-
-	pugi::xml_parse_result result = doc.load_file(argv[1]);
-	if (!result)
-		return -2;
-
-	assemblyName = doc.child("doc").child("assembly").text().as_string();
-	assemblyName = stripChars(assemblyName);
-	for (pugi::xml_node& n : doc.child("doc").child("members")) {
+	for (pugi::xml_node& n : aDoc.child("doc").child("members")) {
 		nodeName = n.attribute("name").as_string();
 		if (nodeName.size() >= 2 && nodeName[1] == ':') {
 			itemName = nodeName.substr(2);
+			sourceFile = n.attribute("source").as_string();
+			sourceLine = n.attribute("line").as_uint();
 			switch (nodeName[0]) {
 				case 'M':
 					m = new CMethod(n, itemName);
+					m->setSourcePosition(sourceFile, sourceLine);
+					m->setLinkRequirements(libraryName, DLLName);
 					methods.insert(std::make_pair(m->getName(), m));
 					break;
 				case 'T':
 					t = new CType(n, itemName);
+					t->setSourcePosition(sourceFile, sourceLine);
 					types.insert(std::make_pair(t->getName(), t));
 					break;
 				case 'F':
@@ -578,14 +619,36 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	COutputMd outMd(methods, types, "doc");
-	for (auto& m : methods) {
-		outMd.OutputMethod(*m.second);
+	return ret;
+}
+
+
+int main(int argc, char* argv[])
+{
+	int ret = 0;
+
+	if (argc < 4)
+		return -1;
+
+	libraryName = argv[1];
+	DLLName = argv[2];
+	for (int i = 3; i < argc; ++i) {
+		pugi::xml_document* doc = NULL;
+
+		fprintf(stderr, "Processing %s\n", argv[i]);
+		doc = new pugi::xml_document();
+		docs_.insert(std::make_pair(argv[i], doc));
+		pugi::xml_parse_result result = doc->load_file(argv[i]);
+		if (result)
+			_processXMLFile(*doc);
 	}
 
-	for (auto& t : types) {
+	COutputMd outMd(methods, types, ".");
+	for (auto& m : methods)
+		outMd.OutputMethod(*m.second);
+
+	for (auto& t : types)
 		outMd.OutputType(*t.second);
-	}
 
 	outMd.OutputSidebar();
 
