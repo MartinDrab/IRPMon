@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
+#include <direct.h>
 #include <vector>
 #include <map>
 
@@ -207,7 +208,7 @@ public:
 
 		remarks_ = aNode.child("remarks");
 		{
-			auto tmp = aNode.previous_sibling();
+			auto tmp = aNode.next_sibling();
 			do {
 				std::string fullTypeName = tmp.attribute("name").as_string();
 				if (fullTypeName.size() < 2 || fullTypeName[1] != ':' ||
@@ -221,12 +222,12 @@ public:
 				fullTypeName = fullTypeName.substr(name_.size() + 1);
 				isStruct_ = true;
 				fields_.push_back(CStructField(fullTypeName, "<unknown>", tmp));
-				tmp = tmp.previous_sibling();
+				tmp = tmp.next_sibling();
 			} while (!tmp.empty());
 		}
 
 		if (!isStruct_) {
-			auto tmp = aNode.next_sibling();
+			auto tmp = aNode.previous_sibling();
 			do {
 				std::string fullTypeName = tmp.attribute("name").as_string();
 				if (fullTypeName.size() < 2 || fullTypeName[1] != ':' ||
@@ -235,7 +236,7 @@ public:
 
 				fullTypeName = fullTypeName.substr(2);
 				fields_.push_back(CStructField(fullTypeName, "<unknown>", tmp));
-				tmp = tmp.next_sibling();
+				tmp = tmp.previous_sibling();
 			} while (!tmp.empty());
 		}
 
@@ -453,9 +454,11 @@ public:
 			}
 
 			fprintf(f, "\n## Requirements\n\n");
-			fprintf(f, "| Header | %s |\n", aMethod.getSourceFile().c_str());
-			fprintf(f, "| Library | %s |\n", aMethod.getLibrary().c_str());
-			fprintf(f, "| DLL | %s |\n", aMethod.getDLL().c_str());
+			fprintf(f, "|   |   |\n");
+			fprintf(f, "|---|---|\n");
+			fprintf(f, "| **Header** | %s |\n", aMethod.getSourceFile().c_str());
+			fprintf(f, "| **Library** | %s |\n", aMethod.getLibrary().c_str());
+			fprintf(f, "| **DLL** | %s |\n", aMethod.getDLL().c_str());
 			fprintf(f, "\n");
 
 			fclose(f);
@@ -504,7 +507,9 @@ public:
 			}
 
 			fprintf(f, "\n## Requirements\n\n");
-			fprintf(f, "| Header | %s |\n", aType.getSourceFile().c_str());
+			fprintf(f, "|   |   |\n");
+			fprintf(f, "|---|---|\n");
+			fprintf(f, "| **Header** | %s |\n", aType.getSourceFile().c_str());
 			fprintf(f, "\n");
 
 			fclose(f);
@@ -643,7 +648,8 @@ int main(int argc, char* argv[])
 			_processXMLFile(*doc);
 	}
 
-	COutputMd outMd(methods, types, ".");
+	_mkdir("..\\bin\\doc");
+	COutputMd outMd(methods, types, "..\\bin\\doc");
 	for (auto& m : methods)
 		outMd.OutputMethod(*m.second);
 
