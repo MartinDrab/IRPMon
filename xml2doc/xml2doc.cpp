@@ -105,7 +105,8 @@ private:
 class CMethodArgument : public CElement {
 public:
 	CMethodArgument(const std::string& aName, const std::string& aType, const pugi::xml_node & aText)
-		: name_(aName), type_(aType), text_(aText), indirections_(0) { 
+		: name_(aName), type_(aType), text_(aText), indirections_(0),
+	isConst_(false), isLong_(false) { 
 		size_t delimiter = type_.find('!');
 
 		if (delimiter != std::string::npos) {
