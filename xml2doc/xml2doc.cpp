@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <direct.h>
 #include <vector>
+#include <fstream>
 #include <map>
 
 
@@ -79,6 +80,21 @@ public:
 
 		return;
 	}
+	void loadSourceFile(const pugi::xml_node& aNode, std::vector<std::string>& aLines)
+	{
+		std::string fileName = aNode.attribute("source").as_string();
+
+		if (!fileName.empty()) {
+			std::ifstream sourceStream(fileName);
+			std::string line;
+			while (std::getline(sourceStream, line))
+				aLines.push_back(line);
+
+			sourceStream.close();
+		}
+
+		return;
+	}
 private:
 	int sourceLine_;
 	std::string sourceFile_;
@@ -141,6 +157,9 @@ public:
 			++tmp;
 		}
 
+		std::string source = aNode.attribute("source").as_string();
+		int line = aNode.attribute("line").as_int();
+		setSourcePosition(source, line);
 		for (auto& n : aNode.children()) {
 			std::string name = n.name();
 
@@ -182,16 +201,82 @@ private:
 	std::vector<CMethodArgument> args_;
 };
 
+typedef enum _ETypeType {
+	ttSimple,
+	ttStruct,
+	ttEnum,
+	ttUnion,
+} ETypeType, * PETypeType;
+
 class CStructField : public CElement {
 public:
-	CStructField(const std::string& aName, const std::string& aType, const pugi::xml_node& aText)
-		: name_(aName), type_(aType), text_(aText) { }
+	CStructField(ETypeType aParentType, const std::string& aName, const pugi::xml_node& aText)
+		: parentType_(aParentType), value_(-1), name_(aName), text_(aText) {
+		std::vector<std::string> sourceFileData;
+		std::string sourceFile = aText.attribute("source").as_string();
+		int sourceLine = aText.attribute("line").as_int();
+		std::string line;
+
+		loadSourceFile(aText, sourceFileData);
+		line = sourceFileData[sourceLine - 1];
+		while (line.find("///") != std::string::npos) {
+			++sourceLine;
+			line = sourceFileData[sourceLine - 1];
+		}
+
+		switch (parentType_) {
+			case ttStruct:
+			case ttUnion: {
+				size_t endIndex = line.find(name_);
+				size_t startIndex = 0;
+
+				while (isspace(line[startIndex]))
+					++startIndex;
+
+				do {
+					--endIndex;
+				} while (isspace(line[endIndex]));
+				
+				type_ = line.substr(startIndex, endIndex - startIndex + 1);
+				startIndex = line.find_first_of('[');
+				endIndex = line.find_first_of(']');
+				if (startIndex != std::string::npos &&
+					endIndex != std::string::npos)
+					arraySpecifier_ = line.substr(startIndex, endIndex - startIndex + 1);
+			} break;
+			case ttEnum: {
+				auto startIndex = line.find_first_of('=');
+
+				if (startIndex != std::string::npos) {
+					do {
+						++startIndex;
+					} while (isspace(line[startIndex]));
+
+					auto endIndex = startIndex;
+					do {
+						++endIndex;
+					} while (endIndex < line.size() && isalnum(line[endIndex]));
+				
+					type_ = line.substr(startIndex, endIndex - startIndex);
+					value_ = (int)std::strtol(type_.c_str(), NULL, 0);
+				}
+			}break;
+		}
+
+		setSourcePosition(sourceFile, sourceLine);
+	}
 	std::string getName(void) const { return name_; }
 	std::string getType(void) const { return type_; }
+	std::string getArraySpecifier(void) const { return arraySpecifier_; }
+	int getValue(void) const { return value_; }
+	void setValue(int aValue) { value_ = aValue; }
 	pugi::xml_node getText(void) const { return text_; }
 private:
+	ETypeType parentType_;
 	std::string name_;
 	std::string type_;
+	std::string arraySpecifier_;
+	int value_;
 	pugi::xml_node text_;
 };
 
@@ -201,13 +286,51 @@ public:
 	{
 		name_ = aName;
 		auto sumNode = aNode.child("summary");
+		std::vector<std::string> sourceFileData;
 
 		if (!sumNode.empty())
 			summary_ = sumNode;
 		else summary_ = aNode;
 
 		remarks_ = aNode.child("remarks");
+		std::string source = aNode.attribute("source").as_string();
+		int sourceLine = aNode.attribute("line").as_int();
 		{
+			std::string line;
+
+			loadSourceFile(aNode, sourceFileData);
+			line = sourceFileData[sourceLine - 1];
+			while (line.find("///") != std::string::npos) {
+				++sourceLine;
+				line = sourceFileData[sourceLine - 1];
+			}
+			
+			ETypeType types[] = {
+				ttStruct,
+				ttEnum,
+				ttUnion,
+			};
+			std::string words[] = {
+				"struct",
+				"enum",
+				"union",
+			};
+
+			setSourcePosition(source, sourceLine);
+			type_ = ttSimple;
+			for (size_t i = 0; i < sizeof(types) / sizeof(types[0]); ++i) {
+				auto index = line.find(words[i]);
+				if (index != std::string::npos &&
+					isspace(line[index - 1]) &&
+					isspace(line[index + words[i].size()])) {
+					type_ = types[i];
+					break;
+				}
+			}
+		}
+
+		std::map<int, CStructField> lineMap;
+		if (type_ == ttStruct) {
 			auto tmp = aNode.next_sibling();
 			do {
 				std::string fullTypeName = tmp.attribute("name").as_string();
@@ -220,13 +343,13 @@ public:
 					break;
 
 				fullTypeName = fullTypeName.substr(name_.size() + 1);
-				isStruct_ = true;
-				fields_.push_back(CStructField(fullTypeName, "<unknown>", tmp));
+				CStructField cf = CStructField(type_, fullTypeName, tmp);
+				lineMap.insert(std::make_pair(cf.getSourceLine(), cf));
 				tmp = tmp.next_sibling();
 			} while (!tmp.empty());
 		}
 
-		if (!isStruct_) {
+		if (type_ == ttEnum) {
 			auto tmp = aNode.previous_sibling();
 			do {
 				std::string fullTypeName = tmp.attribute("name").as_string();
@@ -235,10 +358,28 @@ public:
 					break;
 
 				fullTypeName = fullTypeName.substr(2);
-				fields_.push_back(CStructField(fullTypeName, "<unknown>", tmp));
+				if (fullTypeName.find_first_of('.') != std::string::npos)
+					break;
+				
+				CStructField cf = CStructField(type_, fullTypeName, tmp);
+				lineMap.insert(std::make_pair(cf.getSourceLine(), cf));
 				tmp = tmp.previous_sibling();
 			} while (!tmp.empty());
+
+			int enumValue = 0;
+			for (auto& icf : lineMap) {
+				CStructField& cf = icf.second;
+				
+				if (cf.getValue() == -1) {
+					cf.setValue(enumValue);
+					++enumValue;
+				} else enumValue = cf.getValue() + 1;
+			}
+
 		}
+
+		for (auto& icf : lineMap)
+			fields_.push_back(icf.second);
 
 		return;
 	}
@@ -247,9 +388,9 @@ public:
 	pugi::xml_node getRemarks(void) const { return remarks_; }
 	size_t getFieldCount(void) const { return fields_.size(); }
 	CStructField getField(size_t index) const { return fields_[index]; }
-	bool isStruct(void) const { return isStruct_; }
+	ETypeType getType(void) const { return type_; }
 private:
-	bool isStruct_;
+	ETypeType type_;
 	std::string name_;
 	pugi::xml_node summary_;
 	pugi::xml_node remarks_;
@@ -420,6 +561,9 @@ public:
 					fprintf(f, ",");
 
 				fprintf(f, "\n");
+				auto tit = types_.find(a.getType());
+				if (tit != types_.cend())
+					seeList.insert(std::make_pair(tit->second->getName(), "Type_" + tit->second->getName()));
 			}
 
 			fprintf(f, "   );\n```\n\n");
@@ -473,22 +617,59 @@ public:
 		std::string fileName = outDir_ + "\\Type_" + aType.getName() + ".md";
 		std::string tmp;
 		std::map<std::string, std::string> seeList;
-		const char* word = (aType.isStruct()) ? "structure" : "enumeration";
+		const char* words[] = {
+			"type",
+			"struct",
+			"enum",
+			"union",
+		};
 
 		f = fopen(fileName.c_str(), "w");
 		if (f != NULL) {
-			fprintf(f, "# %s %s\n\n", aType.getName().c_str(), word);
+			fprintf(f, "# %s %s\n\n", aType.getName().c_str(), words[aType.getType()]);
 			tmp = OutputText(aType.getSummary(), seeList);
 			fprintf(f, "## Summary\n\n%s\n\n", tmp.c_str());
-			if (aType.isStruct())
-				fprintf(f, "## Members\n\n");
-			else fprintf(f, "## Values\n\n");
+			if (aType.getType() != ttSimple) {
+				fprintf(f, "## Definition\n\n");
+				fprintf(f, "```c\n");
+				fprintf(f, "typedef %s %s {\n", words[aType.getType()], aType.getName().c_str());
+				for (size_t i = 0; i < aType.getFieldCount(); ++i) {
+					auto a = aType.getField(i);
+					switch (aType.getType()) {
+						case ttStruct:
+						case ttUnion: {
+							fprintf(f, "    %s %s%s;\n", a.getType().c_str(), a.getName().c_str(), a.getArraySpecifier().c_str());
+							auto tit = types_.find(a.getType());
+							if (tit != types_.cend())
+								seeList.insert(std::make_pair(tit->second->getName(), "Type_" + tit->second->getName()));
+						} break;
+						case ttEnum:
+							fprintf(f, "    %s = %i,\n", a.getName().c_str(), a.getValue());
+							break;
+					}
+				}
 
-			for (size_t i = 0; i < aType.getFieldCount(); ++i) {
-				auto a = aType.getField(i);
-				fprintf(f, "### %s\n\n", a.getName().c_str());
-				tmp = OutputText(a.getText(), seeList);
-				fprintf(f, "%s\n\n", tmp.c_str());
+				std::string baseName = aType.getName();
+				if (baseName[0] == '_')
+					baseName = baseName.substr(1);
+
+				fprintf(f, "} %s, *P%s;\n```\n\n", baseName.c_str(), baseName.c_str());
+				switch (aType.getType()) {
+					case ttStruct:
+					case ttUnion:
+						fprintf(f, "## Members\n\n");
+						break;
+					case ttEnum:
+						fprintf(f, "## Values\n\n");
+						break;
+				}
+
+				for (size_t i = 0; i < aType.getFieldCount(); ++i) {
+					auto a = aType.getField(i);
+					fprintf(f, "### %s\n\n", a.getName().c_str());
+					tmp = OutputText(a.getText(), seeList);
+					fprintf(f, "%s\n\n", tmp.c_str());
+				}
 			}
 
 			if (!aType.getRemarks().empty()) {
@@ -601,20 +782,23 @@ static int _processXMLFile(const pugi::xml_document & aDoc)
 		nodeName = n.attribute("name").as_string();
 		if (nodeName.size() >= 2 && nodeName[1] == ':') {
 			itemName = nodeName.substr(2);
-			sourceFile = n.attribute("source").as_string();
-			sourceLine = n.attribute("line").as_uint();
 			switch (nodeName[0]) {
 				case 'M':
 					m = new CMethod(n, itemName);
-					m->setSourcePosition(sourceFile, sourceLine);
 					m->setLinkRequirements(libraryName, DLLName);
 					methods.insert(std::make_pair(m->getName(), m));
 					break;
-				case 'T':
+				case 'T': {
 					t = new CType(n, itemName);
-					t->setSourcePosition(sourceFile, sourceLine);
 					types.insert(std::make_pair(t->getName(), t));
-					break;
+					auto baseName = t->getName();
+					if (baseName[0] == '_')
+						baseName = baseName.substr(1);
+
+					types.insert(std::make_pair(baseName, t));
+					baseName = "P" + baseName;
+					types.insert(std::make_pair(baseName, t));
+				} break;
 				case 'F':
 					break;
 				default:
