@@ -103,8 +103,8 @@
       <ModuleDefinitionFile>irpmondll.def</ModuleDefinitionFile>
     </Link>
     <PostBuildEvent>
-      <Command>
-      </Command>
+      <Command>$(OutDir)..\xml2doc $(ProjectName).lib $(ProjectName).dll $(IntDir)main.xdc</Command>
+      <Message>Generate MD documentation</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -123,8 +123,8 @@
       <ModuleDefinitionFile>irpmondll.def</ModuleDefinitionFile>
     </Link>
     <PostBuildEvent>
-      <Command>
-      </Command>
+      <Command>$(OutDir)..\xml2doc $(ProjectName).lib $(ProjectName).dll $(IntDir)main.xdc</Command>
+      <Message>Generate MD documentation</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -147,8 +147,8 @@
       <ModuleDefinitionFile>irpmondll.def</ModuleDefinitionFile>
     </Link>
     <PostBuildEvent>
-      <Command>
-      </Command>
+      <Command>$(OutDir)..\xml2doc $(ProjectName).lib $(ProjectName).dll $(IntDir)main.xdc</Command>
+      <Message>Generate MD documentation</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -171,8 +171,8 @@
       <ModuleDefinitionFile>irpmondll.def</ModuleDefinitionFile>
     </Link>
     <PostBuildEvent>
-      <Command>
-      </Command>
+      <Command>$(OutDir)..\xml2doc $(ProjectName).lib $(ProjectName).dll $(IntDir)main.xdc</Command>
+      <Message>Generate MD documentation</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -199,6 +199,9 @@
   <ItemGroup>
     <ProjectReference Include="..\requests\requests.vcxproj">
       <Project>{d7d49f20-b8ef-43d8-8d57-b48de51c62f3}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\xml2doc\xml2doc.vcxproj">
+      <Project>{7a2471d2-2f3f-4ea2-a822-36b2c51c7381}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

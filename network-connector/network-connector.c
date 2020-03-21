@@ -139,8 +139,8 @@ DWORD NetConn_Connect(const IRPMON_INIT_INFO *Info)
 			ret = WSAStartup(wVersionRequested, &wsaData);
 			if (ret == 0) {
 				memset(&hints, 0, sizeof(hints));
-				hints.ai_family = Info->Network.AddressFamily;
-				ret = GetAddrInfoW(Info->Network.Address, Info->Network.Service, &hints, &addrs);
+				hints.ai_family = Info->Data.Network.AddressFamily;
+				ret = GetAddrInfoW(Info->Data.Network.Address, Info->Data.Network.Service, &hints, &addrs);
 				if (ret == 0) {
 					tmp = addrs;
 					while (tmp != NULL) {

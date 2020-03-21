@@ -56,7 +56,7 @@ DWORD DevConn_Connect(const IRPMON_INIT_INFO *Info)
 	DEBUG_ENTER_FUNCTION("Info=0x%p", Info);
 
 	ret = ERROR_SUCCESS;
-	deviceName = Info->Device.DeviceName;
+	deviceName = Info->Data.Device.DeviceName;
 	if (deviceName == NULL || *deviceName == L'\0')
 		deviceName = IRPMNDRV_USER_DEVICE_NAME;
 

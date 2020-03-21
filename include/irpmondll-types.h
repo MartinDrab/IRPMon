@@ -84,37 +84,50 @@ typedef enum _EIRPMonConnectorType {
 	ictNetwork,
 } EConnectorType, *PEConnectorType;
 
+/// Defines parameter necessary for connecting to IRPMon driver's control device.
+typedef struct _IRPMON_DEVICE_INIT_INFO {
+	/// Specifies name of the device object belonging to the
+	/// local IRPMon driver.
+	wchar_t* DeviceName;
+} IRPMON_DEVICE_INIT_INFO, *PIRPMON_DEVICE_INIT_INFO;
+
+/// Defines parameter necessary for connecting to IRPMon instance over
+/// a network.
+typedef struct _IRPMON_NETWORK_INIT_INFO {
+	/// Domain or IP address where the remote IRPMon instance
+	/// is running.
+	wchar_t* Address;
+	/// Port number (in its string form) at which the instance listens.
+	wchar_t* Service;
+	/// Version of IP protocol used to establish the connection.
+	/// <list type="bullets">
+	/// <item>
+	///   <term>AF_UNSPEC</term>
+	/// </item>
+	/// <item>
+	///   <term>AF_INET</term>
+	/// </item>
+	/// <item>
+	///   <term>AF_INET6</term>
+	/// </item>
+	/// </list>
+	uint16_t AddressFamily;
+} IRPMON_NETWORK_INIT_INFO, *PIRPMON_NETWORK_INIT_INFO;
+
+/// Defines data specific to individual connection methods.
+typedef union _IRPMON_INIT_INFO_DATA {
+	/// Parameters for connecting to a local IRPMon driver instance.
+	IRPMON_DEVICE_INIT_INFO Device;
+	/// Parameters for making network connections.
+	IRPMON_NETWORK_INIT_INFO Network;
+} IRPMON_INIT_INFO_DATA, *PIRPMON_INIT_INFO_DATA;
+
 /// Information required to initialize the IRPMon library.
 typedef struct _IRPMON_INIT_INFO {
 	/// Defines how to connect to the driver instance.
 	EConnectorType ConnectorType;
-	union {
-		struct _IRPMON_DEVICE_INIT_INFO  {
-			/// Specifies name of the device object belonging to the
-			/// local IRPMon driver.
-			wchar_t *DeviceName;
-		} Device;
-		struct _IRPMON_NETWORK_INIT_INFO  {
-			/// Domain or IP address where the remote IRPMon instance
-			/// is running.
-			wchar_t *Address;
-			/// Port number (in its string form) at which the instance listens.
-			wchar_t *Service;
-			/// Version of IP protocol used to establish the connection.
-			/// <list type="bullets">
-			/// <item>
-			///   <term>AF_UNSPEC</term>
-			/// </item>
-			/// <item>
-			///   <term>AF_INET</term>
-			/// </item>
-			/// <item>
-			///   <term>AF_INET6</term>
-			/// </item>
-			/// </list>
-			uint16_t AddressFamily;
-		} Network;
-	};
+	/// Data specific to the selected connection type.
+	IRPMON_INIT_INFO_DATA Data;
 } IRPMON_INIT_INFO, *PIRPMON_INIT_INFO;
 
 typedef DWORD (DRIVERCOMM_SYNC_IOCTL)(DWORD Code, PVOID InputBuffer, ULONG InputBufferLength, PVOID OutputBuffer, ULONG OutputBufferLength);
