@@ -476,6 +476,7 @@ end;
 
 Procedure TFilterFrm.OkButtonClick(Sender: TObject);
 begin
+FCancelled := False;
 FFilterList.OwnsObjects := False;
 Close;
 end;
