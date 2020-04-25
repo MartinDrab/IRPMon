@@ -15,7 +15,11 @@
 /************************************************************************/
 
 
+typedef int (WSAAPI WSAPOLL)(__inout LPWSAPOLLFD fdArray, __in ULONG fds, __in INT timeout);
+
+
 static IRPMON_INIT_INFO _initInfo;
+static WSAPOLL* _WSAPoll = NULL;
 
 
 /************************************************************************/
@@ -53,9 +57,6 @@ static int _Listener(const ADDRINFOA *Address, HANDLE ExitEvent)
 		goto DestroySocket;
 	}
 
-	fds.events = POLLIN;
-	fds.revents = 0;
-	fds.fd = listenSocket;
 	do {
 		acceptSocket = INVALID_SOCKET;
 		if (ExitEvent != NULL) {
@@ -66,7 +67,15 @@ static int _Listener(const ADDRINFOA *Address, HANDLE ExitEvent)
 			}
 		}
 
-		ret = WSAPoll(&fds, 1, 1000);
+		memset(&fds, 0, sizeof(fds));
+		fds.events = POLLIN;
+		fds.revents = 0;
+		fds.fd = listenSocket;
+		if (_WSAPoll == NULL) {
+			ret = 1;
+			fds.revents = POLLIN;
+		} else ret = _WSAPoll(&fds, 1, 1000);
+		
 		if (ret > 0) {
 			if (fds.revents & POLLERR)
 				ret = WSAGetLastError();
@@ -192,6 +201,15 @@ DWORD IRPMonServerStart(const char *Address, const char *Port, HANDLE ExitEvent)
 	uint32_t wVersionRequested = MAKEWORD(2, 2);
 	ADDRINFOA hints;
 	PADDRINFOA addrs = NULL;
+	HMODULE hWSA32 = NULL;
+
+	hWSA32 = GetModuleHandleW(L"Ws2_32.dll");
+	if (hWSA32 == NULL) {
+		ret = GetLastError();
+		goto Exit;
+	}
+
+	_WSAPoll = (WSAPOLL*)GetProcAddress(hWSA32, "WSAPoll");
 
 	ret = WSAStartup(wVersionRequested, &wsaData);
 	if (ret != 0) {
