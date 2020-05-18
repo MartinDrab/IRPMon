@@ -4,6 +4,7 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <windows.h>
+#include <winsvc.h>
 #include "irpmondll-types.h"
 #include "network-connector.h"
 #include "device-connector.h"
@@ -192,6 +193,44 @@ Exit:
 /************************************************************************/
 /*                   PUBLIC FUNCTIONS                                   */
 /************************************************************************/
+
+
+DWORD IRPMonServerStartDriver(const wchar_t *FileName, BOOLEAN Autostart)
+{
+	DWORD ret = ERROR_GEN_FAILURE;
+	SC_HANDLE hScm = NULL;
+	SC_HANDLE hService = NULL;
+
+	ret = ERROR_SUCCESS;
+	hScm = OpenSCManagerW(NULL, NULL, SC_MANAGER_CREATE_SERVICE | SC_MANAGER_CONNECT);
+	if (hScm != NULL) {
+		hService = CreateServiceW(hScm, L"irpmndrv", L"IRPMon Driver", SERVICE_START, SERVICE_KERNEL_DRIVER, (Autostart ? SERVICE_AUTO_START : SERVICE_DEMAND_START), SERVICE_ERROR_NORMAL, FileName, NULL, NULL, NULL, NULL, NULL);
+		if (hService == NULL) {
+			ret = GetLastError();
+			if (ret == ERROR_SERVICE_EXISTS) {
+				ret = ERROR_SUCCESS;
+				hService = OpenServiceW(hScm, L"irpmndrv", SERVICE_START);
+				if (hService == NULL)
+					ret = GetLastError();
+			}
+		}
+
+		if (hService != NULL) {
+			if (!StartServiceW(hService, 0, NULL)) {
+				ret = GetLastError();
+				if (ret == ERROR_SERVICE_ALREADY_RUNNING)
+					ret = ERROR_SUCCESS;
+			}
+
+			CloseServiceHandle(hService);
+		}
+
+		CloseServiceHandle(hScm);
+	} else ret = GetLastError();
+
+	return ret;
+}
+
 
 
 DWORD IRPMonServerStart(const char *Address, const char *Port, HANDLE ExitEvent)
