@@ -13,3 +13,5 @@ tmp/
 /gui/IRPMon.identcache
 /gui/IRPMon.stat
 *.user
+gui/backup
+*.log
