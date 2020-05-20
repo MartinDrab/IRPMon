@@ -7,7 +7,11 @@ program IRPMon;
 
 
 uses
+{$IFNDEF FPC}
   WinSvc,
+{$ELSE}
+  Interfaces,
+{$ENDIF}
   Windows,
   SysUtils,
   Forms,

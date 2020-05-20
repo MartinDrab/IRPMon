@@ -132,7 +132,8 @@ Implementation
 
 Uses
   Classes, SysUtils, IRPRequest, FastIoRequest, FileObjectNameXXXRequest,
-  XXXDetectedRequests, ProcessXXXRequests;
+  XXXDetectedRequests, ProcessXXXRequests,
+  Utils;
 
 (** TRequestFilter **)
 

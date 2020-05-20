@@ -150,7 +150,11 @@ Implementation
 {$R *.dfm}
 
 Uses
+{$IFNDEF FPC}
   IOUtils,
+{$ELSE}
+  LazFileUtils,
+{$ENDIF}
   IniFiles, ShellAPI, Clipbrd,
   ListModel, HookProgressForm,
   Utils, TreeForm, RequestDetailsForm, AboutForm,
@@ -1152,7 +1156,11 @@ end;
 
 Function TMainFrm.GetLocalSettingsDirectory:WideString;
 begin
+{$IFNDEF FPC}
 Result := Format('%s\IRPMon', [TPath.GetHomePath]);
+{$ELSE}
+Result := Format('%s\IRPMon', [GetUserDir]);
+{$ENDIF}
 ForceDirectories(Result);
 Result := Result + '\';
 end;
