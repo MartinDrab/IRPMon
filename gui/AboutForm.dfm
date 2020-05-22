@@ -3,8 +3,8 @@ object AboutBox: TAboutBox
   Top = 0
   BorderIcons = [biSystemMenu]
   Caption = 'About IRPMon'
-  ClientHeight = 201
-  ClientWidth = 366
+  ClientHeight = 243
+  ClientWidth = 374
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -874,7 +874,7 @@ object AboutBox: TAboutBox
     Left = 0
     Top = 0
     Width = 89
-    Height = 201
+    Height = 243
     Align = alLeft
     Picture.Data = {
       0A544A504547496D616765B0120000FFD8FFE000104A46494600010101004800
@@ -1072,12 +1072,12 @@ object AboutBox: TAboutBox
     ParentFont = False
   end
   object Label4: TLabel
-    Left = 92
+    Left = 98
     Top = 104
-    Width = 45
+    Width = 39
     Height = 13
     BiDiMode = bdRightToLeft
-    Caption = 'Authors'
+    Caption = 'Author'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -1086,7 +1086,22 @@ object AboutBox: TAboutBox
     ParentBiDiMode = False
     ParentFont = False
   end
-  object Edit1: TEdit
+  object Label5: TLabel
+    Left = 69
+    Top = 139
+    Width = 71
+    Height = 13
+    BiDiMode = bdRightToLeft
+    Caption = 'Contributors'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = [fsBold]
+    ParentBiDiMode = False
+    ParentFont = False
+  end
+  object VersionEdit: TEdit
     Left = 160
     Top = 8
     Width = 198
@@ -1102,7 +1117,7 @@ object AboutBox: TAboutBox
     TabOrder = 0
     Text = '1.0'
   end
-  object Edit2: TEdit
+  object LicenseEdit: TEdit
     Left = 160
     Top = 40
     Width = 198
@@ -1118,8 +1133,8 @@ object AboutBox: TAboutBox
     TabOrder = 1
     Text = 'Freeware (MIT)'
   end
-  object Edit3: TEdit
-    Left = 160
+  object WebEdit: TEdit
+    Left = 168
     Top = 72
     Width = 198
     Height = 21
@@ -1134,9 +1149,9 @@ object AboutBox: TAboutBox
     TabOrder = 2
     Text = 'https://github.com/MartinDrab'
   end
-  object Edit4: TEdit
-    Left = 160
-    Top = 104
+  object AuthorEdit: TEdit
+    Left = 168
+    Top = 99
     Width = 198
     Height = 21
     Color = clBtnFace
@@ -1150,20 +1165,19 @@ object AboutBox: TAboutBox
     TabOrder = 3
     Text = 'Martin Dr'#225'b'
   end
-  object Edit5: TEdit
+  object ContributorsMemo: TMemo
     Left = 160
-    Top = 131
+    Top = 136
     Width = 198
-    Height = 21
-    Color = clBtnFace
+    Height = 97
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
     Font.Name = 'Tahoma'
     Font.Style = [fsBold]
+    Lines.Strings = (
+      'Petr Van'#283'k')
     ParentFont = False
-    ReadOnly = True
     TabOrder = 4
-    Text = 'Petr Van'#283'k'
   end
 end

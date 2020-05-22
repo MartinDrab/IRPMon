@@ -9,7 +9,7 @@ Interface
 Uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics,
   Controls, Forms, Dialogs, ExtCtrls,
-  ComCtrls, Vcl.Imaging.jpeg, Vcl.StdCtrls;
+  ComCtrls, StdCtrls, Vcl.Imaging.jpeg;
 
 Type
   TAboutBox = class(TForm)
@@ -18,11 +18,12 @@ Type
     Label2: TLabel;
     Label3: TLabel;
     Label4: TLabel;
-    Edit1: TEdit;
-    Edit2: TEdit;
-    Edit3: TEdit;
-    Edit4: TEdit;
-    Edit5: TEdit;
+    VersionEdit: TEdit;
+    LicenseEdit: TEdit;
+    WebEdit: TEdit;
+    AuthorEdit: TEdit;
+    Label5: TLabel;
+    ContributorsMemo: TMemo;
   end;
 
 Implementation
