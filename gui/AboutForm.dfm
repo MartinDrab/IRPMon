@@ -1,11 +1,10 @@
 object AboutBox: TAboutBox
   Left = 0
   Top = 0
-  AutoSize = True
   BorderIcons = [biSystemMenu]
   Caption = 'About IRPMon'
   ClientHeight = 201
-  ClientWidth = 304
+  ClientWidth = 366
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -1033,45 +1032,138 @@ object AboutBox: TAboutBox
     ExplicitTop = 72
     ExplicitHeight = 65
   end
-  object AboutListView: TListView
-    Left = 89
-    Top = 0
-    Width = 215
-    Height = 201
-    Align = alClient
-    Columns = <
-      item
-        Caption = 'Name'
-        Width = 75
-      end
-      item
-        AutoSize = True
-        Caption = 'Value'
-      end>
+  object Label1: TLabel
+    Left = 95
+    Top = 8
+    Width = 42
+    Height = 13
+    Caption = 'Version'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
     Font.Name = 'Tahoma'
     Font.Style = [fsBold]
-    Items.ItemData = {
-      05890100000500000000000000FFFFFFFFFFFFFFFF01000000FFFFFFFF000000
-      0007560065007200730069006F006E000331002E00300000CC091800000000FF
-      FFFFFFFFFFFFFF01000000FFFFFFFF000000000641007500740068006F007200
-      0B4D0061007200740069006E00200044007200E10062006033F31700000000FF
-      FFFFFFFFFFFFFF01000000FFFFFFFF00000000074C006900630065006E007300
-      65000E46007200650065007700610072006500200028004D0049005400290020
-      2EF31700000000FFFFFFFFFFFFFFFF01000000FFFFFFFF000000000743006F00
-      6E007400610063007400146D0061007200740069006E002E0064007200610062
-      00400065006D00610069006C002E0063007A004832F31700000000FFFFFFFFFF
-      FFFFFF01000000FFFFFFFF000000000357006500620024680074007400700073
-      003A002F002F006700690074006800750062002E0063006F006D002F004D0061
-      007200740069006E0044007200610062002F004900520050004D006F006E0080
-      32F317FFFFFFFFFFFFFFFFFFFF}
-    ReadOnly = True
-    RowSelect = True
     ParentFont = False
-    ShowColumnHeaders = False
+  end
+  object Label2: TLabel
+    Left = 95
+    Top = 40
+    Width = 42
+    Height = 13
+    Caption = 'License'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = [fsBold]
+    ParentFont = False
+  end
+  object Label3: TLabel
+    Left = 95
+    Top = 72
+    Width = 25
+    Height = 13
+    Caption = 'Web'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = [fsBold]
+    ParentFont = False
+  end
+  object Label4: TLabel
+    Left = 92
+    Top = 104
+    Width = 45
+    Height = 13
+    BiDiMode = bdRightToLeft
+    Caption = 'Authors'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = [fsBold]
+    ParentBiDiMode = False
+    ParentFont = False
+  end
+  object Edit1: TEdit
+    Left = 160
+    Top = 8
+    Width = 198
+    Height = 21
+    Color = clBtnFace
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = [fsBold]
+    ParentFont = False
+    ReadOnly = True
     TabOrder = 0
-    ViewStyle = vsReport
+    Text = '1.0'
+  end
+  object Edit2: TEdit
+    Left = 160
+    Top = 40
+    Width = 198
+    Height = 21
+    Color = clBtnFace
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = [fsBold]
+    ParentFont = False
+    ReadOnly = True
+    TabOrder = 1
+    Text = 'Freeware (MIT)'
+  end
+  object Edit3: TEdit
+    Left = 160
+    Top = 72
+    Width = 198
+    Height = 21
+    Color = clBtnFace
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = [fsBold]
+    ParentFont = False
+    ReadOnly = True
+    TabOrder = 2
+    Text = 'https://github.com/MartinDrab'
+  end
+  object Edit4: TEdit
+    Left = 160
+    Top = 104
+    Width = 198
+    Height = 21
+    Color = clBtnFace
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = [fsBold]
+    ParentFont = False
+    ReadOnly = True
+    TabOrder = 3
+    Text = 'Martin Dr'#225'b'
+  end
+  object Edit5: TEdit
+    Left = 160
+    Top = 131
+    Width = 198
+    Height = 21
+    Color = clBtnFace
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = [fsBold]
+    ParentFont = False
+    ReadOnly = True
+    TabOrder = 4
+    Text = 'Petr Van'#283'k'
   end
 end
