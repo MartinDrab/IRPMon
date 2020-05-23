@@ -913,10 +913,8 @@ object RequestDetailsFrm: TRequestDetailsFrm
             AutoSize = True
             Caption = 'Value'
           end>
-        DoubleBuffered = True
         ReadOnly = True
         RowSelect = True
-        ParentDoubleBuffered = False
         PopupMenu = HeaderPopupMenu
         ShowColumnHeaders = False
         ShowWorkAreas = True
