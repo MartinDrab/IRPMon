@@ -277,7 +277,6 @@ object FilterFrm: TFilterFrm
     HideSelection = False
     ReadOnly = True
     RowSelect = True
-    ShowWorkAreas = True
     TabOrder = 2
     ViewStyle = vsReport
     OnAdvancedCustomDrawItem = FilterListViewAdvancedCustomDrawItem

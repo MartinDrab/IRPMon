@@ -917,7 +917,6 @@ object RequestDetailsFrm: TRequestDetailsFrm
         RowSelect = True
         PopupMenu = HeaderPopupMenu
         ShowColumnHeaders = False
-        ShowWorkAreas = True
         TabOrder = 0
         ViewStyle = vsReport
       end
