@@ -1,7 +1,7 @@
-set SIGNEXE="c:\Program Files (x86)\Windows Kits\10\bin\10.0.15063.0\x64\signtool.exe"
+set SIGNEXE="c:\Program Files (x86)\Windows Kits\10\bin\10.0.18362.0\x64\signtool.exe"
 set CONFIG=%1%
 set FILES=^
-	"..\resources\uninst-6.0.2 (u)-86794d44db.e32"^
+	"..\resources\uninst-6.0.4 (u)-e13338eef5.e32"^
 	..\bin\x64\%CONFIG%\irpmon.exe^
 	..\bin\x64\%CONFIG%\kernel\irpmndrv.sys^
 	..\bin\x64\%CONFIG%\kernel\kbase.dll^

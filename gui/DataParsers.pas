@@ -203,7 +203,7 @@ If hSearch <> INVALID_HANDLE_VALUE THen
     If Assigned(dp) THen
       AList.Add(dp);
     end;
-  Until Not FindNextFile(hSearch, d);
+  Until Not FindNextFileW(hSearch, d);
 
   Windows.FindClose(hSearch);
   end;

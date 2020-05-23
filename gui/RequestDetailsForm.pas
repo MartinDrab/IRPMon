@@ -11,7 +11,8 @@ Uses
   Classes, Graphics,
   Controls, Forms, Dialogs, ExtCtrls, StdCtrls,
   RequestListModel, ComCtrls,
-  Generics.Collections, DataParsers, Vcl.Menus;
+  Generics.Collections, DataParsers,
+  Menus;
 
 Type
   TRequestDetailsFrm = Class (TForm)
@@ -81,7 +82,11 @@ Var
   values : TStringList;
   pd : TDataParser;
   tb : TTabSheet;
+{$IFDEF FPC}
+  re : TMemo;
+{$ELSE}
   re : TRichEdit;
+{$ENDIF}
 begin
 names := TStringList.Create;
 values := TStringList.Create;
@@ -94,10 +99,16 @@ For pd In FParsers Do
     tb.Parent := PageControl1;
     tb.Caption := pd.Name;
     tb.PageControl := PageControl1;
+{$IFDEF FPC}
+    re := TMemo.Create(tb);
+{$ELSE}
     re := TRichEdit.Create(tb);
+{$ENDIF}
     re.Parent := tb;
     re.Align := alClient;
+{$IFNDEF FPC}
     re.PlainText := True;
+{$ENDIF}
     re.Font.Name := 'Courier New';
     For I := 0 To values.Count - 1 Do
       begin

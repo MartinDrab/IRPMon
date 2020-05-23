@@ -17,6 +17,14 @@
       <Configuration>Release</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
+    <ProjectConfiguration Include="XP|Win32">
+      <Configuration>XP</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="XP|x64">
+      <Configuration>XP</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{42B0C13C-CF65-4CC5-8BE9-15FC87E9604A}</ProjectGuid>
@@ -45,6 +53,14 @@
     <DriverType>WDM</DriverType>
     <DriverTargetPlatform>Desktop</DriverTargetPlatform>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='XP|Win32'" Label="Configuration">
+    <TargetVersion>Windows7</TargetVersion>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <DriverType>WDM</DriverType>
+    <DriverTargetPlatform>Desktop</DriverTargetPlatform>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <TargetVersion>Windows7</TargetVersion>
     <UseDebugLibraries>true</UseDebugLibraries>
@@ -54,6 +70,14 @@
     <DriverTargetPlatform>Desktop</DriverTargetPlatform>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <TargetVersion>Windows7</TargetVersion>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <DriverType>WDM</DriverType>
+    <DriverTargetPlatform>Desktop</DriverTargetPlatform>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='XP|x64'" Label="Configuration">
     <TargetVersion>Windows7</TargetVersion>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>WindowsKernelModeDriver10.0</PlatformToolset>
@@ -79,7 +103,15 @@
     <Import Project="..\General.props" />
     <Import Project="..\Kernel.props" />
   </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='XP|Win32'" Label="PropertySheets">
+    <Import Project="..\General.props" />
+    <Import Project="..\Kernel.props" />
+  </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="..\General.props" />
+    <Import Project="..\Kernel.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='XP|x64'" Label="PropertySheets">
     <Import Project="..\General.props" />
     <Import Project="..\Kernel.props" />
   </ImportGroup>
@@ -93,11 +125,19 @@
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
     <TargetExt>.dll</TargetExt>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='XP|Win32'">
+    <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
+    <TargetExt>.dll</TargetExt>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
     <TargetExt>.dll</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
+    <TargetExt>.dll</TargetExt>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='XP|x64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
     <TargetExt>.dll</TargetExt>
   </PropertyGroup>
@@ -125,6 +165,18 @@
       <AdditionalDependencies>Ksecdd.lib;%(AdditionalDependencies);$(KernelBufferOverflowLib);$(DDK_LIB_PATH)ntoskrnl.lib;$(DDK_LIB_PATH)hal.lib;$(DDK_LIB_PATH)wmilib.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='XP|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions>KBASE_EXPORTS;_X86_=1;i386=1;STD_CALL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <ModuleDefinitionFile>kbase.def</ModuleDefinitionFile>
+      <EntryPointSymbol>
+      </EntryPointSymbol>
+      <NoEntryPoint>true</NoEntryPoint>
+      <AdditionalDependencies>Ksecdd.lib;%(AdditionalDependencies);$(KernelBufferOverflowLib);$(DDK_LIB_PATH)ntoskrnl.lib;$(DDK_LIB_PATH)hal.lib;$(DDK_LIB_PATH)wmilib.lib</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <PreprocessorDefinitions>KBASE_EXPORTS;_WIN64;_AMD64_;AMD64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -138,6 +190,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <PreprocessorDefinitions>KBASE_EXPORTS;_WIN64;_AMD64_;AMD64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <ModuleDefinitionFile>kbase.def</ModuleDefinitionFile>
+      <EntryPointSymbol>
+      </EntryPointSymbol>
+      <NoEntryPoint>true</NoEntryPoint>
+      <AdditionalDependencies>Ksecdd.lib;%(AdditionalDependencies);$(KernelBufferOverflowLib);$(DDK_LIB_PATH)ntoskrnl.lib;$(DDK_LIB_PATH)hal.lib;$(DDK_LIB_PATH)wmilib.lib</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='XP|x64'">
     <ClCompile>
       <PreprocessorDefinitions>KBASE_EXPORTS;_WIN64;_AMD64_;AMD64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>

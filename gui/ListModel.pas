@@ -32,7 +32,8 @@ Type
     Property AutoSize : Boolean Read FAutoSize;
     Property Tag : NativeUInt Read FTag;
     Property Visible : Boolean Read FVisible Write FVisible;
-    Property MenuItem : TMenuItem Read FMenuItem;
+    Property MenuItem : TMenuItem Read FMenuItem Write FMenuItem;
+    Property Column : TListColumn Read FColumn Write FColumn;
   end;
 
   TListModel<T> = Class
@@ -247,7 +248,7 @@ For I := 0 To FColumns.Count - 1 Do
   If m.Visible Then
     begin
     c := FDisplayer.Columns.Add;
-    m.FColumn := c;
+    m.Column := c;
     c.Caption := m.Caption;
     c.AutoSize := m.AutoSize;
     c.Tag := m.Tag;
@@ -284,7 +285,7 @@ For c In FColumns Do
   M.Checked := c.Visible;
   M.OnClick := OnColumnNemuItemClick;
   M.Tag := NativeInt(c);
-  c.FMenuItem := M;
+  c.MenuItem := M;
   AParent.Add(M);
   end;
 end;

@@ -17,6 +17,9 @@ Function BufferToHex(ABuffer:Pointer; ASize:NativeUInt):WideString;
 Procedure ColorToComponents(AColor:TColor; Var AR,AG,AB:Cardinal);
 Function ColorLuminance(AColor:TColor):Cardinal;
 Function ColorLuminanceHeur(AColor:TColor):Cardinal;
+{$IFDEF FPC}
+Function UIntToStr(AValue:UInt64):WideString;
+{$ENDIF}
 
 Implementation
 
@@ -130,6 +133,27 @@ begin
 ColorToComponents(AColor, r, g, b);
 Result := (r*2990 + g*5870 + b*1140) Div 1000;
 end;
+
+{$IFDEF FPC}
+
+Function UIntToStr(AValue:UInt64):WideString;
+Var
+  digit : Cardinal;
+begin
+Result := '';
+If AValue > 0 Then
+  begin
+  Repeat
+  digit := AValue Mod 10;
+  AValue := AValue Div 10;
+  Result := Chr(digit + Ord('0')) + Result;
+  Until AValue = 0;
+  end
+Else Result := '0';
+end;
+
+{$ENDIF}
+
 
 
 End.

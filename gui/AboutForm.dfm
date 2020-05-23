@@ -1716,7 +1716,7 @@ object AboutBox: TAboutBox
   end
   object Label2: TLabel
     Left = 95
-    Top = 40
+    Top = 38
     Width = 42
     Height = 13
     Caption = 'License'
@@ -1729,7 +1729,7 @@ object AboutBox: TAboutBox
   end
   object Label3: TLabel
     Left = 95
-    Top = 72
+    Top = 68
     Width = 25
     Height = 13
     Caption = 'Web'
@@ -1742,7 +1742,7 @@ object AboutBox: TAboutBox
   end
   object Label4: TLabel
     Left = 98
-    Top = 104
+    Top = 98
     Width = 39
     Height = 13
     BiDiMode = bdRightToLeft
@@ -1756,8 +1756,8 @@ object AboutBox: TAboutBox
     ParentFont = False
   end
   object Label5: TLabel
-    Left = 69
-    Top = 139
+    Left = 95
+    Top = 128
     Width = 71
     Height = 13
     BiDiMode = bdRightToLeft
@@ -1771,7 +1771,7 @@ object AboutBox: TAboutBox
     ParentFont = False
   end
   object VersionEdit: TEdit
-    Left = 160
+    Left = 168
     Top = 8
     Width = 198
     Height = 21
@@ -1787,8 +1787,8 @@ object AboutBox: TAboutBox
     Text = '1.0'
   end
   object LicenseEdit: TEdit
-    Left = 160
-    Top = 40
+    Left = 168
+    Top = 38
     Width = 198
     Height = 21
     Color = clBtnFace
@@ -1804,7 +1804,7 @@ object AboutBox: TAboutBox
   end
   object WebEdit: TEdit
     Left = 168
-    Top = 72
+    Top = 68
     Width = 198
     Height = 21
     Color = clBtnFace
@@ -1820,7 +1820,7 @@ object AboutBox: TAboutBox
   end
   object AuthorEdit: TEdit
     Left = 168
-    Top = 99
+    Top = 98
     Width = 198
     Height = 21
     Color = clBtnFace
@@ -1835,8 +1835,8 @@ object AboutBox: TAboutBox
     Text = 'Martin Dr'#225'b'
   end
   object ContributorsMemo: TMemo
-    Left = 160
-    Top = 136
+    Left = 168
+    Top = 125
     Width = 198
     Height = 97
     Font.Charset = DEFAULT_CHARSET
@@ -1847,6 +1847,7 @@ object AboutBox: TAboutBox
     Lines.Strings = (
       'Petr Van'#283'k')
     ParentFont = False
+    ReadOnly = True
     TabOrder = 4
   end
 end

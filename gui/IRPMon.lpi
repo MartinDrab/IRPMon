@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CONFIG>
   <ProjectOptions>
-    <Version Value="9"/>
+    <Version Value="11"/>
     <PathDelim Value="\"/>
     <General>
       <Flags>
         <MainUnitHasUsesSectionForAllUnits Value="False"/>
         <MainUnitHasCreateFormStatements Value="False"/>
         <MainUnitHasTitleStatement Value="False"/>
+        <MainUnitHasScaledStatement Value="False"/>
       </Flags>
       <SessionStorage Value="InProjectDir"/>
       <MainUnit Value="0"/>
@@ -15,32 +16,23 @@
       <UseAppBundle Value="False"/>
       <ResourceType Value="res"/>
     </General>
-    <i18n>
-      <EnableI18N LFM="False"/>
-    </i18n>
-    <VersionInfo>
-      <UseVersionInfo Value="True"/>
-      <MinorVersionNr Value="6"/>
-      <Attributes pvaPreRelease="True"/>
-      <StringTable CompanyName="Martin Dráb" FileDescription="IRP Monitor Application" InternalName="IrpMon" LegalCopyright="Copyright (c) Martin Dráb, 2015-2016" OriginalFilename="IrpMon.exe" ProductName="IrpMon" ProductVersion="0.6"/>
-    </VersionInfo>
     <BuildModes Count="1">
       <Item1 Name="Default" Default="True"/>
     </BuildModes>
     <PublishOptions>
       <Version Value="2"/>
+      <UseFileFilters Value="True"/>
     </PublishOptions>
     <RunParams>
-      <local>
-        <FormatVersion Value="1"/>
-      </local>
+      <FormatVersion Value="2"/>
+      <Modes Count="0"/>
     </RunParams>
     <RequiredPackages Count="1">
       <Item1>
         <PackageName Value="LCL"/>
       </Item1>
     </RequiredPackages>
-    <Units Count="22">
+    <Units Count="37">
       <Unit0>
         <Filename Value="IRPMon.dpr"/>
         <IsPartOfProject Value="True"/>
@@ -48,9 +40,7 @@
       <Unit1>
         <Filename Value="MainForm.pas"/>
         <IsPartOfProject Value="True"/>
-        <ComponentName Value="MainFrm"/>
         <HasResources Value="True"/>
-        <ResourceBaseClass Value="Form"/>
       </Unit1>
       <Unit2>
         <Filename Value="IRPMonDll.pas"/>
@@ -110,7 +100,9 @@
       <Unit15>
         <Filename Value="AboutForm.pas"/>
         <IsPartOfProject Value="True"/>
+        <ComponentName Value="AboutBox"/>
         <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
       </Unit15>
       <Unit16>
         <Filename Value="ClassWatch.pas"/>
@@ -138,18 +130,77 @@
         <Filename Value="LibJSON.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit21>
+      <Unit22>
+        <Filename Value="FastIoRequest.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit22>
+      <Unit23>
+        <Filename Value="DataParsers.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit23>
+      <Unit24>
+        <Filename Value="FileObjectNameXXXRequest.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit24>
+      <Unit25>
+        <Filename Value="FillterForm.pas"/>
+        <IsPartOfProject Value="True"/>
+        <HasResources Value="True"/>
+      </Unit25>
+      <Unit26>
+        <Filename Value="ProcessXXXRequests.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit26>
+      <Unit27>
+        <Filename Value="ConnectorSelectionForm.pas"/>
+        <IsPartOfProject Value="True"/>
+        <HasResources Value="True"/>
+      </Unit27>
+      <Unit28>
+        <Filename Value="BinaryLogHeader.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit28>
+      <Unit29>
+        <Filename Value="DLLDecider.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit29>
+      <Unit30>
+        <Filename Value="ImageLoadRequest.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit30>
+      <Unit31>
+        <Filename Value="fpc\generics.collections.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit31>
+      <Unit32>
+        <Filename Value="fpc\generics.defaults.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit32>
+      <Unit33>
+        <Filename Value="fpc\generics.hashes.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit33>
+      <Unit34>
+        <Filename Value="fpc\generics.helpers.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit34>
+      <Unit35>
+        <Filename Value="fpc\generics.memoryexpanders.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit35>
+      <Unit36>
+        <Filename Value="fpc\generics.strings.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit36>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
     <Version Value="11"/>
     <PathDelim Value="\"/>
-    <Target>
-      <Filename Value="..\bin\x64\Release\IRPMon"/>
-    </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
       <OtherUnitFiles Value="fpc"/>
-      <UnitOutputDirectory Value="..\tmp\IRPMon"/>
+      <UnitOutputDirectory Value="..\bin\lazarus\$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
     <Parsing>
       <SyntaxOptions>
@@ -157,9 +208,13 @@
       </SyntaxOptions>
     </Parsing>
     <CodeGeneration>
-      <TargetOS Value="win64"/>
+      <TargetCPU Value="i386"/>
     </CodeGeneration>
     <Linking>
+      <Debugging>
+        <GenerateDebugInfo Value="False"/>
+        <StripSymbols Value="True"/>
+      </Debugging>
       <Options>
         <Win32>
           <GraphicApplication Value="True"/>
@@ -168,7 +223,7 @@
     </Linking>
   </CompilerOptions>
   <Debugging>
-    <Exceptions Count="4">
+    <Exceptions Count="3">
       <Item1>
         <Name Value="EAbort"/>
       </Item1>
@@ -178,9 +233,6 @@
       <Item3>
         <Name Value="EFOpenError"/>
       </Item3>
-      <Item4>
-        <Name Value="Unknown"/>
-      </Item4>
     </Exceptions>
   </Debugging>
 </CONFIG>

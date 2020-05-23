@@ -274,12 +274,9 @@ object FilterFrm: TFilterFrm
         AutoSize = True
         Caption = 'Next'
       end>
-    DoubleBuffered = True
     HideSelection = False
     ReadOnly = True
     RowSelect = True
-    ParentDoubleBuffered = False
-    ShowWorkAreas = True
     TabOrder = 2
     ViewStyle = vsReport
     OnAdvancedCustomDrawItem = FilterListViewAdvancedCustomDrawItem

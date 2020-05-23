@@ -898,10 +898,6 @@ object RequestDetailsFrm: TRequestDetailsFrm
     TabOrder = 1
     object HeadersTabSheet: TTabSheet
       Caption = 'Headers'
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object NameValueListView: TListView
         Left = 0
         Top = 0
@@ -917,13 +913,10 @@ object RequestDetailsFrm: TRequestDetailsFrm
             AutoSize = True
             Caption = 'Value'
           end>
-        DoubleBuffered = True
         ReadOnly = True
         RowSelect = True
-        ParentDoubleBuffered = False
         PopupMenu = HeaderPopupMenu
         ShowColumnHeaders = False
-        ShowWorkAreas = True
         TabOrder = 0
         ViewStyle = vsReport
       end

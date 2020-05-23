@@ -3,9 +3,9 @@ Unit ConnectorSelectionForm;
 Interface
 
 Uses
-  Winapi.Windows, Winapi.Messages, System.SysUtils,
-  System.Variants, System.Classes, Vcl.Graphics,
-  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ComCtrls, Vcl.StdCtrls,
+  Windows, Messages, SysUtils,
+  Variants, Classes, Graphics,
+  Controls, Forms, Dialogs, ComCtrls, StdCtrls,
   IRPMonDll;
 
 Type
@@ -68,6 +68,10 @@ If AllocateAndInitializeSid( SECURITY_NT_AUTHORITY, 2, SECURITY_BUILTIN_DOMAIN_R
   FreeSid(AdministratorsGroup);
   end;
 end;
+
+{$IFDEF FPC}
+Function IsWow64Process(hProcess:THandle; Var Wow64:LongBool):LongBool; StdCall; External 'kernel32.dll';
+{$ENDIF}
 
 Function TConnectorSelectionFrm.IsWOW64:Boolean;
 Var

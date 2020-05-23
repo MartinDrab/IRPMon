@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<CONFIG>
-  <Compiler Value="C:\lazarus\fpc\3.0.0\bin\x86_64-win64\fpc.exe" Date="1213098656"/>
-  <Params Value=" -Twin64 -MDelphi -Scghi -O1 -WG -l -vewnhibq -Fum:\Prace\Git\IRPMon\gui\fpc -FuC:\lazarus\lcl\units\x86_64-win64\win32 -FuC:\lazarus\lcl\units\x86_64-win64 -FuC:\lazarus\components\lazutils\lib\x86_64-win64 -FuC:\lazarus\packager\units\x86_64-win64 -Fum:\Prace\Git\IRPMon\gui\ -FEm:\Prace\Git\IRPMon\bin\x64\Release\ -oIRPMon.exe.exe -dLCL -dLCLwin32 IRPMon.dpr"/>
-</CONFIG>
