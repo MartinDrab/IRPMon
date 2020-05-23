@@ -12,6 +12,20 @@ You need Visual Studio 2017 or 2019 to compile drivers and DLLs. All is set for 
 
 Delphi 10.3 Rio does the trick here, although you should be able to compile the project also with Delphi XE2 and later. If you are looking for WIndows XP support, Lazarus seems to be your only option. Version 2.0.8 seems to produce pretty good results.
 
+### Installer
+
+The installer script (`scripts\installer.iss`) works with Inno Setup 6. That means, the resulting installer does not support Windows XP. Currently, there is no installer support for XP, just copy IRPMon files to machine with that old operating system and all should work quite nicely.
+
+### Build Steps
+
+* navigate to the `scripts` directory,
+* build binaries with `build <Configuration>` where `Configuration` may be `Debug`, `Release` or `XP`,
+* sign the binaries with `sign <Configuration>`, the `Configuration` parameter must match the previous step,
+* build the installer with Inno Setup 6,
+* sign the installer with the `sign-installer` script (no extra parameters are required).
+
+You need to alter the signing scripts to respect your signing certificate. Similarly, the SDK version may need to be modified to match version installed on your machine.
+
 ## Donations
 
 If you wish to support development of this tool, you may donate some stuff to the following addresses:
