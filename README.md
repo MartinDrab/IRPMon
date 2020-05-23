@@ -4,9 +4,13 @@ The goal of the tool is to monitor requests received by selected device objects 
 
 ## Compilation
 
-* Visual Studio 2017 for drivers and DLLs,
-* Delphi 10.3 Rio for the application (XE2 and newer should work too).
+### Drivers, Servers and DLLs
 
+You need Visual Studio 2017 or 2019 to compile drivers and DLLs. All is set for the 2019, however, adopting the settings to 2017 one should be a piece of cake. In order to build the XP configuration (WIndows XP support), you need to install the Windows XP support into your Visual Studio. Also, install latest version of the Windows SDK and Windows Driver Kit (latest at the time of this writing at least). To use the `scripts\build.bat`, install MSBuild as well.
+
+### GUI Application
+
+Delphi 10.3 Rio does the trick here, although you should be able to compile the project also with Delphi XE2 and later. If you are looking for WIndows XP support, Lazarus seems to be your only option. Version 2.0.8 seems to produce pretty good results.
 
 ## Donations
 
