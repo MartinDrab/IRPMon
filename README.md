@@ -26,6 +26,16 @@ The installer script (`scripts\installer.iss`) works with Inno Setup 6. That mea
 
 You need to alter the signing scripts to respect your signing certificate. Similarly, the SDK version may need to be modified to match version installed on your machine.
 
+## People
+
+### Authors
+
+* [Martin Dráb](https://github.com/MartinDrab "Martin Dráb")
+
+### Contributors
+
+* [Petr Vaněk](https://github.com/arkamar "Petr Vaněk")
+
 ## Donations
 
 If you wish to support development of this tool, you may donate some stuff to the following addresses:
