@@ -37,7 +37,6 @@ int main(int argc, char* argv[])
 	HANDLE deviceHandle = NULL;
 	DRIVER_MONITOR_SETTINGS driverSettings;
 	PREQUEST_HEADER buffer = NULL;
-	PREQUEST_HEADER tmp = NULL;
 	DWORD bufferSize = 0;
 	IRPMNDRV_SETTINGS globalSettings;
 
@@ -77,6 +76,44 @@ int main(int argc, char* argv[])
 		
 		fprintf(stderr, "[INFO]: Hooking the Keyboard Class driver...\n");
 		ret = IRPMonDllHookDriver(L"\\Driver\\kbdclass", &driverSettings, FALSE, &driverHandle, NULL);
+		if (ret == ERROR_ALREADY_EXISTS) {
+			ULONG count = 0;
+			PHOOKED_DRIVER_UMINFO driverHookInfo = NULL;
+			PHOOKED_DRIVER_UMINFO tmp = NULL;
+
+			fprintf(stderr, "[WARNING]: Driver already hooked. Let's unhook it first\n");
+			ret = IRPMonDllDriverHooksEnumerate(&driverHookInfo, &count);
+			if (ret == 0) {
+				ret = ERROR_FILE_NOT_FOUND;
+				tmp = driverHookInfo;
+				for (size_t i = 0; i < count; ++i) {
+					if (tmp->DriverName != NULL && wcsicmp(tmp->DriverName, L"\\Driver\\kbdclass") == 0) {
+						fprintf(stderr, "[INFO]: Found (ID 0x%p)\n", tmp->ObjectId);
+						ret = IRPMonDllOpenHookedDriver(tmp->ObjectId, &driverHandle);
+						if (ret == 0) {
+							ret = IRPMonDllUnhookDriver(driverHandle);
+							if (ret != 0)
+								fprintf(stderr, "[ERROR]: Unable to unhook the driver: %u\n", ret);
+
+							IRPMonDllCloseHookedDriverHandle(driverHandle);
+						} else fprintf(stderr, "[ERROR]: Unable to get hook driver handle: %u\n", ret);
+
+						break;
+					}
+
+					++tmp;
+				}
+
+				IRPMonDllDriverHooksFree(driverHookInfo, count);
+			} else fprintf(stderr, "[ERROR]: Unable to get list of hooked drivers: %u\n", ret);
+
+			if (ret == 0) {
+				ret = IRPMonDllHookDriver(L"\\Driver\\kbdclass", &driverSettings, FALSE, &driverHandle, NULL);
+				if (ret != 0)
+					fprintf(stderr, "[ERROR]: Unable to hook the driver %u\n", ret);
+			}
+		} else fprintf(stderr, "[ERROR]: Error %u\n", ret);
+
 		if (ret == 0) {
 			fprintf(stderr, "[INFO]: Hooking the primary keyboard device...\n");
 			ret = IRPMonDllHookDeviceByName(L"\\Device\\KeyboardClass0", &deviceHandle, NULL);
@@ -152,7 +189,9 @@ int main(int argc, char* argv[])
 										request = (PREQUEST_HEADER)((unsigned char *)request + RequestGetSize(request));
 									} while (TRUE);
 								} break;
-								case ERROR_INSUFFICIENT_BUFFER:
+								case ERROR_INSUFFICIENT_BUFFER: {
+									PREQUEST_HEADER tmp = NULL;
+
 									// Our buffer is not large enough, let's resize it!
 									fprintf(stderr, "[WARNING]: Buffer of size %u is not enough, enlarging to %u\n", bufferSize, bufferSize*2 + 128);
 									bufferSize = bufferSize*2 + 128;
@@ -164,7 +203,7 @@ int main(int argc, char* argv[])
 									}
 
 									buffer = tmp;
-									break;
+								} break;
 								case ERROR_NO_MORE_ITEMS:
 									// The queue is empty. Well, this is very common
 									// for keyboard devices. Let's just wait.
@@ -205,7 +244,7 @@ int main(int argc, char* argv[])
 			ret = IRPMonDllUnhookDriver(driverHandle);
 			if (ret != 0)
 				fprintf(stderr, "[WARNING]: Error %u\n", ret);
-		} else fprintf(stderr, "[ERROR]: Error %u\n", ret);
+		}
 
 		fprintf(stderr, "[INFO]: Cleanup the library\n");
 		IRPMonDllFinalize();
