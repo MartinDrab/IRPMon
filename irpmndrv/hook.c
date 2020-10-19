@@ -570,7 +570,7 @@ NTSTATUS HookDriverObject(PDRIVER_OBJECT DriverObject, PDRIVER_MONITOR_SETTINGS 
 				*DriverRecord = record;
 			} else {
 				KeReleaseSpinLock(&_driverTableLock, irql);
-				status = STATUS_ALREADY_REGISTERED;
+				status = STATUS_OBJECT_NAME_COLLISION;
 			}
 
 			_FreeDeviceHookRecordArray(existingDevices, existingDeviceCount);
@@ -765,7 +765,7 @@ NTSTATUS DriverHookRecordAddDevice(PDRIVER_HOOK_RECORD DriverRecord, PDEVICE_OBJ
 					DeviceHookRecordReference(existingDeviceRecord);
 					*DeviceRecord = existingDeviceRecord;
 				}
-			} else status = STATUS_ALREADY_REGISTERED;
+			} else status = STATUS_OBJECT_NAME_COLLISION;
 
 			DeviceHookRecordDereference(existingDeviceRecord);
 		}
