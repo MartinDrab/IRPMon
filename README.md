@@ -26,6 +26,14 @@ The installer script (`scripts\installer.iss`) works with Inno Setup 6. That mea
 
 You need to alter the signing scripts to respect your signing certificate. Similarly, the SDK version may need to be modified to match version installed on your machine.
 
+## Samples
+
+I hope to add some sample programs demonstrating how to use IRPMon DLLs to your advantage. So, you will not be dependent on the GUI application.
+
+### Kbdsample
+
+This sample hooks primary keyboard device (`\Device\KeyboardClass0`) and display basic information about detected requests. It also shows how to enumerate hooked drivers and unhook them inf necessary (e.g. if you wish to hook a driver that is already hooked, you may need to unhook it first). See the [kbdsample](kbdsample) directory for more information.
+
 ## People
 
 ### Authors
