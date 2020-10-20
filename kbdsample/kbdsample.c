@@ -112,7 +112,8 @@ int main(int argc, char* argv[])
 				if (ret != 0)
 					fprintf(stderr, "[ERROR]: Unable to hook the driver %u\n", ret);
 			}
-		} else fprintf(stderr, "[ERROR]: Error %u\n", ret);
+		} else if (ret != 0)
+			fprintf(stderr, "[ERROR]: Error %u\n", ret);
 
 		if (ret == 0) {
 			fprintf(stderr, "[INFO]: Hooking the primary keyboard device...\n");
@@ -139,6 +140,7 @@ int main(int argc, char* argv[])
 					fprintf(stderr, "[INFO]: Connecting to the request queue...\n");
 					ret = IRPMonDllConnect();
 					if (ret == 0) {
+						fprintf(stderr, "[INFO]: We are now set! Press CTRL+C to stop monitoring and exit the application peacefully\n");
 						while (!_terminate) {
 							// Attempt to get a request from the queue
 							ret = IRPMonDllGetRequest(buffer, bufferSize);
