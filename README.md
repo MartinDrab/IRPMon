@@ -50,3 +50,11 @@ If you wish to support development of this tool, you may donate some stuff to th
 
 * 17tEADhePvhHPj2X5GWn8vfiYhZCRH1f7V (BTC)
 * [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=6QWP4WH49Y3Z2&item_name=IRPMon&currency_code=CZK&source=url)
+* [IRPMon on OpenCollective](https://opencollective.com/irpmon)
+
+## Contact Me
+
+Every feedback is more than welcome!
+
+* you can create an issue on here on GitHub,
+* or send an e-mail to **martin.drab@email.cz**.
