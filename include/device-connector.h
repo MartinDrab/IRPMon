@@ -9,13 +9,19 @@
 
 
 
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 DWORD DevConn_SynchronousOtherIOCTL(DWORD Code, PVOID InputBuffer, ULONG InputBufferLength, PVOID OutputBuffer, ULONG OutputBufferLength);
 
 DWORD DevConn_Connect(const IRPMON_INIT_INFO *Info);
 void DevConn_Disconnect(void);
 BOOL DevConn_Active(VOID);
+
+#ifdef __cplusplus
+}
+#endif
 
 
 

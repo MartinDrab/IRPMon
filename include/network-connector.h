@@ -21,6 +21,9 @@ typedef struct _NETWORK_MSG_IOCTL {
 
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 DWORD NetConn_SynchronousOtherIOCTL(DWORD Code, PVOID InputBuffer, ULONG InputBufferLength, PVOID OutputBuffer, ULONG OutputBufferLength);
 
@@ -28,6 +31,9 @@ DWORD NetConn_Connect(const IRPMON_INIT_INFO *Info);
 void NetConn_Disconnect(void);
 BOOL NetConn_Active(VOID);
 
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif
