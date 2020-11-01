@@ -6,19 +6,9 @@
 #include "irpmondll-types.h"
 
 
-
-
-#ifdef IRPMONDLL_EXPORTS
-
-#define IRPMONDLL_API                  EXTERN_C __declspec(dllexport)
-
-#else 
-
-#define IRPMONDLL_API                  EXTERN_C __declspec(dllimport)
-
+#ifdef __cplusplus
+extern "C" {
 #endif
-
-
 
 /// <summary> Retrieves information about drivers and devices hooked by the IRPMon driver.
 /// <para>
@@ -52,7 +42,7 @@
 /// When the caller no longer needs the retrieved information, it must free it by calling
 /// the <see cref="IRPMonDllDriverHooksFree"/> procedure.
 /// </remarks>
-IRPMONDLL_API DWORD WINAPI IRPMonDllDriverHooksEnumerate(PHOOKED_DRIVER_UMINFO *HookedDrivers, PULONG Count);
+DWORD WINAPI IRPMonDllDriverHooksEnumerate(PHOOKED_DRIVER_UMINFO *HookedDrivers, PULONG Count);
 
 /// <summary>Frees information returned by the <see cref="IRPMonDllDriverHooksEnumerate"/> function
 /// </summary>
@@ -62,7 +52,7 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllDriverHooksEnumerate(PHOOKED_DRIVER_UMINFO *
 /// <param name="Count">
 /// Number of elements in the array.
 /// </param>
-IRPMONDLL_API VOID WINAPI IRPMonDllDriverHooksFree(PHOOKED_DRIVER_UMINFO HookedDrivers, ULONG Count);
+VOID WINAPI IRPMonDllDriverHooksFree(PHOOKED_DRIVER_UMINFO HookedDrivers, ULONG Count);
 
 /// <summary>Given name of its object, the routine hooks a driver in order to monitor requests serviced by its devices.
 /// </summary>
@@ -111,7 +101,7 @@ IRPMONDLL_API VOID WINAPI IRPMonDllDriverHooksFree(PHOOKED_DRIVER_UMINFO HookedD
 /// <see cref="IRPMonDllSnapshotRetrieve"/> function.
 /// </para>
 /// </remarks>
-IRPMONDLL_API DWORD WINAPI IRPMonDllHookDriver(PWCHAR DriverName, PDRIVER_MONITOR_SETTINGS MonitorSettings, BOOLEAN DeviceExtensionHook, PHANDLE DriverHandle, PVOID *ObjectId);
+DWORD WINAPI IRPMonDllHookDriver(PWCHAR DriverName, PDRIVER_MONITOR_SETTINGS MonitorSettings, BOOLEAN DeviceExtensionHook, PHANDLE DriverHandle, PVOID *ObjectId);
 
 /// <summary>Starts monitoring of a driver.
 /// </summary>
@@ -150,7 +140,7 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllHookDriver(PWCHAR DriverName, PDRIVER_MONITO
 /// function..
 /// </para>
 /// </remarks>
-IRPMONDLL_API DWORD WINAPI IRPMonDllDriverStartMonitoring(HANDLE Driverhandle);
+DWORD WINAPI IRPMonDllDriverStartMonitoring(HANDLE Driverhandle);
 
 /// <summary>Stops monitoring events related to a given driver.
 /// </summary>
@@ -189,7 +179,7 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllDriverStartMonitoring(HANDLE Driverhandle);
 /// driver, use the <see cref="IRPMonDllUnhookDriver"/> function.
 /// </para>
 /// </remarks>
-IRPMONDLL_API DWORD WINAPI IRPMonDllDriverStopMonitoring(HANDLE Driverhandle);
+DWORD WINAPI IRPMonDllDriverStopMonitoring(HANDLE Driverhandle);
 
 /// <summary>Changes monitoring settings for a given driver and its devices.
 /// </summary>
@@ -225,7 +215,7 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllDriverStopMonitoring(HANDLE Driverhandle);
 /// only the value stored in the <see cref="_DRIVER_MONITOR_SETTINGS:MonitorNewDevices"/> field
 /// passed in the <paramref name="Settings"/> parameter takes effect.
 /// </remarks>
-IRPMONDLL_API DWORD WINAPI IRPMonDllDriverSetInfo(HANDLE DriverHandle, PDRIVER_MONITOR_SETTINGS Settings);
+DWORD WINAPI IRPMonDllDriverSetInfo(HANDLE DriverHandle, PDRIVER_MONITOR_SETTINGS Settings);
 
 /// <summary>Unhooks a given driver.
 /// </summary>
@@ -267,7 +257,7 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllDriverSetInfo(HANDLE DriverHandle, PDRIVER_M
 ///	becomes invalid.
 /// </para>
 /// </remark>
-IRPMONDLL_API DWORD WINAPI IRPMonDllUnhookDriver(HANDLE DriverHandle);
+DWORD WINAPI IRPMonDllUnhookDriver(HANDLE DriverHandle);
 
 /// <summary>Starts monitoring events related to a given device, identified by its object name.
 /// </summary>
@@ -305,7 +295,7 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllUnhookDriver(HANDLE DriverHandle);
 /// be hooked. Otherwise, the function fails. Drivers can be hooked by a call to the
 /// <see cref="IRPMonDllHookDriver"/> routine.
 /// </remarks>
-IRPMONDLL_API DWORD WINAPI IRPMonDllHookDeviceByName(PWCHAR DeviceName, PHANDLE HookHandle, PVOID *ObjectId);
+DWORD WINAPI IRPMonDllHookDeviceByName(PWCHAR DeviceName, PHANDLE HookHandle, PVOID *ObjectId);
 
 /// <summary>Starts monitoring events related to a given device, identified by its device object address.
 /// </summary>
@@ -343,7 +333,7 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllHookDeviceByName(PWCHAR DeviceName, PHANDLE 
 /// be hooked. Otherwise, the function fails. Drivers can be hooked by a call to the
 /// <see cref="IRPMonDllHookDriver"/> routine.
 /// </remarks>
-IRPMONDLL_API DWORD WINAPI IRPMonDllHookDeviceByAddress(PVOID DeviceObject, PHANDLE HookHandle, PVOID *ObjectId);
+DWORD WINAPI IRPMonDllHookDeviceByAddress(PVOID DeviceObject, PHANDLE HookHandle, PVOID *ObjectId);
 
 /// <summary>Stops monitoring events related to a given device object.
 /// </summary>
@@ -374,7 +364,7 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllHookDeviceByAddress(PVOID DeviceObject, PHAN
 /// If the whole driver to which the device belongs is unhooked (see <see cref="IRPMonDllUnhookDriver"/>), this
 /// routine needs not to be called since the device handle is automatically invalidated.
 /// </remarks>
-IRPMONDLL_API DWORD WINAPI IRPMonDllUnhookDevice(HANDLE HookHandle);
+DWORD WINAPI IRPMonDllUnhookDevice(HANDLE HookHandle);
 
 /// <summary>Retrieves information about driver and device objects currently present in the system.
 /// </summary>
@@ -407,7 +397,7 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllUnhookDevice(HANDLE HookHandle);
 /// When the caller no longer needs the information retrieved by the routine,
 /// it must free it by calling the <see cref="IRPMonDllSnapshotFree"/> procedure.
 /// </remarks>
-IRPMONDLL_API DWORD WINAPI IRPMonDllSnapshotRetrieve(PIRPMON_DRIVER_INFO **DriverInfo, PULONG Count);
+DWORD WINAPI IRPMonDllSnapshotRetrieve(PIRPMON_DRIVER_INFO **DriverInfo, PULONG Count);
 
 /// <summary> Frees a given snapshot of drivers and their devices.
 /// </summary>
@@ -421,7 +411,7 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllSnapshotRetrieve(PIRPMON_DRIVER_INFO **Drive
 /// Number of entries in the array. This value is returned in the second parameter
 /// of the <see cref="IRPMonDllSnapshotRetrieve"/> call.
 /// </param>
-IRPMONDLL_API VOID WINAPI IRPMonDllSnapshotFree(PIRPMON_DRIVER_INFO *DriverInfo, ULONG Count);
+VOID WINAPI IRPMonDllSnapshotFree(PIRPMON_DRIVER_INFO *DriverInfo, ULONG Count);
 
 /// <summary>
 /// Connects the current thread (the calling one) to the queue
@@ -448,7 +438,7 @@ IRPMONDLL_API VOID WINAPI IRPMonDllSnapshotFree(PIRPMON_DRIVER_INFO *DriverInfo,
 /// At most one thread can be connected to the IRPMon Event Queue at any
 /// moment of time.
 /// </remarks>
-IRPMONDLL_API DWORD WINAPI IRPMonDllConnect(void);
+DWORD WINAPI IRPMonDllConnect(void);
 
 /// <summary>Disconnects the current thread from the IRPMon Event Queue.
 /// </summary>
@@ -469,7 +459,7 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllConnect(void);
 /// </item>
 /// </list>
 /// </returns>
-IRPMONDLL_API DWORD WINAPI IRPMonDllDisconnect(VOID);
+DWORD WINAPI IRPMonDllDisconnect(VOID);
 
 /// <summary>Discards all requests stored in the IRPMon Event Queue.
 /// </summary>
@@ -490,7 +480,7 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllDisconnect(VOID);
 /// </item>
 /// </list>
 /// </returns>
-IRPMONDLL_API DWORD WINAPI IRPMonDllQueueClear(void);
+DWORD WINAPI IRPMonDllQueueClear(void);
 
 /// <summary>Removes a request from the IRPMon Event Queue and copies it to a given buffer.
 /// </summary>
@@ -532,7 +522,7 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllQueueClear(void);
 /// The calling thread must be connected to the IRPMon Event Queue. Otherwise,
 /// the function fails.
 /// </remarks>
-IRPMONDLL_API DWORD WINAPI IRPMonDllGetRequest(PREQUEST_HEADER Request, DWORD Size);
+DWORD WINAPI IRPMonDllGetRequest(PREQUEST_HEADER Request, DWORD Size);
 
 /// <summary>Open a handle to a given driver monitored by the IRPMon driver.
 /// </summary>
@@ -566,7 +556,7 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllGetRequest(PREQUEST_HEADER Request, DWORD Si
 /// function. Alternatively, the <see cref="IRPMonDllUnhookDriver"/> routine may also be used to close the
 /// handle, however, it also unhooks the driver represented by the handle.
 /// </remarks>
-IRPMONDLL_API DWORD WINAPI IRPMonDllOpenHookedDriver(PVOID ObjectId, PHANDLE Handle);
+DWORD WINAPI IRPMonDllOpenHookedDriver(PVOID ObjectId, PHANDLE Handle);
 
 /// <summary>Closes a handle to a given driver monitored by the IRPMon.
 /// </summary>
@@ -578,7 +568,7 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllOpenHookedDriver(PVOID ObjectId, PHANDLE Han
 /// caller's code, not in the code of the library or driver.
 /// TODO: Use the table
 /// </returns>
-IRPMONDLL_API DWORD WINAPI IRPMonDllCloseHookedDriverHandle(HANDLE Handle);
+DWORD WINAPI IRPMonDllCloseHookedDriverHandle(HANDLE Handle);
 
 /// <summary>Open a handle to a given device monitored by the IRPMon driver.
 /// </summary>
@@ -612,7 +602,7 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllCloseHookedDriverHandle(HANDLE Handle);
 /// function. Alternatively, the <see cref="IRPMonDllUnhookDevice"/> routine may also be used to close the
 /// handle, however, it also unhooks the device represented by the handle.
 /// </remarks>
-IRPMONDLL_API DWORD WINAPI IRPMonDllOpenHookedDevice(PVOID ObjectId, PHANDLE Handle);
+DWORD WINAPI IRPMonDllOpenHookedDevice(PVOID ObjectId, PHANDLE Handle);
 
 /// <summary>Closes a handle to a given device monitored by the IRPMon.
 /// </summary>
@@ -624,7 +614,7 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllOpenHookedDevice(PVOID ObjectId, PHANDLE Han
 /// caller's code, not in the code of the library or driver.
 /// TODO: Use the table
 /// </returns>
-IRPMONDLL_API DWORD WINAPI IRPMonDllCloseHookedDeviceHandle(HANDLE Handle);
+DWORD WINAPI IRPMonDllCloseHookedDeviceHandle(HANDLE Handle);
 
 /// <summary>
 /// 
@@ -634,7 +624,7 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllCloseHookedDeviceHandle(HANDLE Handle);
 /// <param name="FastIOSettings"></param>
 /// <param name="MonitoringEnabled"></param>
 /// <returns></returns>
-IRPMONDLL_API DWORD WINAPI IRPMonDllHookedDeviceGetInfo(HANDLE Handle, PUCHAR IRPSettings, PUCHAR FastIOSettings, PBOOLEAN MonitoringEnabled);
+DWORD WINAPI IRPMonDllHookedDeviceGetInfo(HANDLE Handle, PUCHAR IRPSettings, PUCHAR FastIOSettings, PBOOLEAN MonitoringEnabled);
 
 /// <summary>
 /// 
@@ -644,7 +634,7 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllHookedDeviceGetInfo(HANDLE Handle, PUCHAR IR
 /// <param name="FastIOSettings"></param>
 /// <param name="MonitoringEnabled"></param>
 /// <returns></returns>
-IRPMONDLL_API DWORD WINAPI IRPMonDllHookedDeviceSetInfo(HANDLE Handle, PUCHAR IRPSettings, PUCHAR FastIOSettings, BOOLEAN MonitoringEnabled);
+DWORD WINAPI IRPMonDllHookedDeviceSetInfo(HANDLE Handle, PUCHAR IRPSettings, PUCHAR FastIOSettings, BOOLEAN MonitoringEnabled);
 
 /// <summary>
 /// 
@@ -653,7 +643,7 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllHookedDeviceSetInfo(HANDLE Handle, PUCHAR IR
 /// <param name="Settings"></param>
 /// <param name="MonitoringEnabled"></param>
 /// <returns></returns>
-IRPMONDLL_API DWORD WINAPI IRPMonDllHookedDriverGetInfo(HANDLE Handle, PDRIVER_MONITOR_SETTINGS Settings, PBOOLEAN MonitoringEnabled);
+DWORD WINAPI IRPMonDllHookedDriverGetInfo(HANDLE Handle, PDRIVER_MONITOR_SETTINGS Settings, PBOOLEAN MonitoringEnabled);
 
 /// <summary>Starts watching for devices (and their drivers) belonging to a given device setup class.
 /// <para>
@@ -692,7 +682,7 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllHookedDriverGetInfo(HANDLE Handle, PDRIVER_M
 /// driver with specific name immediately after one of its devices is created and detected
 /// by the class watching capability of the IRPMon driver.
 /// </remarks>
-IRPMONDLL_API DWORD WINAPI IRPMonDllClassWatchRegister(PWCHAR ClassGuid, BOOLEAN UpperFilter, BOOLEAN Beginning);
+DWORD WINAPI IRPMonDllClassWatchRegister(PWCHAR ClassGuid, BOOLEAN UpperFilter, BOOLEAN Beginning);
 
 /// <summary>Stops watching a given device setup class from specific filter position.
 /// </summary>
@@ -722,7 +712,7 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllClassWatchRegister(PWCHAR ClassGuid, BOOLEAN
 /// Look at the Remarks section for <see cref="IRPMonDllClassWatchRegister"/> to get more details
 /// about the usefulness of class watching. 
 /// </remarks>
-IRPMONDLL_API DWORD WINAPI IRPMonDllClassWatchUnregister(PWCHAR ClassGuid, BOOLEAN UpperFilter, BOOLEAN Beginning);
+DWORD WINAPI IRPMonDllClassWatchUnregister(PWCHAR ClassGuid, BOOLEAN UpperFilter, BOOLEAN Beginning);
 
 /// <summary>Enumerates device setup classes watched by the IRPMon driver.
 /// </summary>
@@ -749,7 +739,7 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllClassWatchUnregister(PWCHAR ClassGuid, BOOLE
 /// <remarks>
 /// Use <see cref="IRPMonDllClassWatchEnumFree"/> to release the array retrieved by this routine.
 /// </remarks>
-IRPMONDLL_API DWORD WINAPI IRPMonDllClassWatchEnum(PCLASS_WATCH_RECORD *Array, PULONG Count);
+DWORD WINAPI IRPMonDllClassWatchEnum(PCLASS_WATCH_RECORD *Array, PULONG Count);
 
 /// <summary>Releases array of watched classes returned by the <see cref="IRPMonDllClassWatchEnum"/> routine.
 /// </summary>
@@ -759,7 +749,7 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllClassWatchEnum(PCLASS_WATCH_RECORD *Array, P
 /// <param name="Count">
 /// Number of elements in the array.
 /// </param>
-IRPMONDLL_API VOID WINAPI IRPMonDllClassWatchEnumFree(PCLASS_WATCH_RECORD Array, ULONG Count);
+VOID WINAPI IRPMonDllClassWatchEnumFree(PCLASS_WATCH_RECORD Array, ULONG Count);
 
 
 /// <summary>Instructs the IRPMon driver to automatically start monitoring
@@ -798,7 +788,7 @@ IRPMONDLL_API VOID WINAPI IRPMonDllClassWatchEnumFree(PCLASS_WATCH_RECORD Array,
 /// Use <see cref="IRPMonDllDriverNameWatchUnregister"/> to stop watching for the given driver.
 /// </para>
 /// </remarks>
-IRPMONDLL_API DWORD WINAPI IRPMonDllDriverNameWatchRegister(PWCHAR DriverName, PDRIVER_MONITOR_SETTINGS MonitorSettings);
+DWORD WINAPI IRPMonDllDriverNameWatchRegister(PWCHAR DriverName, PDRIVER_MONITOR_SETTINGS MonitorSettings);
 
 /// <summary>Stops watching for driver with given name.
 /// </summary>
@@ -828,7 +818,7 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllDriverNameWatchRegister(PWCHAR DriverName, P
 /// This routine is exact opposite to <see cref="IRPMonDllDriverNameWatchRegister"/> one.
 /// </para>
 /// </remarks>
-IRPMONDLL_API DWORD WINAPI IRPMonDllDriverNameWatchUnregister(PWCHAR DriverName);
+DWORD WINAPI IRPMonDllDriverNameWatchUnregister(PWCHAR DriverName);
 
 /// <summary>Enumerates names of drivers on the watch list.
 /// </summary>
@@ -856,7 +846,7 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllDriverNameWatchUnregister(PWCHAR DriverName)
 /// Release the array returned by this routine by calling
 /// the <see cref="IRPMonDllDriverNameWatchEnumFree"/> routine.
 /// </remarks>
-IRPMONDLL_API DWORD WINAPI IRPMonDllDriverNameWatchEnum(PDRIVER_NAME_WATCH_RECORD *Array, PULONG Count);
+DWORD WINAPI IRPMonDllDriverNameWatchEnum(PDRIVER_NAME_WATCH_RECORD *Array, PULONG Count);
 
 /// <summary>Releases array of watched classes returned by the <see cref="IRPMonDllDriverNameWatchEnum"/> routine.
 /// </summary>
@@ -866,26 +856,26 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllDriverNameWatchEnum(PDRIVER_NAME_WATCH_RECOR
 /// <param name="Count">
 /// Number of elements in the array.
 /// </param>
-IRPMONDLL_API VOID WINAPI IRPMonDllDriverNameWatchEnumFree(PDRIVER_NAME_WATCH_RECORD Array, ULONG Count);
+VOID WINAPI IRPMonDllDriverNameWatchEnumFree(PDRIVER_NAME_WATCH_RECORD Array, ULONG Count);
 
 /// <summary>
 /// 
 /// </summary>
 /// <returns></returns>
-IRPMONDLL_API DWORD WINAPI IRPMonDllEmulateDriverDevices(void);
+DWORD WINAPI IRPMonDllEmulateDriverDevices(void);
 
 /// <summary>
 /// 
 /// </summary>
 /// <returns></returns>
-IRPMONDLL_API DWORD WINAPI IRPMonDllEmulateProcesses(void);
+DWORD WINAPI IRPMonDllEmulateProcesses(void);
 
 /// <summary>
 /// 
 /// </summary>
 /// <param name="Settings"></param>
 /// <returns></returns>
-IRPMONDLL_API DWORD WINAPI IRPMonDllSettingsQuery(PIRPMNDRV_SETTINGS Settings);
+DWORD WINAPI IRPMonDllSettingsQuery(PIRPMNDRV_SETTINGS Settings);
 
 /// <summary>
 /// 
@@ -893,7 +883,7 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllSettingsQuery(PIRPMNDRV_SETTINGS Settings);
 /// <param name="Settings"></param>
 /// <param name="Save"></param>
 /// <returns></returns>
-IRPMONDLL_API DWORD WINAPI IRPMonDllSettingsSet(PIRPMNDRV_SETTINGS Settings, BOOLEAN Save);
+DWORD WINAPI IRPMonDllSettingsSet(PIRPMNDRV_SETTINGS Settings, BOOLEAN Save);
 
 /************************************************************************/
 /*           INITIALIZATION AND FINALIZATION                            */
@@ -908,7 +898,7 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllSettingsSet(PIRPMNDRV_SETTINGS Settings, BOO
 /// The library is considered initialized if and only if a connection to the IRPMon
 /// driver device object is established (locally or remotely).
 /// </remarks>
-IRPMONDLL_API BOOL WINAPI IRPMonDllInitialized(VOID);
+BOOL WINAPI IRPMonDllInitialized(VOID);
 
 /// <summary>
 /// Initializes the IRPMon library and connects the current process to the
@@ -940,7 +930,7 @@ IRPMONDLL_API BOOL WINAPI IRPMonDllInitialized(VOID);
 /// This routine must be successfully called before any other routine exported
 /// by the library.
 /// </remarks>
-IRPMONDLL_API DWORD WINAPI IRPMonDllInitialize(const IRPMON_INIT_INFO *Info);
+DWORD WINAPI IRPMonDllInitialize(const IRPMON_INIT_INFO *Info);
 
 /// <summary>Disconnects the current process from the IRPMon driver and cleans up
 /// resources used by the library.
@@ -949,8 +939,12 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllInitialize(const IRPMON_INIT_INFO *Info);
 /// After calling this routine, no other routine exported by the library can
 /// be successfully invoked.
 /// </remarks>
-IRPMONDLL_API VOID WINAPI IRPMonDllFinalize(VOID);
+VOID WINAPI IRPMonDllFinalize(VOID);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif 
