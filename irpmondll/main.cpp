@@ -361,24 +361,3 @@ VOID WINAPI IRPMonDllFinalize(VOID)
 #ifdef __cplusplus
 }
 #endif
-
-
-/************************************************************************/
-/*                          DLL MAIN                                    */
-/************************************************************************/
-
-
-BOOL WINAPI DllMain(_In_  HINSTANCE hinstDLL, _In_  DWORD fdwReason, _In_  LPVOID lpvReserved)
-{
-	BOOL ret = FALSE;
-	DEBUG_ENTER_FUNCTION("hinstDLL=0x%p; fdwReason=%u; lpReserved=0x%p", hinstDLL, fdwReason, lpvReserved);
-
-	switch (fdwReason) {
-		case DLL_PROCESS_ATTACH:
-			ret = DisableThreadLibraryCalls(hinstDLL);
-			break;
-	}
-
-	DEBUG_EXIT_FUNCTION("%u", ret);
-	return ret;
-}
