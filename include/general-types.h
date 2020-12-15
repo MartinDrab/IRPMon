@@ -229,6 +229,38 @@ typedef struct _REQUEST_IRP_COMPLETION {
 	// Data
 } REQUEST_IRP_COMPLETION, *PREQUEST_IRP_COMPLETION;
 
+#ifndef _KERNEL_MODE
+
+typedef struct _NAMED_PIPE_CREATE_PARAMETERS {
+	ULONG NamedPipeType;
+	ULONG ReadMode;
+	ULONG CompletionMode;
+	ULONG MaximumInstances;
+	ULONG InboundQuota;
+	ULONG OutboundQuota;
+	LARGE_INTEGER DefaultTimeout;
+	BOOLEAN TimeoutSpecified;
+} NAMED_PIPE_CREATE_PARAMETERS, * PNAMED_PIPE_CREATE_PARAMETERS;
+
+typedef struct _MAILSLOT_CREATE_PARAMETERS {
+	ULONG MailslotQuota;
+	ULONG MaximumMessageSize;
+	LARGE_INTEGER ReadTimeout;
+	BOOLEAN TimeoutSpecified;
+} MAILSLOT_CREATE_PARAMETERS, * PMAILSLOT_CREATE_PARAMETERS;
+
+#endif
+
+typedef struct _REQUEST_IRP_CREATE_NAMED_PIPE_DATA {
+	NAMED_PIPE_CREATE_PARAMETERS Parameters;
+	ULONG DesiredAccess;
+} REQUEST_IRP_CREATE_NAMED_PIPE_DATA, *PREQUEST_IRP_CREATE_NAMED_PIPE_DATA;
+
+typedef struct _REQUEST_IRP_CREATE_MAILSLOT_DATA {
+	MAILSLOT_CREATE_PARAMETERS Parameters;
+	ULONG DesiredAccess;
+} REQUEST_IRP_CREATE_MAILSLOT_DATA, *PREQUEST_IRP_CREATE_MAILSLOT_DATA;
+
 /** Represents a fast I/O request. */
 typedef struct _REQUEST_FASTIO {
 	/** Request header. */
