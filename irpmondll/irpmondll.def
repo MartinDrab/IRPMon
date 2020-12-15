@@ -33,8 +33,9 @@ EXPORTS
 	IRPMonDllDriverNameWatchEnumFree
 	IRPMonDllEmulateDriverDevices
 	IRPMonDllEmulateProcesses
+	IRPMonDllSettingsQuery
+	IRPMonDllSettingsSet
+
 	IRPMonDllInitialized
 	IRPMonDllInitialize
 	IRPMonDllFinalize
-	IRPMonDllSettingsQuery
-	IRPMonDllSettingsSet

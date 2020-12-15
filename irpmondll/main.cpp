@@ -75,55 +75,59 @@
 #include "irpmondll.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 /************************************************************************/
 /*                           EXPORTED FUNCTIONS                         */
 /************************************************************************/
 
 
-IRPMONDLL_API DWORD WINAPI IRPMonDllGetRequest(PREQUEST_HEADER Request, DWORD Size)
+DWORD WINAPI IRPMonDllGetRequest(PREQUEST_HEADER Request, DWORD Size)
 {
 	return DriverComGetRequest(Request, Size);
 }
 
 
-IRPMONDLL_API DWORD WINAPI IRPMonDllConnect(void)
+DWORD WINAPI IRPMonDllConnect(void)
 {
 	return DriverComConnect();
 }
 
 
-IRPMONDLL_API DWORD WINAPI IRPMonDllDisconnect(VOID)
+DWORD WINAPI IRPMonDllDisconnect(VOID)
 {
 	return DriverComDisconnect();
 }
 
 
-IRPMONDLL_API DWORD WINAPI IRPMonDllQueueClear(void)
+DWORD WINAPI IRPMonDllQueueClear(void)
 {
 	return DriverComQueueClear();
 }
 
 
-IRPMONDLL_API DWORD WINAPI IRPMonDllHookDriver(PWCHAR DriverName, PDRIVER_MONITOR_SETTINGS MonitorSettings, BOOLEAN DeviceExtensionHook, PHANDLE DriverHandle, PVOID *ObjectId)
+DWORD WINAPI IRPMonDllHookDriver(PWCHAR DriverName, PDRIVER_MONITOR_SETTINGS MonitorSettings, BOOLEAN DeviceExtensionHook, PHANDLE DriverHandle, PVOID *ObjectId)
 {
 	return DriverComHookDriver(DriverName, MonitorSettings, DeviceExtensionHook, DriverHandle, ObjectId);
 }
 
 
-IRPMONDLL_API DWORD WINAPI IRPMonDllUnhookDriver(HANDLE HookHandle)
+DWORD WINAPI IRPMonDllUnhookDriver(HANDLE HookHandle)
 {
 	return DriverComUnhookDriver(HookHandle);
 }
 
 
-IRPMONDLL_API DWORD WINAPI IRPMonDllSnapshotRetrieve(PIRPMON_DRIVER_INFO **DriverInfo, PULONG InfoCount)
+DWORD WINAPI IRPMonDllSnapshotRetrieve(PIRPMON_DRIVER_INFO **DriverInfo, PULONG InfoCount)
 {
 	return DriverComSnapshotRetrieve(DriverInfo, InfoCount);
 }
 
 
-IRPMONDLL_API VOID WINAPI IRPMonDllSnapshotFree(PIRPMON_DRIVER_INFO *DriverInfo, ULONG Count)
+VOID WINAPI IRPMonDllSnapshotFree(PIRPMON_DRIVER_INFO *DriverInfo, ULONG Count)
 {
 	DriverComSnapshotFree(DriverInfo, Count);
 
@@ -131,79 +135,79 @@ IRPMONDLL_API VOID WINAPI IRPMonDllSnapshotFree(PIRPMON_DRIVER_INFO *DriverInfo,
 }
 
 
-IRPMONDLL_API DWORD WINAPI IRPMonDllHookDeviceByName(PWCHAR DeviceName, PHANDLE HookHandle, PVOID *ObjectId)
+DWORD WINAPI IRPMonDllHookDeviceByName(PWCHAR DeviceName, PHANDLE HookHandle, PVOID *ObjectId)
 {
 	return DriverComHookDeviceByName(DeviceName, HookHandle, ObjectId);
 }
 
 
-IRPMONDLL_API DWORD WINAPI IRPMonDllHookDeviceByAddress(PVOID DeviceObject, PHANDLE HookHandle, PVOID *ObjectId)
+DWORD WINAPI IRPMonDllHookDeviceByAddress(PVOID DeviceObject, PHANDLE HookHandle, PVOID *ObjectId)
 {
 	return DriverComHookDeviceByAddress(DeviceObject, HookHandle, ObjectId);
 }
 
 
-IRPMONDLL_API DWORD WINAPI IRPMonDllHookedDeviceGetInfo(HANDLE Handle, PUCHAR IRPSettings, PUCHAR FastIOSettings, PBOOLEAN MonitoringEnabled)
+DWORD WINAPI IRPMonDllHookedDeviceGetInfo(HANDLE Handle, PUCHAR IRPSettings, PUCHAR FastIOSettings, PBOOLEAN MonitoringEnabled)
 {
 	return DriverComDeviceGetInfo(Handle, IRPSettings, FastIOSettings, MonitoringEnabled);
 }
 
 
-IRPMONDLL_API DWORD WINAPI IRPMonDllHookedDeviceSetInfo(HANDLE Handle, PUCHAR IRPSettings, PUCHAR FastIOSettings, BOOLEAN MonitoringEnabled)
+DWORD WINAPI IRPMonDllHookedDeviceSetInfo(HANDLE Handle, PUCHAR IRPSettings, PUCHAR FastIOSettings, BOOLEAN MonitoringEnabled)
 {
 	return DriverComDeviceSetInfo(Handle, IRPSettings, FastIOSettings, MonitoringEnabled);
 }
 
 
-IRPMONDLL_API DWORD WINAPI IRPMonDllHookedDriverGetInfo(HANDLE Handle, PDRIVER_MONITOR_SETTINGS Settings, PBOOLEAN MonitoringEnabled)
+DWORD WINAPI IRPMonDllHookedDriverGetInfo(HANDLE Handle, PDRIVER_MONITOR_SETTINGS Settings, PBOOLEAN MonitoringEnabled)
 {
 	return DriverComHookedDriverGetInfo(Handle, Settings, MonitoringEnabled);
 }
 
 
-IRPMONDLL_API DWORD WINAPI IRPMonDllUnhookDevice(HANDLE HookHandle)
+DWORD WINAPI IRPMonDllUnhookDevice(HANDLE HookHandle)
 {
 	return DriverComUnhookDevice(HookHandle);
 }
 
 
-IRPMONDLL_API DWORD WINAPI IRPMonDllDriverStartMonitoring(HANDLE Driverhandle)
+DWORD WINAPI IRPMonDllDriverStartMonitoring(HANDLE Driverhandle)
 {
 	return DriverComHookedDriverActivate(Driverhandle, TRUE);
 }
 
 
-IRPMONDLL_API DWORD WINAPI IRPMonDllDriverStopMonitoring(HANDLE Driverhandle)
+DWORD WINAPI IRPMonDllDriverStopMonitoring(HANDLE Driverhandle)
 {
 	return DriverComHookedDriverActivate(Driverhandle, FALSE);
 }
 
 
-IRPMONDLL_API DWORD WINAPI IRPMonDllDriverSetInfo(HANDLE DriverHandle, PDRIVER_MONITOR_SETTINGS Settings)
+DWORD WINAPI IRPMonDllDriverSetInfo(HANDLE DriverHandle, PDRIVER_MONITOR_SETTINGS Settings)
 {
 	return DriverComHookedDriverSetInfo(DriverHandle, Settings);
 }
 
 
-IRPMONDLL_API DWORD WINAPI IRPMonDllOpenHookedDriver(PVOID ObjectId, PHANDLE Handle)
+DWORD WINAPI IRPMonDllOpenHookedDriver(PVOID ObjectId, PHANDLE Handle)
 {
 	return DriverComDriverOpen(ObjectId, Handle);
 }
 
 
-IRPMONDLL_API DWORD WINAPI IRPMonDllCloseHookedDriverHandle(HANDLE Handle)
+DWORD WINAPI IRPMonDllCloseHookedDriverHandle(HANDLE Handle)
 {
 	return DriverComDriverHandleClose(Handle);
 }
 
 
-IRPMONDLL_API DWORD WINAPI IRPMonDllOpenHookedDevice(PVOID ObjectId, PHANDLE Handle)
+DWORD WINAPI IRPMonDllOpenHookedDevice(PVOID ObjectId, PHANDLE Handle)
 {
 	return DriverComDeviceOpen(ObjectId, Handle);
 }
 
 
-IRPMONDLL_API DWORD WINAPI IRPMonDllCloseHookedDeviceHandle(HANDLE Handle)
+DWORD WINAPI IRPMonDllCloseHookedDeviceHandle(HANDLE Handle)
 {
 	return DriverComDeviceHandleClose(Handle);
 }
@@ -214,13 +218,13 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllCloseHookedDeviceHandle(HANDLE Handle)
 /************************************************************************/
 
 
-IRPMONDLL_API DWORD WINAPI IRPMonDllDriverHooksEnumerate(PHOOKED_DRIVER_UMINFO *HookedDrivers, PULONG Count)
+DWORD WINAPI IRPMonDllDriverHooksEnumerate(PHOOKED_DRIVER_UMINFO *HookedDrivers, PULONG Count)
 {
 	return DriverComHookedObjectsEnumerate(HookedDrivers, Count);
 }
 
 
-IRPMONDLL_API VOID WINAPI IRPMonDllDriverHooksFree(PHOOKED_DRIVER_UMINFO HookedDrivers, ULONG Count)
+VOID WINAPI IRPMonDllDriverHooksFree(PHOOKED_DRIVER_UMINFO HookedDrivers, ULONG Count)
 {
 
 	DriverComHookedObjectsFree(HookedDrivers, Count);
@@ -234,24 +238,25 @@ IRPMONDLL_API VOID WINAPI IRPMonDllDriverHooksFree(PHOOKED_DRIVER_UMINFO HookedD
 /************************************************************************/
 
 
-IRPMONDLL_API DWORD WINAPI IRPMonDllClassWatchRegister(PWCHAR ClassGuid, BOOLEAN UpperFilter, BOOLEAN Beginning)
+DWORD WINAPI IRPMonDllClassWatchRegister(PWCHAR ClassGuid, BOOLEAN UpperFilter, BOOLEAN Beginning)
 {
 	return DriverComClassWatchRegister(ClassGuid, UpperFilter, Beginning);
 }
 
 
-IRPMONDLL_API DWORD WINAPI IRPMonDllClassWatchUnregister(PWCHAR ClassGuid, BOOLEAN UpperFilter, BOOLEAN Beginning)
+DWORD WINAPI IRPMonDllClassWatchUnregister(PWCHAR ClassGuid, BOOLEAN UpperFilter, BOOLEAN Beginning)
 {
 	return DriverComClassWatchUnregister(ClassGuid, UpperFilter, Beginning);
 }
 
 
-IRPMONDLL_API DWORD WINAPI IRPMonDllClassWatchEnum(PCLASS_WATCH_RECORD *Array, PULONG Count)
+DWORD WINAPI IRPMonDllClassWatchEnum(PCLASS_WATCH_RECORD *Array, PULONG Count)
 {
 	return DriverComClassWatchEnum(Array, Count);
 }
 
-IRPMONDLL_API VOID WINAPI IRPMonDllClassWatchEnumFree(PCLASS_WATCH_RECORD Array, ULONG Count)
+
+VOID WINAPI IRPMonDllClassWatchEnumFree(PCLASS_WATCH_RECORD Array, ULONG Count)
 {
 	DriverComClassWatchEnumFree(Array, Count);
 
@@ -263,26 +268,25 @@ IRPMONDLL_API VOID WINAPI IRPMonDllClassWatchEnumFree(PCLASS_WATCH_RECORD Array,
 /*                  DRIVER NAME WATCHES                                 */
 /************************************************************************/
 
-
-IRPMONDLL_API DWORD WINAPI IRPMonDllDriverNameWatchRegister(PWCHAR DriverName, PDRIVER_MONITOR_SETTINGS MonitorSettings)
+DWORD WINAPI IRPMonDllDriverNameWatchRegister(PWCHAR DriverName, PDRIVER_MONITOR_SETTINGS MonitorSettings)
 {
 	return DriverComDriverNameWatchRegister(DriverName, MonitorSettings);
 }
 
 
-IRPMONDLL_API DWORD WINAPI IRPMonDllDriverNameWatchUnregister(PWCHAR DriverName)
+DWORD WINAPI IRPMonDllDriverNameWatchUnregister(PWCHAR DriverName)
 {
 	return DriverComDriverNameWatchUnregister(DriverName);
 }
 
 
-IRPMONDLL_API DWORD WINAPI IRPMonDllDriverNameWatchEnum(PDRIVER_NAME_WATCH_RECORD *Array, PULONG Count)
+DWORD WINAPI IRPMonDllDriverNameWatchEnum(PDRIVER_NAME_WATCH_RECORD *Array, PULONG Count)
 {
 	return DriverComDriverNameWatchEnum(Array, Count);
 }
 
 
-IRPMONDLL_API VOID WINAPI IRPMonDllDriverNameWatchEnumFree(PDRIVER_NAME_WATCH_RECORD Array, ULONG Count)
+VOID WINAPI IRPMonDllDriverNameWatchEnumFree(PDRIVER_NAME_WATCH_RECORD Array, ULONG Count)
 {
 	DriverComDriverNameWatchEnumFree(Array, Count);
 
@@ -290,25 +294,25 @@ IRPMONDLL_API VOID WINAPI IRPMonDllDriverNameWatchEnumFree(PDRIVER_NAME_WATCH_RE
 }
 
 
-IRPMONDLL_API DWORD WINAPI IRPMonDllEmulateDriverDevices(void)
+DWORD WINAPI IRPMonDllEmulateDriverDevices(void)
 {
 	return DriverComEmulateDriverDevices();
 }
 
 
-IRPMONDLL_API DWORD WINAPI IRPMonDllEmulateProcesses(void)
+DWORD WINAPI IRPMonDllEmulateProcesses(void)
 {
 	return DriverComEmulateProcesses();
 }
 
 
-IRPMONDLL_API DWORD WINAPI IRPMonDllSettingsQuery(PIRPMNDRV_SETTINGS Settings)
+DWORD WINAPI IRPMonDllSettingsQuery(PIRPMNDRV_SETTINGS Settings)
 {
 	return DriverComSettingsQuery(Settings);
 }
 
 
-IRPMONDLL_API DWORD WINAPI IRPMonDllSettingsSet(PIRPMNDRV_SETTINGS Settings, BOOLEAN Save)
+DWORD WINAPI IRPMonDllSettingsSet(PIRPMNDRV_SETTINGS Settings, BOOLEAN Save)
 {
 	return DriverComSettingsSet(Settings, Save);
 }
@@ -319,7 +323,7 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllSettingsSet(PIRPMNDRV_SETTINGS Settings, BOO
 /************************************************************************/
 
 
-IRPMONDLL_API BOOL WINAPI IRPMonDllInitialized(VOID)
+BOOL WINAPI IRPMonDllInitialized(VOID)
 {
 	BOOL ret = FALSE;
 	DEBUG_ENTER_FUNCTION_NO_ARGS();
@@ -331,7 +335,7 @@ IRPMONDLL_API BOOL WINAPI IRPMonDllInitialized(VOID)
 }
 
 
-IRPMONDLL_API DWORD WINAPI IRPMonDllInitialize(const IRPMON_INIT_INFO *Info)
+DWORD WINAPI IRPMonDllInitialize(const IRPMON_INIT_INFO *Info)
 {
 	DWORD ret = ERROR_GEN_FAILURE;
 	DEBUG_ENTER_FUNCTION("Info=0x%p", Info);
@@ -343,7 +347,7 @@ IRPMONDLL_API DWORD WINAPI IRPMonDllInitialize(const IRPMON_INIT_INFO *Info)
 }
 
 
-IRPMONDLL_API VOID WINAPI IRPMonDllFinalize(VOID)
+VOID WINAPI IRPMonDllFinalize(VOID)
 {
 	DEBUG_ENTER_FUNCTION_NO_ARGS();
 
@@ -354,22 +358,6 @@ IRPMONDLL_API VOID WINAPI IRPMonDllFinalize(VOID)
 }
 
 
-/************************************************************************/
-/*                          DLL MAIN                                    */
-/************************************************************************/
-
-
-BOOL WINAPI DllMain(_In_  HINSTANCE hinstDLL, _In_  DWORD fdwReason, _In_  LPVOID lpvReserved)
-{
-	BOOL ret = FALSE;
-	DEBUG_ENTER_FUNCTION("hinstDLL=0x%p; fdwReason=%u; lpReserved=0x%p", hinstDLL, fdwReason, lpvReserved);
-
-	switch (fdwReason) {
-		case DLL_PROCESS_ATTACH:
-			ret = DisableThreadLibraryCalls(hinstDLL);
-			break;
-	}
-
-	DEBUG_EXIT_FUNCTION("%u", ret);
-	return ret;
+#ifdef __cplusplus
 }
+#endif
