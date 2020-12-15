@@ -67,6 +67,18 @@ Type
       Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
     end;
 
+  TCreatePipeRequest = Class (TIRPRequest)
+    Public
+      Function GetColumnName(AColumnType:ERequestListModelColumnType):WideString; Override;
+      Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
+    end;
+
+  TCreateMailslotRequest = Class (TIRPRequest)
+    Public
+      Function GetColumnName(AColumnType:ERequestListModelColumnType):WideString; Override;
+      Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
+    end;
+
   TDeviceControlRequest = Class (TIRPRequest)
     Public
       Function GetColumnName(AColumnType:ERequestListModelColumnType):WideString; Override;
@@ -503,6 +515,7 @@ begin
 Result := Nil;
 Case ARequest.MajorFunction Of
   0 : Result := TCreateRequest.Create(ARequest);
+  1 : Result := TCreatePipeRequest.Create(ARequest);
   2, 18 : Result := TCloseCleanupRequest.Create(ARequest);
   3, 4   : Result := TReadWriteRequest.Create(ARequest);
   5, 6   : Result := TQuerySetRequest.Create(ARequest);
@@ -510,6 +523,7 @@ Case ARequest.MajorFunction Of
   12 : ;     // DirectoryControl
   13 : Result := TFileSystemControlRequest.Create(ARequest);
   14, 15 : Result := TDeviceControlRequest.Create(ARequest);
+  19 : Result := TCreateMailslotRequest.Create(ARequest);
   20 : Result := TQuerySecurityRequest.Create(ARequest);
   21 : Result := TSetSecurityRequest.Create(ARequest);
   22 : begin
@@ -582,6 +596,55 @@ Case AColumnType Of
   Else Result := Inherited GetColumnName(AColumnType);
   end;
 end;
+
+(** TCreatePipeRequest **)
+
+Function TCreatePipeRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
+begin
+Result := True;
+Case AColumnType Of
+  rlmctArg1: AResult := Format('0x%p', [FArgs.Create.SecurityContext]);
+  rlmctArg2: AResult := CreateOptionsToString(FArgs.Create.Options);
+  rlmctArg3: AResult := ShareAccessToString(FArgs.Create.ShareAccess);
+  rlmctArg4: Result := False;
+  Else Result := Inherited GetColumnValue(AColumnType, AResult);
+  end;
+end;
+
+Function TCreatePipeRequest.GetColumnName(AColumnType:ERequestListModelColumnType):WideString;
+begin
+Case AColumnType Of
+  rlmctArg1 : Result := 'Security context';
+  rlmctArg2 : Result := 'Options';
+  rlmctArg3 : Result := 'Access and attributes';
+  Else Result := Inherited GetColumnName(AColumnType);
+  end;
+end;
+
+(** TCreateMailslotRequest **)
+
+Function TCreateMailslotRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
+begin
+Result := True;
+Case AColumnType Of
+  rlmctArg1: AResult := Format('0x%p', [FArgs.Create.SecurityContext]);
+  rlmctArg2: AResult := CreateOptionsToString(FArgs.Create.Options);
+  rlmctArg3: AResult := ShareAccessToString(FArgs.Create.ShareAccess);
+  rlmctArg4: Result := False;
+  Else Result := Inherited GetColumnValue(AColumnType, AResult);
+  end;
+end;
+
+Function TCreateMailslotRequest.GetColumnName(AColumnType:ERequestListModelColumnType):WideString;
+begin
+Case AColumnType Of
+  rlmctArg1 : Result := 'Security context';
+  rlmctArg2 : Result := 'Options';
+  rlmctArg3 : Result := 'Access and attributes';
+  Else Result := Inherited GetColumnName(AColumnType);
+  end;
+end;
+
 
 (** TDeviceControlRequest **)
 
