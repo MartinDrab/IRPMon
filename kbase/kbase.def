@@ -81,3 +81,5 @@ EXPORTS
 	ProcessQueryFullImageName
 	ProcessQueryCommandLine
 	FileNameFromFileObject
+	UtilsModuleInit
+	UtilsModuleFinit
