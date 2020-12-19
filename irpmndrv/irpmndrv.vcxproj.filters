@@ -60,6 +60,9 @@
     <ClCompile Include="..\shared\request.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="boot-log.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="driver.h">
@@ -129,6 +132,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="image-load.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="boot-log.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

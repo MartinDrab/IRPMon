@@ -3,6 +3,7 @@
 #define __PNP_DRIVER_WATCH_H__
 
 #include <ntifs.h>
+#include "ioctls.h"
 #include "kernel-shared.h"
 #include "hash_table.h"
 
@@ -30,6 +31,8 @@ VOID PDWClassWatchesUnregister(VOID);
 NTSTATUS PWDDriverNameRegister(PUNICODE_STRING Name, PDRIVER_MONITOR_SETTINGS Settings);
 NTSTATUS PWDDriverNameUnregister(PUNICODE_STRING Name);
 NTSTATUS PWDDriverNameEnumerate(PIOCTL_IRPMNDRV_DRIVER_WATCH_ENUM_OUTPUT Buffer, SIZE_T Length, PSIZE_T ReturnLength, KPROCESSOR_MODE AccessMode);
+
+NTSTATUS PDWMonitorFileSystems(BOOLEAN Monitor);
 
 NTSTATUS PWDModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context);
 VOID PWDModuleFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context);

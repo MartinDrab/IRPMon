@@ -18,6 +18,7 @@
 #include "driver-settings.h"
 #include "devext-hooks.h"
 #include "image-load.h"
+#include "boot-log.h"
 #include "driver.h"
 
 
@@ -421,11 +422,12 @@ static DRIVER_MODULE_ENTRY_PARAMETERS _moduleEntries[] = {
 	{HookModuleInit, HookModuleFinit, NULL},
 	{HookHandlerModuleInit, HookHandlerModuleFinit, NULL},
 	{DevExtHooksModuleInit, DevExtHooksModuleFinit, NULL},
+	{PWDModuleInit, PWDModuleFinit, NULL},
 	{UMServicesModuleInit, UMServicesModuleFinit, NULL},
 	{ProcessEventsModuleInit, ProcessEventsModuleFinit, NULL},
 	{ImageLoadModuleInit, ImageLoadModuleFinit, NULL},
-	{PWDModuleInit, PWDModuleFinit, NULL},
 	{DataLoggerModuleInit, DataLoggerModuleFinit, NULL},
+	{BLModuleInit, BLModuleFinit, NULL},
 	{DriverInit, DriverFinit, NULL},
 };
 

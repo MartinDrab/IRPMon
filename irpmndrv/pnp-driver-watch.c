@@ -43,6 +43,8 @@ static UNICODE_STRING _driverServiceName;
 static ULONG _currentControlSet = 1;
 static RTL_OSVERSIONINFOW _versionInfo;
 
+static volatile BOOLEAN _fsMonitoring = FALSE;
+
 /************************************************************************/
 /*                    HELPER FUNCTIONS                                  */
 /************************************************************************/
@@ -174,7 +176,7 @@ static NTSTATUS _CheckDriver(PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT DeviceO
 	status = ObQueryNameString(DriverObject, NULL, 0, &returnLength);
 	if (status == STATUS_INFO_LENGTH_MISMATCH) {
 		returnLength += sizeof(UNICODE_STRING) + sizeof(WCHAR);
-		oni = (POBJECT_NAME_INFORMATION)HeapMemoryAllocPaged(returnLength);
+		oni = HeapMemoryAllocPaged(returnLength);
 		if (oni != NULL) {
 			RtlSecureZeroMemory(oni, returnLength);
 			status = ObQueryNameString(DriverObject, oni, returnLength, &returnLength);
@@ -187,11 +189,12 @@ static NTSTATUS _CheckDriver(PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT DeviceO
 					if (NT_SUCCESS(status)) {
 						status = DriverHookRecordEnable(hookRecord, TRUE);
 						if (NT_SUCCESS(status)) {
-						
-							status = DriverHookRecordAddDevice(hookRecord, DeviceObject, NULL, NULL, TRUE, &deviceRecord);
-							if (NT_SUCCESS(status)) {
+							if (DeviceObject != NULL) {
+								status = DriverHookRecordAddDevice(hookRecord, DeviceObject, NULL, NULL, TRUE, &deviceRecord);
+								if (NT_SUCCESS(status)) {
 
-								DeviceHookRecordDereference(deviceRecord);
+									DeviceHookRecordDereference(deviceRecord);
+								}
 							}
 						}
 
@@ -214,9 +217,11 @@ static NTSTATUS _CheckDriver(PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT DeviceO
 		if (NT_SUCCESS(status))
 			RequestQueueInsert(rq);
 
-		status = RequestXXXDetectedCreate(ertDeviceDetected, DriverObject, DeviceObject, &rq);
-		if (NT_SUCCESS(status))
-			RequestQueueInsert(rq);
+		if (DeviceObject != NULL) {
+			status = RequestXXXDetectedCreate(ertDeviceDetected, DriverObject, DeviceObject, &rq);
+			if (NT_SUCCESS(status))
+				RequestQueueInsert(rq);
+		}
 	}
 
 	DEBUG_EXIT_FUNCTION("0x%x", status);
@@ -242,6 +247,18 @@ static NTSTATUS _AddDevice(PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT PhysicalD
 
 	DEBUG_EXIT_FUNCTION("0x%x", status);
 	return status;
+}
+
+
+static void _FileSystemCallback(PDEVICE_OBJECT DeviceObject, BOOLEAN FsActive)
+{
+	DEBUG_ENTER_FUNCTION("DeviceObject=0x%p; FsActive=%u", DeviceObject, FsActive);
+
+	if (FsActive)
+		_CheckDriver(DeviceObject->DriverObject, DeviceObject);
+
+	DEBUG_EXIT_FUNCTION_VOID();
+	return;
 }
 
 
@@ -434,7 +451,7 @@ NTSTATUS PDWClassRegister(PGUID ClassGuid, BOOLEAN UpperFilter, BOOLEAN Beginnin
 	ExAcquireResourceExclusiveLite(&_classGuidsLock, TRUE);
 	h = HashTableGet(targetTable, ClassGuid);
 	if (h == NULL) {
-		rec = (PDEVICE_CLASS_WATCH_RECORD)HeapMemoryAllocPaged(sizeof(DEVICE_CLASS_WATCH_RECORD));
+		rec = HeapMemoryAllocPaged(sizeof(DEVICE_CLASS_WATCH_RECORD));
 		if (rec != NULL) {
 			memset(rec, 0, sizeof(DEVICE_CLASS_WATCH_RECORD));
 			rec->ClassGuid = *ClassGuid;
@@ -717,6 +734,28 @@ NTSTATUS PWDDriverNameEnumerate(PIOCTL_IRPMNDRV_DRIVER_WATCH_ENUM_OUTPUT Buffer,
 }
 
 
+NTSTATUS PDWMonitorFileSystems(BOOLEAN Monitor)
+{
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION("Monitor=%u", Monitor);
+
+	status = STATUS_SUCCESS;
+	if (Monitor) {
+		if (!_fsMonitoring) {
+			status = IoRegisterFsRegistrationChange(_driverObject, _FileSystemCallback);
+			_fsMonitoring = NT_SUCCESS(status);
+		} else status = STATUS_OBJECT_NAME_COLLISION;
+	} else {
+		if (_fsMonitoring) {
+			IoUnregisterFsRegistrationChange(_driverObject, _FileSystemCallback);
+			_fsMonitoring = FALSE;
+		}
+	}
+
+	DEBUG_EXIT_FUNCTION("0x%x", status);
+	return status;
+}
+
 /************************************************************************/
 /*                INITIALIZATION AND FINALIZATION                       */
 /************************************************************************/
@@ -778,6 +817,7 @@ VOID PWDModuleFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, P
 	UNREFERENCED_PARAMETER(RegistryPath);
 	UNREFERENCED_PARAMETER(Context);
 
+	PDWMonitorFileSystems(FALSE);
 	StringHashTableDestroy(_driverNameTable);
 	ExDeleteResourceLite(&_driverNamesLock);
 	HashTableDestroy(_upperClassGuidTable);

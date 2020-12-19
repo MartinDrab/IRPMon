@@ -545,7 +545,25 @@ typedef struct _IRPMNDRV_SETTINGS {
 	/// If set to <c>FALSE</c> the limit is not enforced. If set to <c>TRUE</c>,
 	/// data are stripped to match the limit, if necessary.
 	BOOLEAN StripData;
+	/// If set to TRUE, the drive logs requests during
+	/// system startup
+	BOOLEAN LogBoot;
 } IRPMNDRV_SETTINGS, *PIRPMNDRV_SETTINGS;
+
+/**************/
+/* LOG FILES  */
+/**************/
+
+#define LOGHEADER_SIGNATURE			0x474f4c4e4d505249ULL
+#define LOGHEADER_VERSION			1
+#define LOGHEADER_ARCHITECTURE_X86	1
+#define LOGHEADER_ARCHITECTURE_X64	2
+
+typedef struct _BINARY_LOG_HEADER {
+	ULONG64 Signature;
+	ULONG Version;
+	ULONG Architecture;
+} BINARY_LOG_HEADER, *PBINARY_LOG_HEADER;
 
 
 

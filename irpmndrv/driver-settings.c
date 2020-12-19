@@ -44,6 +44,7 @@ static NTSTATUS _LoadFromRegistry(PUNICODE_STRING ServiceKey)
 				L"ProcessEmulateOnConnect",
 				L"DriverSnapshotOnConnect",
 				L"StripData",
+				L"LogBoot",
 			};
 			BOOLEAN *booleanSettingsValues[] = {
 				&_globalSettings.ReqQueueClearOnDisconnect,
@@ -54,6 +55,7 @@ static NTSTATUS _LoadFromRegistry(PUNICODE_STRING ServiceKey)
 				&_globalSettings.ProcessEmulateOnConnect,
 				&_globalSettings.DriverSnapshotOnConnect,
 				&_globalSettings.StripData,
+				&_globalSettings.LogBoot,
 			};
 			ULONG retLength = 0;
 			PKEY_VALUE_FULL_INFORMATION kvfi = NULL;
@@ -122,7 +124,6 @@ static NTSTATUS _LoadFromRegistry(PUNICODE_STRING ServiceKey)
 }
 
 
-
 static NTSTATUS _SaveToRegistry(PUNICODE_STRING ServiceKey)
 {
 	ULONG keyDisposition = 0;
@@ -149,6 +150,7 @@ static NTSTATUS _SaveToRegistry(PUNICODE_STRING ServiceKey)
 				L"ProcessEmulateOnConnect",
 				L"DriverSnapshotOnConnect",
 				L"StripData",
+				L"LogBoot"
 			};
 			BOOLEAN *booleanSettingsValues[] = {
 				&_globalSettings.ReqQueueClearOnDisconnect,
@@ -159,6 +161,7 @@ static NTSTATUS _SaveToRegistry(PUNICODE_STRING ServiceKey)
 				&_globalSettings.ProcessEmulateOnConnect,
 				&_globalSettings.DriverSnapshotOnConnect,
 				&_globalSettings.StripData,
+				&_globalSettings.LogBoot,
 			};
 			const wchar_t *ulongValueNames[] = {
 				L"StripDataThreshold",
@@ -229,6 +232,7 @@ NTSTATUS DriverSettingsSet(const IRPMNDRV_SETTINGS *Settings, BOOLEAN Save)
 	_globalSettings.ReqQueueCollectWhenDisconnected = Settings->ReqQueueCollectWhenDisconnected;
 	_globalSettings.DataStripThreshold = Settings->DataStripThreshold;
 	_globalSettings.StripData = Settings->StripData;
+	_globalSettings.LogBoot = Settings->LogBoot;
 	if (Save)
 		status = _SaveToRegistry(&_uServiceKey);
 
@@ -260,6 +264,7 @@ NTSTATUS DriverSettingsInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING Registr
 		_globalSettings.ReqQueueCollectWhenDisconnected = FALSE;
 		_globalSettings.StripData = TRUE;
 		_globalSettings.DataStripThreshold = 1024;
+		_globalSettings.LogBoot = FALSE;
 		status = _LoadFromRegistry(RegistryPath);
 		if (NT_SUCCESS(status))
 			status = _SaveToRegistry(RegistryPath);
