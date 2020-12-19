@@ -152,6 +152,7 @@ NTSTATUS RequestQueueConnect()
 				}
 
 				_driverSettings->ReqQueueConnected = TRUE;
+				BLDisable();
 			}
 
 			if (!NT_SUCCESS(status)) {

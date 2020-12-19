@@ -11,6 +11,7 @@
 #include "req-queue.h"
 #include "multistring.h"
 #include "regman.h"
+#include "boot-log.h"
 #include "pnp-driver-watch.h"
 
 
@@ -659,10 +660,18 @@ NTSTATUS PWDDriverNameRegister(PUNICODE_STRING Name, PDRIVER_MONITOR_SETTINGS Se
 	KeEnterCriticalRegion();
 	ExAcquireResourceExclusiveLite(&_driverNamesLock, TRUE);
 	if (StringHashTableGetUnicodeString(_driverNameTable, Name) == NULL) {
-		rec = (PDRIVER_NAME_WATCH_RECORD)HeapMemoryAllocNonPaged(sizeof(DRIVER_NAME_WATCH_RECORD));
+		rec = HeapMemoryAllocNonPaged(sizeof(DRIVER_NAME_WATCH_RECORD));
 		if (rec != NULL) {
 			rec->MonitorSettings = *Settings;
 			status = StringHashTableInsertUnicodeString(_driverNameTable, Name, rec);
+			if (NT_SUCCESS(status)) {
+				status = BLDriverNameSave(Name, Settings);
+				if (!NT_SUCCESS(status))
+					StringHashTableDeleteUnicodeString(_driverNameTable, Name);
+			}
+
+			if (!NT_SUCCESS(status))
+				HeapMemoryFree(rec);
 		} else status = STATUS_INSUFFICIENT_RESOURCES;
 	} else status = STATUS_ALREADY_REGISTERED;
 
@@ -684,6 +693,7 @@ NTSTATUS PWDDriverNameUnregister(PUNICODE_STRING Name)
 	ExAcquireResourceExclusiveLite(&_driverNamesLock, TRUE);
 	rec = (PDRIVER_NAME_WATCH_RECORD)StringHashTableDeleteUnicodeString(_driverNameTable, Name);
 	if (rec != NULL) {
+		BLDriverNameDelete(Name);
 		HeapMemoryFree(rec);
 		status = STATUS_SUCCESS;
 	} else status = STATUS_NOT_FOUND;

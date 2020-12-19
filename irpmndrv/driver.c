@@ -423,11 +423,11 @@ static DRIVER_MODULE_ENTRY_PARAMETERS _moduleEntries[] = {
 	{HookHandlerModuleInit, HookHandlerModuleFinit, NULL},
 	{DevExtHooksModuleInit, DevExtHooksModuleFinit, NULL},
 	{PWDModuleInit, PWDModuleFinit, NULL},
-	{UMServicesModuleInit, UMServicesModuleFinit, NULL},
-	{ProcessEventsModuleInit, ProcessEventsModuleFinit, NULL},
-	{ImageLoadModuleInit, ImageLoadModuleFinit, NULL},
 	{DataLoggerModuleInit, DataLoggerModuleFinit, NULL},
 	{BLModuleInit, BLModuleFinit, NULL},
+	{ProcessEventsModuleInit, ProcessEventsModuleFinit, NULL},
+	{ImageLoadModuleInit, ImageLoadModuleFinit, NULL},
+	{UMServicesModuleInit, UMServicesModuleFinit, NULL},
 	{DriverInit, DriverFinit, NULL},
 };
 

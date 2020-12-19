@@ -17,7 +17,7 @@ static LIST_ENTRY _blNPCache;
 static KSPIN_LOCK _blNPLock;
 static volatile BOOLEAN _blEnabled = FALSE;
 static PETHREAD _blSavingThread = NULL;
-
+static UNICODE_STRING _registryPath;
 
 
 static void _ListHeadMove(PLIST_ENTRY Original, PLIST_ENTRY New)
@@ -309,6 +309,10 @@ static NTSTATUS _SaveDriverMonitoringSettings(HANDLE KeyHandle, const DRIVER_MON
 
 static NTSTATUS _LoadSettings(PUNICODE_STRING RegistryPath)
 {
+	ULONG index = 0;
+	ULONG retLength = 0;
+	PKEY_BASIC_INFORMATION kbi = NULL;
+	HANDLE driverKey = NULL;
 	HANDLE blKey = NULL;
 	HANDLE servicesKey = NULL;
 	OBJECT_ATTRIBUTES oa;
@@ -319,36 +323,172 @@ static NTSTATUS _LoadSettings(PUNICODE_STRING RegistryPath)
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("RegistryPath=\"%wZ\"", RegistryPath);
 
+	status = STATUS_SUCCESS;
 	globalSettings = DriverSettingsGet();
 	_blEnabled = globalSettings->LogBoot;
-	InitializeObjectAttributes(&oa, RegistryPath, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, NULL);
-	status = ZwOpenKey(&servicesKey, KEY_READ, &oa);
+	if (_blEnabled) {
+		InitializeObjectAttributes(&oa, RegistryPath, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, NULL);
+		status = ZwOpenKey(&servicesKey, KEY_READ, &oa);
+		if (NT_SUCCESS(status)) {
+			RtlInitUnicodeString(&uName, L"BootLogging");
+			InitializeObjectAttributes(&oa, &uName, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, servicesKey, NULL);
+			status = ZwOpenKey(&blKey, KEY_READ, &oa);
+			if (NT_SUCCESS(status)) {
+				do {
+					status = ZwEnumerateKey(blKey, index, KeyBasicInformation, NULL, 0, &retLength);
+					if (status == STATUS_BUFFER_TOO_SMALL) {
+						kbi = HeapMemoryAllocPaged(retLength);
+						if (kbi != NULL) {
+							status = ZwEnumerateKey(blKey, index, KeyBasicInformation, kbi, retLength, &retLength);
+							if (NT_SUCCESS(status)) {
+								uName.Length = (USHORT)kbi->NameLength;
+								uName.MaximumLength = uName.Length;
+								uName.Buffer = kbi->Name;
+								InitializeObjectAttributes(&oa, &uName, OBJ_KERNEL_HANDLE | OBJ_CASE_INSENSITIVE, blKey, NULL);
+								status = ZwOpenKey(&driverKey, KEY_READ, &oa);
+							}
+						
+							HeapMemoryFree(kbi);
+						} else status = STATUS_INSUFFICIENT_RESOURCES;
+					}
+
+					if (NT_SUCCESS(status)) {
+						RtlInitUnicodeString(&uValueName, L"DriverObjectName");
+						status = _RegReadString(driverKey, &uValueName, &uName);
+						if (NT_SUCCESS(status)) {
+							status = _LoadDriverMonitoringSettings(driverKey, &monitorSettings);
+							if (NT_SUCCESS(status))
+								status = PWDDriverNameRegister(&uName, &monitorSettings);
+				
+							HeapMemoryFree(uName.Buffer);
+						}
+
+						ZwClose(driverKey);
+					}
+
+					++index;
+				} while (NT_SUCCESS(status));
+
+				if (status == STATUS_NO_MORE_ENTRIES)
+					status = STATUS_SUCCESS;
+
+				ZwClose(blKey);
+			}
+
+			ZwClose(servicesKey);
+		}
+
+		if (status == STATUS_OBJECT_NAME_NOT_FOUND)
+			status = STATUS_SUCCESS;
+	}
+
+	if (NT_SUCCESS(status) && _blEnabled)
+		status = PDWMonitorFileSystems(TRUE);
+
+	DEBUG_EXIT_FUNCTION("0x%x", status);
+	return status;
+}
+
+
+NTSTATUS BLDriverNameSave(PUNICODE_STRING DriverName, const DRIVER_MONITOR_SETTINGS* Settings)
+{
+	HANDLE driverKey = NULL;
+	HANDLE serviceKey = NULL;
+	HANDLE blKey = NULL;
+	UNICODE_STRING uName;
+	UNICODE_STRING uValueName;
+	OBJECT_ATTRIBUTES oa;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION("DriverName=\"%wZ\"; Settings=0x%p", DriverName, Settings);
+
+	InitializeObjectAttributes(&oa, &_registryPath, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, NULL);
+	status = ZwOpenKey(&serviceKey, KEY_WRITE, &oa);
 	if (NT_SUCCESS(status)) {
 		RtlInitUnicodeString(&uName, L"BootLogging");
-		InitializeObjectAttributes(&oa, &uName, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, servicesKey, NULL);
-		status = ZwOpenKey(&blKey, KEY_READ, &oa);
+		InitializeObjectAttributes(&oa, &uName, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, serviceKey, NULL);
+		status = ZwCreateKey(&blKey, KEY_WRITE, &oa, 0, NULL, 0, NULL);
 		if (NT_SUCCESS(status)) {
-			RtlInitUnicodeString(&uValueName, L"DriverObjectName");
-			status = _RegReadString(blKey, &uValueName, &uName);
+			uName = *DriverName;
+			uName.MaximumLength = uName.Length;
+			uName.Buffer = HeapMemoryAllocPaged(uName.Length);
+			if (uName.Buffer != NULL) {
+				memcpy(uName.Buffer, DriverName->Buffer, uName.Length);
+				for (size_t i = 0; i < uName.Length / sizeof(wchar_t); ++i) {
+					if (uName.Buffer[i] == L'\\')
+						uName.Buffer[i] = L'_';
+				}
+			} else status = STATUS_INSUFFICIENT_RESOURCES;
+
 			if (NT_SUCCESS(status)) {
-				status = _LoadDriverMonitoringSettings(blKey, &monitorSettings);
-				if (NT_SUCCESS(status))
-					status = PWDDriverNameRegister(&uName, &monitorSettings);
-				
+				InitializeObjectAttributes(&oa, &uName, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, blKey, NULL);
+				status = ZwCreateKey(&driverKey, KEY_WRITE, &oa, 0, NULL, 0, NULL);
+				if (NT_SUCCESS(status)) {
+					RtlInitUnicodeString(&uValueName, L"DriverObjectName");
+					status = ZwSetValueKey(driverKey, &uValueName, 0, REG_SZ, DriverName->Buffer, DriverName->Length);
+					if (NT_SUCCESS(status))
+						status = _SaveDriverMonitoringSettings(driverKey, Settings);
+					
+					ZwClose(driverKey);
+				}
+
 				HeapMemoryFree(uName.Buffer);
 			}
 
 			ZwClose(blKey);
 		}
 
-		ZwClose(servicesKey);
+		ZwClose(serviceKey);
 	}
 
-	if (status == STATUS_OBJECT_NAME_NOT_FOUND)
-		status = STATUS_SUCCESS;
+	DEBUG_EXIT_FUNCTION("0x%x", status);
+	return status;
+}
 
-	if (NT_SUCCESS(status) && _blEnabled)
-		status = PDWMonitorFileSystems(TRUE);
+
+NTSTATUS BLDriverNameDelete(PUNICODE_STRING DriverName)
+{
+	HANDLE driverKey = NULL;
+	HANDLE serviceKey = NULL;
+	HANDLE blKey = NULL;
+	UNICODE_STRING uName;
+	OBJECT_ATTRIBUTES oa;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION("DriverName=\"%wZ\"", DriverName);
+
+	InitializeObjectAttributes(&oa, &_registryPath, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, NULL);
+	status = ZwOpenKey(&serviceKey, KEY_WRITE, &oa);
+	if (NT_SUCCESS(status)) {
+		RtlInitUnicodeString(&uName, L"BootLogging");
+		InitializeObjectAttributes(&oa, &uName, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, serviceKey, NULL);
+		status = ZwCreateKey(&blKey, KEY_WRITE, &oa, 0, NULL, 0, NULL);
+		if (NT_SUCCESS(status)) {
+			uName = *DriverName;
+			uName.MaximumLength = uName.Length;
+			uName.Buffer = HeapMemoryAllocPaged(uName.Length);
+			if (uName.Buffer != NULL) {
+				memcpy(uName.Buffer, DriverName->Buffer, uName.Length);
+				for (size_t i = 0; i < uName.Length / sizeof(wchar_t); ++i) {
+					if (uName.Buffer[i] == L'\\')
+						uName.Buffer[i] = L'_';
+				}
+			} else status = STATUS_INSUFFICIENT_RESOURCES;
+
+			if (NT_SUCCESS(status)) {
+				InitializeObjectAttributes(&oa, &uName, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, blKey, NULL);
+				status = ZwCreateKey(&driverKey, DELETE, &oa, 0, NULL, 0, NULL);
+				if (NT_SUCCESS(status)) {
+					status = ZwDeleteKey(driverKey);
+					ZwClose(driverKey);
+				}
+
+				HeapMemoryFree(uName.Buffer);
+			}
+
+			ZwClose(blKey);
+		}
+
+		ZwClose(serviceKey);
+	}
 
 	DEBUG_EXIT_FUNCTION("0x%x", status);
 	return status;
@@ -372,6 +512,7 @@ void BLLogRequest(PREQUEST_HEADER Request)
 	DEBUG_EXIT_FUNCTION_VOID();
 	return;
 }
+
 
 BOOLEAN BLEnabled(void)
 {
@@ -403,15 +544,24 @@ NTSTATUS BLModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath,
 	FltInitializePushLock(&_blRequestListLock);
 	InitializeListHead(&_blNPCache);
 	KeInitializeSpinLock(&_blNPLock);
-	status = _LoadSettings(RegistryPath);
-	if (NT_SUCCESS(status)) {
-		InitializeObjectAttributes(&oa, NULL, OBJ_KERNEL_HANDLE, NULL, NULL);
-		status = PsCreateSystemThread(&hThread, SYNCHRONIZE, &oa, NULL, &clientId, _BLSaveThread, NULL);
+	_registryPath = *RegistryPath;
+	_registryPath.MaximumLength = _registryPath.Length;
+	_registryPath.Buffer = HeapMemoryAllocPaged(_registryPath.Length);
+	if (_registryPath.Buffer != NULL) {
+		memcpy(_registryPath.Buffer, RegistryPath->Buffer, _registryPath.Length);
+		status = _LoadSettings(RegistryPath);
 		if (NT_SUCCESS(status)) {
-			status = ObReferenceObjectByHandle(hThread, SYNCHRONIZE, *PsThreadType, KernelMode, &_blSavingThread, NULL);
-			ZwClose(hThread);
+			InitializeObjectAttributes(&oa, NULL, OBJ_KERNEL_HANDLE, NULL, NULL);
+			status = PsCreateSystemThread(&hThread, SYNCHRONIZE, &oa, NULL, &clientId, _BLSaveThread, NULL);
+			if (NT_SUCCESS(status)) {
+				status = ObReferenceObjectByHandle(hThread, SYNCHRONIZE, *PsThreadType, KernelMode, &_blSavingThread, NULL);
+				ZwClose(hThread);
+			}
 		}
-	}
+
+		if (!NT_SUCCESS(status))
+			HeapMemoryFree(_registryPath.Buffer);
+	} else status = STATUS_INSUFFICIENT_RESOURCES;
 
 	DEBUG_EXIT_FUNCTION("0x%x", status);
 	return status;
@@ -424,6 +574,7 @@ void BLModuleFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PV
 
 	BLDisable();
 	ObDereferenceObject(_blSavingThread);
+	HeapMemoryFree(_registryPath.Buffer);
 
 	DEBUG_EXIT_FUNCTION_VOID();
 	return;
