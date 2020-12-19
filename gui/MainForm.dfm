@@ -1091,6 +1091,11 @@ object MainFrm: TMainFrm
         Caption = 'Max request data size'
         OnClick = DriverSettingsMenuItemClick
       end
+      object LogBootMenuItem: TMenuItem
+        Tag = 9
+        Caption = 'Log boot'
+        OnClick = DriverSettingsMenuItemClick
+      end
     end
     object ColumnsMenuItem: TMenuItem
       Caption = 'Columns'

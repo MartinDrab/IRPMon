@@ -82,6 +82,7 @@ Type
     CopyMenuItem: TMenuItem;
     CopyVisibleColumnsMenuItem: TMenuItem;
     CopyWholeLineMenuItem: TMenuItem;
+    LogBootMenuItem: TMenuItem;
     Procedure ClearMenuItemClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure CaptureEventsMenuItemClick(Sender: TObject);
@@ -537,6 +538,7 @@ FileObjectEventsCollectMenuItem.Enabled := (err = ERROR_SUCCESS);
 DriverSnapshotEventsCollectMenuItem.Enabled := (err = ERROR_SUCCESS);
 ProcessEmulateOnConnectMenuItem.Enabled := (err = ERROR_SUCCESS);
 DriverSnapshotOnConnectMenuItem.Enabled := (err = ERROR_SUCCESS);
+LogBootMenuItem.Enabled := (err = ERROR_SUCCESS);
 If err = ERROR_SUCCESS Then
   begin
   ReqQueueClearOnDisconnectMenuItem.Checked := settings.ReqQueueClearOnDisconnect;
@@ -548,6 +550,7 @@ If err = ERROR_SUCCESS Then
   DriverSnapshotOnConnectMenuItem.Checked := settings.DriverSnapshotOnConnect;
   StripRequestDataMenuItem.Checked := settings.StripData;
   MaxRequestDataSizeMenuItem.Caption := Format('Max request data size: %u', [settings.DataStripThreshold]);
+  LogBootMenuItem.Checked := settings.LogBoot;
   end;
 end;
 
@@ -577,6 +580,7 @@ If err = ERROR_SUCCESS Then
     6 : pv := @settings.DriverSnapshotOnConnect;
     7 : pv := @settings.StripData;
     8 : puv := @settings.DataStripThreshold;
+    9 : pv := @Settings.LogBoot;
     end;
 
   If Assigned(puv) Then

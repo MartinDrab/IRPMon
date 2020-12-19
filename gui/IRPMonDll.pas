@@ -863,6 +863,7 @@ Type
 	  DriverSnapshotOnConnect : ByteBool;
     DataStripThreshold : Cardinal;
     StripData : ByteBool;
+    LogBoot : ByteBool;
     end;
   IRPMNDRV_SETTINGS = _IRPMNDRV_SETTINGS;
   PIRPMNDRV_SETTINGS = ^IRPMNDRV_SETTINGS;
