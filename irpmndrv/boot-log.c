@@ -86,7 +86,7 @@ static NTSTATUS _FlushBootRequests(HANDLE FileHandle)
 	_NPCacheFlush(&reqsToSave);
 	FltAcquirePushLockExclusive(&_blRequestListLock);
 	_AddTailList(&_blRequestListHead, &reqsToSave);
-	_ListHeadMove(&_blNPCache, &reqsToSave);
+	_ListHeadMove(&_blRequestListHead, &reqsToSave);
 	FltReleasePushLock(&_blRequestListLock);
 	tmp = CONTAINING_RECORD(&reqsToSave.Flink, REQUEST_HEADER, Entry);
 	while (&tmp->Entry != &reqsToSave) {
