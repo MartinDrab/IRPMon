@@ -22,11 +22,13 @@ static UNICODE_STRING _registryPath;
 
 static void _ListHeadMove(PLIST_ENTRY Original, PLIST_ENTRY New)
 {
-	New->Flink = Original->Flink;
-	New->Blink = Original->Blink;
-	New->Flink->Blink = New;
-	New->Blink->Flink = New;
-	InitializeListHead(Original);
+	InitializeListHead(New);
+	if (!IsListEmpty(Original)) {
+		*New = *Original;
+		New->Flink->Blink = New;
+		New->Blink->Flink = New;
+		InitializeListHead(Original);
+	}
 
 	return;
 }
@@ -35,9 +37,9 @@ static void _ListHeadMove(PLIST_ENTRY Original, PLIST_ENTRY New)
 static void _AddTailList(PLIST_ENTRY Head, PLIST_ENTRY List)
 {
 	if (!IsListEmpty(List)) {
-		Head->Blink->Flink = List->Flink;
 		List->Flink->Blink = Head->Blink;
 		List->Blink->Flink = Head;
+		Head->Blink->Flink = List->Flink;
 		Head->Blink = List->Blink;
 		InitializeListHead(List);
 	}
@@ -82,6 +84,7 @@ static NTSTATUS _FlushBootRequests(HANDLE FileHandle)
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("FileHandle=0x%p", FileHandle);
 
+	status = STATUS_SUCCESS;
 	InitializeListHead(&reqsToSave);
 	_NPCacheFlush(&reqsToSave);
 	FltAcquirePushLockExclusive(&_blRequestListLock);
@@ -92,7 +95,12 @@ static NTSTATUS _FlushBootRequests(HANDLE FileHandle)
 	while (&tmp->Entry != &reqsToSave) {
 		old = tmp;
 		tmp = CONTAINING_RECORD(tmp->Entry.Flink, REQUEST_HEADER, Entry);
+		RtlSecureZeroMemory(&old->Entry, sizeof(old->Entry));
 		status = ZwWriteFile(FileHandle, NULL, NULL, NULL, &iosb, old, (ULONG)RequestGetSize(old), NULL, NULL);
+		if (!NT_SUCCESS(status)) {
+			DEBUG_ERROR("Unable to save request 0x%p to boot log: 0x%p", old, status);
+		}
+
 		RequestMemoryFree(old);
 	}
 
@@ -129,6 +137,10 @@ static void _BLSaveThread(PVOID Context)
 		status = ZwCreateFile(&hFile, FILE_APPEND_DATA | SYNCHRONIZE, &oa, &iosb, NULL, FILE_ATTRIBUTE_NORMAL, 0, FILE_SUPERSEDE, FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0);
 		if (NT_SUCCESS(status)) {
 			status = ZwWriteFile(hFile, NULL, NULL, NULL, &iosb, &hdr, sizeof(hdr), NULL, NULL);
+			if (!NT_SUCCESS(status)) {
+				DEBUG_ERROR("nable to write boot log file header: 0x%x", status);
+			}
+			
 			if (NT_SUCCESS(status)) {
 				while (BLEnabled()) {
 					status = _FlushBootRequests(hFile);
@@ -570,11 +582,26 @@ NTSTATUS BLModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath,
 
 void BLModuleFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context)
 {
+	PREQUEST_HEADER tmp = NULL;
+	PREQUEST_HEADER old = NULL;
 	DEBUG_ENTER_FUNCTION("", DriverObject, RegistryPath, Context);
 
 	BLDisable();
 	ObDereferenceObject(_blSavingThread);
 	HeapMemoryFree(_registryPath.Buffer);
+	tmp = CONTAINING_RECORD(&_blNPCache.Flink, REQUEST_HEADER, Entry);
+	while (&tmp->Entry != &_blNPCache) {
+		old = tmp;
+		tmp = CONTAINING_RECORD(tmp->Entry.Flink, REQUEST_HEADER, Entry);
+		RequestMemoryFree(old);
+	}
+
+	tmp = CONTAINING_RECORD(&_blRequestListHead.Flink, REQUEST_HEADER, Entry);
+	while (&tmp->Entry != &_blRequestListHead) {
+		old = tmp;
+		tmp = CONTAINING_RECORD(tmp->Entry.Flink, REQUEST_HEADER, Entry);
+		RequestMemoryFree(old);
+	}
 
 	DEBUG_EXIT_FUNCTION_VOID();
 	return;
