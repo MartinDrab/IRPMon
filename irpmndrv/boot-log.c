@@ -457,9 +457,13 @@ static NTSTATUS _BLRegistryCallback(PVOID Context, PVOID Argument1, PVOID Argume
 					if (serviceKey)
 						PDWCheckDrivers();
 				}
+			} else {
+				DEBUG_ERROR("RtlUnicodeStringPrintf(%u): 0x%x", _currentControlSetNumber, status);
 			}
 
 			HeapMemoryFree(uKeyName.Buffer);
+		} else {
+			DEBUG_ERROR("_GetObjectName: 0x%p", status);
 		}
 	}
 
