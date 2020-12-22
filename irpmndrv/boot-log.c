@@ -96,7 +96,7 @@ static NTSTATUS _FlushBootRequests(HANDLE FileHandle)
 	_AddTailList(&_blRequestListHead, &reqsToSave);
 	_ListHeadMove(&_blRequestListHead, &reqsToSave);
 	FltReleasePushLock(&_blRequestListLock);
-	tmp = CONTAINING_RECORD(&reqsToSave.Flink, REQUEST_HEADER, Entry);
+	tmp = CONTAINING_RECORD(reqsToSave.Flink, REQUEST_HEADER, Entry);
 	while (&tmp->Entry != &reqsToSave) {
 		old = tmp;
 		tmp = CONTAINING_RECORD(tmp->Entry.Flink, REQUEST_HEADER, Entry);
@@ -671,14 +671,14 @@ void BLModuleFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PV
 	RegManRawCallbackUnregister(_blRegCallbackHandle);
 	ObDereferenceObject(_blSavingThread);
 	HeapMemoryFree(_registryPath.Buffer);
-	tmp = CONTAINING_RECORD(&_blNPCache.Flink, REQUEST_HEADER, Entry);
+	tmp = CONTAINING_RECORD(_blNPCache.Flink, REQUEST_HEADER, Entry);
 	while (&tmp->Entry != &_blNPCache) {
 		old = tmp;
 		tmp = CONTAINING_RECORD(tmp->Entry.Flink, REQUEST_HEADER, Entry);
 		RequestMemoryFree(old);
 	}
 
-	tmp = CONTAINING_RECORD(&_blRequestListHead.Flink, REQUEST_HEADER, Entry);
+	tmp = CONTAINING_RECORD(_blRequestListHead.Flink, REQUEST_HEADER, Entry);
 	while (&tmp->Entry != &_blRequestListHead) {
 		old = tmp;
 		tmp = CONTAINING_RECORD(tmp->Entry.Flink, REQUEST_HEADER, Entry);
