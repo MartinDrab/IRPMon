@@ -100,7 +100,7 @@ NTSTATUS RegManRawCallbackRegister(EX_CALLBACK_FUNCTION *Callback, void* Context
 
 	status = RegRawCallbackRegister(Callback, Context, Handle);
 
-	DEBUG_EXIT_FUNCTION("0x%x", status);
+	DEBUG_EXIT_FUNCTION("0x%x, *Handle=0x%p", status, *Handle);
 	return status;
 }
 

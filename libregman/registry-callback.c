@@ -117,7 +117,7 @@ static NTSTATUS _RegistryCallback(_In_ PVOID Context, _In_opt_ PVOID Argument1, 
 	FltAcquirePushLockShared(&_rawCallbackLock);
 	rec = CONTAINING_RECORD(_rawCallbackList.Flink, RAW_CALLBACK_RECORD, Entry);
 	while (&rec->Entry != &_rawCallbackList) {
-		status = rec->Callback(rec->Context, Argument2, Argument2);
+		status = rec->Callback(rec->Context, Argument1, Argument2);
 		if (!NT_SUCCESS(status))
 			break;
 
