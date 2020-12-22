@@ -896,7 +896,7 @@ DWORD DriverComDriverNameWatchEnum(PDRIVER_NAME_WATCH_RECORD *Array, PULONG Coun
 	ret = _SynchronousVariableOutputIOCTL(IOCTL_IRPMNDRV_DRIVER_WATCH_ENUM, NULL, 0, outputSize, (PVOID *)&output, &outputSize);
 	if (ret == ERROR_SUCCESS) {
 		if (output->Count > 0) {
-			tmpArray = (PDRIVER_NAME_WATCH_RECORD)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, output->Count*sizeof(CLASS_WATCH_RECORD));
+			tmpArray = (PDRIVER_NAME_WATCH_RECORD)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, output->Count*sizeof(DRIVER_NAME_WATCH_RECORD));
 			if (tmpArray != NULL) {
 				SIZE_T entrySize = 0;
 				PDRIVER_NAME_WATCH_RECORD rec = tmpArray;
