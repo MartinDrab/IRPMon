@@ -93,6 +93,31 @@ VOID RegManValueCallbackUnregiser(_In_ HANDLE CallbackHandle)
 }
 
 
+NTSTATUS RegManRawCallbackRegister(EX_CALLBACK_FUNCTION *Callback, void* Context, PHANDLE Handle)
+{
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION("Callback=0x%p; Context=0x%p; Handle=0xp", Callback, Context, Handle);
+
+	status = RegRawCallbackRegister(Callback, Context, Handle);
+
+	DEBUG_EXIT_FUNCTION("0x%x", status);
+	return status;
+}
+
+
+void RegManRawCallbackUnregister(HANDLE Handle)
+{
+	DEBUG_ENTER_FUNCTION("Handle=0x%p", Handle);
+
+	RegRawCallbackUnregister(Handle);
+
+	DEBUG_EXIT_FUNCTION_VOID();
+	return;
+}
+
+
+
+
 NTSTATUS DllInitialize(_In_ PUNICODE_STRING RegistryPath)
 {
 	RTL_OSVERSIONINFOW versionInfo;

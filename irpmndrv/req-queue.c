@@ -370,7 +370,7 @@ NTSTATUS ListDriversAndDevicesByEvents(PLIST_ENTRY ListHead)
 				if (NT_SUCCESS(status)) {
 					tmpRequest->Flags |= REQUEST_FLAG_EMULATED;
 					InsertTailList(ListHead, &tmpRequest->Entry);
-					status = _EnumDriverDevices(driverArray[j], &deviceArray, &deviceArrayLength);
+					status = UtilsEnumDriverDevices(driverArray[j], &deviceArray, &deviceArrayLength);
 					if (NT_SUCCESS(status)) {
 						for (size_t k = 0; k < deviceArrayLength; ++k) {
 							status = RequestXXXDetectedCreate(ertDeviceDetected, driverArray[j], deviceArray[k], &tmpRequest);

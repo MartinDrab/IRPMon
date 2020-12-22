@@ -37,6 +37,8 @@ NTSTATUS RegManKeyValueAdd(_In_ HANDLE KeyHandle, _In_opt_ PUNICODE_STRING Value
 VOID RegManKeyValueDelete(_In_ HANDLE ValueHandle);
 NTSTATUS RegManValueCallbacksRegister(_In_ HANDLE ValueHandle, _In_ const REGMAN_CALLBACKS *Callbacks, _Out_ PHANDLE CallbackHandle);
 VOID RegManValueCallbackUnregiser(_In_ HANDLE CallbackHandle);
+NTSTATUS RegManRawCallbackRegister(EX_CALLBACK_FUNCTION *Callback, void *Context, PHANDLE Handle);
+void RegManRawCallbackUnregister(HANDLE Handle);
 
 
 

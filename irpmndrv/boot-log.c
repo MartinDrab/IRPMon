@@ -1,12 +1,15 @@
 
 #include <ntifs.h>
 #include <fltKernel.h>
+#include <ntstrsafe.h>
 #include "allocator.h"
+#include "utils.h"
 #include "preprocessor.h"
 #include "general-types.h"
 #include "request.h"
 #include "driver-settings.h"
 #include "pnp-driver-watch.h"
+#include "regman.h"
 #include "boot-log.h"
 
 
@@ -18,6 +21,8 @@ static KSPIN_LOCK _blNPLock;
 static volatile BOOLEAN _blEnabled = FALSE;
 static PETHREAD _blSavingThread = NULL;
 static UNICODE_STRING _registryPath;
+static HANDLE _blRegCallbackHandle = NULL;
+static ULONG _currentControlSetNumber = 0;
 
 
 static void _ListHeadMove(PLIST_ENTRY Original, PLIST_ENTRY New)
@@ -115,11 +120,16 @@ static void _BLSaveThread(PVOID Context)
 	OBJECT_ATTRIBUTES oa;
 	HANDLE hFile = NULL;
 	LARGE_INTEGER timeout;
+	wchar_t fileNameBuffer[260];
 	UNICODE_STRING uFileName;
 	BINARY_LOG_HEADER hdr;
+	LARGE_INTEGER time;
+	TIME_FIELDS timeFields;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("Context=0x%p", Context);
 
+	KeQuerySystemTime(&time);
+	RtlTimeToTimeFields(&time, &timeFields);
 	RtlSecureZeroMemory(&hdr, sizeof(hdr));
 	hdr.Signature = LOGHEADER_SIGNATURE;
 	hdr.Version = LOGHEADER_VERSION;
@@ -131,28 +141,35 @@ static void _BLSaveThread(PVOID Context)
 #error Unsupported architecture
 #endif
 	timeout.QuadPart = -10000000;
-	RtlInitUnicodeString(&uFileName, L"\\SystemRoot\\IRPMon-boot.bin");
-	InitializeObjectAttributes(&oa, &uFileName, OBJ_KERNEL_HANDLE | OBJ_CASE_INSENSITIVE, NULL, NULL);
-	while (BLEnabled()) {
-		status = ZwCreateFile(&hFile, FILE_APPEND_DATA | SYNCHRONIZE, &oa, &iosb, NULL, FILE_ATTRIBUTE_NORMAL, 0, FILE_SUPERSEDE, FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0);
-		if (NT_SUCCESS(status)) {
-			status = ZwWriteFile(hFile, NULL, NULL, NULL, &iosb, &hdr, sizeof(hdr), NULL, NULL);
-			if (!NT_SUCCESS(status)) {
-				DEBUG_ERROR("nable to write boot log file header: 0x%x", status);
-			}
-			
+	uFileName.Length = 0;
+	uFileName.MaximumLength = sizeof(fileNameBuffer);
+	uFileName.Buffer = fileNameBuffer;
+	status = RtlUnicodeStringPrintf(&uFileName, L"\\SystemRoot\\IRPMon-%.4u-%.2u-%.2u %.2u-%.2u-%.2u.bin", timeFields.Year, timeFields.Month, timeFields.Day, timeFields.Hour, timeFields.Minute, timeFields.Second);
+	if (NT_SUCCESS(status)) {
+		InitializeObjectAttributes(&oa, &uFileName, OBJ_KERNEL_HANDLE | OBJ_CASE_INSENSITIVE, NULL, NULL);
+		while (BLEnabled()) {
+			status = ZwCreateFile(&hFile, GENERIC_WRITE | SYNCHRONIZE, &oa, &iosb, NULL, FILE_ATTRIBUTE_NORMAL, 0, FILE_SUPERSEDE, FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0);
 			if (NT_SUCCESS(status)) {
-				while (BLEnabled()) {
-					status = _FlushBootRequests(hFile);
-					KeDelayExecutionThread(KernelMode, FALSE, &timeout);
+				status = ZwWriteFile(hFile, NULL, NULL, NULL, &iosb, &hdr, sizeof(hdr), NULL, NULL);
+				if (!NT_SUCCESS(status)) {
+					DEBUG_ERROR("nable to write boot log file header: 0x%x", status);
 				}
+			
+				if (NT_SUCCESS(status)) {
+					while (BLEnabled()) {
+						status = _FlushBootRequests(hFile);
+						KeDelayExecutionThread(KernelMode, FALSE, &timeout);
+					}
+				}
+
+				status = _FlushBootRequests(hFile);
+				ZwClose(hFile);
 			}
 
-			status = _FlushBootRequests(hFile);
-			ZwClose(hFile);
+			KeDelayExecutionThread(KernelMode, FALSE, &timeout);
 		}
-
-		KeDelayExecutionThread(KernelMode, FALSE, &timeout);
+	} else {
+		DEBUG_ERROR("RtlUnicodeStringPrintf: 0x%x", status);
 	}
 
 	DEBUG_EXIT_FUNCTION_VOID();
@@ -402,6 +419,57 @@ static NTSTATUS _LoadSettings(PUNICODE_STRING RegistryPath)
 }
 
 
+static NTSTATUS _BLRegistryCallback(PVOID Context, PVOID Argument1, PVOID Argument2)
+{
+	UNICODE_STRING uKeyName;
+	BOOLEAN serviceKey = FALSE;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	PREG_KEY_HANDLE_CLOSE_INFORMATION closeInfo = NULL;
+	REG_NOTIFY_CLASS regOpClass = (REG_NOTIFY_CLASS)(ULONG_PTR)Argument1;
+	wchar_t prefixBuffer[260];
+	UNICODE_STRING uPrefix;
+	UNICODE_STRING tmp;
+
+	if (_blEnabled && PsGetCurrentProcess() == PsInitialSystemProcess && regOpClass == RegNtPreKeyHandleClose) {
+		closeInfo = (PREG_KEY_HANDLE_CLOSE_INFORMATION)Argument2;
+		status = _GetObjectName(closeInfo->Object, &uKeyName);
+		if (NT_SUCCESS(status)) {
+			uPrefix.Length = 0;
+			uPrefix.MaximumLength = sizeof(prefixBuffer);
+			uPrefix.Buffer = prefixBuffer;
+			status = RtlUnicodeStringPrintf(&uPrefix, L"\\Registry\\Machine\\SYSTEM\\ControlSet%.3u\\services\\", _currentControlSetNumber);
+			if (NT_SUCCESS(status)) {
+				tmp.Buffer = uKeyName.Buffer;
+				tmp.Length = uPrefix.Length;
+				tmp.MaximumLength = tmp.Length;
+				if (RtlEqualUnicodeString(&uPrefix, &tmp, TRUE)) {
+					serviceKey = TRUE;
+					tmp.Length = uKeyName.Length - uPrefix.Length;
+					tmp.MaximumLength = tmp.Length;
+					tmp.Buffer = uKeyName.Buffer + (uKeyName.Length - tmp.Length) / sizeof(wchar_t);
+					for (size_t i = 0; i < tmp.Length / sizeof(wchar_t); ++i) {
+						if (tmp.Buffer[i] == L'\\') {
+							serviceKey = FALSE;
+							break;
+						}
+					}
+
+					if (serviceKey)
+						PDWCheckDrivers();
+				}
+			}
+
+			HeapMemoryFree(uKeyName.Buffer);
+		}
+	}
+
+
+	status = STATUS_SUCCESS;
+
+	return status;
+}
+
+
 NTSTATUS BLDriverNameSave(PUNICODE_STRING DriverName, const DRIVER_MONITOR_SETTINGS* Settings)
 {
 	HANDLE driverKey = NULL;
@@ -563,11 +631,20 @@ NTSTATUS BLModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath,
 		memcpy(_registryPath.Buffer, RegistryPath->Buffer, _registryPath.Length);
 		status = _LoadSettings(RegistryPath);
 		if (NT_SUCCESS(status)) {
-			InitializeObjectAttributes(&oa, NULL, OBJ_KERNEL_HANDLE, NULL, NULL);
-			status = PsCreateSystemThread(&hThread, SYNCHRONIZE, &oa, NULL, &clientId, _BLSaveThread, NULL);
+			status = UtilsGetCurrentControlSetNumber(&_currentControlSetNumber);
 			if (NT_SUCCESS(status)) {
-				status = ObReferenceObjectByHandle(hThread, SYNCHRONIZE, *PsThreadType, KernelMode, &_blSavingThread, NULL);
-				ZwClose(hThread);
+				status = RegManRawCallbackRegister(_BLRegistryCallback, NULL, &_blRegCallbackHandle);
+				if (NT_SUCCESS(status)) {
+				InitializeObjectAttributes(&oa, NULL, OBJ_KERNEL_HANDLE, NULL, NULL);
+					status = PsCreateSystemThread(&hThread, SYNCHRONIZE, &oa, NULL, &clientId, _BLSaveThread, NULL);
+					if (NT_SUCCESS(status)) {
+						status = ObReferenceObjectByHandle(hThread, SYNCHRONIZE, *PsThreadType, KernelMode, &_blSavingThread, NULL);
+						ZwClose(hThread);
+					}
+
+					if (!NT_SUCCESS(status))
+						RegManRawCallbackUnregister(_blRegCallbackHandle);
+				}
 			}
 		}
 
@@ -587,6 +664,7 @@ void BLModuleFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PV
 	DEBUG_ENTER_FUNCTION("", DriverObject, RegistryPath, Context);
 
 	BLDisable();
+	RegManRawCallbackUnregister(_blRegCallbackHandle);
 	ObDereferenceObject(_blSavingThread);
 	HeapMemoryFree(_registryPath.Buffer);
 	tmp = CONTAINING_RECORD(&_blNPCache.Flink, REQUEST_HEADER, Entry);

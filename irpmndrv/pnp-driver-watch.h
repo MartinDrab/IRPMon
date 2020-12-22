@@ -23,6 +23,8 @@ typedef struct _DRIVER_NAME_WATCH_RECORD {
 } DRIVER_NAME_WATCH_RECORD, *PDRIVER_NAME_WATCH_RECORD;
 
 
+NTSTATUS PDWCheckDriver(PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT DeviceObject);
+void PDWCheckDrivers(void);
 NTSTATUS PDWClassRegister(PGUID ClassGuid, BOOLEAN UpperFilter, BOOLEAN Beginning);
 NTSTATUS PDWClassUnregister(PGUID ClassGuid, BOOLEAN UpperFilter, BOOLEAN Beginning);
 NTSTATUS PDWClassEnumerate(PIOCTL_IRPMNDRV_CLASS_WATCH_OUTPUT Buffer, SIZE_T Length, PSIZE_T ReturnLength, KPROCESSOR_MODE AccessMode);

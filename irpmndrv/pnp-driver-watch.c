@@ -7,6 +7,7 @@
 #include "string-hash-table.h"
 #include "ioctls.h"
 #include "kernel-shared.h"
+#include "utils.h"
 #include "hook.h"
 #include "req-queue.h"
 #include "multistring.h"
@@ -51,39 +52,6 @@ static volatile BOOLEAN _fsMonitoring = FALSE;
 /************************************************************************/
 
 
-static NTSTATUS _GetCurrentControlSetNumber(void)
-{
-	HANDLE hSelectKey = NULL;
-	UNICODE_STRING uSelectKey;
-	OBJECT_ATTRIBUTES oa;
-	NTSTATUS status = STATUS_UNSUCCESSFUL;
-	DEBUG_ENTER_FUNCTION_NO_ARGS();
-
-	RtlInitUnicodeString(&uSelectKey, L"\\Registry\\Machine\\SYSTEM\\Select");
-	InitializeObjectAttributes(&oa, &uSelectKey, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, NULL);
-	status = ZwOpenKey(&hSelectKey, KEY_QUERY_VALUE, &oa);
-	if (NT_SUCCESS(status)) {
-		ULONG retLength = 0;
-		UNICODE_STRING uValueName;
-		UCHAR kvpiStorage[sizeof(KEY_VALUE_PARTIAL_INFORMATION) + sizeof(ULONG)];
-		PKEY_VALUE_PARTIAL_INFORMATION kvpi = (PKEY_VALUE_PARTIAL_INFORMATION)kvpiStorage;
-
-		RtlInitUnicodeString(&uValueName, L"Current");
-		status = ZwQueryValueKey(hSelectKey, &uValueName, KeyValuePartialInformation, kvpi, sizeof(kvpiStorage), &retLength);
-		if (NT_SUCCESS(status)) {
-			if (kvpi->DataLength == sizeof(ULONG))
-				_currentControlSet = *(PULONG)kvpi->Data;
-			else status = STATUS_INVALID_PARAMETER;
-		}
-
-		ZwClose(hSelectKey);
-	}
-
-	DEBUG_EXIT_FUNCTION("0x%x, _currentControlSet=%u", status, _currentControlSet);
-	return status;
-}
-
-
 static BOOLEAN _OnDriverNameWatchEnum(PWCHAR String, PVOID Data, PVOID Context)
 {
 	SIZE_T len = 0;
@@ -126,6 +94,82 @@ static BOOLEAN _OnDriverNameWatchEnum(PWCHAR String, PVOID Data, PVOID Context)
 }
 
 
+static NTSTATUS _HookDriverAndDevices(PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT DeviceObject, const DRIVER_MONITOR_SETTINGS* Settings)
+{
+	PDRIVER_HOOK_RECORD hookRecord = NULL;
+	PDEVICE_HOOK_RECORD deviceRecord = NULL;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; DeviceObject=0x%p; Settings=0x%p", DriverObject, DeviceObject, Settings);
+
+	if ((DriverObject->Flags & DRVO_UNLOAD_INVOKED) == 0 &&
+		(DriverObject->Flags & DRVO_INITIALIZED) != 0) {
+		status = HookDriverObject(DriverObject, Settings, FALSE, &hookRecord);
+		if (NT_SUCCESS(status)) {
+			status = DriverHookRecordEnable(hookRecord, TRUE);
+			if (NT_SUCCESS(status)) {
+				if (DeviceObject != NULL) {
+					status = DriverHookRecordAddDevice(hookRecord, DeviceObject, NULL, NULL, TRUE, &deviceRecord);
+					if (NT_SUCCESS(status)) {
+
+						DeviceHookRecordDereference(deviceRecord);
+					}
+				} else if (Settings->MonitorNewDevices) {
+					ULONG deviceCount = 0;
+					PDEVICE_OBJECT *deviceArray = NULL;
+
+					status = UtilsEnumDriverDevices(DriverObject, &deviceArray, &deviceCount);
+					if (NT_SUCCESS(status)) {
+						for (size_t i = 0; i < deviceCount; ++i) {
+							status = DriverHookRecordAddDevice(hookRecord, deviceArray[i], NULL, NULL, TRUE, &deviceRecord);
+							if (NT_SUCCESS(status)) {
+
+								DeviceHookRecordDereference(deviceRecord);
+							}
+						}
+
+						_ReleaseDeviceArray(deviceArray, deviceCount);
+					}
+				}
+			}
+
+			DriverHookRecordDereference(hookRecord);
+		}
+	} else status = STATUS_DEVICE_NOT_READY;
+
+	DEBUG_EXIT_FUNCTION("0x%x", status);
+	return status;
+}
+
+
+static void _OnDriverNameCheck(PWCHAR String, PVOID Data, PVOID Context)
+{
+	PDRIVER_OBJECT driverObject = NULL;
+	UNICODE_STRING uDriverName;
+	PDRIVER_NAME_WATCH_RECORD rec = NULL;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION("String=\"%ls\"; Data=0x%p; Context=0x%p", String, Data, Context);
+
+	RtlInitUnicodeString(&uDriverName, String);
+	status = GetDriverObjectByName(&uDriverName, &driverObject);
+	if (NT_SUCCESS(status)) {
+		rec = (PDRIVER_NAME_WATCH_RECORD)Data;
+		status = _HookDriverAndDevices(driverObject, NULL, &rec->MonitorSettings);
+		if (NT_SUCCESS(status)) {
+			PREQUEST_HEADER rq = NULL;
+
+			status = RequestXXXDetectedCreate(ertDriverDetected, driverObject, NULL, &rq);
+			if (NT_SUCCESS(status))
+				RequestQueueInsert(rq);
+		}
+
+		ObDereferenceObject(driverObject);
+	}
+
+	DEBUG_EXIT_FUNCTION_VOID();
+	return;
+}
+
+
 static NTSTATUS _CaptureServiceName(PUNICODE_STRING RegistryPath)
 {
 	const wchar_t *wServiceName = NULL;
@@ -164,72 +208,6 @@ static void _FreeServiceName(void)
 }
 
 
-static NTSTATUS _CheckDriver(PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT DeviceObject)
-{
-	ULONG returnLength = 0;
-	PDRIVER_NAME_WATCH_RECORD nameRecord = NULL;
-	PDRIVER_HOOK_RECORD hookRecord = NULL;
-	PDEVICE_HOOK_RECORD deviceRecord = NULL;
-	POBJECT_NAME_INFORMATION oni = NULL;
-	NTSTATUS status = STATUS_UNSUCCESSFUL;
-	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; DeviceObject=0x%p", DriverObject, DeviceObject);
-
-	status = ObQueryNameString(DriverObject, NULL, 0, &returnLength);
-	if (status == STATUS_INFO_LENGTH_MISMATCH) {
-		returnLength += sizeof(UNICODE_STRING) + sizeof(WCHAR);
-		oni = HeapMemoryAllocPaged(returnLength);
-		if (oni != NULL) {
-			RtlSecureZeroMemory(oni, returnLength);
-			status = ObQueryNameString(DriverObject, oni, returnLength, &returnLength);
-			if (NT_SUCCESS(status)) {
-				KeEnterCriticalRegion();
-				ExAcquireResourceSharedLite(&_driverNamesLock, TRUE);
-				nameRecord = (PDRIVER_NAME_WATCH_RECORD)StringHashTableGetUnicodeString(_driverNameTable, &oni->Name);
-				if (nameRecord != NULL) {
-					status = HookDriverObject(DriverObject, &nameRecord->MonitorSettings, FALSE, &hookRecord);
-					if (NT_SUCCESS(status)) {
-						status = DriverHookRecordEnable(hookRecord, TRUE);
-						if (NT_SUCCESS(status)) {
-							if (DeviceObject != NULL) {
-								status = DriverHookRecordAddDevice(hookRecord, DeviceObject, NULL, NULL, TRUE, &deviceRecord);
-								if (NT_SUCCESS(status)) {
-
-									DeviceHookRecordDereference(deviceRecord);
-								}
-							}
-						}
-
-						DriverHookRecordDereference(hookRecord);
-					}
-				}
-
-				ExReleaseResourceLite(&_driverNamesLock);
-				KeLeaveCriticalRegion();
-			}
-
-			HeapMemoryFree(oni);
-		} else status = STATUS_INSUFFICIENT_RESOURCES;
-	}
-
-	if (NT_SUCCESS(status)) {
-		PREQUEST_HEADER rq = NULL;
-
-		status = RequestXXXDetectedCreate(ertDriverDetected, DriverObject, NULL, &rq);
-		if (NT_SUCCESS(status))
-			RequestQueueInsert(rq);
-
-		if (DeviceObject != NULL) {
-			status = RequestXXXDetectedCreate(ertDeviceDetected, DriverObject, DeviceObject, &rq);
-			if (NT_SUCCESS(status))
-				RequestQueueInsert(rq);
-		}
-	}
-
-	DEBUG_EXIT_FUNCTION("0x%x", status);
-	return status;
-}
-
-
 static NTSTATUS _AddDevice(PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT PhysicalDeviceObject)
 {
 	PDEVICE_OBJECT deviceObject = NULL;
@@ -240,7 +218,7 @@ static NTSTATUS _AddDevice(PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT PhysicalD
 
 	deviceObject = PhysicalDeviceObject;
 	do {
-		status = _CheckDriver(deviceObject->DriverObject, deviceObject);
+		status = PDWCheckDriver(deviceObject->DriverObject, deviceObject);
 		deviceObject = deviceObject->AttachedDevice;
 	} while (deviceObject != NULL);
 
@@ -256,7 +234,7 @@ static void _FileSystemCallback(PDEVICE_OBJECT DeviceObject, BOOLEAN FsActive)
 	DEBUG_ENTER_FUNCTION("DeviceObject=0x%p; FsActive=%u", DeviceObject, FsActive);
 
 	if (FsActive)
-		_CheckDriver(DeviceObject->DriverObject, DeviceObject);
+		PDWCheckDriver(DeviceObject->DriverObject, DeviceObject);
 
 	DEBUG_EXIT_FUNCTION_VOID();
 	return;
@@ -277,7 +255,7 @@ static ULONG32 _HashFunction(PVOID Key)
 }
 
 
-BOOLEAN _CompareFunction(PHASH_ITEM Item, PVOID Key)
+static BOOLEAN _CompareFunction(PHASH_ITEM Item, PVOID Key)
 {
 	PDEVICE_CLASS_WATCH_RECORD rec = CONTAINING_RECORD(Item, DEVICE_CLASS_WATCH_RECORD, HashItem);
 
@@ -437,6 +415,57 @@ static NTSTATUS _SetCallback(_Inout_ PREGMAN_VALUE_INFO ValueInfo, _In_opt_ PVOI
 /************************************************************************/
 /*                     PUBLIC FUNCTIONS                                 */
 /************************************************************************/
+
+
+NTSTATUS PDWCheckDriver(PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT DeviceObject)
+{
+	ULONG returnLength = 0;
+	PDRIVER_NAME_WATCH_RECORD nameRecord = NULL;
+	POBJECT_NAME_INFORMATION oni = NULL;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; DeviceObject=0x%p", DriverObject, DeviceObject);
+
+	status = ObQueryNameString(DriverObject, NULL, 0, &returnLength);
+	if (status == STATUS_INFO_LENGTH_MISMATCH) {
+		returnLength += sizeof(UNICODE_STRING) + sizeof(WCHAR);
+		oni = HeapMemoryAllocPaged(returnLength);
+		if (oni != NULL) {
+			RtlSecureZeroMemory(oni, returnLength);
+			status = ObQueryNameString(DriverObject, oni, returnLength, &returnLength);
+			if (NT_SUCCESS(status)) {
+				KeEnterCriticalRegion();
+				ExAcquireResourceSharedLite(&_driverNamesLock, TRUE);
+				nameRecord = (PDRIVER_NAME_WATCH_RECORD)StringHashTableGetUnicodeString(_driverNameTable, &oni->Name);
+				if (nameRecord != NULL)
+					status = _HookDriverAndDevices(DriverObject, DeviceObject, &nameRecord->MonitorSettings);
+
+				ExReleaseResourceLite(&_driverNamesLock);
+				KeLeaveCriticalRegion();
+			}
+
+			HeapMemoryFree(oni);
+		}
+		else status = STATUS_INSUFFICIENT_RESOURCES;
+	}
+
+	if (NT_SUCCESS(status)) {
+		PREQUEST_HEADER rq = NULL;
+
+		status = RequestXXXDetectedCreate(ertDriverDetected, DriverObject, NULL, &rq);
+		if (NT_SUCCESS(status))
+			RequestQueueInsert(rq);
+
+		if (DeviceObject != NULL) {
+			status = RequestXXXDetectedCreate(ertDeviceDetected, DriverObject, DeviceObject, &rq);
+			if (NT_SUCCESS(status))
+				RequestQueueInsert(rq);
+		}
+	}
+
+	DEBUG_EXIT_FUNCTION("0x%x", status);
+	return status;
+}
+
 
 NTSTATUS PDWClassRegister(PGUID ClassGuid, BOOLEAN UpperFilter, BOOLEAN Beginning)
 {
@@ -766,6 +795,22 @@ NTSTATUS PDWMonitorFileSystems(BOOLEAN Monitor)
 	return status;
 }
 
+
+void PDWCheckDrivers(void)
+{
+	DEBUG_ENTER_FUNCTION_NO_ARGS();
+
+	KeEnterCriticalRegion();
+	ExAcquireResourceSharedLite(&_driverNamesLock, TRUE);
+	StringHashTablePerform(_driverNameTable, _OnDriverNameCheck, NULL);
+	ExReleaseResourceLite(&_driverNamesLock);
+	KeLeaveCriticalRegion();
+
+	DEBUG_EXIT_FUNCTION_VOID();
+	return;
+}
+
+
 /************************************************************************/
 /*                INITIALIZATION AND FINALIZATION                       */
 /************************************************************************/
@@ -778,7 +823,7 @@ NTSTATUS PWDModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath
 	_versionInfo.dwOSVersionInfoSize = sizeof(_versionInfo);
 	status = RtlGetVersion(&_versionInfo);
 	if (NT_SUCCESS(status)) {
-		status = _GetCurrentControlSetNumber();
+		status = UtilsGetCurrentControlSetNumber(&_currentControlSet);
 		if (NT_SUCCESS(status)) {
 			status = _CaptureServiceName(RegistryPath);
 			if (NT_SUCCESS(status)) {
