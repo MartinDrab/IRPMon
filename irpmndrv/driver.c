@@ -418,12 +418,12 @@ VOID DriverFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOI
 
 static DRIVER_MODULE_ENTRY_PARAMETERS _moduleEntries[] = {
 	{DriverSettingsInit, DriverSettingsFinit, NULL},
+	{DataLoggerModuleInit, DataLoggerModuleFinit, NULL},
 	{RequestQueueModuleInit, RequestQueueModuleFinit, NULL},
 	{HookModuleInit, HookModuleFinit, NULL},
 	{HookHandlerModuleInit, HookHandlerModuleFinit, NULL},
 	{DevExtHooksModuleInit, DevExtHooksModuleFinit, NULL},
 	{PWDModuleInit, PWDModuleFinit, NULL},
-	{DataLoggerModuleInit, DataLoggerModuleFinit, NULL},
 	{BLModuleInit, BLModuleFinit, NULL},
 	{ProcessEventsModuleInit, ProcessEventsModuleFinit, NULL},
 	{ImageLoadModuleInit, ImageLoadModuleFinit, NULL},
