@@ -82,6 +82,7 @@ static void _NPCacheFlush(PLIST_ENTRY Head)
 
 static NTSTATUS _FlushBootRequests(HANDLE FileHandle)
 {
+	ULONG requestSize = 0;
 	IO_STATUS_BLOCK iosb;
 	LIST_ENTRY reqsToSave;
 	PREQUEST_HEADER tmp = NULL;
@@ -100,8 +101,12 @@ static NTSTATUS _FlushBootRequests(HANDLE FileHandle)
 	while (&tmp->Entry != &reqsToSave) {
 		old = tmp;
 		tmp = CONTAINING_RECORD(tmp->Entry.Flink, REQUEST_HEADER, Entry);
+		requestSize = (ULONG)RequestGetSize(old);
 		RtlSecureZeroMemory(&old->Entry, sizeof(old->Entry));
-		status = ZwWriteFile(FileHandle, NULL, NULL, NULL, &iosb, old, (ULONG)RequestGetSize(old), NULL, NULL);
+		status = ZwWriteFile(FileHandle, NULL, NULL, NULL, &iosb, &requestSize, sizeof(requestSize), NULL, NULL);
+		if (NT_SUCCESS(status))
+			status = ZwWriteFile(FileHandle, NULL, NULL, NULL, &iosb, old, requestSize, NULL, NULL);
+		
 		if (!NT_SUCCESS(status)) {
 			DEBUG_ERROR("Unable to save request 0x%p to boot log: 0x%p", old, status);
 		}
@@ -148,7 +153,7 @@ static void _BLSaveThread(PVOID Context)
 	if (NT_SUCCESS(status)) {
 		InitializeObjectAttributes(&oa, &uFileName, OBJ_KERNEL_HANDLE | OBJ_CASE_INSENSITIVE, NULL, NULL);
 		while (BLEnabled()) {
-			status = ZwCreateFile(&hFile, GENERIC_WRITE | SYNCHRONIZE, &oa, &iosb, NULL, FILE_ATTRIBUTE_NORMAL, 0, FILE_SUPERSEDE, FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0);
+			status = ZwCreateFile(&hFile, GENERIC_WRITE | SYNCHRONIZE, &oa, &iosb, NULL, FILE_ATTRIBUTE_NORMAL, FILE_SHARE_READ, FILE_SUPERSEDE, FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0);
 			if (NT_SUCCESS(status)) {
 				status = ZwWriteFile(hFile, NULL, NULL, NULL, &iosb, &hdr, sizeof(hdr), NULL, NULL);
 				if (!NT_SUCCESS(status)) {
@@ -164,6 +169,8 @@ static void _BLSaveThread(PVOID Context)
 
 				status = _FlushBootRequests(hFile);
 				ZwClose(hFile);
+			} else {
+				DEBUG_ERROR("ZwCreateFile(\"%wZ\"): 0x%x", &uFileName, status);
 			}
 
 			KeDelayExecutionThread(KernelMode, FALSE, &timeout);
