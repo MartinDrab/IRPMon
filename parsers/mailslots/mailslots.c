@@ -19,14 +19,18 @@ static DWORD _ProcessCreateBuffer(PNV_PAIR Pair, const REQUEST_IRP_CREATE_MAILSL
 {
 	DWORD ret = ERROR_GEN_FAILURE;
 
-	PBaseAddNameFormat(Pair, L"Desired access", L"0x%x", Buffer->DesiredAccess);
-	PBaseAddNameFormat(Pair, L"Quota", L"%u", Buffer->Parameters.MailslotQuota);
-	PBaseAddNameFormat(Pair, L"Max message size", L"%u", Buffer->Parameters.MaximumMessageSize);
-	PBaseAddNameFormat(Pair, L"Timeout specified", L"%u", Buffer->Parameters.TimeoutSpecified);
-	if (Buffer->Parameters.TimeoutSpecified)
-		PBaseAddNameFormat(Pair, L"Timeout", L"%lld ms", Buffer->Parameters.ReadTimeout.QuadPart / 10000);
+	ret = PBaseAddNameFormat(Pair, L"Desired access", L"0x%x", Buffer->DesiredAccess);
+	if (ret == ERROR_SUCCESS)
+		ret = PBaseAddNameFormat(Pair, L"Quota", L"%u", Buffer->Parameters.MailslotQuota);
 
+	if (ret == ERROR_SUCCESS)
+		ret = PBaseAddNameFormat(Pair, L"Max message size", L"%u", Buffer->Parameters.MaximumMessageSize);
 
+	if (ret == ERROR_SUCCESS)
+		ret = PBaseAddNameFormat(Pair, L"Timeout specified", L"%u", Buffer->Parameters.TimeoutSpecified);
+	
+	if (ret == ERROR_SUCCESS && Buffer->Parameters.TimeoutSpecified)
+		ret = PBaseAddNameFormat(Pair, L"Timeout", L"%lld ms", Buffer->Parameters.ReadTimeout.QuadPart / 10000);
 
 	return ret;
 }
@@ -42,8 +46,7 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 
 	memset(&p, 0, sizeof(p));
 	ret = ERROR_SUCCESS;
-	switch (Request->Type) {
-	case ertIRP:
+	if (Request->Type == ertIRP) {
 		irp = CONTAINING_RECORD(Request, REQUEST_IRP, Header);
 		if (irp->DataSize > 0) {
 			switch (irp->MajorFunction) {
@@ -54,7 +57,6 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 					break;
 			}
 		}
-		break;
 	}
 
 	*RowCount = 0;
