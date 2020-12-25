@@ -31,7 +31,6 @@ Type
     FDeviceName : WideString;
     FNetworkAddress : WideString;
     FNetworkPort : WideString;
-    Function IsAdmin:Boolean;
     Function IsWOW64:Boolean;
   Public
     Property Cancelled : Boolean Read FCancelled;
@@ -43,31 +42,11 @@ Type
 
 Implementation
 
+Uses
+  Utils;
+
 {$R *.DFM}
 
-
-
-Function CheckTokenMembership(AToken:THandle; ASid:PSID; Var AAdmin:BOOL):BOOL; StdCall; External 'advapi32.dll';
-
-Function TConnectorSelectionFrm.IsAdmin:Boolean;
-const
-  SECURITY_NT_AUTHORITY: TSIDIdentifierAuthority =
-    (Value: (0, 0, 0, 0, 0, 5));
-  SECURITY_BUILTIN_DOMAIN_RID = $00000020;
-  DOMAIN_ALIAS_RID_ADMINS = $00000220;
-var
-  b: BOOL;
-  AdministratorsGroup: PSID;
-begin
-Result := False;
-If AllocateAndInitializeSid( SECURITY_NT_AUTHORITY, 2, SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0, AdministratorsGroup) Then
-  begin
-  If CheckTokenMembership(0, AdministratorsGroup, b) then
-    Result := b;
-
-  FreeSid(AdministratorsGroup);
-  end;
-end;
 
 {$IFDEF FPC}
 Function IsWow64Process(hProcess:THandle; Var Wow64:LongBool):LongBool; StdCall; External 'kernel32.dll';
