@@ -38,8 +38,12 @@ Uses
 
 
 Constructor TFastIoRequest.Create(Var ARequest:REQUEST_FASTIO);
+Var
+  d : Pointer;
 begin
 Inherited Create(ARequest.Header);
+d := PByte(@ARequest) + SizeOf(ARequest);
+AssignData(d, ARequest.DataSize);
 FFastIoType := ARequest.FastIoType;
 FPreviousMode := ARequest.PreviousMode;
 FIOSBStatus := ARequest.IOSBStatus;

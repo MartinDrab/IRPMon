@@ -526,6 +526,7 @@ Type
 	  FileObject : Pointer;
 	  IOSBStatus : Cardinal;
 	  IOSBInformation : NativeUInt;
+    DataSize : Cardinal;
     end;
   REQUEST_FASTIO = _REQUEST_FASTIO;
   PREQUEST_FASTIO = ^REQUEST_FASTIO;
