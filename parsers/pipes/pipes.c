@@ -19,18 +19,29 @@ static DWORD _ProcessCreateBuffer(PNV_PAIR Pair, const REQUEST_IRP_CREATE_NAMED_
 {
 	DWORD ret = ERROR_GEN_FAILURE;
 
-	PBaseAddNameFormat(Pair, L"Desired access", L"0x%x", Buffer->DesiredAccess);
-	PBaseAddNameFormat(Pair, L"Type", L"%u", Buffer->Parameters.NamedPipeType);
-	PBaseAddNameFormat(Pair, L"Read mode", L"0x%x", Buffer->Parameters.ReadMode);
-	PBaseAddNameFormat(Pair, L"Completion mode", L"0x%x", Buffer->Parameters.CompletionMode);
-	PBaseAddNameFormat(Pair, L"Inbound quota", L"%u", Buffer->Parameters.InboundQuota);
-	PBaseAddNameFormat(Pair, L"Outbound quota", L"%u", Buffer->Parameters.OutboundQuota);
-	PBaseAddNameFormat(Pair, L"Maximum instances", L"%u", Buffer->Parameters.MaximumInstances);
-	PBaseAddNameFormat(Pair, L"Timeout specified", L"%u", Buffer->Parameters.TimeoutSpecified);
-	if (Buffer->Parameters.TimeoutSpecified)
-		PBaseAddNameFormat(Pair, L"Timeout", L"%lld ms", Buffer->Parameters.DefaultTimeout.QuadPart / 10000);
+	ret = PBaseAddNameFormat(Pair, L"Desired access", L"0x%x", Buffer->DesiredAccess);
+	if (ret == ERROR_SUCCESS)
+	ret = PBaseAddNameFormat(Pair, L"Type", L"%u", Buffer->Parameters.NamedPipeType);
+	if (ret == ERROR_SUCCESS)
+		ret = PBaseAddNameFormat(Pair, L"Read mode", L"0x%x", Buffer->Parameters.ReadMode);
 
+	if (ret == ERROR_SUCCESS)
+		ret = PBaseAddNameFormat(Pair, L"Completion mode", L"0x%x", Buffer->Parameters.CompletionMode);
 
+	if (ret == ERROR_SUCCESS)
+		ret = PBaseAddNameFormat(Pair, L"Inbound quota", L"%u", Buffer->Parameters.InboundQuota);
+
+	if (ret == ERROR_SUCCESS)
+		ret = PBaseAddNameFormat(Pair, L"Outbound quota", L"%u", Buffer->Parameters.OutboundQuota);
+
+	if (ret == ERROR_SUCCESS)
+		ret = PBaseAddNameFormat(Pair, L"Maximum instances", L"%u", Buffer->Parameters.MaximumInstances);
+
+	if (ret == ERROR_SUCCESS)
+		ret = PBaseAddNameFormat(Pair, L"Timeout specified", L"%u", Buffer->Parameters.TimeoutSpecified);
+
+	if (ret == ERROR_SUCCESS && Buffer->Parameters.TimeoutSpecified)
+		ret = PBaseAddNameFormat(Pair, L"Timeout", L"%lld ms", Buffer->Parameters.DefaultTimeout.QuadPart / 10000);
 
 	return ret;
 }
@@ -46,8 +57,7 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 
 	memset(&p, 0, sizeof(p));
 	ret = ERROR_SUCCESS;
-	switch (Request->Type) {
-	case ertIRP:
+	if (Request->Type == ertIRP) {
 		irp = CONTAINING_RECORD(Request, REQUEST_IRP, Header);
 		if (irp->DataSize > 0) {
 			switch (irp->MajorFunction) {
@@ -58,7 +68,6 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 					break;
 			}
 		}
-		break;
 	}
 
 	*RowCount = 0;
