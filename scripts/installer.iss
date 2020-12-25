@@ -260,7 +260,7 @@ Case CurPageID Of
 			serviceFileName := 'irpmndrv.sys';
 			serviceStartType := SERVICE_DEMAND_START;
 			If DriverAuto Then
-				serviceStartType := SERVICE_AUTO_START;
+				serviceStartType := SERVICE_SYSTEM_START;
 
 			err := InstallService(DriverServiceName, DriverServiceDisplayName, SERVICE_KERNEL_DRIVER, serviceStartType, serviceFileName);
 			If err <> 0 Then

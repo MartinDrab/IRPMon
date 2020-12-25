@@ -901,6 +901,10 @@ object MainFrm: TMainFrm
       Caption = 'Data Parsers'
       ImageIndex = 1
       OnShow = DataParsersTabSheetShow
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object DataParsersListView: TListView
         Left = 0
         Top = 0
@@ -1095,6 +1099,35 @@ object MainFrm: TMainFrm
         Tag = 9
         Caption = 'Log boot'
         OnClick = DriverSettingsMenuItemClick
+      end
+      object DriverStartMenuItem: TMenuItem
+        Caption = 'Start type'
+        OnClick = DriverStartMenuItemClick
+        object BootStartMenuItem: TMenuItem
+          Caption = 'Boot'
+          RadioItem = True
+          OnClick = DriverStartMenuItemClick
+        end
+        object SystemStartMenuItem: TMenuItem
+          Caption = 'System'
+          RadioItem = True
+          OnClick = DriverStartMenuItemClick
+        end
+        object AutoStartMenuItem: TMenuItem
+          Caption = 'Auto'
+          RadioItem = True
+          OnClick = DriverStartMenuItemClick
+        end
+        object DemandStartMenuItem: TMenuItem
+          Caption = 'Demand'
+          RadioItem = True
+          OnClick = DriverStartMenuItemClick
+        end
+        object DisabledStartMenuItem: TMenuItem
+          Caption = 'Disabled'
+          RadioItem = True
+          OnClick = DriverStartMenuItemClick
+        end
       end
     end
     object ColumnsMenuItem: TMenuItem
