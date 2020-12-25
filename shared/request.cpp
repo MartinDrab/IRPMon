@@ -81,6 +81,7 @@ size_t RequestGetSize(const REQUEST_HEADER *Header)
 	size_t ret = 0;
 	const REQUEST_IRP *irp = NULL;
 	const REQUEST_IRP_COMPLETION *irpComp = NULL;
+	const REQUEST_FASTIO *fastIo = NULL;
 	const REQUEST_STARTIO *startIo = NULL;
 	const REQUEST_DRIVER_DETECTED *drr = CONTAINING_RECORD(Header, REQUEST_DRIVER_DETECTED, Header);
 	const REQUEST_DEVICE_DETECTED *der = CONTAINING_RECORD(Header, REQUEST_DEVICE_DETECTED, Header);
@@ -102,6 +103,8 @@ size_t RequestGetSize(const REQUEST_HEADER *Header)
 			break;
 		case ertFastIo:
 			ret = sizeof(REQUEST_FASTIO);
+			fastIo = CONTAINING_RECORD(Header, REQUEST_FASTIO, Header);
+			ret += fastIo->DataSize;
 			break;
 		case ertAddDevice:
 			ret = sizeof(REQUEST_ADDDEVICE);
