@@ -1135,6 +1135,7 @@ Var
 begin
 settingsFile := ChangeFileExt(ExtractFileName(Application.ExeName), '.ini');
 settingsDir := ExtractFilePath(Application.ExeName);
+iniFile := Nil;
 Try
   iniFile := TIniFile.Create(settingsDir + settingsFile);
 Except
@@ -1153,25 +1154,32 @@ If Not Assigned(iniFile) Then
 
 If Assigned(iniFile) Then
   begin
-  iniFIle.WriteBool('Driver', 'unload_on_exit', UnloadOnExitMenuItem.Checked);
-  iniFIle.WriteBool('Driver', 'uninstall_on_exit', UninstallOnExitMenuItem.Checked);
-  iniFile.WriteBool('General', 'CaptureEvents', CaptureEventsMenuItem.Checked);
-  iniFile.WriteBool('General', 'filter_display_only', HideExcludedRequestsMenuItem.Checked);
-  iniFile.WriteBool('Log', 'compress_requests', CompressMenuItem.Checked);
-  iniFile.WriteBool('Log', 'ignore_headers', IgnoreLogFileHeadersMenuItem.Checked);
-  For I := 0 To FModel.ColumnCount - 1 Do
-    begin
-    c := FModel.Columns[I];
-    iniColumnName := c.Caption;
-    For J := 1 To Length(iniColumnName) Do
+  Try
+    iniFIle.WriteBool('Driver', 'unload_on_exit', UnloadOnExitMenuItem.Checked);
+    iniFIle.WriteBool('Driver', 'uninstall_on_exit', UninstallOnExitMenuItem.Checked);
+    iniFile.WriteBool('General', 'CaptureEvents', CaptureEventsMenuItem.Checked);
+    iniFile.WriteBool('General', 'filter_display_only', HideExcludedRequestsMenuItem.Checked);
+    iniFile.WriteBool('Log', 'compress_requests', CompressMenuItem.Checked);
+    iniFile.WriteBool('Log', 'ignore_headers', IgnoreLogFileHeadersMenuItem.Checked);
+    For I := 0 To FModel.ColumnCount - 1 Do
       begin
-      If (iniColumnName[J] = ' ') Then
-        iniColumnName[J] := '_';
-      end;
+      c := FModel.Columns[I];
+      iniColumnName := c.Caption;
+      For J := 1 To Length(iniColumnName) Do
+        begin
+        If (iniColumnName[J] = ' ') Then
+          iniColumnName[J] := '_';
+        end;
 
-    iniFile.WriteBool('Columns', iniColumnName, c.Visible);
+      iniFile.WriteBool('Columns', iniColumnName, c.Visible);
+      end;
+  Except
+    WarningMessage('Unable to save program settings');
     end;
-  end;
+
+  iniFile.Free;
+  end
+Else WarningMessage('Unable to create file for program settings');
 end;
 
 Procedure TMainFrm.ReadSettings;
