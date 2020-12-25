@@ -57,10 +57,7 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 		}
 	}
 
-	*RowCount = 0;
-	*Names = NULL;
-	*Values = NULL;
-	if (ret == ERROR_SUCCESS) {
+	if (ret == ERROR_SUCCESS && buffer != NULL) {
 		*Handled = TRUE;
 		*RowCount = p.Count;
 		*Names = p.Names;
