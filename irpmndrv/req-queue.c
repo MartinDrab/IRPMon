@@ -6,6 +6,7 @@
 #include "request.h"
 #include "process-events.h"
 #include "driver-settings.h"
+#include "boot-log.h"
 #include "req-queue.h"
 
 #undef DEBUG_TRACE_ENABLED
@@ -151,6 +152,7 @@ NTSTATUS RequestQueueConnect()
 				}
 
 				_driverSettings->ReqQueueConnected = TRUE;
+				BLDisable();
 			}
 
 			if (!NT_SUCCESS(status)) {
@@ -204,7 +206,7 @@ VOID RequestQueueInsert(PREQUEST_HEADER Header)
 	DEBUG_IRQL_LESS_OR_EQUAL(DISPATCH_LEVEL);
 
 	if (_driverSettings->ReqQueueConnected ||
-		_driverSettings->ReqQueueCollectWhenDisconnected) {
+		(_driverSettings->ReqQueueCollectWhenDisconnected && !BLEnabled())) {
 		status = IoAcquireRemoveLock(&_removeLock, NULL);
 		if (NT_SUCCESS(status)) {
 			Header->Id = InterlockedIncrement(&_driverSettings->ReqQueueLastRequestId);
@@ -213,6 +215,12 @@ VOID RequestQueueInsert(PREQUEST_HEADER Header)
 		}
 	} else status = STATUS_CONNECTION_DISCONNECTED;
 	
+	if (status == STATUS_CONNECTION_DISCONNECTED && BLEnabled()) {
+		Header->Id = InterlockedIncrement(&_driverSettings->ReqQueueLastRequestId);
+		BLLogRequest(Header);
+		status = STATUS_SUCCESS;
+	}
+
 	if (!NT_SUCCESS(status))
 		RequestMemoryFree(Header);
 
@@ -362,7 +370,7 @@ NTSTATUS ListDriversAndDevicesByEvents(PLIST_ENTRY ListHead)
 				if (NT_SUCCESS(status)) {
 					tmpRequest->Flags |= REQUEST_FLAG_EMULATED;
 					InsertTailList(ListHead, &tmpRequest->Entry);
-					status = _EnumDriverDevices(driverArray[j], &deviceArray, &deviceArrayLength);
+					status = UtilsEnumDriverDevices(driverArray[j], &deviceArray, &deviceArrayLength);
 					if (NT_SUCCESS(status)) {
 						for (size_t k = 0; k < deviceArrayLength; ++k) {
 							status = RequestXXXDetectedCreate(ertDeviceDetected, driverArray[j], deviceArray[k], &tmpRequest);

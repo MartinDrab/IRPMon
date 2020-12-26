@@ -18,6 +18,7 @@
 #include "driver-settings.h"
 #include "devext-hooks.h"
 #include "image-load.h"
+#include "boot-log.h"
 #include "driver.h"
 
 
@@ -418,15 +419,16 @@ VOID DriverFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOI
 static DRIVER_MODULE_ENTRY_PARAMETERS _moduleEntries[] = {
 	{UtilsModuleInit, UtilsModuleFinit, NULL},
 	{DriverSettingsInit, DriverSettingsFinit, NULL},
+	{DataLoggerModuleInit, DataLoggerModuleFinit, NULL},
 	{RequestQueueModuleInit, RequestQueueModuleFinit, NULL},
 	{HookModuleInit, HookModuleFinit, NULL},
 	{HookHandlerModuleInit, HookHandlerModuleFinit, NULL},
 	{DevExtHooksModuleInit, DevExtHooksModuleFinit, NULL},
-	{UMServicesModuleInit, UMServicesModuleFinit, NULL},
+	{PWDModuleInit, PWDModuleFinit, NULL},
+	{BLModuleInit, BLModuleFinit, NULL},
 	{ProcessEventsModuleInit, ProcessEventsModuleFinit, NULL},
 	{ImageLoadModuleInit, ImageLoadModuleFinit, NULL},
-	{PWDModuleInit, PWDModuleFinit, NULL},
-	{DataLoggerModuleInit, DataLoggerModuleFinit, NULL},
+	{UMServicesModuleInit, UMServicesModuleFinit, NULL},
 	{DriverInit, DriverFinit, NULL},
 };
 

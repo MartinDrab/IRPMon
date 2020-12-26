@@ -487,7 +487,7 @@ NTSTATUS UMEnumDriversDevices(PVOID OutputBuffer, ULONG OutputBufferLength, PULO
 				tmp = driverInfoArray;
 				for (i = 0; i < driversCount; ++i) {
 					tmp->DriverObject = (i < driverDirCount) ? driverDir[i] : fsDir[i - driverDirCount];
-					status = _EnumDriverDevices(tmp->DriverObject, &tmp->Devices, &tmp->DeviceCount);
+					status = UtilsEnumDriverDevices(tmp->DriverObject, &tmp->Devices, &tmp->DeviceCount);
 					if (NT_SUCCESS(status)) {
 						status = _GetObjectName(tmp->DriverObject, &tmp->DriverName);
 						if (NT_SUCCESS(status)) {

@@ -1095,6 +1095,40 @@ object MainFrm: TMainFrm
         Caption = 'Max request data size'
         OnClick = DriverSettingsMenuItemClick
       end
+      object LogBootMenuItem: TMenuItem
+        Tag = 9
+        Caption = 'Log boot'
+        OnClick = DriverSettingsMenuItemClick
+      end
+      object DriverStartMenuItem: TMenuItem
+        Caption = 'Start type'
+        OnClick = DriverStartMenuItemClick
+        object BootStartMenuItem: TMenuItem
+          Caption = 'Boot'
+          RadioItem = True
+          OnClick = DriverStartMenuItemClick
+        end
+        object SystemStartMenuItem: TMenuItem
+          Caption = 'System'
+          RadioItem = True
+          OnClick = DriverStartMenuItemClick
+        end
+        object AutoStartMenuItem: TMenuItem
+          Caption = 'Auto'
+          RadioItem = True
+          OnClick = DriverStartMenuItemClick
+        end
+        object DemandStartMenuItem: TMenuItem
+          Caption = 'Demand'
+          RadioItem = True
+          OnClick = DriverStartMenuItemClick
+        end
+        object DisabledStartMenuItem: TMenuItem
+          Caption = 'Disabled'
+          RadioItem = True
+          OnClick = DriverStartMenuItemClick
+        end
+      end
     end
     object ColumnsMenuItem: TMenuItem
       Caption = 'Columns'

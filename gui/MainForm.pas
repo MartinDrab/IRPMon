@@ -82,6 +82,13 @@ Type
     CopyMenuItem: TMenuItem;
     CopyVisibleColumnsMenuItem: TMenuItem;
     CopyWholeLineMenuItem: TMenuItem;
+    LogBootMenuItem: TMenuItem;
+    DriverStartMenuItem: TMenuItem;
+    BootStartMenuItem: TMenuItem;
+    SystemStartMenuItem: TMenuItem;
+    AutoStartMenuItem: TMenuItem;
+    DemandStartMenuItem: TMenuItem;
+    DisabledStartMenuItem: TMenuItem;
     Procedure ClearMenuItemClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure CaptureEventsMenuItemClick(Sender: TObject);
@@ -110,6 +117,7 @@ Type
     procedure CompressMenuItemClick(Sender: TObject);
     procedure IgnoreLogFileHeadersMenuItemClick(Sender: TObject);
     procedure CopyVisibleColumnsMenuItemClick(Sender: TObject);
+    procedure DriverStartMenuItemClick(Sender: TObject);
   Private
 {$IFDEF FPC}
     FAppEvents: TApplicationProperties;
@@ -150,6 +158,7 @@ Implementation
 {$R *.dfm}
 
 Uses
+  WinSvc,
 {$IFNDEF FPC}
   IOUtils,
 {$ELSE}
@@ -537,6 +546,7 @@ FileObjectEventsCollectMenuItem.Enabled := (err = ERROR_SUCCESS);
 DriverSnapshotEventsCollectMenuItem.Enabled := (err = ERROR_SUCCESS);
 ProcessEmulateOnConnectMenuItem.Enabled := (err = ERROR_SUCCESS);
 DriverSnapshotOnConnectMenuItem.Enabled := (err = ERROR_SUCCESS);
+LogBootMenuItem.Enabled := (err = ERROR_SUCCESS);
 If err = ERROR_SUCCESS Then
   begin
   ReqQueueClearOnDisconnectMenuItem.Checked := settings.ReqQueueClearOnDisconnect;
@@ -548,6 +558,7 @@ If err = ERROR_SUCCESS Then
   DriverSnapshotOnConnectMenuItem.Checked := settings.DriverSnapshotOnConnect;
   StripRequestDataMenuItem.Checked := settings.StripData;
   MaxRequestDataSizeMenuItem.Caption := Format('Max request data size: %u', [settings.DataStripThreshold]);
+  LogBootMenuItem.Checked := settings.LogBoot;
   end;
 end;
 
@@ -577,6 +588,7 @@ If err = ERROR_SUCCESS Then
     6 : pv := @settings.DriverSnapshotOnConnect;
     7 : pv := @settings.StripData;
     8 : puv := @settings.DataStripThreshold;
+    9 : pv := @Settings.LogBoot;
     end;
 
   If Assigned(puv) Then
@@ -600,6 +612,68 @@ If err = ERROR_SUCCESS Then
   err := IRPMonDllSettingsSet(settings, True);
   If err <> ERROR_SUCCESS THen
     WinErrorMessage('Unable to change the driver settings', err);
+  end;
+end;
+
+Procedure TMainFrm.DriverStartMenuItemClick(Sender: TObject);
+Var
+  accessMask : Cardinal;
+  needed : Cardinal;
+  hScm : SC_HANDLE;
+  hService : SC_HANDLE;
+  sc : LPQUERY_SERVICE_CONFIGW;
+  M : TMenuItem;
+  subM : TMenuItem;
+  success : Boolean;
+begin
+success := False;
+hScm := OpenSCManagerW(Nil, Nil, SC_MANAGER_CONNECT);
+If hScm <> 0 Then
+  begin
+  M := Sender As TMenuItem;
+  If M = DriverStartMenuItem Then
+    accessMask := SERVICE_QUERY_CONFIG
+  Else accessMask := SERVICE_CHANGE_CONFIG;
+
+  hService := OpenServiceW(hScm, 'irpmndrv', accessMask);
+  If hService <> 0 Then
+    begin
+    If M = DriverStartMenuItem Then
+      begin
+      If (Not QueryServiceConfigW(hService, Nil, 0, needed)) And
+        (GetLastError = ERROR_INSUFFICIENT_BUFFER) Then
+        begin
+        sc := AllocMem(needed);
+        If Assigned(sc) Then
+          begin
+          If QueryServiceConfigW(hService, sc, needed, needed) Then
+            begin
+            M.Items[sc.dwStartType].Checked := True;
+            success := True;
+            end;
+
+          FreeMem(sc);
+          end;
+        end;
+      end
+    Else begin
+      If ChangeServiceConfigW(hService, SERVICE_NO_CHANGE, M.MenuIndex, SERVICE_NO_CHANGE, Nil, Nil, Nil, Nil, Nil, Nil, Nil) Then
+        begin
+        success := True;
+        M.Checked := True;
+        end;
+      end;
+
+    CloseServiceHandle(hService);
+    end;
+
+  CloseServiceHandle(hScm);
+  end;
+
+If M = DriverStartMenuItem Then
+  begin
+  For subM In M Do
+    subM.Enabled := success;
   end;
 end;
 
@@ -1065,6 +1139,7 @@ If IsAdmin Then
   settingsDir := ExtractFilePath(Application.ExeName)
 Else settingsDir := GetLocalSettingsDirectory;
 
+iniFile := Nil;
 Try
   iniFile := TIniFile.Create(settingsDir + settingsFile);
 Except
@@ -1090,7 +1165,6 @@ If Assigned(iniFile) Then
           iniColumnName[J] := '_';
         end;
 
-      iniFile.WriteBool('Columns', iniColumnName, c.Visible);
       end;
   Except
     WarningMessage('Unable to save program settings');

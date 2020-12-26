@@ -136,6 +136,8 @@ void IRPDataLogger(PDEVICE_OBJECT DeviceObject, PIRP Irp, PIO_STACK_LOCATION Irp
 					Result->Buffer = MmGetSystemAddressForMdlSafe(Irp->MdlAddress, NormalPagePriority);
 				} else if (Irp->AssociatedIrp.SystemBuffer != NULL)
 					Result->Buffer = Irp->AssociatedIrp.SystemBuffer;
+				else if (KeGetCurrentIrql() < DISPATCH_LEVEL && Irp->UserBuffer != NULL)
+					Result->Buffer = Irp->UserBuffer;
 
 				if (Result->Buffer != NULL)
 					Result->BufferSize = Irp->IoStatus.Information;
@@ -148,6 +150,8 @@ void IRPDataLogger(PDEVICE_OBJECT DeviceObject, PIRP Irp, PIO_STACK_LOCATION Irp
 					Result->Buffer = MmGetSystemAddressForMdlSafe(Irp->MdlAddress, NormalPagePriority);
 				} else if (Irp->AssociatedIrp.SystemBuffer != NULL)
 					Result->Buffer = Irp->AssociatedIrp.SystemBuffer;
+				else if (Irp->UserBuffer != NULL)
+					Result->Buffer = Irp->UserBuffer;
 
 				if (Result->Buffer != NULL)
 					Result->BufferSize = IrpStack->Parameters.Write.Length;

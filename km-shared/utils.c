@@ -253,7 +253,7 @@ NTSTATUS _GetDriversInDirectory(PUNICODE_STRING Directory, PDRIVER_OBJECT **Driv
 }
 
 
-NTSTATUS _EnumDriverDevices(PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT **DeviceArray, PULONG DeviceArrayLength)
+NTSTATUS UtilsEnumDriverDevices(PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT **DeviceArray, PULONG DeviceArrayLength)
 {
 	ULONG TmpArrayLength = 0;
 	PDEVICE_OBJECT *TmpDeviceArray = NULL;
@@ -327,7 +327,7 @@ NTSTATUS _GetDeviceAddressByCondition(DEVICE_CONDITION_CALLBACK *Callback, BOOLE
                PDEVICE_OBJECT *DeviceArray = NULL;
                ULONG DeviceArrayLength = 0;
 
-               Status = _EnumDriverDevices(TotalArray[i], &DeviceArray, &DeviceArrayLength);
+               Status = UtilsEnumDriverDevices(TotalArray[i], &DeviceArray, &DeviceArrayLength);
                if (NT_SUCCESS(Status)) {
                   ULONG j = 0;
 
@@ -707,6 +707,39 @@ NTSTATUS FileNameFromFileObject(PFILE_OBJECT FileObject, PUNICODE_STRING Name)
 	}
 
 	DEBUG_EXIT_FUNCTION("0x%x, Name=\"%wZ\"", status, Name);
+	return status;
+}
+
+
+NTSTATUS UtilsGetCurrentControlSetNumber(PULONG Number)
+{
+	HANDLE hSelectKey = NULL;
+	UNICODE_STRING uSelectKey;
+	OBJECT_ATTRIBUTES oa;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION("Number=0x%p", Number);
+
+	RtlInitUnicodeString(&uSelectKey, L"\\Registry\\Machine\\SYSTEM\\Select");
+	InitializeObjectAttributes(&oa, &uSelectKey, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, NULL);
+	status = ZwOpenKey(&hSelectKey, KEY_QUERY_VALUE, &oa);
+	if (NT_SUCCESS(status)) {
+		ULONG retLength = 0;
+		UNICODE_STRING uValueName;
+		UCHAR kvpiStorage[sizeof(KEY_VALUE_PARTIAL_INFORMATION) + sizeof(ULONG)];
+		PKEY_VALUE_PARTIAL_INFORMATION kvpi = (PKEY_VALUE_PARTIAL_INFORMATION)kvpiStorage;
+
+		RtlInitUnicodeString(&uValueName, L"Current");
+		status = ZwQueryValueKey(hSelectKey, &uValueName, KeyValuePartialInformation, kvpi, sizeof(kvpiStorage), &retLength);
+		if (NT_SUCCESS(status)) {
+			if (kvpi->DataLength == sizeof(ULONG))
+				*Number = *(PULONG)kvpi->Data;
+			else status = STATUS_INVALID_PARAMETER;
+		}
+
+		ZwClose(hSelectKey);
+	}
+
+	DEBUG_EXIT_FUNCTION("0x%x, *Number=%u", status, *Number);
 	return status;
 }
 

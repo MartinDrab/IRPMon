@@ -315,7 +315,7 @@ static VOID _UnhookDriverObject(PDRIVER_HOOK_RECORD HookRecord)
 /*                      DRIVER HOOK RECORDS                             */
 /************************************************************************/
 
-static NTSTATUS _DriverHookRecordCreate(PDRIVER_OBJECT DriverObject, PDRIVER_MONITOR_SETTINGS MonitorSettings, BOOLEAN MonitoringEnabled, BOOLEAN DeviceExtensionHook, PDRIVER_HOOK_RECORD *Record)
+static NTSTATUS _DriverHookRecordCreate(PDRIVER_OBJECT DriverObject, const DRIVER_MONITOR_SETTINGS *MonitorSettings, BOOLEAN MonitoringEnabled, BOOLEAN DeviceExtensionHook, PDRIVER_HOOK_RECORD *Record)
 {
 	PDRIVER_HOOK_RECORD tmpRecord = NULL;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
@@ -444,7 +444,7 @@ static NTSTATUS _CreateRecordsForExistingDevices(PDRIVER_HOOK_RECORD DriverRecor
 	DEBUG_ENTER_FUNCTION("DriverRecord=0x%p; Records=0x%p; Count=0x%p", DriverRecord, Records, Count);
 
 	driverObject = DriverRecord->DriverObject;
-	status = _EnumDriverDevices(driverObject, &devices, &deviceCount);
+	status = UtilsEnumDriverDevices(driverObject, &devices, &deviceCount);
 	if (NT_SUCCESS(status)) {
 		hookRecordCount = deviceCount;
 		hookRecords = (PDEVICE_HOOK_RECORD *)HeapMemoryAllocNonPaged(sizeof(PDEVICE_HOOK_RECORD)*hookRecordCount);
@@ -532,7 +532,7 @@ VOID DeviceHookRecordDereference(PDEVICE_HOOK_RECORD Record)
 	return;
 }
 
-NTSTATUS HookDriverObject(PDRIVER_OBJECT DriverObject, PDRIVER_MONITOR_SETTINGS MonitorSettings, BOOLEAN DeviceExtensionHook, PDRIVER_HOOK_RECORD *DriverRecord)
+NTSTATUS HookDriverObject(PDRIVER_OBJECT DriverObject, const DRIVER_MONITOR_SETTINGS *MonitorSettings, BOOLEAN DeviceExtensionHook, PDRIVER_HOOK_RECORD *DriverRecord)
 {
 	KIRQL irql;
 	PDRIVER_HOOK_RECORD record = NULL;

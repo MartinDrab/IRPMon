@@ -218,6 +218,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\shared\request.cpp" />
+    <ClCompile Include="boot-log.c" />
     <ClCompile Include="data-loggers.c" />
     <ClCompile Include="devext-hooks.c" />
     <ClCompile Include="driver-settings.c" />
@@ -239,6 +240,7 @@
     <ClInclude Include="..\include\kernel-shared.h" />
     <ClInclude Include="..\km-shared\preprocessor.h" />
     <ClInclude Include="..\shared\request.h" />
+    <ClInclude Include="boot-log.h" />
     <ClInclude Include="data-loggers.h" />
     <ClInclude Include="devext-hooks.h" />
     <ClInclude Include="driver-settings.h" />

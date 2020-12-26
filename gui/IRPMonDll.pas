@@ -526,6 +526,7 @@ Type
 	  FileObject : Pointer;
 	  IOSBStatus : Cardinal;
 	  IOSBInformation : NativeUInt;
+    DataSize : Cardinal;
     end;
   REQUEST_FASTIO = _REQUEST_FASTIO;
   PREQUEST_FASTIO = ^REQUEST_FASTIO;
@@ -863,6 +864,7 @@ Type
 	  DriverSnapshotOnConnect : ByteBool;
     DataStripThreshold : Cardinal;
     StripData : ByteBool;
+    LogBoot : ByteBool;
     end;
   IRPMNDRV_SETTINGS = _IRPMNDRV_SETTINGS;
   PIRPMNDRV_SETTINGS = ^IRPMNDRV_SETTINGS;

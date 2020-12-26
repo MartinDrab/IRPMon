@@ -114,7 +114,7 @@ VOID DeviceHookRecordReference(PDEVICE_HOOK_RECORD Record);
 VOID DeviceHookRecordDereference(PDEVICE_HOOK_RECORD Record);
 BOOLEAN DeviceHookRecordValid(PDEVICE_HOOK_RECORD DeviceRecord);
 
-NTSTATUS HookDriverObject(PDRIVER_OBJECT DriverObject, PDRIVER_MONITOR_SETTINGS MonitorSettings, BOOLEAN DeviceExtensionHook, PDRIVER_HOOK_RECORD *DriverRecord);
+NTSTATUS HookDriverObject(PDRIVER_OBJECT DriverObject, const DRIVER_MONITOR_SETTINGS *MonitorSettings, BOOLEAN DeviceExtensionHook, PDRIVER_HOOK_RECORD *DriverRecord);
 NTSTATUS UnhookDriverObject(PDRIVER_HOOK_RECORD DriverRecord);
 NTSTATUS DriverHookRecordSetInfo(PDRIVER_HOOK_RECORD Record, PDRIVER_MONITOR_SETTINGS DriverSettings);
 VOID DriverHookRecordGetInfo(PDRIVER_HOOK_RECORD Record, PDRIVER_MONITOR_SETTINGS DriverSettings, PBOOLEAN Enabled);
