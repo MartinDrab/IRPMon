@@ -36,6 +36,10 @@ set FILES=^
 	..\bin\Win32\%CONFIG%\dlls\device-connector.dll^
 	..\bin\Win32\%CONFIG%\parser\ea.dll^
 	..\bin\x64\%CONFIG%\parser\ea.dll^
+	..\bin\Win32\%CONFIG%\parser\pipes.dll^
+	..\bin\x64\%CONFIG%\parser\pipes.dll^
+	..\bin\Win32\%CONFIG%\parser\mailslots.dll^
+	..\bin\x64\%CONFIG%\parser\mailslots.dll^
 	..\bin\Win32\%CONFIG%\server\libserver.dll^
 	..\bin\x64\%CONFIG%\server\libserver.dll^
 	..\bin\Win32\%CONFIG%\server\server-app.exe^

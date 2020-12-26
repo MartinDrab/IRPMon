@@ -95,6 +95,40 @@ void IRPDataLogger(PDEVICE_OBJECT DeviceObject, PIRP Irp, PIO_STACK_LOCATION Irp
 				}
 			}
 		} break;
+		case IRP_MJ_CREATE_NAMED_PIPE: {
+			SIZE_T bufSize = 0;
+			POOL_TYPE pt = (KeGetCurrentIrql() < DISPATCH_LEVEL) ? PagedPool : NonPagedPool;
+			PREQUEST_IRP_CREATE_NAMED_PIPE_DATA buf = NULL;
+
+			if (!Completion && IrpStack->Parameters.CreatePipe.SecurityContext != NULL) {
+				bufSize = sizeof(REQUEST_IRP_CREATE_NAMED_PIPE_DATA);
+				buf = HeapMemoryAlloc(pt, bufSize);
+				if (buf != NULL) {
+					buf->DesiredAccess = IrpStack->Parameters.CreatePipe.SecurityContext->DesiredAccess;
+					buf->Parameters = *IrpStack->Parameters.CreatePipe.Parameters;
+					Result->Buffer = buf;
+					Result->BufferAllocated = TRUE;
+					Result->BufferSize = bufSize;
+				}
+			}
+		} break;
+		case IRP_MJ_CREATE_MAILSLOT: {
+			SIZE_T bufSize = 0;
+			POOL_TYPE pt = (KeGetCurrentIrql() < DISPATCH_LEVEL) ? PagedPool : NonPagedPool;
+			PREQUEST_IRP_CREATE_MAILSLOT_DATA buf = NULL;
+
+			if (!Completion && IrpStack->Parameters.CreateMailslot.SecurityContext != NULL) {
+				bufSize = sizeof(REQUEST_IRP_CREATE_MAILSLOT_DATA);
+				buf = HeapMemoryAlloc(pt, bufSize);
+				if (buf != NULL) {
+					buf->DesiredAccess = IrpStack->Parameters.CreateMailslot.SecurityContext->DesiredAccess;
+					buf->Parameters = *IrpStack->Parameters.CreateMailslot.Parameters;
+					Result->Buffer = buf;
+					Result->BufferAllocated = TRUE;
+					Result->BufferSize = bufSize;
+				}
+			}
+		} break;
 		case IRP_MJ_READ: {
 			if (Completion) {
 				if (Irp->MdlAddress != NULL) {

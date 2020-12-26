@@ -1371,6 +1371,8 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 	BOOLEAN isCleanup = FALSE;
 	PFILE_OBJECT cleanupFileObject = NULL;
 	BOOLEAN isCreate = FALSE;
+	BOOLEAN isCreatePipe = FALSE;
+	BOOLEAN isCreateMailslot = FALSE;
 	PFILE_OBJECT createFileObject = NULL;
 	PIRP_COMPLETION_CONTEXT compContext = NULL;
 	PREQUEST_IRP request = NULL;
@@ -1392,8 +1394,12 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 		catchRequest = (_CatchRequest(driverRecord, deviceRecord, Deviceobject) && (deviceRecord == NULL || deviceRecord->IRPMonitorSettings[irpStack->MajorFunction]));
 		if (catchRequest) {
 			isCreate = (irpStack->MajorFunction == IRP_MJ_CREATE);
-			if (isCreate) {
-				openByFileId = (irpStack->Parameters.Create.Options & FILE_OPEN_BY_FILE_ID) != 0;
+			isCreatePipe = (irpStack->MajorFunction == IRP_MJ_CREATE_NAMED_PIPE);
+			isCreateMailslot = (irpStack->MajorFunction == IRP_MJ_CREATE_MAILSLOT);
+			if (isCreate || isCreatePipe || isCreateMailslot) {
+				if (isCreate)
+					openByFileId = (irpStack->Parameters.Create.Options & FILE_OPEN_BY_FILE_ID) != 0;
+				
 				createFileObject = irpStack->FileObject;
 				QueryClientBasicInformation(&clientInfo);
 				if (createFileObject != NULL && KeGetCurrentIrql() < DISPATCH_LEVEL && !openByFileId)
@@ -1480,10 +1486,10 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 			driverRecord->DriverObject->MajorFunction[irpStack->MajorFunction](Deviceobject, Irp) :
 			driverRecord->OldMajorFunction[irpStack->MajorFunction](Deviceobject, Irp);
 		
-		if (catchRequest && isCreate && createFileObject != NULL) {
+		if (catchRequest && (isCreate || isCreateMailslot || isCreatePipe) && createFileObject != NULL) {
 			PREQUEST_FILE_OBJECT_NAME_ASSIGNED ar = NULL;
 
-			if (NT_SUCCESS(status) && KeGetCurrentIrql() < DISPATCH_LEVEL && status != STATUS_PENDING) {
+			if (NT_SUCCESS(status) && isCreate && KeGetCurrentIrql() < DISPATCH_LEVEL && status != STATUS_PENDING) {
 				PFLT_FILE_NAME_INFORMATION fi = NULL;
 				NTSTATUS tmpStatus = STATUS_UNSUCCESSFUL;
 
