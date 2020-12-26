@@ -114,8 +114,7 @@ static BOOLEAN _OnDriverNameWatchEnum(PWCHAR String, PVOID Data, PVOID Context)
 				ctx->BytesWritten += requiredLength;
 				ctx->RemainingLength -= requiredLength;
 			}
-		}
-		else ctx->Status = STATUS_BUFFER_TOO_SMALL;
+		} else ctx->Status = STATUS_BUFFER_TOO_SMALL;
 	}
 
 	DEBUG_EXIT_FUNCTION("0x%x", ctx->Status);
