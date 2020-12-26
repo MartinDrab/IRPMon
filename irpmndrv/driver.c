@@ -13,8 +13,6 @@
 #include "pnp-driver-watch.h"
 #include "process-events.h"
 #include "req-queue.h"
-#include "regman.h"
-#include "data-loggers.h"
 #include "devext-hooks.h"
 #include "image-load.h"
 #include "boot-log.h"
