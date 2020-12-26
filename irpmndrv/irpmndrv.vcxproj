@@ -219,7 +219,6 @@
   <ItemGroup>
     <ClCompile Include="..\shared\request.cpp" />
     <ClCompile Include="boot-log.c" />
-    <ClCompile Include="data-loggers.c" />
     <ClCompile Include="devext-hooks.c" />
     <ClCompile Include="driver.c" />
     <ClCompile Include="fo-context-table.c" />
@@ -240,7 +239,6 @@
     <ClInclude Include="..\km-shared\preprocessor.h" />
     <ClInclude Include="..\shared\request.h" />
     <ClInclude Include="boot-log.h" />
-    <ClInclude Include="data-loggers.h" />
     <ClInclude Include="devext-hooks.h" />
     <ClInclude Include="driver.h" />
     <ClInclude Include="fo-context-table.h" />
@@ -264,6 +262,9 @@
   <ItemGroup>
     <ProjectReference Include="..\kbase\kbase.vcxproj">
       <Project>{42b0c13c-cf65-4cc5-8be9-15fc87e9604a}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\kdatalog\kdatalog.vcxproj">
+      <Project>{754b79fb-ab1f-4bca-8478-6a0f03dc3866}</Project>
     </ProjectReference>
     <ProjectReference Include="..\ksettings\ksettings.vcxproj">
       <Project>{cea00262-711a-4ef4-993f-80b4083359b5}</Project>

@@ -3,6 +3,9 @@
 #define __DATA_LOGGERS_H__
 
 
+#include "general-types.h"
+
+
 typedef enum _EDataLoggerResultType {
 	dlrtNoBuffers,
 	dlrtKernelMode,

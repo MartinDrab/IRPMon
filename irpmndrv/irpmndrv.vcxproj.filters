@@ -36,9 +36,6 @@
     <ClCompile Include="um-services.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="data-loggers.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="process-events.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -93,9 +90,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\km-shared\preprocessor.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="data-loggers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\shared\request.h">

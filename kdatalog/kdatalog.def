@@ -1,0 +1,7 @@
+LIBRARY kdatalog
+EXPORTS
+	DllInitialize	PRIVATE
+	DllUnload	PRIVATE
+	IRPDataLogger
+	IRPDataLoggerSetRequestFlags
+	DataLoggerResultRelease
