@@ -26,6 +26,10 @@ object ConnectorSelectionFrm: TConnectorSelectionFrm
     TabOrder = 0
     object NoneTabSheet: TTabSheet
       Caption = 'None'
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
     end
     object DeviceTabSheet: TTabSheet
       Caption = 'Device'
@@ -48,6 +52,10 @@ object ConnectorSelectionFrm: TConnectorSelectionFrm
     object NetworkTabSheet: TTabSheet
       Caption = 'Network'
       ImageIndex = 2
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object Label2: TLabel
         Left = 16
         Top = 3

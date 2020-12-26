@@ -1059,45 +1059,46 @@ Var
   settingsDir : WideString;
   settingsFile : WideString;
 begin
+iniFile := Nil;
 settingsFile := ChangeFileExt(ExtractFileName(Application.ExeName), '.ini');
-settingsDir := ExtractFilePath(Application.ExeName);
+If IsAdmin Then
+  settingsDir := ExtractFilePath(Application.ExeName)
+Else settingsDir := GetLocalSettingsDirectory;
+
 Try
   iniFile := TIniFile.Create(settingsDir + settingsFile);
 Except
   iniFile := Nil;
   End;
 
-If Not Assigned(iniFile) Then
-  begin
-  settingsDir := GetLocalSettingsDirectory;
-  Try
-    iniFile := TIniFile.Create(settingsDir + settingsFile);
-  Except
-    iniFile := Nil;
-    End;
-  end;
-
 If Assigned(iniFile) Then
   begin
-  iniFIle.WriteBool('Driver', 'unload_on_exit', UnloadOnExitMenuItem.Checked);
-  iniFIle.WriteBool('Driver', 'uninstall_on_exit', UninstallOnExitMenuItem.Checked);
-  iniFile.WriteBool('General', 'CaptureEvents', CaptureEventsMenuItem.Checked);
-  iniFile.WriteBool('General', 'filter_display_only', HideExcludedRequestsMenuItem.Checked);
-  iniFile.WriteBool('Log', 'compress_requests', CompressMenuItem.Checked);
-  iniFile.WriteBool('Log', 'ignore_headers', IgnoreLogFileHeadersMenuItem.Checked);
-  For I := 0 To FModel.ColumnCount - 1 Do
-    begin
-    c := FModel.Columns[I];
-    iniColumnName := c.Caption;
-    For J := 1 To Length(iniColumnName) Do
+  Try
+    iniFIle.WriteBool('Driver', 'unload_on_exit', UnloadOnExitMenuItem.Checked);
+    iniFIle.WriteBool('Driver', 'uninstall_on_exit', UninstallOnExitMenuItem.Checked);
+    iniFile.WriteBool('General', 'CaptureEvents', CaptureEventsMenuItem.Checked);
+    iniFile.WriteBool('General', 'filter_display_only', HideExcludedRequestsMenuItem.Checked);
+    iniFile.WriteBool('Log', 'compress_requests', CompressMenuItem.Checked);
+    iniFile.WriteBool('Log', 'ignore_headers', IgnoreLogFileHeadersMenuItem.Checked);
+    For I := 0 To FModel.ColumnCount - 1 Do
       begin
-      If (iniColumnName[J] = ' ') Then
-        iniColumnName[J] := '_';
-      end;
+      c := FModel.Columns[I];
+      iniColumnName := c.Caption;
+      For J := 1 To Length(iniColumnName) Do
+        begin
+        If (iniColumnName[J] = ' ') Then
+          iniColumnName[J] := '_';
+        end;
 
-    iniFile.WriteBool('Columns', iniColumnName, c.Visible);
+      iniFile.WriteBool('Columns', iniColumnName, c.Visible);
+      end;
+  Except
+    WarningMessage('Unable to save program settings');
     end;
-  end;
+
+  iniFile.Free;
+  end
+Else WarningMessage('Unable to create file for program settings');
 end;
 
 Procedure TMainFrm.ReadSettings;
@@ -1111,9 +1112,9 @@ Var
 begin
 iniFIle := Nil;
 settingsFile := ChangeFileExt(ExtractFileName(Application.ExeName), '.ini');
-settingsDir := GetLocalSettingsDirectory;
-If Not FileExists(settingsDir + settingsFile) Then
-  settingsDir := ExtractFilePath(Application.ExeName);
+If IsAdmin Then
+  settingsDir := ExtractFilePath(Application.ExeName)
+Else settingsDir := GetLocalSettingsDirectory;
 
 If FileExists(settingsDir + settingsFile) Then
   begin

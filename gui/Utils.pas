@@ -17,6 +17,7 @@ Function BufferToHex(ABuffer:Pointer; ASize:NativeUInt):WideString;
 Procedure ColorToComponents(AColor:TColor; Var AR,AG,AB:Cardinal);
 Function ColorLuminance(AColor:TColor):Cardinal;
 Function ColorLuminanceHeur(AColor:TColor):Cardinal;
+Function IsAdmin:Boolean;
 {$IFDEF FPC}
 Function UIntToStr(AValue:UInt64):WideString;
 {$ENDIF}
@@ -153,6 +154,28 @@ Else Result := '0';
 end;
 
 {$ENDIF}
+
+Function CheckTokenMembership(AToken:THandle; ASid:PSID; Var AAdmin:BOOL):BOOL; StdCall; External 'advapi32.dll';
+
+Function IsAdmin:Boolean;
+const
+  SECURITY_NT_AUTHORITY: TSIDIdentifierAuthority =
+    (Value: (0, 0, 0, 0, 0, 5));
+  SECURITY_BUILTIN_DOMAIN_RID = $00000020;
+  DOMAIN_ALIAS_RID_ADMINS = $00000220;
+var
+  b: BOOL;
+  AdministratorsGroup: PSID;
+begin
+Result := False;
+If AllocateAndInitializeSid( SECURITY_NT_AUTHORITY, 2, SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0, AdministratorsGroup) Then
+  begin
+  If CheckTokenMembership(0, AdministratorsGroup, b) then
+    Result := b;
+
+  FreeSid(AdministratorsGroup);
+  end;
+end;
 
 
 
