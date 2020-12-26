@@ -21,7 +21,8 @@ static DWORD _ProcessCreateBuffer(PNV_PAIR Pair, const REQUEST_IRP_CREATE_NAMED_
 
 	ret = PBaseAddNameFormat(Pair, L"Desired access", L"0x%x", Buffer->DesiredAccess);
 	if (ret == ERROR_SUCCESS)
-	ret = PBaseAddNameFormat(Pair, L"Type", L"%u", Buffer->Parameters.NamedPipeType);
+		ret = PBaseAddNameFormat(Pair, L"Type", L"%u", Buffer->Parameters.NamedPipeType);
+	
 	if (ret == ERROR_SUCCESS)
 		ret = PBaseAddNameFormat(Pair, L"Read mode", L"0x%x", Buffer->Parameters.ReadMode);
 
@@ -50,7 +51,6 @@ static DWORD _ProcessCreateBuffer(PNV_PAIR Pair, const REQUEST_IRP_CREATE_NAMED_
 static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST_EXTRA_INFO *ExtraInfo, PBOOLEAN Handled, wchar_t ***Names, wchar_t ***Values, size_t *RowCount)
 {
 	NV_PAIR p;
-	BOOLEAN parsed = FALSE;
 	DWORD ret = ERROR_GEN_FAILURE;
 	const REQUEST_IRP* irp = NULL;
 	const REQUEST_IRP_CREATE_NAMED_PIPE_DATA *buffer = NULL;
@@ -64,7 +64,6 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 				case IRP_MJ_CREATE_NAMED_PIPE:
 					buffer = (REQUEST_IRP_CREATE_NAMED_PIPE_DATA *)(irp + 1);
 					ret = _ProcessCreateBuffer(&p, buffer);
-					parsed = TRUE;
 					break;
 			}
 		}
@@ -74,7 +73,7 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 	*Names = NULL;
 	*Values = NULL;
 	if (ret == ERROR_SUCCESS) {
-		*Handled = parsed;
+		*Handled = TRUE;
 		*RowCount = p.Count;
 		*Names = p.Names;
 		*Values = p.Values;

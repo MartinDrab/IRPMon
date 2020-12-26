@@ -39,7 +39,6 @@ static DWORD _ProcessCreateBuffer(PNV_PAIR Pair, const REQUEST_IRP_CREATE_MAILSL
 static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST_EXTRA_INFO *ExtraInfo, PBOOLEAN Handled, wchar_t ***Names, wchar_t ***Values, size_t *RowCount)
 {
 	NV_PAIR p;
-	BOOLEAN parsed = FALSE;
 	DWORD ret = ERROR_GEN_FAILURE;
 	const REQUEST_IRP *irp = NULL;
 	const REQUEST_IRP_CREATE_MAILSLOT_DATA *buffer = NULL;
@@ -53,7 +52,6 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 				case IRP_MJ_CREATE_MAILSLOT:
 					buffer = (REQUEST_IRP_CREATE_MAILSLOT_DATA *)(irp + 1);
 					ret = _ProcessCreateBuffer(&p, buffer);
-					parsed = TRUE;
 					break;
 			}
 		}
@@ -63,7 +61,7 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 	*Names = NULL;
 	*Values = NULL;
 	if (ret == ERROR_SUCCESS) {
-		*Handled = parsed;
+		*Handled = TRUE;
 		*RowCount = p.Count;
 		*Names = p.Names;
 		*Values = p.Values;
