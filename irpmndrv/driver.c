@@ -11,6 +11,8 @@
 #include "req-queue.h"
 #include "um-services.h"
 #include "pnp-driver-watch.h"
+#include "pnp-class-watch.h"
+#include "fs-watch.h"
 #include "process-events.h"
 #include "req-queue.h"
 #include "devext-hooks.h"
@@ -184,7 +186,7 @@ static NTSTATUS _HandleCDORequest(ULONG ControlCode, PVOID InputBuffer, ULONG In
 			status = UMClassWatchUnregister((PIOCTL_IRPMNDRV_CLASS_WATCH_UNREGISTER_INPUT)InputBuffer, InputBufferLength);
 			break;
 		case IOCTL_IRPMNDRV_CLASS_WATCH_ENUM:
-			status = PDWClassEnumerate((PIOCTL_IRPMNDRV_CLASS_WATCH_OUTPUT)OutputBuffer, OutputBufferLength, &IoStatus->Information, ExGetPreviousMode());
+			status = CWEnumerate((PIOCTL_IRPMNDRV_CLASS_WATCH_OUTPUT)OutputBuffer, OutputBufferLength, &IoStatus->Information, ExGetPreviousMode());
 			break;
 
 		case IOCTL_IRPMNDRV_DRIVER_WATCH_REGISTER:
@@ -288,7 +290,7 @@ NTSTATUS DriverShutdown(PDEVICE_OBJECT DeviceObject, PIRP Irp)
 	if (DeviceObject == _controlDeviceObject) {
 		DEBUG_ENTER_FUNCTION("DeviceObject=0x%p; Irp=0x%p", DeviceObject, Irp);
 
-		PDWClassWatchesUnregister();
+		CWClear();
 		status = STATUS_SUCCESS;
 		Irp->IoStatus.Status = status;
 		Irp->IoStatus.Information = 0;
@@ -419,6 +421,8 @@ static DRIVER_MODULE_ENTRY_PARAMETERS _moduleEntries[] = {
 	{HookHandlerModuleInit, HookHandlerModuleFinit, NULL},
 	{DevExtHooksModuleInit, DevExtHooksModuleFinit, NULL},
 	{PWDModuleInit, PWDModuleFinit, NULL},
+	{CWModuleInit, CWModuleFinit, NULL},
+	{FSWModuleInit, FSWModuleFinit, NULL},
 	{BLModuleInit, BLModuleFinit, NULL},
 	{ProcessEventsModuleInit, ProcessEventsModuleFinit, NULL},
 	{ImageLoadModuleInit, ImageLoadModuleFinit, NULL},

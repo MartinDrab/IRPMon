@@ -9,6 +9,7 @@
 #include "request.h"
 #include "driver-settings.h"
 #include "pnp-driver-watch.h"
+#include "fs-watch.h"
 #include "regman.h"
 #include "boot-log.h"
 
@@ -419,7 +420,7 @@ static NTSTATUS _LoadSettings(PUNICODE_STRING RegistryPath)
 	}
 
 	if (NT_SUCCESS(status) && _blEnabled)
-		status = PDWMonitorFileSystems(TRUE);
+		status = FSWMonitor(TRUE);
 
 	DEBUG_EXIT_FUNCTION("0x%x", status);
 	return status;

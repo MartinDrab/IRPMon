@@ -115,7 +115,7 @@ NTSTATUS _GetObjectName(PVOID Object, PUNICODE_STRING Name)
 	status = ObQueryNameString(Object, NULL, 0, &oniLen);
 	if (status == STATUS_INFO_LENGTH_MISMATCH) {
 		oniLen += sizeof(OBJECT_NAME_INFORMATION) + sizeof(WCHAR);
-		oni = (POBJECT_NAME_INFORMATION)HeapMemoryAllocNonPaged(oniLen);
+		oni = HeapMemoryAllocNonPaged(oniLen);
 		if (oni != NULL) {
 			status = ObQueryNameString(Object, oni, oniLen, &oniLen);
 			if (NT_SUCCESS(status)) {
@@ -133,7 +133,7 @@ NTSTATUS _GetObjectName(PVOID Object, PUNICODE_STRING Name)
 	} else if (NT_SUCCESS(status)) {
 		Name->Length = 0;
 		Name->MaximumLength = sizeof(WCHAR);
-		Name->Buffer = (PWCH)HeapMemoryAllocNonPaged(sizeof(WCHAR));
+		Name->Buffer = HeapMemoryAllocNonPaged(sizeof(WCHAR));
 		if (Name->Buffer != NULL) {
 			Name->Buffer[0] = L'\0';
 			status = STATUS_SUCCESS;

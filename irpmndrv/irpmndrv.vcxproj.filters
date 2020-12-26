@@ -57,6 +57,12 @@
     <ClCompile Include="boot-log.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="pnp-class-watch.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="fs-watch.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="driver.h">
@@ -123,6 +129,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="boot-log.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="pnp-class-watch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="fs-watch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

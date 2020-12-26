@@ -11,6 +11,7 @@
 #include "request.h"
 #include "req-queue.h"
 #include "pnp-driver-watch.h"
+#include "pnp-class-watch.h"
 #include "process-events.h"
 #include "driver-settings.h"
 #include "um-services.h"
@@ -1115,7 +1116,7 @@ NTSTATUS UMClassWatchRegister(PIOCTL_IRPMNDRV_CLASS_WATCH_REGISTER_INPUT InputBu
 			} else classGuid = input.Data.ClassGuidBinary;
 
 			if (NT_SUCCESS(status))
-				status = PDWClassRegister(&classGuid, (input.Flags & CLASS_WATCH_FLAG_UPPERFILTER), (input.Flags & CLASS_WATCH_FLAG_BEGINNING));
+				status = CWRegister(&classGuid, (input.Flags & CLASS_WATCH_FLAG_UPPERFILTER), (input.Flags & CLASS_WATCH_FLAG_BEGINNING));
 		}
 	} else status = STATUS_BUFFER_TOO_SMALL;
 
@@ -1152,7 +1153,7 @@ NTSTATUS UMClassWatchUnregister(PIOCTL_IRPMNDRV_CLASS_WATCH_UNREGISTER_INPUT Inp
 			} else classGuid = input.Data.ClassGuidBinary;
 
 			if (NT_SUCCESS(status))
-				status = PDWClassUnregister(&classGuid, (input.Flags & CLASS_WATCH_FLAG_UPPERFILTER), (input.Flags & CLASS_WATCH_FLAG_BEGINNING));
+				status = CWUnregister(&classGuid, (input.Flags & CLASS_WATCH_FLAG_UPPERFILTER), (input.Flags & CLASS_WATCH_FLAG_BEGINNING));
 		}
 	} else status = STATUS_BUFFER_TOO_SMALL;
 
