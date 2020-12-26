@@ -78,6 +78,9 @@ NTSTATUS ProcessQueryCommandLine(HANDLE ProcessHandle, POOL_TYPE PoolType, PUNIC
 
 NTSTATUS FileNameFromFileObject(PFILE_OBJECT FileObject, PUNICODE_STRING Name);
 
+NTSTATUS UtilsModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context);
+void UtilsModuleFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context);
+
 
 
 #endif

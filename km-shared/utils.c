@@ -1,5 +1,6 @@
 
 #include <ntifs.h>
+#include <fltKernel.h>
 #include <ntddvol.h>
 #include "preprocessor.h"
 #include "allocator.h"
@@ -47,11 +48,14 @@ typedef struct _OBJECT_DIRECTORY_INFORMATION {
    UNICODE_STRING TypeName;
 } OBJECT_DIRECTORY_INFORMATION, *POBJECT_DIRECTORY_INFORMATION;
 
+typedef POBJECT_TYPE (OBGETOBJECTTYPE)(PVOID Object);
+
 __declspec(dllimport) ZWQUERYDIRECTORYOBJECT ZwQueryDirectoryObject;
 __declspec(dllimport) OBREFERENCEOBJECTBYNAME ObReferenceObjectByName;
 __declspec(dllimport) ZWQUERYSYSTEMINFORMATION ZwQuerySystemInformation;
 __declspec(dllimport) ZWQUERYINFORMATIONPROCESS ZwQueryInformationProcess;
-__declspec(dllimport) POBJECT_TYPE *IoDriverObjectType;
+
+static POBJECT_TYPE *_IoDriverObjectType = NULL;
 
 
 /************************************************************************/
@@ -162,6 +166,17 @@ static NTSTATUS _AppendDriverNameToDirectory(PUNICODE_STRING Dest, PUNICODE_STRI
 }
 
 
+typedef struct _OBJECT_DIRECTORY_ENTRY {
+	struct _OBJECT_DIRECTORY_ENTRY *Next;
+	PVOID Object;
+	ULONG Hash;
+} OBJECT_DIRECTORY_ENTRY, *POBJECT_DIRECTORY_ENTRY;
+
+typedef struct _OBJECT_DIRECTORY {
+	POBJECT_DIRECTORY_ENTRY Buckets[37];
+	EX_PUSH_LOCK Lock;
+} OBJECT_DIRECTORY, *POBJECT_DIRECTORY;
+
 NTSTATUS _GetDriversInDirectory(PUNICODE_STRING Directory, PDRIVER_OBJECT **DriverArray, PSIZE_T DriverCount)
 {
 	SIZE_T tmpDriverCount = 0;
@@ -178,7 +193,7 @@ NTSTATUS _GetDriversInDirectory(PUNICODE_STRING Directory, PDRIVER_OBJECT **Driv
 	status = DymArrayCreate(PagedPool, &driverArray);
 	if (NT_SUCCESS(status)) {
 		RtlInitUnicodeString(&uDriverTypeString, L"Driver");
-		InitializeObjectAttributes(&oa, Directory, OBJ_CASE_INSENSITIVE, NULL, NULL);
+		InitializeObjectAttributes(&oa, Directory, OBJ_KERNEL_HANDLE | OBJ_CASE_INSENSITIVE, NULL, NULL);
 		status = ZwOpenDirectoryObject(&hDirectory, DIRECTORY_QUERY, &oa);
 		if (NT_SUCCESS(status)) {
 			ULONG QueryContext = 0;
@@ -196,7 +211,7 @@ NTSTATUS _GetDriversInDirectory(PUNICODE_STRING Directory, PDRIVER_OBJECT **Driv
 						if (NT_SUCCESS(status)) {
 							PDRIVER_OBJECT DriverPtr = NULL;
 
-							status = ObReferenceObjectByName(&FullDriverName, OBJ_CASE_INSENSITIVE, NULL, GENERIC_READ, *IoDriverObjectType, KernelMode, NULL, (PVOID *)&DriverPtr);
+							status = ObReferenceObjectByName(&FullDriverName, OBJ_CASE_INSENSITIVE, NULL, GENERIC_READ, *_IoDriverObjectType, KernelMode, NULL, (PVOID *)&DriverPtr);
 							if (NT_SUCCESS(status)) {
 								status = DymArrayPushBack(driverArray, DriverPtr);
 								if (!NT_SUCCESS(status))
@@ -428,7 +443,7 @@ NTSTATUS GetDriverObjectByName(PUNICODE_STRING Name, PDRIVER_OBJECT *DriverObjec
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("Name=0x%p; DriverObject=0x%p", Name, DriverObject);
 
-	status = ObReferenceObjectByName(Name, 0, NULL, 0, *IoDriverObjectType, KernelMode, NULL, &tmpDriverObject);
+	status = ObReferenceObjectByName(Name, 0, NULL, 0, *_IoDriverObjectType, KernelMode, NULL, &tmpDriverObject);
 	if (NT_SUCCESS(status))
 		*DriverObject = tmpDriverObject;
 
@@ -693,4 +708,32 @@ NTSTATUS FileNameFromFileObject(PFILE_OBJECT FileObject, PUNICODE_STRING Name)
 
 	DEBUG_EXIT_FUNCTION("0x%x, Name=\"%wZ\"", status, Name);
 	return status;
+}
+
+
+NTSTATUS UtilsModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context)
+{
+	UNICODE_STRING uRoutineName;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"; Context=0x%p", DriverObject, RegistryPath, Context);
+
+	status = STATUS_SUCCESS;
+	RtlInitUnicodeString(&uRoutineName, L"IoDriverObjectType");
+	_IoDriverObjectType = (POBJECT_TYPE*)MmGetSystemRoutineAddress(&uRoutineName);
+	if (_IoDriverObjectType == NULL)
+		status = STATUS_NOT_FOUND;
+
+	DEBUG_EXIT_FUNCTION("0x%x", status);
+	return status;
+}
+
+
+void UtilsModuleFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context)
+{
+	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"; Context=0x%p", DriverObject, RegistryPath, Context);
+
+	_IoDriverObjectType = NULL;
+
+	DEBUG_EXIT_FUNCTION_VOID();
+	return;
 }
