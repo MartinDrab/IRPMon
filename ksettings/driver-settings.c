@@ -245,7 +245,7 @@ NTSTATUS DriverSettingsSet(const IRPMNDRV_SETTINGS *Settings, BOOLEAN Save)
 /*                  INITIALIZATION AND FINALIZATION                     */
 /************************************************************************/
 
-NTSTATUS DriverSettingsInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context)
+NTSTATUS DriverSettingsInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, void *Context)
 {
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("", DriverObject, RegistryPath, Context);
@@ -278,7 +278,7 @@ NTSTATUS DriverSettingsInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING Registr
 }
 
 
-VOID DriverSettingsFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context)
+void DriverSettingsFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, void *Context)
 {
 	DEBUG_ENTER_FUNCTION("", DriverObject, RegistryPath, Context);
 

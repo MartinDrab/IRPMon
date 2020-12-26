@@ -15,7 +15,6 @@
 #include "req-queue.h"
 #include "regman.h"
 #include "data-loggers.h"
-#include "driver-settings.h"
 #include "devext-hooks.h"
 #include "image-load.h"
 #include "boot-log.h"
@@ -417,7 +416,6 @@ VOID DriverFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOI
 /************************************************************************/
 
 static DRIVER_MODULE_ENTRY_PARAMETERS _moduleEntries[] = {
-	{DriverSettingsInit, DriverSettingsFinit, NULL},
 	{DataLoggerModuleInit, DataLoggerModuleFinit, NULL},
 	{RequestQueueModuleInit, RequestQueueModuleFinit, NULL},
 	{HookModuleInit, HookModuleFinit, NULL},

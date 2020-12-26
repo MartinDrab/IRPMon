@@ -48,9 +48,6 @@
     <ClCompile Include="process-context-table.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="driver-settings.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="devext-hooks.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -111,9 +108,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="process-context-table.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="driver-settings.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="resource.h">

@@ -1,0 +1,4 @@
+LIBRARY ksettings
+EXPORTS
+	DriverSettingsGet
+	DriverSettingsSet
