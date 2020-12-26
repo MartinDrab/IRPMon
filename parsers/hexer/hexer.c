@@ -20,8 +20,9 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 	const unsigned char *data = NULL;
 	size_t dataLen = 0;
 	const REQUEST_IRP *irp = NULL;
-	const REQUEST_STARTIO *startIo = NULL;
 	const REQUEST_IRP_COMPLETION *irpComp = NULL;
+	const REQUEST_FASTIO *fastIo = NULL;
+	const REQUEST_STARTIO* startIo = NULL;
 	wchar_t lowers[] = {L"0123456789abcdef"};
 	wchar_t uppers[] = { L"0123456789ABCDEF" };
 	const wchar_t *digits[] = {lowers, uppers};
@@ -44,6 +45,11 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 			data = (unsigned char *)(irpComp + 1);
 			dataLen = irpComp->DataSize;
 			break;
+		case ertFastIo:
+			fastIo = CONTAINING_RECORD(Request, REQUEST_FASTIO, Header);
+			data = (unsigned char *)(fastIo + 1);
+			dataLen = 0;
+			break;
 		case ertStartIo:
 			startIo = CONTAINING_RECORD(Request, REQUEST_STARTIO, Header);
 			data = (unsigned char *)(startIo + 1);
@@ -54,7 +60,7 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 			break;
 	}
 
-	if (ret == ERROR_SUCCESS) {
+	if (ret == ERROR_SUCCESS && data != NULL && dataLen > 0) {
 		lineCount = (dataLen + 15) / 16;
 		if (_displayAddress) {
 			addressSize = 31;
