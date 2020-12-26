@@ -417,7 +417,6 @@ VOID DriverFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOI
 /************************************************************************/
 
 static DRIVER_MODULE_ENTRY_PARAMETERS _moduleEntries[] = {
-	{UtilsModuleInit, UtilsModuleFinit, NULL},
 	{DriverSettingsInit, DriverSettingsFinit, NULL},
 	{DataLoggerModuleInit, DataLoggerModuleFinit, NULL},
 	{RequestQueueModuleInit, RequestQueueModuleFinit, NULL},

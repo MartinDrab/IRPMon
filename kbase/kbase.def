@@ -82,5 +82,3 @@ EXPORTS
 	ProcessQueryCommandLine
 	FileNameFromFileObject
 	UtilsGetCurrentControlSetNumber
-	UtilsModuleInit
-	UtilsModuleFinit
