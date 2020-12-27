@@ -27,6 +27,9 @@ typedef struct _PROXY_DEVICE_EXTENSION {
 
 NTSTATUS ProxyDeviceCreate(PDEVICE_OBJECT TargetDevice, PDEVICE_OBJECT *ProxyDevice);
 void ProxyDeviceDelete(PDEVICE_OBJECT ProxyDevice);
+void ProxySetDriverObject(PDRIVER_OBJECT DriverObject);
+void ProxyTranslate(PDEVICE_OBJECT *DeviceObject, PDRIVER_OBJECT *DriverObject);
+
 
 NTSTATUS DevExtHooksModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context);
 void DevExtHooksModuleFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context);

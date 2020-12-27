@@ -29,8 +29,15 @@ NTSTATUS ProxyDeviceCreate(PDEVICE_OBJECT TargetDevice, PDEVICE_OBJECT *ProxyDev
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("TargetDevice=0x%p; ProxyDevice=0x%p", TargetDevice, ProxyDevice);
 
+	status = STATUS_SUCCESS;
+	if (_driverObject == NULL)
+		status = STATUS_DEVICE_NOT_READY;
+
 	upperDevice = TargetDevice->AttachedDevice;
-	if (upperDevice != NULL) {
+	if (NT_SUCCESS(status) && upperDevice == NULL)
+		status = STATUS_INVALID_PARAMETER;
+
+	if (NT_SUCCESS(status)) {
 		status = IoCreateDevice(_driverObject, sizeof(PROXY_DEVICE_EXTENSION), NULL, TargetDevice->DeviceType, TargetDevice->Characteristics, (TargetDevice->Flags & DO_EXCLUSIVE), &tmpProxy);
 		if (NT_SUCCESS(status)) {
 			tmpProxy->StackSize = TargetDevice->StackSize;
@@ -68,7 +75,7 @@ NTSTATUS ProxyDeviceCreate(PDEVICE_OBJECT TargetDevice, PDEVICE_OBJECT *ProxyDev
 				IoDeleteDevice(tmpProxy);
 			}
 		}
-	} else status = STATUS_INVALID_PARAMETER;
+	}
 
 	DEBUG_EXIT_FUNCTION("0x%x, *ProxyDevice=0x%p", status, *ProxyDevice);
 	return status;
@@ -100,6 +107,43 @@ void ProxyDeviceDelete(PDEVICE_OBJECT ProxyDevice)
 }
 
 
+void ProxySetDriverObject(PDRIVER_OBJECT DriverObject)
+{
+	PDRIVER_OBJECT localDriverObject = NULL;
+	DEBUG_ENTER_FUNCTION("DriverObject=0x%p", DriverObject);
+
+	ObReferenceObject(DriverObject);
+	localDriverObject = InterlockedExchangePointer(&_driverObject, DriverObject);
+	if (localDriverObject != NULL)
+		ObDereferenceObject(localDriverObject);
+
+	DEBUG_EXIT_FUNCTION_VOID();
+	return;
+}
+
+
+void ProxyTranslate(PDEVICE_OBJECT *DeviceObject, PDRIVER_OBJECT *DriverObject)
+{
+	PPROXY_DEVICE_EXTENSION ext = NULL;
+	PDRIVER_OBJECT tmpDriverObject = NULL;
+	DEBUG_ENTER_FUNCTION("DeviceObject=0x%p; DriverObject=0x%p", DeviceObject, DriverObject);
+
+	tmpDriverObject = (*DeviceObject)->DriverObject;
+	if (_driverObject != NULL && tmpDriverObject == _driverObject && *DeviceObject != NULL) {
+		ext = (PPROXY_DEVICE_EXTENSION)((*DeviceObject)->DeviceExtension);
+		if (ext->Type == detProxy) {
+			tmpDriverObject = ext->TargetDevice->DriverObject;
+			*DeviceObject = ext->TargetDevice;
+		}
+	}
+
+	*DriverObject = tmpDriverObject;
+
+	DEBUG_EXIT_FUNCTION("void, *DeviceObject=0x%p, *DriverObject=0x%p", *DeviceObject, *DriverObject);
+	return;
+}
+
+
 /************************************************************************/
 /*                   INITIALIZATION AND FINALIZATION                    */
 /************************************************************************/
@@ -110,9 +154,9 @@ NTSTATUS DevExtHooksModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING Regi
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"; Context=0x%p", DriverObject, RegistryPath, Context);
 
-	ObReferenceObject(DriverObject);
-	_driverObject = DriverObject;
 	status = STATUS_SUCCESS;
+	if (DriverObject != NULL)
+		ProxySetDriverObject(DriverObject);
 
 	DEBUG_EXIT_FUNCTION("0x%x", status);
 	return status;
@@ -121,10 +165,14 @@ NTSTATUS DevExtHooksModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING Regi
 
 void DevExtHooksModuleFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context)
 {
+	PDRIVER_OBJECT localDriverObject = NULL;
 	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"; Context=0x%p", DriverObject, RegistryPath, Context);
 
-	ObDereferenceObject(_driverObject);
-	_driverObject = NULL;
+	localDriverObject = InterlockedExchangePointer(&_driverObject, NULL);
+	if (localDriverObject != NULL) {
+		ObDereferenceObject(localDriverObject);
+		localDriverObject = NULL;
+	}
 
 	DEBUG_EXIT_FUNCTION_VOID();
 	return;
