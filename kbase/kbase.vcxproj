@@ -224,9 +224,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\km-shared\allocator.c" />
+    <ClCompile Include="..\km-shared\fo-context-table.c" />
     <ClCompile Include="..\km-shared\handle-table.c" />
     <ClCompile Include="..\km-shared\hash_table.c" />
     <ClCompile Include="..\km-shared\multistring.c" />
+    <ClCompile Include="..\km-shared\process-context-table.c" />
     <ClCompile Include="..\km-shared\string-hash-table.c" />
     <ClCompile Include="..\km-shared\string-ref-table.c" />
     <ClCompile Include="..\km-shared\utils-dym-array.c" />
@@ -235,10 +237,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\km-shared\allocator.h" />
+    <ClInclude Include="..\km-shared\fo-context-table.h" />
     <ClInclude Include="..\km-shared\handle-table.h" />
     <ClInclude Include="..\km-shared\hash_table.h" />
     <ClInclude Include="..\km-shared\multistring.h" />
     <ClInclude Include="..\km-shared\preprocessor.h" />
+    <ClInclude Include="..\km-shared\process-context-table.h" />
     <ClInclude Include="..\km-shared\string-hash-table.h" />
     <ClInclude Include="..\km-shared\string-ref-table.h" />
     <ClInclude Include="..\km-shared\utils-dym-array-types.h" />

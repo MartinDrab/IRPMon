@@ -13,76 +13,55 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Driver Files">
+      <UniqueIdentifier>{8E41214B-6785-4CFE-B992-037D68949A14}</UniqueIdentifier>
+      <Extensions>inf;inv;inx;mof;mc;</Extensions>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="driver.c">
+    <ClCompile Include="hook.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="modules.c">
+    <ClCompile Include="hook-handlers.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="pnp-driver-watch.c">
+    <ClCompile Include="khook.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="um-services.c">
+    <ClCompile Include="req-queue.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="image-load.c">
+    <ClCompile Include="devext-hooks.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="boot-log.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="pnp-class-watch.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="fs-watch.c">
+    <ClCompile Include="process-events.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="driver.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="modules.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="pnp-driver-watch.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="um-services.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\general-types.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\ioctls.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\kernel-shared.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\km-shared\preprocessor.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="version.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="devext-hooks.h">
+    <ClInclude Include="..\km-shared\hook.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="image-load.h">
+    <ClInclude Include="..\km-shared\req-queue.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="boot-log.h">
+    <ClInclude Include="..\km-shared\process-events.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="pnp-class-watch.h">
+    <ClInclude Include="..\km-shared\hook-handlers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="fs-watch.h">
+    <ClInclude Include="..\km-shared\devext-hooks.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="khook.def">
+      <Filter>Driver Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\resources\version.rc">

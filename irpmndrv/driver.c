@@ -4,7 +4,6 @@
 #include "allocator.h"
 #include "utils.h"
 #include "hook.h"
-#include "hook-handlers.h"
 #include "kernel-shared.h"
 #include "ioctls.h"
 #include "modules.h"
@@ -13,11 +12,11 @@
 #include "pnp-driver-watch.h"
 #include "pnp-class-watch.h"
 #include "fs-watch.h"
-#include "process-events.h"
 #include "req-queue.h"
-#include "devext-hooks.h"
 #include "image-load.h"
 #include "boot-log.h"
+#include "hook-handlers.h"
+#include "devext-hooks.h"
 #include "driver.h"
 
 
@@ -416,15 +415,10 @@ VOID DriverFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOI
 /************************************************************************/
 
 static DRIVER_MODULE_ENTRY_PARAMETERS _moduleEntries[] = {
-	{RequestQueueModuleInit, RequestQueueModuleFinit, NULL},
-	{HookModuleInit, HookModuleFinit, NULL},
-	{HookHandlerModuleInit, HookHandlerModuleFinit, NULL},
-	{DevExtHooksModuleInit, DevExtHooksModuleFinit, NULL},
 	{PWDModuleInit, PWDModuleFinit, NULL},
 	{CWModuleInit, CWModuleFinit, NULL},
 	{FSWModuleInit, FSWModuleFinit, NULL},
 	{BLModuleInit, BLModuleFinit, NULL},
-	{ProcessEventsModuleInit, ProcessEventsModuleFinit, NULL},
 	{ImageLoadModuleInit, ImageLoadModuleFinit, NULL},
 	{UMServicesModuleInit, UMServicesModuleFinit, NULL},
 	{DriverInit, DriverFinit, NULL},

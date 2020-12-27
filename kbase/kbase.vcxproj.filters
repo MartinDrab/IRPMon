@@ -46,6 +46,12 @@
     <ClCompile Include="kbase.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\km-shared\fo-context-table.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\km-shared\process-context-table.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\km-shared\allocator.h">
@@ -79,6 +85,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="version.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\km-shared\fo-context-table.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\km-shared\process-context-table.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

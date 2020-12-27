@@ -82,3 +82,18 @@ EXPORTS
 	ProcessQueryCommandLine
 	FileNameFromFileObject
 	UtilsGetCurrentControlSetNumber
+	FoTableInit
+	FoTableFinit
+	FoTableInsert
+	FoTableDelete
+	FoTableDeleteNoReturn
+	FoTableGet
+	FoContextDereference
+	PsTableInit
+	PsTableFinit
+	PsTableInsert
+	PsTableDelete
+	PsTableDeleteNoReturn
+	PsTableGet
+	PsTableEnum
+	PsContextDereference
