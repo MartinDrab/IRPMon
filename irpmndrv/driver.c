@@ -415,10 +415,8 @@ VOID DriverFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOI
 /************************************************************************/
 
 static DRIVER_MODULE_ENTRY_PARAMETERS _moduleEntries[] = {
-	{PWDModuleInit, PWDModuleFinit, NULL},
 	{CWModuleInit, CWModuleFinit, NULL},
 	{FSWModuleInit, FSWModuleFinit, NULL},
-	{BLModuleInit, BLModuleFinit, NULL},
 	{ImageLoadModuleInit, ImageLoadModuleFinit, NULL},
 	{UMServicesModuleInit, UMServicesModuleFinit, NULL},
 	{DriverInit, DriverFinit, NULL},

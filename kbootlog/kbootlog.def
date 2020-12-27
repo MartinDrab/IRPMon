@@ -1,0 +1,9 @@
+LIBRARY kbootlog
+EXPORTS
+	BLEnabled
+	BLDisable
+	PDWCheckDriver
+	PDWCheckDrivers
+	PWDDriverNameRegister
+	PWDDriverNameUnregister
+	PWDDriverNameEnumerate

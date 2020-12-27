@@ -13,62 +13,30 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Driver Files">
+      <UniqueIdentifier>{8E41214B-6785-4CFE-B992-037D68949A14}</UniqueIdentifier>
+      <Extensions>inf;inv;inx;mof;mc;</Extensions>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="driver.c">
+    <ClCompile Include="boot-log.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="modules.c">
+    <ClCompile Include="kbootlog.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="um-services.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="image-load.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="pnp-class-watch.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="fs-watch.c">
+    <ClCompile Include="pnp-driver-watch.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="driver.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="modules.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="um-services.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\general-types.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\ioctls.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\kernel-shared.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\km-shared\preprocessor.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="version.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="devext-hooks.h">
+    <ClInclude Include="..\km-shared\boot-log.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="image-load.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="pnp-class-watch.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="fs-watch.h">
+    <ClInclude Include="..\km-shared\pnp-driver-watch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -76,5 +44,10 @@
     <ResourceCompile Include="..\resources\version.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="kbootlog.def">
+      <Filter>Driver Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
