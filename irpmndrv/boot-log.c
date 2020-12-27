@@ -7,6 +7,7 @@
 #include "preprocessor.h"
 #include "general-types.h"
 #include "request.h"
+#include "req-queue.h"
 #include "driver-settings.h"
 #include "pnp-driver-watch.h"
 #include "regman.h"
@@ -23,6 +24,7 @@ static PETHREAD _blSavingThread = NULL;
 static UNICODE_STRING _registryPath;
 static HANDLE _blRegCallbackHandle = NULL;
 static ULONG _currentControlSetNumber = 0;
+static HANDLE _rqCallbackHandle = NULL;
 
 
 static void _ListHeadMove(PLIST_ENTRY Original, PLIST_ENTRY New)
@@ -477,6 +479,26 @@ static NTSTATUS _BLRegistryCallback(PVOID Context, PVOID Argument1, PVOID Argume
 }
 
 
+static void _BLOnRequest(PREQUEST_HEADER Request, void* Context)
+{
+	LIST_ENTRY cachedHead;
+	DEBUG_ENTER_FUNCTION("Request=0x%p; Context=0x%p", Request, Context);
+
+	if (KeGetCurrentIrql() < DISPATCH_LEVEL) {
+		InitializeListHead(&cachedHead);
+		_NPCacheFlush(&cachedHead);
+		FltAcquirePushLockExclusive(&_blRequestListLock);
+		_AddTailList(&_blRequestListHead, &cachedHead);
+		InsertTailList(&_blRequestListHead, &Request->Entry);
+		FltReleasePushLock(&_blRequestListLock);
+	}
+	else _NPCacheInsert(Request);
+
+	DEBUG_EXIT_FUNCTION_VOID();
+	return;
+}
+
+
 NTSTATUS BLDriverNameSave(PUNICODE_STRING DriverName, const DRIVER_MONITOR_SETTINGS* Settings)
 {
 	HANDLE driverKey = NULL;
@@ -582,25 +604,6 @@ NTSTATUS BLDriverNameDelete(PUNICODE_STRING DriverName)
 }
 
 
-void BLLogRequest(PREQUEST_HEADER Request)
-{
-	LIST_ENTRY cachedHead;
-	DEBUG_ENTER_FUNCTION("Request=0x%p", Request);
-
-	if (KeGetCurrentIrql() < DISPATCH_LEVEL) {
-		InitializeListHead(&cachedHead);
-		_NPCacheFlush(&cachedHead);
-		FltAcquirePushLockExclusive(&_blRequestListLock);
-		_AddTailList(&_blRequestListHead, &cachedHead);
-		InsertTailList(&_blRequestListHead, &Request->Entry);
-		FltReleasePushLock(&_blRequestListLock);
-	} else _NPCacheInsert(Request);
-
-	DEBUG_EXIT_FUNCTION_VOID();
-	return;
-}
-
-
 BOOLEAN BLEnabled(void)
 {
 	return _blEnabled;
@@ -611,7 +614,11 @@ void BLDisable(void)
 {
 	DEBUG_ENTER_FUNCTION_NO_ARGS();
 
-	_blEnabled = FALSE;
+	if (_blEnabled) {
+		RequestQueueCallbackUnregister(_rqCallbackHandle);
+		_blEnabled = FALSE;
+	}
+
 	KeWaitForSingleObject(_blSavingThread, Executive, KernelMode, FALSE, NULL);
 
 	DEBUG_EXIT_FUNCTION_VOID();
@@ -640,17 +647,23 @@ NTSTATUS BLModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath,
 		if (NT_SUCCESS(status)) {
 			status = UtilsGetCurrentControlSetNumber(&_currentControlSetNumber);
 			if (NT_SUCCESS(status)) {
-				status = RegManRawCallbackRegister(_BLRegistryCallback, NULL, &_blRegCallbackHandle);
+				status = RequestQueueCallbackRegister(_BLOnRequest, NULL, &_rqCallbackHandle);
 				if (NT_SUCCESS(status)) {
-				InitializeObjectAttributes(&oa, NULL, OBJ_KERNEL_HANDLE, NULL, NULL);
-					status = PsCreateSystemThread(&hThread, SYNCHRONIZE, &oa, NULL, &clientId, _BLSaveThread, NULL);
+					status = RegManRawCallbackRegister(_BLRegistryCallback, NULL, &_blRegCallbackHandle);
 					if (NT_SUCCESS(status)) {
-						status = ObReferenceObjectByHandle(hThread, SYNCHRONIZE, *PsThreadType, KernelMode, &_blSavingThread, NULL);
-						ZwClose(hThread);
+						InitializeObjectAttributes(&oa, NULL, OBJ_KERNEL_HANDLE, NULL, NULL);
+						status = PsCreateSystemThread(&hThread, SYNCHRONIZE, &oa, NULL, &clientId, _BLSaveThread, NULL);
+						if (NT_SUCCESS(status)) {
+							status = ObReferenceObjectByHandle(hThread, SYNCHRONIZE, *PsThreadType, KernelMode, &_blSavingThread, NULL);
+							ZwClose(hThread);
+						}
+
+						if (!NT_SUCCESS(status))
+							RegManRawCallbackUnregister(_blRegCallbackHandle);
 					}
 
 					if (!NT_SUCCESS(status))
-						RegManRawCallbackUnregister(_blRegCallbackHandle);
+						RequestQueueCallbackUnregister(_rqCallbackHandle);
 				}
 			}
 		}

@@ -7,7 +7,6 @@
 #include "request.h"
 #include "process-events.h"
 #include "driver-settings.h"
-#include "boot-log.h"
 #include "req-queue.h"
 
 #undef DEBUG_TRACE_ENABLED
@@ -25,6 +24,9 @@ static LIST_ENTRY _pagedRequestListHead;
 static IO_REMOVE_LOCK _removeLock;
 static EX_PUSH_LOCK _connectLock;
 static PIRPMNDRV_SETTINGS _driverSettings = NULL;
+
+static LIST_ENTRY _callbackList;
+static KSPIN_LOCK _callbackLock;
 
 /************************************************************************/
 /*                             HELPER FUNCTIONS                         */
@@ -111,6 +113,83 @@ static PREQUEST_HEADER _RequestRemove(PBOOLEAN NextAvailable)
 }
 
 
+static NTSTATUS _CallbackListReference(PREQUEST_QUEUE_CALLBACK_RECORD *Last)
+{
+	KIRQL irql;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	PREQUEST_QUEUE_CALLBACK_RECORD tmp = NULL;
+	DEBUG_ENTER_FUNCTION("Last=0x%p", Last);
+
+	status = STATUS_SUCCESS;
+	KeAcquireSpinLock(&_callbackLock, &irql);
+	if (IsListEmpty(&_callbackList))
+		status = STATUS_CONNECTION_DISCONNECTED;
+
+	if (NT_SUCCESS(status)) {
+		tmp = CONTAINING_RECORD(_callbackList.Flink, REQUEST_QUEUE_CALLBACK_RECORD, Entry);
+		while (&tmp->Entry != &_callbackList) {
+			*Last = tmp;
+			InterlockedIncrement(&tmp->ReferenceCount);
+			tmp = CONTAINING_RECORD(tmp->Entry.Flink, REQUEST_QUEUE_CALLBACK_RECORD, Entry);
+		}
+	}
+
+	KeReleaseSpinLock(&_callbackLock, irql);
+
+	DEBUG_EXIT_FUNCTION("0x%x, *Last=0x%p", status, *Last);
+	return status;
+}
+
+
+static void _CallbackListDereference(PREQUEST_QUEUE_CALLBACK_RECORD Last)
+{
+	KIRQL irql;
+	LIST_ENTRY listToDelete;
+	PREQUEST_QUEUE_CALLBACK_RECORD old = NULL;
+	PREQUEST_QUEUE_CALLBACK_RECORD tmp = NULL;
+	DEBUG_ENTER_FUNCTION("Last=0x%p", Last);
+
+	InitializeListHead(&listToDelete);
+	KeAcquireSpinLock(&_callbackLock, &irql);
+	tmp = CONTAINING_RECORD(_callbackList.Flink, REQUEST_QUEUE_CALLBACK_RECORD, Entry);
+	while (&tmp->Entry != &Last->Entry) {
+		old = tmp;
+		tmp = CONTAINING_RECORD(tmp->Entry.Flink, REQUEST_QUEUE_CALLBACK_RECORD, Entry);
+		if (InterlockedDecrement(&old->ReferenceCount) == 0) {
+			RemoveEntryList(&old->Entry);
+			InsertTailList(&listToDelete, &old->Entry);
+		}
+	}
+
+	KeReleaseSpinLock(&_callbackLock, irql);
+	tmp = CONTAINING_RECORD(listToDelete.Flink, REQUEST_QUEUE_CALLBACK_RECORD, Entry);
+	while (&tmp->Entry != &listToDelete) {
+		old = tmp;
+		tmp = CONTAINING_RECORD(tmp->Entry.Flink, REQUEST_QUEUE_CALLBACK_RECORD, Entry);
+		KeSetEvent(&old->Event, IO_NO_INCREMENT, FALSE);
+	}
+
+	DEBUG_EXIT_FUNCTION_VOID();
+	return;
+}
+
+
+static void _CallbackListInvoke(PREQUEST_QUEUE_CALLBACK_RECORD Last, PREQUEST_HEADER Header)
+{
+	PREQUEST_QUEUE_CALLBACK_RECORD tmp = NULL;
+	DEBUG_ENTER_FUNCTION("Last=0x%p; Header=0x%p", Last, Header);
+
+	tmp = CONTAINING_RECORD(_callbackList.Flink, REQUEST_QUEUE_CALLBACK_RECORD, Entry);
+	while (&tmp->Entry != &Last->Entry) {
+		tmp->Callback(Header, tmp->Context);
+		tmp = CONTAINING_RECORD(tmp->Entry.Flink, REQUEST_QUEUE_CALLBACK_RECORD, Entry);
+	}
+
+	DEBUG_EXIT_FUNCTION_VOID();
+	return;
+}
+
+
 /************************************************************************/
 /*                            PUBLIC ROUTINES                           */
 /************************************************************************/
@@ -148,7 +227,6 @@ NTSTATUS RequestQueueConnect()
 				}
 
 				_driverSettings->ReqQueueConnected = TRUE;
-				BLDisable();
 			}
 
 			if (!NT_SUCCESS(status)) {
@@ -172,7 +250,7 @@ NTSTATUS RequestQueueConnect()
 }
 
 
-void RequestQueueDisconnect(VOID)
+void RequestQueueDisconnect(void)
 {
 	DEBUG_ENTER_FUNCTION_NO_ARGS();
 	DEBUG_IRQL_LESS_OR_EQUAL(APC_LEVEL);
@@ -199,7 +277,7 @@ void RequestQueueInsert(PREQUEST_HEADER Header)
 	DEBUG_IRQL_LESS_OR_EQUAL(DISPATCH_LEVEL);
 
 	if (_driverSettings->ReqQueueConnected ||
-		(_driverSettings->ReqQueueCollectWhenDisconnected && !BLEnabled())) {
+		(_driverSettings->ReqQueueCollectWhenDisconnected)) {
 		status = IoAcquireRemoveLock(&_removeLock, NULL);
 		if (NT_SUCCESS(status)) {
 			Header->Id = InterlockedIncrement(&_driverSettings->ReqQueueLastRequestId);
@@ -208,10 +286,15 @@ void RequestQueueInsert(PREQUEST_HEADER Header)
 		}
 	} else status = STATUS_CONNECTION_DISCONNECTED;
 	
-	if (status == STATUS_CONNECTION_DISCONNECTED && BLEnabled()) {
-		Header->Id = InterlockedIncrement(&_driverSettings->ReqQueueLastRequestId);
-		BLLogRequest(Header);
-		status = STATUS_SUCCESS;
+	if (status == STATUS_CONNECTION_DISCONNECTED) {
+		PREQUEST_QUEUE_CALLBACK_RECORD cr = NULL;
+
+		status = _CallbackListReference(&cr);
+		if (NT_SUCCESS(status)) {
+			Header->Id = InterlockedIncrement(&_driverSettings->ReqQueueLastRequestId);
+			_CallbackListInvoke(cr, Header);
+			_CallbackListDereference(cr);
+		}
 	}
 
 	if (!NT_SUCCESS(status))
@@ -438,9 +521,57 @@ void RequestQueueClear(void)
 }
 
 
+NTSTATUS RequestQueueCallbackRegister(REQUEST_QUEUE_CALLBACK* Callback, void* Context, PHANDLE Handle)
+{
+	KIRQL irql;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	PREQUEST_QUEUE_CALLBACK_RECORD cr = NULL;
+	DEBUG_ENTER_FUNCTION("Callback=0x%p; Context=0x%p; Handle=0x%p", Callback, Context, Handle);
+
+	cr = HeapMemoryAllocNonPaged(sizeof(REQUEST_QUEUE_CALLBACK_RECORD));
+	if (cr != NULL) {
+		RtlSecureZeroMemory(cr, sizeof(REQUEST_QUEUE_CALLBACK_RECORD));
+		InitializeListHead(&cr->Entry);
+		cr->ReferenceCount = 1;
+		cr->Callback = Callback;
+		cr->Context = Context;
+		KeInitializeEvent(&cr->Event, NotificationEvent, FALSE);
+		KeAcquireSpinLock(&_callbackLock, &irql);
+		InsertTailList(&_callbackList, &cr->Entry);
+		KeReleaseSpinLock(&_callbackLock, irql);
+		*Handle = cr;
+		status = STATUS_SUCCESS;
+	} else status = STATUS_INSUFFICIENT_RESOURCES;
+
+	DEBUG_EXIT_FUNCTION("0x%x, *Handle=0x%p", status, *Handle);
+	return status;
+}
+
+
+void RequestQueueCallbackUnregister(HANDLE Handle)
+{
+	KIRQL irql;
+	PREQUEST_QUEUE_CALLBACK_RECORD cr = NULL;
+	DEBUG_ENTER_FUNCTION("Handle=0x%p", Handle);
+
+	cr = (PREQUEST_QUEUE_CALLBACK_RECORD)Handle;
+	if (InterlockedDecrement(&cr->ReferenceCount) == 0) {
+		KeAcquireSpinLock(&_callbackLock, &irql);
+		RemoveEntryList(&cr->Entry);
+		KeReleaseSpinLock(&_callbackLock, irql);
+	} else KeWaitForSingleObject(&cr->Event, Executive, KernelMode, FALSE, NULL);
+
+	HeapMemoryFree(cr);
+
+	DEBUG_EXIT_FUNCTION_VOID();
+	return;
+}
+
+
 /************************************************************************/
 /*                     INITIALIZATION AND FINALIZATION                  */
 /************************************************************************/
+
 
 NTSTATUS RequestQueueModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context)
 {
@@ -454,16 +585,29 @@ NTSTATUS RequestQueueModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING Reg
 	KeInitializeSpinLock(&_npagedRequestListLock);
 	IoInitializeRemoveLock(&_removeLock, 0, 0, 0x7fffffff);
 	FltInitializePushLock(&_connectLock);
+	InitializeListHead(&_callbackList);
+	KeInitializeSpinLock(&_callbackLock);
+	status = STATUS_SUCCESS;
 
 	DEBUG_EXIT_FUNCTION("0x%x", status);
 	return status;
 }
 
-VOID RequestQueueModuleFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context)
+
+void RequestQueueModuleFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context)
 {
+	PREQUEST_QUEUE_CALLBACK_RECORD tmp = NULL;
+	PREQUEST_QUEUE_CALLBACK_RECORD old = NULL;
 	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"; Context=0x%p", DriverObject, RegistryPath, Context);
 
 	RequestQueueClear();
+	tmp = CONTAINING_RECORD(_callbackList.Flink, REQUEST_QUEUE_CALLBACK_RECORD, Entry);
+	while (&tmp->Entry != &_callbackList) {
+		old = tmp;
+		tmp = CONTAINING_RECORD(tmp->Entry.Flink, REQUEST_QUEUE_CALLBACK_RECORD, Entry);
+		HeapMemoryFree(old);
+	}
+
 	_driverSettings = NULL;
 
 	DEBUG_EXIT_FUNCTION_VOID();

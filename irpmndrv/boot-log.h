@@ -8,7 +8,6 @@
 
 
 
-void BLLogRequest(PREQUEST_HEADER Request);
 BOOLEAN BLEnabled(void);
 void BLDisable(void);
 NTSTATUS BLDriverNameSave(PUNICODE_STRING DriverName, const DRIVER_MONITOR_SETTINGS* Settings);

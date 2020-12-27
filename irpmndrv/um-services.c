@@ -14,6 +14,7 @@
 #include "pnp-class-watch.h"
 #include "process-events.h"
 #include "driver-settings.h"
+#include "boot-log.h"
 #include "um-services.h"
 
 
@@ -672,6 +673,8 @@ NTSTATUS UMRequestQueueConnect(void)
 	DEBUG_ENTER_FUNCTION_NO_ARGS();
 
 	status = RequestQueueConnect();
+	if (NT_SUCCESS(status))
+		BLDisable();
 
 	DEBUG_EXIT_FUNCTION("0x%x", status);
 	return status;
