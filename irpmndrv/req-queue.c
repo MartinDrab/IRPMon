@@ -1,5 +1,6 @@
 
 #include <ntifs.h>
+#include <fltKernel.h>
 #include "preprocessor.h"
 #include "allocator.h"
 #include "utils.h"
@@ -19,10 +20,10 @@
 
 static KSPIN_LOCK _npagedRequestListLock;
 static LIST_ENTRY _npagedRequestListHead;
-static ERESOURCE _pagedRequestListLock;
+static EX_PUSH_LOCK _pagedRequestListLock;
 static LIST_ENTRY _pagedRequestListHead;
 static IO_REMOVE_LOCK _removeLock;
-static ERESOURCE _connectLock;
+static EX_PUSH_LOCK _connectLock;
 static PIRPMNDRV_SETTINGS _driverSettings = NULL;
 
 /************************************************************************/
@@ -39,8 +40,7 @@ static void _RequestInsert(PREQUEST_HEADER Header, BOOLEAN Head)
 	if (Header->Flags & REQUEST_FLAG_PAGED) {
 		ASSERT(KeGetCurrentIrql() < DISPATCH_LEVEL);
 		listHead = &_pagedRequestListHead;
-		KeEnterCriticalRegion();
-		ExAcquireResourceExclusiveLite(&_pagedRequestListLock, TRUE);
+		FltAcquirePushLockExclusive(&_pagedRequestListLock);
 	} else if (Header->Flags & REQUEST_FLAG_NONPAGED) {
 		listHead = &_npagedRequestListHead;
 		KeAcquireSpinLock(&_npagedRequestListLock, &irql);
@@ -51,8 +51,7 @@ static void _RequestInsert(PREQUEST_HEADER Header, BOOLEAN Head)
 	else InsertTailList(listHead, &Header->Entry);
 
 	if (Header->Flags & REQUEST_FLAG_PAGED) {
-		ExReleaseResourceLite(&_pagedRequestListLock);
-		KeLeaveCriticalRegion();
+		FltReleasePushLock(&_pagedRequestListLock);
 		InterlockedIncrement(&_driverSettings->ReqQueuePagedLength);
 	} else if (Header->Flags & REQUEST_FLAG_NONPAGED) {
 		KeReleaseSpinLock(&_npagedRequestListLock, irql);
@@ -77,8 +76,7 @@ static PREQUEST_HEADER _RequestRemove(PBOOLEAN NextAvailable)
 	DEBUG_ENTER_FUNCTION("NextAvailable=0x%p", NextAvailable);
 
 	*NextAvailable = FALSE;
-	KeEnterCriticalRegion();
-	ExAcquireResourceExclusiveLite(&_pagedRequestListLock, TRUE);
+	FltAcquirePushLockExclusive(&_pagedRequestListLock);
 	if (!IsListEmpty(&_pagedRequestListHead)) {
 		pagedRequest = CONTAINING_RECORD(_pagedRequestListHead.Flink, REQUEST_HEADER, Entry);
 		pagedId = pagedRequest->Id;
@@ -102,8 +100,7 @@ static PREQUEST_HEADER _RequestRemove(PBOOLEAN NextAvailable)
 		InterlockedDecrement(&_driverSettings->ReqQueuePagedLength);
 	}
 
-	ExReleaseResourceLite(&_pagedRequestListLock);
-	KeLeaveCriticalRegion();
+	FltReleasePushLock(&_pagedRequestListLock);
 	if (ret != NULL) {
 		InterlockedDecrement(&_driverSettings->ReqQueueLength);
 		*NextAvailable = (!IsListEmpty(&_pagedRequestListHead) || !IsListEmpty(&_npagedRequestListHead));
@@ -128,8 +125,7 @@ NTSTATUS RequestQueueConnect()
 	DEBUG_ENTER_FUNCTION_NO_ARGS();
 	DEBUG_IRQL_LESS_OR_EQUAL(PASSIVE_LEVEL);
 
-	KeEnterCriticalRegion();
-	ExAcquireResourceExclusiveLite(&_connectLock, TRUE);
+	FltAcquirePushLockExclusive(&_connectLock);
 	if (!_driverSettings->ReqQueueConnected) {
 		IoInitializeRemoveLock(&_removeLock, 0, 0, 0x7fffffff);
 		status = IoAcquireRemoveLock(&_removeLock, NULL);
@@ -169,21 +165,19 @@ NTSTATUS RequestQueueConnect()
 		}
 	} else status = STATUS_ALREADY_REGISTERED;
 
-	ExReleaseResourceLite(&_connectLock);
-	KeLeaveCriticalRegion();
+	FltReleasePushLock(&_connectLock);
 
 	DEBUG_EXIT_FUNCTION("0x%x", status);
 	return status;
 }
 
 
-VOID RequestQueueDisconnect(VOID)
+void RequestQueueDisconnect(VOID)
 {
 	DEBUG_ENTER_FUNCTION_NO_ARGS();
 	DEBUG_IRQL_LESS_OR_EQUAL(APC_LEVEL);
 
-	KeEnterCriticalRegion();
-	ExAcquireResourceExclusiveLite(&_connectLock, TRUE);
+	FltAcquirePushLockExclusive(&_connectLock);
 	if (_driverSettings->ReqQueueConnected) {
 		IoReleaseRemoveLockAndWait(&_removeLock, NULL);
 		_driverSettings->ReqQueueConnected = FALSE;
@@ -191,15 +185,14 @@ VOID RequestQueueDisconnect(VOID)
 			RequestQueueClear();
 	}
 
-	ExReleaseResourceLite(&_connectLock);
-	KeLeaveCriticalRegion();
+	FltReleasePushLock(&_connectLock);
 
 	DEBUG_EXIT_FUNCTION_VOID();
 	return;
 }
 
 
-VOID RequestQueueInsert(PREQUEST_HEADER Header)
+void RequestQueueInsert(PREQUEST_HEADER Header)
 {
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("Header=0x%p", Header);
@@ -229,7 +222,7 @@ VOID RequestQueueInsert(PREQUEST_HEADER Header)
 }
 
 
-VOID RequestHeaderInit(PREQUEST_HEADER Header, PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT DeviceObject, ERequesttype RequestType)
+void RequestHeaderInit(PREQUEST_HEADER Header, PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT DeviceObject, ERequesttype RequestType)
 {
 	RequestHeaderInitNoId(Header, DriverObject, DeviceObject, RequestType);
 
@@ -237,7 +230,7 @@ VOID RequestHeaderInit(PREQUEST_HEADER Header, PDRIVER_OBJECT DriverObject, PDEV
 }
 
 
-VOID RequestHeaderInitNoId(PREQUEST_HEADER Header, PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT DeviceObject, ERequesttype RequestType)
+void RequestHeaderInitNoId(PREQUEST_HEADER Header, PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT DeviceObject, ERequesttype RequestType)
 {
 	InitializeListHead(&Header->Entry);
 	KeQuerySystemTime(&Header->Time);
@@ -422,15 +415,13 @@ void RequestQueueClear(void)
 	}
 
 	InitializeListHead(&tmpList);
-	KeEnterCriticalRegion();
-	ExAcquireResourceExclusiveLite(&_pagedRequestListLock, TRUE);
+	FltAcquirePushLockExclusive(&_pagedRequestListLock);
 	if (!IsListEmpty(&_pagedRequestListHead)) {
 		tmpList = _pagedRequestListHead;
 		InitializeListHead(&_pagedRequestListHead);
 	}
 
-	ExReleaseResourceLite(&_pagedRequestListLock);
-	KeLeaveCriticalRegion();
+	FltReleasePushLock(&_pagedRequestListLock);
 	tmpList.Flink->Blink = &tmpList;
 	tmpList.Blink->Flink = &tmpList;
 	req = CONTAINING_RECORD(tmpList.Flink, REQUEST_HEADER, Entry);
@@ -455,22 +446,14 @@ NTSTATUS RequestQueueModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING Reg
 {
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"; Context=0x%p", DriverObject, RegistryPath, Context);
-
-	UNREFERENCED_PARAMETER(DriverObject);
-	UNREFERENCED_PARAMETER(RegistryPath);
-	UNREFERENCED_PARAMETER(Context);
 	
 	_driverSettings = DriverSettingsGet();
-	status = ExInitializeResourceLite(&_pagedRequestListLock);
-	if (NT_SUCCESS(status)) {
-		InitializeListHead(&_npagedRequestListHead);
-		InitializeListHead(&_pagedRequestListHead);
-		KeInitializeSpinLock(&_npagedRequestListLock);
-		IoInitializeRemoveLock(&_removeLock, 0, 0, 0x7fffffff);
-		status = ExInitializeResourceLite(&_connectLock);
-		if (!NT_SUCCESS(status))
-			ExDeleteResourceLite(&_pagedRequestListLock);
-	}
+	FltInitializePushLock(&_pagedRequestListLock);
+	InitializeListHead(&_npagedRequestListHead);
+	InitializeListHead(&_pagedRequestListHead);
+	KeInitializeSpinLock(&_npagedRequestListLock);
+	IoInitializeRemoveLock(&_removeLock, 0, 0, 0x7fffffff);
+	FltInitializePushLock(&_connectLock);
 
 	DEBUG_EXIT_FUNCTION("0x%x", status);
 	return status;
@@ -480,13 +463,7 @@ VOID RequestQueueModuleFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING Regist
 {
 	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"; Context=0x%p", DriverObject, RegistryPath, Context);
 
-	UNREFERENCED_PARAMETER(DriverObject);
-	UNREFERENCED_PARAMETER(RegistryPath);
-	UNREFERENCED_PARAMETER(Context);
-
 	RequestQueueClear();
-	ExDeleteResourceLite(&_connectLock);
-	ExDeleteResourceLite(&_pagedRequestListLock);
 	_driverSettings = NULL;
 
 	DEBUG_EXIT_FUNCTION_VOID();

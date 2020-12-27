@@ -1,0 +1,13 @@
+LIBRARY krequests
+EXPORTS
+	RequestGetSize
+	RequestCopy
+	RequestEmulateDriverDetected
+	RequestEmulateDeviceDetected
+	RequestEmulateFileNameAssigned
+	RequestEmulateFileNameDeleted
+	RequestEmulateProcessCreated
+	RequestEmulateProcessExitted
+	_SetRequestFlags
+	RequestMemoryAlloc
+	RequestMemoryFree

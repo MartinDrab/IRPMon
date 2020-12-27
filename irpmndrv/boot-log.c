@@ -9,7 +9,6 @@
 #include "request.h"
 #include "driver-settings.h"
 #include "pnp-driver-watch.h"
-#include "fs-watch.h"
 #include "regman.h"
 #include "boot-log.h"
 
@@ -419,9 +418,6 @@ static NTSTATUS _LoadSettings(PUNICODE_STRING RegistryPath)
 			status = STATUS_SUCCESS;
 	}
 
-	if (NT_SUCCESS(status) && _blEnabled)
-		status = FSWMonitor(TRUE);
-
 	DEBUG_EXIT_FUNCTION("0x%x", status);
 	return status;
 }
@@ -474,7 +470,6 @@ static NTSTATUS _BLRegistryCallback(PVOID Context, PVOID Argument1, PVOID Argume
 			DEBUG_ERROR("_GetObjectName: 0x%p", status);
 		}
 	}
-
 
 	status = STATUS_SUCCESS;
 

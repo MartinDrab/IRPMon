@@ -217,7 +217,6 @@
     <FilesToPackage Include="$(TargetPath)" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\shared\request.cpp" />
     <ClCompile Include="boot-log.c" />
     <ClCompile Include="devext-hooks.c" />
     <ClCompile Include="driver.c" />
@@ -239,7 +238,6 @@
     <ClInclude Include="..\include\ioctls.h" />
     <ClInclude Include="..\include\kernel-shared.h" />
     <ClInclude Include="..\km-shared\preprocessor.h" />
-    <ClInclude Include="..\shared\request.h" />
     <ClInclude Include="boot-log.h" />
     <ClInclude Include="devext-hooks.h" />
     <ClInclude Include="driver.h" />
@@ -254,9 +252,6 @@
     <ClInclude Include="process-context-table.h" />
     <ClInclude Include="process-events.h" />
     <ClInclude Include="req-queue.h" />
-    <ClInclude Include="resource.h" />
-    <ClInclude Include="resource1.h" />
-    <ClInclude Include="resource2.h" />
     <ClInclude Include="um-services.h" />
     <ClInclude Include="version.h" />
   </ItemGroup>
@@ -269,6 +264,9 @@
     </ProjectReference>
     <ProjectReference Include="..\kdatalog\kdatalog.vcxproj">
       <Project>{754b79fb-ab1f-4bca-8478-6a0f03dc3866}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\krequests\krequests.vcxproj">
+      <Project>{5fce9136-6ff6-43f8-a219-7a26f27af1f0}</Project>
     </ProjectReference>
     <ProjectReference Include="..\ksettings\ksettings.vcxproj">
       <Project>{cea00262-711a-4ef4-993f-80b4083359b5}</Project>

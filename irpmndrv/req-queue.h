@@ -6,11 +6,12 @@
 #include "kernel-shared.h"
 
 
-VOID RequestHeaderInit(PREQUEST_HEADER Header, PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT DeviceObject, ERequesttype RequestType);
-VOID RequestHeaderInitNoId(PREQUEST_HEADER Header, PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT DeviceObject, ERequesttype RequestType);
+
+void RequestHeaderInit(PREQUEST_HEADER Header, PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT DeviceObject, ERequesttype RequestType);
+void RequestHeaderInitNoId(PREQUEST_HEADER Header, PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT DeviceObject, ERequesttype RequestType);
 NTSTATUS RequestXXXDetectedCreate(ERequesttype Type, PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT DeviceObject, PREQUEST_HEADER *Header);
 NTSTATUS RequestQueueGet(PREQUEST_HEADER *Buffer, PSIZE_T Length);
-VOID RequestQueueInsert(PREQUEST_HEADER Header);
+void RequestQueueInsert(PREQUEST_HEADER Header);
 NTSTATUS ListDriversAndDevicesByEvents(PLIST_ENTRY ListHead);
 void RequestQueueClear(void);
 
