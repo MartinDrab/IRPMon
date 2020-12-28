@@ -58,10 +58,10 @@ Source: "..\bin\Win32\{#ConfigMode}\parser\*.dll"; DestDir: "{app}\x86"; Flags: 
 Source: "..\bin\x64\{#ConfigMode}\IRPMon.exe"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Application;
 Source: "..\bin\Win32\{#ConfigMode}\IRPMon.exe"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: Application;
 
-Source: "..\bin\x64\{#ConfigMode}\kernel\*.dll"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Kernel;
-Source: "..\bin\x64\{#ConfigMode}\kernel\*.sys"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Kernel;
-Source: "..\bin\Win32\{#ConfigMode}\kernel\*.dll"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: Kernel;
-Source: "..\bin\Win32\{#ConfigMode}\kernel\*.sys"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: Kernel;
+Source: "..\bin\x64\{#ConfigMode}\kernel\*.dll"; DestDir: "{sysnative}\drivers\IRPMon\"; Check: Is64BitInstallMode; Flags: ignoreversion; Components: Kernel;
+Source: "..\bin\x64\{#ConfigMode}\kernel\*.sys"; DestDir: "{sysnative}\drivers\IRPMon\"; Check: Is64BitInstallMode; Flags: ignoreversion; Components: Kernel;
+Source: "..\bin\Win32\{#ConfigMode}\kernel\*.dll"; DestDir: "{sysnative}\drivers\IRPMon\"; Check: not Is64BitInstallMode; Flags: ignoreversion; Components: Kernel;
+Source: "..\bin\Win32\{#ConfigMode}\kernel\*.sys"; DestDir: "{sysnative}\drivers\IRPMon\"; Check: not Is64BitInstallMode; Flags: ignoreversion; Components: Kernel;
 
 Source: "..\bin\x64\{#ConfigMode}\dlls\*.dll"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Libraries;
 Source: "..\bin\Win32\{#ConfigMode}\dlls\*.dll"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: Libraries;
@@ -176,11 +176,15 @@ Result := 0;
 hScm := OpenSCManager('', '', SC_MANAGER_CREATE_SERVICE);
 If hScm <> 0 Then
 	begin
-	fileNamePrefix := ExpandConstant('{app}');
-	If IsWin64 Then
-		fileNamePrefix := fileNamePrefix + '\x64\'
-	Else fileNamePrefix := fileNamePrefix + '\x86\';
-	
+  If AType <> SERVICE_KERNEL_DRIVER Then
+    begin
+    fileNamePrefix := ExpandConstant('{app}');
+    If IsWin64 Then
+      fileNamePrefix := fileNamePrefix + '\x64\'
+    Else fileNamePrefix := fileNamePrefix + '\x86\';
+    end
+	Else fileNamePrefix := 'system32\drivers\IRPMon\';
+
 	AFileName := fileNamePrefix + AFileName;			
 	hService := CreateService(hScm, AName, ADisplayName, SERVICE_START, AType, AStart, SERVICE_ERROR_NORMAL, AFileName, '', '', '', '', '');
 				

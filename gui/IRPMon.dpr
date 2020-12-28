@@ -114,7 +114,7 @@ If err = ERROR_SUCCESS Then
       hScm := OpenSCManagerW(Nil, Nil, scmAccess);
 
     taskList := TTaskOperationList.Create;
-    serviceTask := TDriverTaskObject.Create(initInfo, hScm, serviceName, serviceDescription, serviceDescription, ExtractFilePath(Application.ExeName) + 'irpmndrv.sys');
+    serviceTask := TDriverTaskObject.Create(initInfo, hScm, serviceName, serviceDescription, serviceDescription, 'system32\drivers\\IRPMon\irpmndrv.sys');
     serviceTask.SetCompletionCallback(OnServiceTaskComplete, Nil);
     If (connType = ictDevice) And (hScm <> 0) Then
       begin

@@ -1,5 +1,7 @@
 LIBRARY kbootlog
 EXPORTS
+	DllInitialize	PRIVATE
+	DllUnload	PRIVATE
 	BLEnabled
 	BLDisable
 	PDWCheckDriver

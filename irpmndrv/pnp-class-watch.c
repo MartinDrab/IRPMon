@@ -512,10 +512,6 @@ void CWModuleFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PV
 {
 	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"; Context=0x%p", DriverObject, RegistryPath, Context);
 
-	UNREFERENCED_PARAMETER(DriverObject);
-	UNREFERENCED_PARAMETER(RegistryPath);
-	UNREFERENCED_PARAMETER(Context);
-
 	HashTableDestroy(_upperClassGuidTable);
 	HashTableDestroy(_lowerClassGuidTable);
 	_driverObject = NULL;

@@ -73,6 +73,7 @@ NTSTATUS FSWModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath
 	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"; Context=0x%p", DriverObject, RegistryPath, Context);
 
 	_driverObject = DriverObject;
+	status = STATUS_SUCCESS;
 
 	DEBUG_EXIT_FUNCTION("0x%x", status);
 	return status;
@@ -82,10 +83,6 @@ NTSTATUS FSWModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath
 void FSWModuleFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context)
 {
 	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"; Context=0x%p", DriverObject, RegistryPath, Context);
-
-	UNREFERENCED_PARAMETER(DriverObject);
-	UNREFERENCED_PARAMETER(RegistryPath);
-	UNREFERENCED_PARAMETER(Context);
 
 	FSWMonitor(FALSE);
 	_driverObject = NULL;
