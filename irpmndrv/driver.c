@@ -427,7 +427,7 @@ NTSTATUS DriverEntry(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath)
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"", DriverObject, RegistryPath);
 
-	_moduleEntries[3].Context = RegistryPath;
+	ProxySetDriverObject(DriverObject);
 	status= ModuleFrameworkInit(DriverObject);
 	if (NT_SUCCESS(status)) {
 		status = ModuleFrameworkAddModules(_moduleEntries, sizeof(_moduleEntries) / sizeof(DRIVER_MODULE_ENTRY_PARAMETERS));

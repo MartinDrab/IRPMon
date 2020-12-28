@@ -58,3 +58,4 @@ EXPORTS
 	HookHandlerFastIoMdlWriteCompleteCompressed
 	HookHandlerIRPDisptach
 	ListProcessesByEvents
+	ProxySetDriverObject
