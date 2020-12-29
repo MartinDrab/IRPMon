@@ -239,21 +239,48 @@
     <ClCompile Include="..\km-shared\string-ref-table.c" />
     <ClCompile Include="..\km-shared\utils-dym-array.c" />
     <ClCompile Include="..\km-shared\utils.c" />
+    <ClCompile Include="..\shared\request.cpp" />
+    <ClCompile Include="boot-log.c" />
+    <ClCompile Include="data-loggers.c" />
+    <ClCompile Include="devext-hooks.c" />
+    <ClCompile Include="driver-settings.c" />
+    <ClCompile Include="hook-handlers.c" />
+    <ClCompile Include="hook.c" />
     <ClCompile Include="kbase.c" />
+    <ClCompile Include="key-record.c" />
+    <ClCompile Include="pnp-driver-watch.c" />
+    <ClCompile Include="process-events.c" />
+    <ClCompile Include="registry-callback.c" />
+    <ClCompile Include="regman.c" />
+    <ClCompile Include="req-queue.c" />
+    <ClCompile Include="value-record.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\km-shared\allocator.h" />
+    <ClInclude Include="..\km-shared\boot-log.h" />
+    <ClInclude Include="..\km-shared\data-loggers.h" />
+    <ClInclude Include="..\km-shared\devext-hooks.h" />
+    <ClInclude Include="..\km-shared\driver-settings.h" />
     <ClInclude Include="..\km-shared\fo-context-table.h" />
     <ClInclude Include="..\km-shared\handle-table.h" />
     <ClInclude Include="..\km-shared\hash_table.h" />
+    <ClInclude Include="..\km-shared\hook-handlers.h" />
+    <ClInclude Include="..\km-shared\hook.h" />
     <ClInclude Include="..\km-shared\multistring.h" />
+    <ClInclude Include="..\km-shared\pnp-driver-watch.h" />
     <ClInclude Include="..\km-shared\preprocessor.h" />
     <ClInclude Include="..\km-shared\process-context-table.h" />
+    <ClInclude Include="..\km-shared\process-events.h" />
+    <ClInclude Include="..\km-shared\req-queue.h" />
     <ClInclude Include="..\km-shared\string-hash-table.h" />
     <ClInclude Include="..\km-shared\string-ref-table.h" />
     <ClInclude Include="..\km-shared\utils-dym-array-types.h" />
     <ClInclude Include="..\km-shared\utils-dym-array.h" />
     <ClInclude Include="..\km-shared\utils.h" />
+    <ClInclude Include="..\shared\request.h" />
+    <ClInclude Include="key-record.h" />
+    <ClInclude Include="registry-callback.h" />
+    <ClInclude Include="value-record.h" />
     <ClInclude Include="version.h" />
   </ItemGroup>
   <ItemGroup>

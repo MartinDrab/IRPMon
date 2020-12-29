@@ -97,3 +97,97 @@ EXPORTS
 	PsTableGet
 	PsTableEnum
 	PsContextDereference
+
+	DriverSettingsGet
+	DriverSettingsSet
+
+	RequestGetSize
+	RequestCopy
+	RequestEmulateDriverDetected
+	RequestEmulateDeviceDetected
+	RequestEmulateFileNameAssigned
+	RequestEmulateFileNameDeleted
+	RequestEmulateProcessCreated
+	RequestEmulateProcessExitted
+	_SetRequestFlags
+	RequestMemoryAlloc
+	RequestMemoryFree
+
+	IRPDataLogger
+	IRPDataLoggerSetRequestFlags
+	DataLoggerResultRelease
+
+	RegManKeyRegister
+	RegManKeyUnregister
+	RegManKeyValueAdd
+	RegManKeyValueDelete
+	RegManValueCallbacksRegister
+	RegManValueCallbackUnregiser
+	RegManRawCallbackRegister
+	RegManRawCallbackUnregister
+
+	DriverHookRecordReference
+	DriverHookRecordDereference
+	DriverHookRecordValid
+	DeviceHookRecordReference
+	DeviceHookRecordDereference
+	DeviceHookRecordValid
+	HookDriverObject
+	UnhookDriverObject
+	DriverHookRecordSetInfo
+	DriverHookRecordGetInfo
+	DriverHookRecordEnable
+	DriverHookRecordGet
+	DriverHookRecordAddDevice
+	DriverHookRecordDeleteDevice
+	DriverHookRecordGetDevice
+	DeviceHookRecordSetInfo
+	DeviceHookRecordGetInfo
+	HookObjectsEnumerate
+	RequestHeaderInit
+	RequestHeaderInitNoId
+	RequestXXXDetectedCreate
+	RequestQueueGet
+	RequestQueueInsert
+	ListDriversAndDevicesByEvents
+	RequestQueueClear
+	RequestQueueConnect
+	RequestQueueDisconnect
+	RequestQueueCallbackRegister
+	RequestQueueCallbackUnregister
+	HookHandlerFastIoCheckIfPossible
+	HookHandlerFastIoDetachDevice
+	HookHandlerFastIoDeviceControl
+	HookHandlerFastIoLock
+	HookHandlerFastIoQueryBasicInfo
+	HookHandlerFastIoQueryNetworkOpenInfo
+	HookHandlerFastIoQueryOpenInfo
+	HookHandlerFastIoQueryStandardInfo
+	HookHandlerFastIoRead
+	HookHandlerFastIoUnlockAll
+	HookHandlerFastIoUnlockByKey
+	HookHandlerFastIoUnlockSingle
+	HookHandlerFastIoWrite
+	HookHandlerFastIoMdlRead
+	HookHandlerFastIoMdlWrite
+	HookHandlerFastIoMdlReadComplete
+	HookHandlerFastIoMdlWriteComplete
+	HookHandlerFastIoReadCompressed
+	HookHandlerFastIoWriteCompressed
+	HookHandlerFastIoAcquireForModWrite
+	HookHandlerFastIoReleaseForModWrite
+	HookHandlerFastIoAcquireForCcFlush
+	HookHandlerFastIoReleaseForCcFlush
+	HookHandlerFastIoMdlReadCompleteCompressed
+	HookHandlerFastIoMdlWriteCompleteCompressed
+	HookHandlerIRPDisptach
+	ListProcessesByEvents
+	ProxySetDriverObject
+
+	BLEnabled
+	BLDisable
+	PDWCheckDriver
+	PDWCheckDrivers
+	PWDDriverNameRegister
+	PWDDriverNameUnregister
+	PWDDriverNameEnumerate

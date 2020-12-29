@@ -116,9 +116,7 @@ void RegManRawCallbackUnregister(HANDLE Handle)
 }
 
 
-
-
-NTSTATUS DllInitialize(_In_ PUNICODE_STRING RegistryPath)
+NTSTATUS RegManModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context)
 {
 	RTL_OSVERSIONINFOW versionInfo;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
@@ -137,28 +135,13 @@ NTSTATUS DllInitialize(_In_ PUNICODE_STRING RegistryPath)
 }
 
 
-NTSTATUS DllUnload(void)
+void RegManModuleFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context)
 {
-	NTSTATUS status = STATUS_UNSUCCESSFUL;
-	DEBUG_ENTER_FUNCTION_NO_ARGS();
+	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=\"%wZ\"; Context=0x%p", DriverObject, RegistryPath, Context);
 
 	if (_emulationSupported)
 		RegCallbackModuleFinit(NULL, NULL, NULL);
 
-	status = STATUS_SUCCESS;
-
-	DEBUG_EXIT_FUNCTION("0x%x", status);
-	return status;
-}
-
-
-NTSTATUS DriverEntry(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath)
-{
-	NTSTATUS status = STATUS_UNSUCCESSFUL;
-	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; RegistryPath=%wZ", DriverObject, RegistryPath);
-
-	status = DllInitialize(RegistryPath);
-
-	DEBUG_EXIT_FUNCTION("0x%x", status);
-	return status;
+	DEBUG_EXIT_FUNCTION_VOID();
+	return;
 }

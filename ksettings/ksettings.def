@@ -1,6 +1,0 @@
-LIBRARY ksettings
-EXPORTS
-	DllInitialize	PRIVATE
-	DllUnload	PRIVATE
-	DriverSettingsGet
-	DriverSettingsSet

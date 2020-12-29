@@ -40,6 +40,9 @@ VOID RegManValueCallbackUnregiser(_In_ HANDLE CallbackHandle);
 NTSTATUS RegManRawCallbackRegister(EX_CALLBACK_FUNCTION *Callback, void *Context, PHANDLE Handle);
 void RegManRawCallbackUnregister(HANDLE Handle);
 
+NTSTATUS RegManModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context);
+void RegManModuleFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context);
+
 
 
 #endif

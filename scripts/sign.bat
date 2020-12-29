@@ -5,12 +5,6 @@ set FILES=^
 	..\bin\x64\%CONFIG%\irpmon.exe^
 	..\bin\x64\%CONFIG%\kernel\irpmndrv.sys^
 	..\bin\x64\%CONFIG%\kernel\kbase.dll^
-	..\bin\x64\%CONFIG%\kernel\ksettings.dll^
-	..\bin\x64\%CONFIG%\kernel\krequests.dll^
-	..\bin\x64\%CONFIG%\kernel\kbootlog.dll^
-	..\bin\x64\%CONFIG%\kernel\kdatalog.dll^
-	..\bin\x64\%CONFIG%\kernel\khook.dll^
-	..\bin\x64\%CONFIG%\kernel\regman.dll^
 	..\bin\x64\%CONFIG%\dlls\irpmondll.dll^
 	..\bin\x64\%CONFIG%\dlls\requests.dll^
 	..\bin\x64\%CONFIG%\parser\hexer.dll^
@@ -26,12 +20,6 @@ set FILES=^
 	..\bin\Win32\%CONFIG%\irpmon.exe^
 	..\bin\Win32\%CONFIG%\kernel\irpmndrv.sys^
 	..\bin\Win32\%CONFIG%\kernel\kbase.dll^
-	..\bin\Win32\%CONFIG%\kernel\ksettings.dll^
-	..\bin\Win32\%CONFIG%\kernel\krequests.dll^
-	..\bin\Win32\%CONFIG%\kernel\kbootlog.dll^
-	..\bin\Win32\%CONFIG%\kernel\kdatalog.dll^
-	..\bin\Win32\%CONFIG%\kernel\khook.dll^
-	..\bin\Win32\%CONFIG%\kernel\regman.dll^
 	..\bin\Win32\%CONFIG%\dlls\irpmondll.dll^
 	..\bin\Win32\%CONFIG%\dlls\requests.dll^
 	..\bin\Win32\%CONFIG%\parser\hexer.dll^

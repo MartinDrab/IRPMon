@@ -52,6 +52,48 @@
     <ClCompile Include="..\km-shared\process-context-table.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="driver-settings.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\request.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="data-loggers.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="key-record.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="registry-callback.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="regman.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="value-record.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="devext-hooks.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="hook.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="hook-handlers.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="process-events.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="req-queue.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="boot-log.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="pnp-driver-watch.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\km-shared\allocator.h">
@@ -91,6 +133,45 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\km-shared\process-context-table.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\km-shared\driver-settings.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\request.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\km-shared\data-loggers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="key-record.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="registry-callback.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="value-record.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\km-shared\boot-log.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\km-shared\pnp-driver-watch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\km-shared\hook.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\km-shared\hook-handlers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\km-shared\req-queue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\km-shared\process-events.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\km-shared\devext-hooks.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
