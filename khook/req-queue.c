@@ -161,6 +161,11 @@ static void _CallbackListDereference(PREQUEST_QUEUE_CALLBACK_RECORD Last)
 		}
 	}
 
+	if (InterlockedDecrement(&tmp->ReferenceCount) == 0) {
+		RemoveEntryList(&tmp->Entry);
+		InsertTailList(&listToDelete, &tmp->Entry);
+	}
+
 	KeReleaseSpinLock(&_callbackLock, irql);
 	tmp = CONTAINING_RECORD(listToDelete.Flink, REQUEST_QUEUE_CALLBACK_RECORD, Entry);
 	while (&tmp->Entry != &listToDelete) {
@@ -184,6 +189,8 @@ static void _CallbackListInvoke(PREQUEST_QUEUE_CALLBACK_RECORD Last, PREQUEST_HE
 		tmp->Callback(Header, tmp->Context);
 		tmp = CONTAINING_RECORD(tmp->Entry.Flink, REQUEST_QUEUE_CALLBACK_RECORD, Entry);
 	}
+
+	tmp->Callback(Header, tmp->Context);
 
 	DEBUG_EXIT_FUNCTION_VOID();
 	return;
@@ -532,7 +539,7 @@ NTSTATUS RequestQueueCallbackRegister(REQUEST_QUEUE_CALLBACK* Callback, void* Co
 	if (cr != NULL) {
 		RtlSecureZeroMemory(cr, sizeof(REQUEST_QUEUE_CALLBACK_RECORD));
 		InitializeListHead(&cr->Entry);
-		cr->ReferenceCount = 1;
+		InterlockedExchange(&cr->ReferenceCount, 1);
 		cr->Callback = Callback;
 		cr->Context = Context;
 		KeInitializeEvent(&cr->Event, NotificationEvent, FALSE);

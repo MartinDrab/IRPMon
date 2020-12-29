@@ -491,8 +491,7 @@ static void _BLOnRequest(PREQUEST_HEADER Request, void* Context)
 		_AddTailList(&_blRequestListHead, &cachedHead);
 		InsertTailList(&_blRequestListHead, &Request->Entry);
 		FltReleasePushLock(&_blRequestListLock);
-	}
-	else _NPCacheInsert(Request);
+	} else _NPCacheInsert(Request);
 
 	DEBUG_EXIT_FUNCTION_VOID();
 	return;
