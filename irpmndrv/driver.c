@@ -432,10 +432,8 @@ NTSTATUS DriverEntry(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath)
 	ProxySetDriverObject(DriverObject);
 	status= ModuleFrameworkInit(DriverObject);
 	if (NT_SUCCESS(status)) {
-		status = ModuleFrameworkAddModules(_moduleEntries, sizeof(_moduleEntries) / sizeof(DRIVER_MODULE_ENTRY_PARAMETERS));
-		if (NT_SUCCESS(status))
-			status = ModuleFrameworkInitializeModules(RegistryPath);
-
+		ModuleFrameworkAddModules(_moduleEntries, sizeof(_moduleEntries) / sizeof(DRIVER_MODULE_ENTRY_PARAMETERS));
+		status = ModuleFrameworkInitializeModules(RegistryPath);
 		if (!NT_SUCCESS(status))
 			ModuleFrameworkFinit();
 	}

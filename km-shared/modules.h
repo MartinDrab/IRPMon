@@ -66,8 +66,8 @@ typedef struct {
 
 NTSTATUS ModuleFrameworkInitializeModules(PUNICODE_STRING RegistryPath);
 void ModuleFrameworkFinalizeModules(void);
-NTSTATUS ModuleFrameworkAddModule(const DRIVER_MODULE_ENTRY_PARAMETERS *moduleParams);
-NTSTATUS ModuleFrameworkAddModules(const DRIVER_MODULE_ENTRY_PARAMETERS *moduleParams, ULONG count);
+void ModuleFrameworkAddModule(const DRIVER_MODULE_ENTRY_PARAMETERS *moduleParams);
+void ModuleFrameworkAddModules(const DRIVER_MODULE_ENTRY_PARAMETERS *moduleParams, size_t count);
 
 NTSTATUS ModuleFrameworkInit(PDRIVER_OBJECT driverObject);
 void ModuleFrameworkFinit(VOID);

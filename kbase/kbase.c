@@ -48,10 +48,8 @@ NTSTATUS DllInitialize(_In_ PUNICODE_STRING RegistryPath)
 		if (NT_SUCCESS(status)) {
 			status = ModuleFrameworkInit(NULL);
 			if (NT_SUCCESS(status)) {
-				status = ModuleFrameworkAddModules(_modules, sizeof(_modules) / sizeof(_modules[0]));
-				if (NT_SUCCESS(status))
-					status = ModuleFrameworkInitializeModules(&uRegistryPath);
-
+				ModuleFrameworkAddModules(_modules, sizeof(_modules) / sizeof(_modules[0]));
+				status = ModuleFrameworkInitializeModules(&uRegistryPath);
 				if (NT_SUCCESS(status))
 					InterlockedExchange(&_initialized, 1);
 

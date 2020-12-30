@@ -40,7 +40,6 @@
  */
 
 #include <ntifs.h>
-#include "allocator.h"
 #include "preprocessor.h"
 #include "modules.h"
 
@@ -48,8 +47,10 @@
 /*                         GLOBAL VARIABLES                             */
 /************************************************************************/
 
-/** List of modules registered for automatic initialization and finalization. */
-static LIST_ENTRY _driverModuleList;
+/** Array for modules registered for automatic initialization and finalization. */
+static DRIVER_MODULE_ENTRY _modules[256];
+/** Number of registered modules. */
+static size_t _moduleCount = 0;
 /** Address of Driver Object of the current driver. */
 static PDRIVER_OBJECT _driverObject = NULL;
 
@@ -70,16 +71,10 @@ static PDRIVER_OBJECT _driverObject = NULL;
  */
 static void _ModuleFrameworkDeleteAllModules(void)
 {
-	PDRIVER_MODULE_ENTRY iteratedEntry = NULL;
 	DEBUG_ENTER_FUNCTION_NO_ARGS();
-	DEBUG_IRQL_LESS_OR_EQUAL(APC_LEVEL);
 
-	iteratedEntry = CONTAINING_RECORD(_driverModuleList.Flink, DRIVER_MODULE_ENTRY, Entry);
-	while (&iteratedEntry->Entry != &_driverModuleList) {
-		PDRIVER_MODULE_ENTRY deletedEntry = iteratedEntry;
-		iteratedEntry = CONTAINING_RECORD(iteratedEntry->Entry.Flink, DRIVER_MODULE_ENTRY, Entry);
-		HeapMemoryFree(deletedEntry);
-	}
+	RtlSecureZeroMemory(_modules, sizeof(_modules));
+	_moduleCount = 0;
 
 	DEBUG_EXIT_FUNCTION_VOID();
 	return;
@@ -95,36 +90,21 @@ static void _ModuleFrameworkDeleteAllModules(void)
  *
  *  @param moduleParams Information about the module to add.
  *
- *  @return
- *  The following NTSTATUS values can be returned:
- *  @value STATUS_SUCCESS The module has been successfully added to the list.
- *  @value STATUS_INSUFFICIENT_RESOURCES The operation failed due to insufficient
- *  amount of free memory.
- *
  *  @remark
  *  The routine is not thread-safe. The caller is expected to use Module Framework
  *  only twice: during the initialization and during the finalization, and that
  *  moments should not occur in one point of time.
- *
- *  The routine must be called at IRQL below DISPATCH_LEVEL.
  */
-NTSTATUS ModuleFrameworkAddModule(const DRIVER_MODULE_ENTRY_PARAMETERS *moduleParams)
+void ModuleFrameworkAddModule(const DRIVER_MODULE_ENTRY_PARAMETERS *moduleParams)
 {
-	PDRIVER_MODULE_ENTRY modEntry = NULL;
-	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("ModuleParams=0x%p", moduleParams);
-	DEBUG_IRQL_LESS_OR_EQUAL(APC_LEVEL);
 
-	modEntry = HeapMemoryAllocPaged(sizeof(DRIVER_MODULE_ENTRY));
-	if (modEntry != NULL) {
-		InitializeListHead(&modEntry->Entry);
-		memcpy(&modEntry->Parameters, moduleParams, sizeof(DRIVER_MODULE_ENTRY_PARAMETERS));
-		InsertTailList(&_driverModuleList, &modEntry->Entry);
-		status = STATUS_SUCCESS;
-	} else status = STATUS_INSUFFICIENT_RESOURCES;
+	ASSERT(_moduleCount < sizeof(_modules) / sizeof(_modules[0]));;
+	_modules[_moduleCount].Parameters = *moduleParams;
+	++_moduleCount;
 
-	DEBUG_EXIT_FUNCTION("0x%x", status);
-	return status;
+	DEBUG_EXIT_FUNCTION_VOID();
+	return;
 }
 
 
@@ -135,39 +115,23 @@ NTSTATUS ModuleFrameworkAddModule(const DRIVER_MODULE_ENTRY_PARAMETERS *modulePa
  *  describes one module to be added to the list.
  *  @param count Number of elements in the moduleParams array.
  *
- *  @return
- *  The routine can return the following NTSTATUS values:
- *  @value STATUS_SUCCESS All modules have been successfully added to the list.
- *  @value STATUS_INSUFFICIENT_RESOURCES There is not enough available memory
- *  to add all the modules into the list. 
- *
  *  @remark
  *  The routine is not thread-safe. The caller is expected to use Module Framework
  *  only twice: during the initialization and during the finalization, and that
  *  moments should not occur in one point of time.
- *
- *  If the routine fails, none of the modules is added to the list – none becomes
- *  subject to automated initialization and finalization.
- *
- *  The routine must be called at IRQL below DISPATCH_LEVEL.
  */
-NTSTATUS ModuleFrameworkAddModules(const DRIVER_MODULE_ENTRY_PARAMETERS *moduleParams, ULONG count)
+void ModuleFrameworkAddModules(const DRIVER_MODULE_ENTRY_PARAMETERS *moduleParams, size_t count)
 {
-	NTSTATUS status = STATUS_UNSUCCESSFUL;
-	DEBUG_ENTER_FUNCTION("ModuleParams=0x%p; Count=%u", moduleParams, count);
-	DEBUG_IRQL_LESS_OR_EQUAL(APC_LEVEL);
+	DEBUG_ENTER_FUNCTION("ModuleParams=0x%p; Count=%zu", moduleParams, count);
 
-	for (ULONG i = 0; i < count; ++i) {
-		status = ModuleFrameworkAddModule(&moduleParams[i]);
-		if (!NT_SUCCESS(status)) {
-			// TODO: We should remove only modules we added
-			_ModuleFrameworkDeleteAllModules();
-			break;
-		}
-	}
+	ASSERT(_moduleCount + count <= sizeof(_modules) / sizeof(_modules[0]));;
+	for (size_t i = 0; i < count; ++i)
+		_modules[_moduleCount + i].Parameters = moduleParams[i];
 
-	DEBUG_EXIT_FUNCTION("0x%x", status);
-	return status;
+	_moduleCount += count;
+
+	DEBUG_EXIT_FUNCTION_VOID();
+	return;
 }
 
 
@@ -192,29 +156,18 @@ NTSTATUS ModuleFrameworkAddModules(const DRIVER_MODULE_ENTRY_PARAMETERS *moduleP
  */
 NTSTATUS ModuleFrameworkInitializeModules(PUNICODE_STRING RegistryPath)
 {
-	PDRIVER_MODULE_ENTRY moduleEntry = NULL;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("RegistryPath=\"%wZ\"", RegistryPath);
 	DEBUG_IRQL_EQUAL(PASSIVE_LEVEL);
 
 	status = STATUS_SUCCESS;
-	moduleEntry = CONTAINING_RECORD(_driverModuleList.Flink, DRIVER_MODULE_ENTRY, Entry);
-	while (&moduleEntry->Entry != &_driverModuleList) {
-		status = moduleEntry->Parameters.InitRoutine(_driverObject, RegistryPath, moduleEntry->Parameters.Context);
-		if (!NT_SUCCESS(status))
+	for (size_t i = 0; i < _moduleCount; ++i) {
+		status = _modules[i].Parameters.InitRoutine(_driverObject, RegistryPath, _modules[i].Parameters.Context);
+		if (!NT_SUCCESS(status)) {
+			for (size_t j = i; j > 0; --j)
+				_modules[j - 1].Parameters.FinitRoutine(_driverObject, RegistryPath, _modules[j - 1].Parameters.Context);
+
 			break;
-
-		moduleEntry = CONTAINING_RECORD(moduleEntry->Entry.Flink, DRIVER_MODULE_ENTRY, Entry);
-	}
-
-	if (!NT_SUCCESS(status)) {
-		moduleEntry = CONTAINING_RECORD(moduleEntry->Entry.Blink, DRIVER_MODULE_ENTRY, Entry);
-		while (&moduleEntry->Entry != &_driverModuleList) {
-			// Finalize only the modules that require that
-			if (moduleEntry->Parameters.FinitRoutine != NULL)
-				moduleEntry->Parameters.FinitRoutine(_driverObject, RegistryPath, moduleEntry->Parameters.Context);
-
-			moduleEntry = CONTAINING_RECORD(moduleEntry->Entry.Blink, DRIVER_MODULE_ENTRY, Entry);
 		}
 	}
 
@@ -234,18 +187,11 @@ NTSTATUS ModuleFrameworkInitializeModules(PUNICODE_STRING RegistryPath)
  */
 void ModuleFrameworkFinalizeModules(void)
 {
-	PDRIVER_MODULE_ENTRY moduleEntry = NULL;
 	DEBUG_ENTER_FUNCTION_NO_ARGS();
 	DEBUG_IRQL_EQUAL(PASSIVE_LEVEL);
 
-	moduleEntry = CONTAINING_RECORD(_driverModuleList.Blink, DRIVER_MODULE_ENTRY, Entry);
-	while (&moduleEntry->Entry != &_driverModuleList) {
-		// finalize only the modules that require that
-		if (moduleEntry->Parameters.FinitRoutine != NULL)
-			 moduleEntry->Parameters.FinitRoutine(_driverObject, NULL, moduleEntry->Parameters.Context);
-
-		moduleEntry = CONTAINING_RECORD(moduleEntry->Entry.Blink, DRIVER_MODULE_ENTRY, Entry);
-	}
+	for (size_t i = _moduleCount; i > 0; --i)
+		_modules[i - 1].Parameters.FinitRoutine(_driverObject, NULL, _modules[i - 1].Parameters.Context);
 
 	DEBUG_EXIT_FUNCTION_VOID();
 	return;
@@ -283,7 +229,6 @@ NTSTATUS ModuleFrameworkInit(PDRIVER_OBJECT driverObject)
 		_driverObject = driverObject;
 	}
 
-	InitializeListHead(&_driverModuleList);
 	status = STATUS_SUCCESS;
 
 	DEBUG_EXIT_FUNCTION("0x%x", status);
@@ -304,7 +249,6 @@ void ModuleFrameworkFinit(void)
 	DEBUG_IRQL_EQUAL(PASSIVE_LEVEL);
 
 	_ModuleFrameworkDeleteAllModules();
-	InitializeListHead(&_driverModuleList);
 	if (_driverObject != NULL) {
 		ObDereferenceObject(_driverObject);
 		_driverObject = NULL;
