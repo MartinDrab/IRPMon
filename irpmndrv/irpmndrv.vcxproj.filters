@@ -18,9 +18,6 @@
     <ClCompile Include="driver.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="modules.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="um-services.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -33,12 +30,12 @@
     <ClCompile Include="fs-watch.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\km-shared\modules.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="driver.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="modules.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="um-services.h">
@@ -69,6 +66,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="fs-watch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\km-shared\modules.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

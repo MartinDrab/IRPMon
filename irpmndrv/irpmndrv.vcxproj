@@ -217,10 +217,10 @@
     <FilesToPackage Include="$(TargetPath)" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\km-shared\modules.c" />
     <ClCompile Include="driver.c" />
     <ClCompile Include="fs-watch.c" />
     <ClCompile Include="image-load.c" />
-    <ClCompile Include="modules.c" />
     <ClCompile Include="pnp-class-watch.c" />
     <ClCompile Include="um-services.c" />
   </ItemGroup>
@@ -228,12 +228,12 @@
     <ClInclude Include="..\include\general-types.h" />
     <ClInclude Include="..\include\ioctls.h" />
     <ClInclude Include="..\include\kernel-shared.h" />
+    <ClInclude Include="..\km-shared\modules.h" />
     <ClInclude Include="..\km-shared\preprocessor.h" />
     <ClInclude Include="devext-hooks.h" />
     <ClInclude Include="driver.h" />
     <ClInclude Include="fs-watch.h" />
     <ClInclude Include="image-load.h" />
-    <ClInclude Include="modules.h" />
     <ClInclude Include="pnp-class-watch.h" />
     <ClInclude Include="um-services.h" />
     <ClInclude Include="version.h" />

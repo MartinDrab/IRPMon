@@ -68,7 +68,7 @@ static PDRIVER_OBJECT _driverObject = NULL;
  *
  *  The routine must be run at IRQL below DISPATCH_LEVEL.
  */
-static VOID _ModuleFrameworkDeleteAllModules(VOID)
+static void _ModuleFrameworkDeleteAllModules(void)
 {
 	PDRIVER_MODULE_ENTRY iteratedEntry = NULL;
 	DEBUG_ENTER_FUNCTION_NO_ARGS();
@@ -108,7 +108,7 @@ static VOID _ModuleFrameworkDeleteAllModules(VOID)
  *
  *  The routine must be called at IRQL below DISPATCH_LEVEL.
  */
-NTSTATUS ModuleFrameworkAddModule(PDRIVER_MODULE_ENTRY_PARAMETERS moduleParams)
+NTSTATUS ModuleFrameworkAddModule(const DRIVER_MODULE_ENTRY_PARAMETERS *moduleParams)
 {
 	PDRIVER_MODULE_ENTRY modEntry = NULL;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
@@ -118,7 +118,7 @@ NTSTATUS ModuleFrameworkAddModule(PDRIVER_MODULE_ENTRY_PARAMETERS moduleParams)
 	modEntry = HeapMemoryAllocPaged(sizeof(DRIVER_MODULE_ENTRY));
 	if (modEntry != NULL) {
 		InitializeListHead(&modEntry->Entry);
-		RtlCopyMemory(&modEntry->Parameters, moduleParams, sizeof(DRIVER_MODULE_ENTRY_PARAMETERS));
+		memcpy(&modEntry->Parameters, moduleParams, sizeof(DRIVER_MODULE_ENTRY_PARAMETERS));
 		InsertTailList(&_driverModuleList, &modEntry->Entry);
 		status = STATUS_SUCCESS;
 	} else status = STATUS_INSUFFICIENT_RESOURCES;
@@ -151,7 +151,7 @@ NTSTATUS ModuleFrameworkAddModule(PDRIVER_MODULE_ENTRY_PARAMETERS moduleParams)
  *
  *  The routine must be called at IRQL below DISPATCH_LEVEL.
  */
-NTSTATUS ModuleFrameworkAddModules(DRIVER_MODULE_ENTRY_PARAMETERS moduleParams[], ULONG count)
+NTSTATUS ModuleFrameworkAddModules(const DRIVER_MODULE_ENTRY_PARAMETERS *moduleParams, ULONG count)
 {
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("ModuleParams=0x%p; Count=%u", moduleParams, count);
@@ -232,7 +232,7 @@ NTSTATUS ModuleFrameworkInitializeModules(PUNICODE_STRING RegistryPath)
  *  
  *  The routine must be called at IRQL = PASSIVE_LEVEL.
  */
-VOID ModuleFrameworkFinalizeModules(VOID)
+void ModuleFrameworkFinalizeModules(void)
 {
 	PDRIVER_MODULE_ENTRY moduleEntry = NULL;
 	DEBUG_ENTER_FUNCTION_NO_ARGS();
@@ -278,8 +278,11 @@ NTSTATUS ModuleFrameworkInit(PDRIVER_OBJECT driverObject)
 	DEBUG_ENTER_FUNCTION("DriverObject=0x%p", driverObject);
 	DEBUG_IRQL_EQUAL(PASSIVE_LEVEL);
 
-	ObReferenceObject(driverObject);
-	_driverObject = driverObject;
+	if (driverObject != NULL) {
+		ObReferenceObject(driverObject);
+		_driverObject = driverObject;
+	}
+
 	InitializeListHead(&_driverModuleList);
 	status = STATUS_SUCCESS;
 
@@ -295,15 +298,17 @@ NTSTATUS ModuleFrameworkInit(PDRIVER_OBJECT driverObject)
  *
  *  The routine must be called at IRQL = PASSIVE_LEVEL.
  */
-VOID ModuleFrameworkFinit(VOID)
+void ModuleFrameworkFinit(void)
 {
 	DEBUG_ENTER_FUNCTION_NO_ARGS();
 	DEBUG_IRQL_EQUAL(PASSIVE_LEVEL);
 
 	_ModuleFrameworkDeleteAllModules();
 	InitializeListHead(&_driverModuleList);
-	ObDereferenceObject(_driverObject);
-	_driverObject = NULL;
+	if (_driverObject != NULL) {
+		ObDereferenceObject(_driverObject);
+		_driverObject = NULL;
+	}
 
 	DEBUG_EXIT_FUNCTION_VOID();
 	return;

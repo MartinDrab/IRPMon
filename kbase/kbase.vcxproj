@@ -233,6 +233,7 @@
     <ClCompile Include="..\km-shared\fo-context-table.c" />
     <ClCompile Include="..\km-shared\handle-table.c" />
     <ClCompile Include="..\km-shared\hash_table.c" />
+    <ClCompile Include="..\km-shared\modules.c" />
     <ClCompile Include="..\km-shared\multistring.c" />
     <ClCompile Include="..\km-shared\process-context-table.c" />
     <ClCompile Include="..\km-shared\string-hash-table.c" />
@@ -266,6 +267,8 @@
     <ClInclude Include="..\km-shared\hash_table.h" />
     <ClInclude Include="..\km-shared\hook-handlers.h" />
     <ClInclude Include="..\km-shared\hook.h" />
+    <ClInclude Include="..\km-shared\kbase.h" />
+    <ClInclude Include="..\km-shared\modules.h" />
     <ClInclude Include="..\km-shared\multistring.h" />
     <ClInclude Include="..\km-shared\pnp-driver-watch.h" />
     <ClInclude Include="..\km-shared\preprocessor.h" />

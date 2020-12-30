@@ -94,6 +94,9 @@
     <ClCompile Include="pnp-driver-watch.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\km-shared\modules.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\km-shared\allocator.h">
@@ -172,6 +175,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\km-shared\devext-hooks.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\km-shared\modules.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\km-shared\kbase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

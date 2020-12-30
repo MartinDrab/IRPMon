@@ -17,6 +17,7 @@
 #include "boot-log.h"
 #include "hook-handlers.h"
 #include "devext-hooks.h"
+#include "kbase.h"
 #include "driver.h"
 
 
@@ -415,6 +416,7 @@ VOID DriverFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOI
 /************************************************************************/
 
 static DRIVER_MODULE_ENTRY_PARAMETERS _moduleEntries[] = {
+	{KBaseInit, KBaseFinit, NULL},
 	{CWModuleInit, CWModuleFinit, NULL},
 	{FSWModuleInit, FSWModuleFinit, NULL},
 	{ImageLoadModuleInit, ImageLoadModuleFinit, NULL},

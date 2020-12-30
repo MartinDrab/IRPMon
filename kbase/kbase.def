@@ -191,3 +191,6 @@ EXPORTS
 	PWDDriverNameRegister
 	PWDDriverNameUnregister
 	PWDDriverNameEnumerate
+
+	KBaseInit
+	KBaseFinit
