@@ -309,7 +309,7 @@ BOOLEAN HookHandlerFastIoQueryBasicInfo(PFILE_OBJECT FileObject, BOOLEAN Wait, P
 					request->Arg6 = (PVOID)Buffer->LastWriteTime.HighPart;
 					request->Arg7 = (PVOID)Buffer->FileAttributes;
 					__try {
-						memcpy(request- + 1, Buffer, request->DataSize);
+						memcpy(request + 1, Buffer, request->DataSize);
 					} __except (EXCEPTION_EXECUTE_HANDLER) {
 					}
 				}
@@ -362,7 +362,7 @@ BOOLEAN HookHandlerFastIoQueryNetworkOpenInfo(PFILE_OBJECT FileObject, BOOLEAN W
 					request->Arg6 = (PVOID)Buffer->LastWriteTime.HighPart;
 					request->Arg7 = (PVOID)Buffer->FileAttributes;
 					__try {
-						memcpy(request - +1, Buffer, request->DataSize);
+						memcpy(request + 1, Buffer, request->DataSize);
 					} __except (EXCEPTION_EXECUTE_HANDLER) {
 					}
 				}
@@ -418,7 +418,7 @@ BOOLEAN HookHandlerFastIoQueryOpenInfo(PIRP Irp, PFILE_NETWORK_OPEN_INFORMATION 
 				request->Arg6 = (PVOID)Buffer->LastWriteTime.HighPart;
 				request->Arg7 = (PVOID)Buffer->FileAttributes;
 				__try {
-					memcpy(request - +1, Buffer, request->DataSize);
+					memcpy(request + 1, Buffer, request->DataSize);
 				} __except (EXCEPTION_EXECUTE_HANDLER) {
 				}
 			}
@@ -467,7 +467,7 @@ BOOLEAN HookHandlerFastIoQueryStandardInfo(PFILE_OBJECT FileObject, BOOLEAN Wait
 					request->Arg6 = (PVOID)Buffer->Directory;
 					request->Arg7 = (PVOID)Buffer->DeletePending;
 					__try {
-						memcpy(request - +1, Buffer, request->DataSize);
+						memcpy(request + 1, Buffer, request->DataSize);
 					} __except (EXCEPTION_EXECUTE_HANDLER) {
 					}
 				}
@@ -514,7 +514,7 @@ BOOLEAN HookHandlerFastIoRead(PFILE_OBJECT FileObject, PLARGE_INTEGER FileOffset
 				request->IOSBInformation = IoStatusBlock->Information;
 				request->IOSBStatus = IoStatusBlock->Status;
 				__try {
-					memcpy(request - +1, Buffer, IoStatusBlock->Information);
+					memcpy(request + 1, Buffer, IoStatusBlock->Information);
 				} __except (EXCEPTION_EXECUTE_HANDLER) {
 				}
 			}
@@ -669,7 +669,7 @@ BOOLEAN HookHandlerFastIoWrite(PFILE_OBJECT FileObject, PLARGE_INTEGER FileOffse
 		
 		if (request != NULL) {
 			__try {
-				memcpy(request - +1, Buffer, IoStatusBlock->Information);
+				memcpy(request + 1, Buffer, IoStatusBlock->Information);
 			} __except (EXCEPTION_EXECUTE_HANDLER) {
 			}
 
