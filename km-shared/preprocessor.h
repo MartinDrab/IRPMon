@@ -25,7 +25,7 @@
  */
 #define DEBUG_ENTER_FUNCTION_NO_ARGS() \
 	do { if (DEBUG_TRACE_ENABLED)	\
-		DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_TRACE_LEVEL, "[%d;%d,%d]: " AT_FUNCTION "()\n", PsGetCurrentProcessId(), PsGetCurrentThreadId(), KeGetCurrentIrql()); \
+		DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_TRACE_LEVEL, "[%u;%u,%u]: " AT_FUNCTION "()\n", PtrToUlong(PsGetCurrentProcessId()), PtrToUlong(PsGetCurrentThreadId()), KeGetCurrentIrql()); \
 	} while (0)
 
 /*
@@ -33,7 +33,7 @@
  */
 #define DEBUG_ENTER_FUNCTION(paramsFormat,...) \
 	do { if (DEBUG_TRACE_ENABLED)	\
-		DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_TRACE_LEVEL, "[%d;%d,%d]: " AT_FUNCTION "(" paramsFormat ")\n", PsGetCurrentProcessId(), PsGetCurrentThreadId(), KeGetCurrentIrql(), __VA_ARGS__); \
+		DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_TRACE_LEVEL, "[%u;%u,%u]: " AT_FUNCTION "(" paramsFormat ")\n", PtrToUlong(PsGetCurrentProcessId()), PtrToUlong(PsGetCurrentThreadId()), KeGetCurrentIrql(), __VA_ARGS__); \
 	} while (0)
 
 /*
@@ -41,7 +41,7 @@
  */
 #define DEBUG_EXIT_FUNCTION(returnValueFormat,...) \
 	do { if (DEBUG_TRACE_ENABLED)	\
-		DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_TRACE_LEVEL, "[%d;%d,%d]: " AT_FUNCTION "(-):" returnValueFormat "\n", PsGetCurrentProcessId(), PsGetCurrentThreadId(), KeGetCurrentIrql(), __VA_ARGS__); \
+		DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_TRACE_LEVEL, "[%u;%u,%u]: " AT_FUNCTION "(-):" returnValueFormat "\n", PtrToUlong(PsGetCurrentProcessId()), PtrToUlong(PsGetCurrentThreadId()), KeGetCurrentIrql(), __VA_ARGS__); \
 	} while (0)
 
 /*
@@ -50,7 +50,7 @@
  */
 #define DEBUG_EXIT_FUNCTION_VOID() \
 	do { if (DEBUG_TRACE_ENABLED)	\
-		DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_TRACE_LEVEL, "[%d;%d,%d]: " AT_FUNCTION "(-):void\n", PsGetCurrentProcessId(), PsGetCurrentThreadId(), KeGetCurrentIrql()); \
+		DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_TRACE_LEVEL, "[%u;%u,%u]: " AT_FUNCTION "(-):void\n", PtrToUlong(PsGetCurrentProcessId()), PtrToUlong(PsGetCurrentThreadId()), KeGetCurrentIrql()); \
 	} while (0)
 
 /*
