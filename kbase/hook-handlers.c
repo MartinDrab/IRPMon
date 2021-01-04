@@ -1263,7 +1263,9 @@ static NTSTATUS _HookHandlerIRPCompletion(PDEVICE_OBJECT DeviceObject, PIRP Irp,
 			IRPDataLogger(cc->DeviceObject, Irp, &cc->StackLocation, TRUE, &loggedData);	
 	}
 
-	if (cc->StackLocation.MajorFunction == IRP_MJ_CREATE &&
+	if ((cc->StackLocation.MajorFunction == IRP_MJ_CREATE ||
+		cc->StackLocation.MajorFunction == IRP_MJ_CREATE_NAMED_PIPE ||
+		cc->StackLocation.MajorFunction == IRP_MJ_CREATE_MAILSLOT) &&
 		NT_SUCCESS(Irp->IoStatus.Status)) {
 		FoTableInsert(&_foTable, cc->StackLocation.FileObject, &cc->ClientInfo, sizeof(cc->ClientInfo));
 	}
@@ -1414,8 +1416,10 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 				
 				createFileObject = irpStack->FileObject;
 				QueryClientBasicInformation(&clientInfo);
-				if (createFileObject != NULL && KeGetCurrentIrql() < DISPATCH_LEVEL && !openByFileId)
-					FileNameFromFileObject(createFileObject, &uPreCreateFileName);
+				if (createFileObject != NULL && KeGetCurrentIrql() < DISPATCH_LEVEL && !openByFileId) {
+					status = FileNameFromFileObject(createFileObject, &uPreCreateFileName);
+					status = STATUS_SUCCESS;
+				}
 			} else if (irpStack->FileObject != NULL) {
 				PFILE_OBJECT_CONTEXT foc = NULL;
 
@@ -1498,19 +1502,20 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 			driverRecord->DriverObject->MajorFunction[irpStack->MajorFunction](Deviceobject, Irp) :
 			driverRecord->OldMajorFunction[irpStack->MajorFunction](Deviceobject, Irp);
 		
-		if (catchRequest && (isCreate || isCreateMailslot || isCreatePipe) && createFileObject != NULL) {
+		if (catchRequest && (isCreate || isCreateMailslot || isCreatePipe) && createFileObject != NULL && KeGetCurrentIrql() < DISPATCH_LEVEL) {
 			PREQUEST_FILE_OBJECT_NAME_ASSIGNED ar = NULL;
 
-			if (NT_SUCCESS(status) && isCreate && KeGetCurrentIrql() < DISPATCH_LEVEL && status != STATUS_PENDING) {
+			if (NT_SUCCESS(status) && status != STATUS_PENDING && isCreate) {
+				PFILE_OBJECT_CONTEXT fco = NULL;
 				PFLT_FILE_NAME_INFORMATION fi = NULL;
 				NTSTATUS tmpStatus = STATUS_UNSUCCESSFUL;
+				UNICODE_STRING uFileName;
 
+				RtlSecureZeroMemory(&uFileName, sizeof(uFileName));
 				tmpStatus = FltGetFileNameInformationUnsafe(createFileObject, NULL, FLT_FILE_NAME_NORMALIZED | FLT_FILE_NAME_QUERY_DEFAULT, &fi);
 				if (NT_SUCCESS(tmpStatus)) {
 					tmpStatus = FltParseFileNameInformation(fi);
 					if (NT_SUCCESS(tmpStatus)) {
-						UNICODE_STRING uFileName;
-
 						uFileName = fi->Name;
 						if (fi->Volume.Length > 0 && fi->Volume.Length <= fi->Name.Length) {
 							uFileName.Length -= fi->Volume.Length;
@@ -1529,13 +1534,23 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 							RequestQueueInsert(&ar->Header);
 						} else tmpStatus = STATUS_INSUFFICIENT_RESOURCES;
 					}
-
-					FltReleaseFileNameInformation(fi);
 				}
 
-				if (NT_SUCCESS(status) && status != STATUS_PENDING)
-					FoTableInsert(&_foTable, createFileObject, &clientInfo, sizeof(clientInfo));
+				if (NT_SUCCESS(status) && status != STATUS_PENDING) {
+					tmpStatus = FoTableInsert(&_foTable, createFileObject, &clientInfo, sizeof(clientInfo));
+					if (NT_SUCCESS(tmpStatus)) {
+						fco = FoTableGet(&_foTable, createFileObject);
+						FoContextSetFileName(fco, &uFileName);
+						FoContextDereference(fco);
+					}
+				}
+
+				if (fi != NULL)
+					FltReleaseFileNameInformation(fi);
 			} else if (uPreCreateFileName.Length > 0) {
+				PFILE_OBJECT_CONTEXT fco = NULL;
+				NTSTATUS tmpStatus = STATUS_UNSUCCESSFUL;
+				
 				ar = (PREQUEST_FILE_OBJECT_NAME_ASSIGNED)RequestMemoryAlloc(sizeof(REQUEST_FILE_OBJECT_NAME_ASSIGNED) + uPreCreateFileName.Length);
 				if (ar != NULL) {
 					RequestHeaderInitNoId(&ar->Header, Deviceobject->DriverObject, Deviceobject, ertFileObjectNameAssigned);
@@ -1546,12 +1561,30 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 					_SetRequestFlags(&ar->Header, &clientInfo);
 					RequestQueueInsert(&ar->Header);
 				}
+
+				if (NT_SUCCESS(status) && status != STATUS_PENDING) {
+					tmpStatus = FoTableInsert(&_foTable, createFileObject, &clientInfo, sizeof(clientInfo));
+					if (NT_SUCCESS(tmpStatus)) {
+						fco = FoTableGet(&_foTable, createFileObject);
+						FoContextSetFileName(fco, &uPreCreateFileName);
+						FoContextDereference(fco);
+					}
+				}
 			}
 		}
 
 		if (request != NULL) {
 			RequestHeaderSetResult(request->Header, NTSTATUS, status);
 			RequestQueueInsert(&request->Header);
+			if (!NT_SUCCESS(status) && (isCreate || isCreatePipe || isCreateMailslot)) {
+				rfond = (PREQUEST_FILE_OBJECT_NAME_DELETED)RequestMemoryAlloc(sizeof(REQUEST_FILE_OBJECT_NAME_DELETED));
+				if (rfond != NULL) {
+					RequestHeaderInit(&rfond->Header, Deviceobject->DriverObject, Deviceobject, ertFileObjectNameDeleted);
+					RequestHeaderSetResult(rfond->Header, NTSTATUS, STATUS_SUCCESS);
+					rfond->FileObject = createFileObject;
+					_SetRequestFlags(&rfond->Header, &clientInfo);
+				}
+			}
 		}
 
 		if (compContext != NULL && InterlockedDecrement(&compContext->ReferenceCount) == 0) {

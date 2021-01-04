@@ -12,6 +12,7 @@ typedef struct _FILE_OBJECT_CONTEXT {
 	volatile LONG ReferenceCount;
 	CLONG DataSize;
 	FO_CONTEXT_FREE_ROUTINE *FreeRoutine;
+	UNICODE_STRING FileName;
 	// Data
 } FILE_OBJECT_CONTEXT, *PFILE_OBJECT_CONTEXT;
 
@@ -38,7 +39,7 @@ PFILE_OBJECT_CONTEXT FoTableDelete(PFO_CONTEXT_TABLE Table, PFILE_OBJECT FileObj
 void FoTableDeleteNoReturn(PFO_CONTEXT_TABLE Table, PFILE_OBJECT FileObject);
 PFILE_OBJECT_CONTEXT FoTableGet(PFO_CONTEXT_TABLE Table, PFILE_OBJECT FileObject);
 void FoContextDereference(PFILE_OBJECT_CONTEXT FoContext);
-
+NTSTATUS FoContextSetFileName(PFILE_OBJECT_CONTEXT FsContext, const UNICODE_STRING *FileName);
 
 
 #endif
