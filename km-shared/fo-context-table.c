@@ -189,6 +189,9 @@ void FoContextDereference(PFILE_OBJECT_CONTEXT FoContext)
 	DEBUG_ENTER_FUNCTION("FoContext=0x%p", FoContext);
 
 	if (InterlockedDecrement(&FoContext->ReferenceCount) == 0) {
+		if (FoContext->FileName.Length > 0)
+			HeapMemoryFree(FoContext->FileName.Buffer);
+		
 		if (FoContext->FreeRoutine != NULL)
 			FoContext->FreeRoutine(FO_CONTEXT_TO_DATA(FoContext));
 
@@ -197,4 +200,33 @@ void FoContextDereference(PFILE_OBJECT_CONTEXT FoContext)
 
 	DEBUG_EXIT_FUNCTION_VOID();
 	return;
+}
+
+
+NTSTATUS FoContextSetFileName(PFILE_OBJECT_CONTEXT FsContext, const UNICODE_STRING* FileName)
+{
+	UNICODE_STRING tmp;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION("FsContext=0x%p; FileName=\"%wZ\"", FsContext, FileName);
+
+	status = STATUS_SUCCESS;
+	tmp.Buffer = NULL;
+	tmp.Length = FileName->Length;
+	tmp.MaximumLength = tmp.Length;
+	if (tmp.Length > 0) {
+		tmp.Buffer = HeapMemoryAllocPaged(tmp.Length);
+		if (tmp.Buffer != NULL)
+			memcpy(tmp.Buffer, FileName->Buffer, tmp.Length);
+		else status = STATUS_INSUFFICIENT_RESOURCES;
+	}
+
+	if (NT_SUCCESS(status)) {
+	if (FsContext->FileName.Length > 0)
+			HeapMemoryFree(FsContext->FileName.Buffer);
+
+		FsContext->FileName = tmp;
+	}
+
+	DEBUG_EXIT_FUNCTION("0x%x", status);
+	return status;
 }
