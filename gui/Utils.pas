@@ -21,6 +21,7 @@ Function IsAdmin:Boolean;
 {$IFDEF FPC}
 Function UIntToStr(AValue:UInt64):WideString;
 {$ENDIF}
+Function StringEscape(AString:WideString):WideString;
 
 Implementation
 
@@ -177,6 +178,28 @@ If AllocateAndInitializeSid( SECURITY_NT_AUTHORITY, 2, SECURITY_BUILTIN_DOMAIN_R
   end;
 end;
 
+Function StringEscape(AString:WideString):WideString;
+Var
+  ch : WideChar;
+  I : Integer;
+begin
+Result := '';
+For I := 1 To Length(AString) Do
+  begin
+  ch := AString[I];
+  Case ch Of
+    #8 : Result := Result + '\t';
+    #9 : Result := Result + '\b';
+    #10 : Result := Result + '\n';
+    #13 : Result := Result + '\r';
+    #27 : Result := Result + '\e';
+    '"' : Result := Result + '\"';
+    '\' : Result := Result + '\\';
+    '''' : Result := Result + '\''';
+    Else Result := Result + ch;
+    end;
+  end;
+end;
 
 
 End.

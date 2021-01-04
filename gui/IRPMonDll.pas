@@ -889,6 +889,14 @@ Type
     ffaPassToFilter
   );
 
+  _ERequestLogFormat = (
+    rlfUnknown,
+    rlfText,
+    rlfBinary,
+    rlfJSONArray,
+    rlfJSONLines);
+  ERequestLogFormat = _ERequestLogFormat;
+  PERequestLogFormat = ^ERequestLogFormat;
 
 Function IRPMonDllDriverHooksEnumerate(Var AHookedDrivers:PHOOKED_DRIVER_UMINFO; Var ACount:Cardinal):Cardinal; StdCall;
 Procedure IRPMonDllDriverHooksFree(AHookedDrivers:PHOOKED_DRIVER_UMINFO; ACount:Cardinal); StdCall;

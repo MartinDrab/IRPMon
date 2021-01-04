@@ -14,6 +14,7 @@ typedef struct _DP_REQUEST_EXTRA_INFO {
 	PWCHAR DeviceName;
 	PWCHAR FileName;
 	PWCHAR ProcessName;
+	ERequestLogFormat Format;
 } DP_REQUEST_EXTRA_INFO, *PDP_REQUEST_EXTRA_INFO;
 
 typedef DWORD (cdecl DP_PARSE_ROUTINE)(const REQUEST_HEADER *Request, const DP_REQUEST_EXTRA_INFO *ExtraInfo, PBOOLEAN Handled, wchar_t ***Names, wchar_t ***Values, size_t *RowCount);

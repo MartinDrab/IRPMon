@@ -598,6 +598,13 @@ typedef struct _BINARY_LOG_HEADER {
 	ULONG Architecture;
 } BINARY_LOG_HEADER, *PBINARY_LOG_HEADER;
 
+typedef enum _ERequestLogFormat {
+	rlfUnknown,
+	rlfText,
+	rlfBinary,
+	rlfJSONArray,
+	rlfJSONLines,
+} ERequestLogFormat, *PERequestLogFormat;
 
 
 #endif 

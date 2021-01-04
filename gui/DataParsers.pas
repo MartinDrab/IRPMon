@@ -16,6 +16,7 @@ Type
     DeviceName : PWideChar;
     FileName : PWideChar;
     ProcessName : PWideChar;
+    Format : ERequestLogFormat;
     end;
   DP_REQUEST_EXTRA_INFO = _DP_REQUEST_EXTRA_INFO;
   PDP_REQUEST_EXTRA_INFO = ^DP_REQUEST_EXTRA_INFO;
@@ -57,7 +58,7 @@ Type
       Destructor Destroy; Override;
       Class Function CreateForLibrary(ALibraryName:WideString; Var AError:Cardinal):TDataParser;
 
-      Function Parse(ARequest:TGeneralRequest; Var AHandled:ByteBool; ANames:TStrings; AValues:TStrings):Cardinal;
+      Function Parse(AFormat:ERequestLogFormat; ARequest:TGeneralRequest; Var AHandled:ByteBool; ANames:TStrings; AValues:TStrings):Cardinal;
 
       Property Name : WideString Read FName;
       Property Description : WideString Read FDescription;
@@ -74,7 +75,8 @@ Procedure DataPrasersLoad(ADirectory:WideString; AList:TObjectList<TDataParser>)
 Implementation
 
 Uses
-  SysUtils, RequestListModel;
+  SysUtils,
+  RequestListModel;
 
 Constructor TDataParser.Create(ALibraryHandle:THandle; ALibraryName:WideString; Var ARaw:IRPMON_DATA_PARSER);
 begin
@@ -99,7 +101,7 @@ If FLibraryHandle <> 0 Then
 Inherited Destroy;
 end;
 
-Function TDataParser.Parse(ARequest:TGeneralRequest; Var AHandled:ByteBool; ANames:TStrings; AValues:TStrings):Cardinal;
+Function TDataParser.Parse(AFormat:ERequestLogFormat; ARequest:TGeneralRequest; Var AHandled:ByteBool; ANames:TStrings; AValues:TStrings):Cardinal;
 Var
   I : Integer;
   _handled : ByteBool;
@@ -115,6 +117,7 @@ ei.DriverName := PWideChar(ARequest.DriverName);
 ei.DeviceName := PWideChar(ARequest.DeviceName);
 ei.FileName := PWideChar(ARequest.FileName);
 ei.ProcessName := PWideChar(ARequest.ProcessName);
+ei.Format := AFormat;
 Result := FParseRoutine(ARequest.Raw, ei, _handled, _ns, _vs, _rsCount);
 If (Result = 0) And (_handled) Then
   begin

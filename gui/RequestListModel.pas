@@ -145,13 +145,6 @@ Const
   );
 
 Type
-  ERequestLogFormat = (
-    rlfUnknown,
-    rlfText,
-    rlfBinary,
-    rlfJSONArray,
-    rlfJSONLines);
-
   TDriverRequest = Class (TGeneralRequest)
   Private
     FHighlight : Boolean;
@@ -303,7 +296,7 @@ If Assigned(AParsers) Then
   values := TStringList.Create;
   For pd In AParsers Do
     begin
-    err := pd.Parse(Self, _handled, names, values);
+    err := pd.Parse(AFormat, Self, _handled, names, values);
     If (err = ERROR_SUCCESS) And (_handled) Then
       begin
       Case AFormat Of
@@ -323,8 +316,8 @@ If Assigned(AParsers) Then
           rlfJSONArray,
           rlfJSONLines : begin
             If names.Count > 0 Then
-              jsonString := jsonString + Format('"%s" : "%s",', [names[I], values[I]])
-            Else jsonString := jsonString + Format('"Data%u" : "%s",', [I, values[I]]);
+              jsonString := jsonString + Format('"%s" : "%s",', [names[I], StringEscape(values[I])])
+            Else jsonString := jsonString + Format('"Data%u" : "%s",', [I, StringEscape(values[I])]);
             end;
           end;
         end;
@@ -401,8 +394,8 @@ Case AFormat Of
         If value <> '' Then
           begin
           If RequestListModelColumnValueTypes[Ord(ct)] = rlmcvtInteger Then
-            jsonString := Format('"%s" : %s,', [GetColumnName(ct), value])
-          Else jsonString := Format('"%s" : "%s",', [GetColumnName(ct), value]);
+            jsonString := Format('"%s" : %s,', [GetColumnName(ct), StringEscape(value)])
+          Else jsonString := Format('"%s" : "%s",', [GetColumnName(ct), StringEscape(value)]);
           end;
         end;
       end;
