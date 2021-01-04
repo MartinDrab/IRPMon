@@ -901,10 +901,6 @@ object MainFrm: TMainFrm
       Caption = 'Data Parsers'
       ImageIndex = 1
       OnShow = DataParsersTabSheetShow
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object DataParsersListView: TListView
         Left = 0
         Top = 0
@@ -1146,7 +1142,9 @@ object MainFrm: TMainFrm
     end
   end
   object LogSaveDialog: TSaveDialog
-    Filter = 'Text log files [*.log]|*.log|Binary log files [*.bin]|*.bin'
+    Filter = 
+      'Text log files [*.log]|*.log|Binary log files [*.bin]|*.bin|JSON' +
+      ' Array [*.json]|*.json|JSON Lines [*.json]|*.json'
     Left = 160
     Top = 88
   end

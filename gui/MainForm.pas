@@ -777,17 +777,24 @@ end;
 
 Procedure TMainFrm.SaveMenuItemClick(Sender: TObject);
 Var
+  logFormat : ERequestLogFormat;
   fn : WideString;
 begin
 If LogSaveDialog.Execute Then
   begin
+  logFormat := ERequestLogFormat(LogSaveDialog.FilterIndex);
   fn := LogSaveDialog.FileName;
-  Case LogSaveDialog.FilterIndex Of
-    1 : fn := ChangeFIleExt(fn, '.log');
-    2 : fn := ChangeFIleExt(fn, '.bin');
+  Case logFormat Of
+    rlfText : fn := ChangeFIleExt(fn, '.log');
+    rlfBinary : fn := ChangeFIleExt(fn, '.bin');
+    rlfJSONArray,
+    rlfJSONLines : fn := ChangeFIleExt(fn, '.json');
+    Else logFormat := rlfUnknown;
     end;
 
-  FModel.SaveToFile(fn, LogSaveDialog.FilterIndex = 2, CompressMenuItem.Checked);
+  If logFormat <> rlfUnknown Then
+    FModel.SaveToFile(fn, logFormat, CompressMenuItem.Checked)
+  Else WarningMessage(Format('Invalid log format specified (%u)', [Ord(logFormat)]));
   end;
 end;
 
