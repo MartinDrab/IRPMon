@@ -61,75 +61,99 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 	}
 
 	if (ret == ERROR_SUCCESS && data != NULL && dataLen > 0) {
-		lineCount = (dataLen + 15) / 16;
-		if (_displayAddress) {
-			addressSize = 31;
-			while (addressSize > 0 && (size_t)(1 << addressSize) >= lineCount * 16)
-				--addressSize;
+		if (ExtraInfo->Format == rlfText) {
+			lineCount = (dataLen + 15) / 16;
+			if (_displayAddress) {
+				addressSize = 31;
+				while (addressSize > 0 && (size_t)(1 << addressSize) >= lineCount * 16)
+					--addressSize;
 
-			++addressSize;
-			addressSize = (addressSize + 3) / 4;
-			totalLineChars += (addressSize + 2);
-		}
+				++addressSize;
+				addressSize = (addressSize + 3) / 4;
+				totalLineChars += (addressSize + 2);
+			}
 
-		totalLineChars += (16 * 3 - 1);
-		if (_displayCharValues)
-			totalLineChars += (16 + 1);
+			totalLineChars += (16 * 3 - 1);
+			if (_displayCharValues)
+				totalLineChars += (16 + 1);
 
-		tmpLines = (wchar_t **)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, lineCount*sizeof(wchar_t *));
-		if (tmpLines != NULL) {
-			size_t bytesToDo = 0;
+			tmpLines = (wchar_t **)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, lineCount*sizeof(wchar_t *));
+			if (tmpLines != NULL) {
+				size_t bytesToDo = 0;
 
-			for (size_t i = 0; i < lineCount; ++i) {
-				line = (wchar_t *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (totalLineChars + 1) * sizeof(wchar_t));
-				if (line != NULL) {
-					for (size_t j = 0; j < totalLineChars; ++j)
-						line[j] = L' ';
+				for (size_t i = 0; i < lineCount; ++i) {
+					line = (wchar_t *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (totalLineChars + 1) * sizeof(wchar_t));
+					if (line != NULL) {
+						for (size_t j = 0; j < totalLineChars; ++j)
+							line[j] = L' ';
 
-					if (_displayAddress) {
-						line[addressSize] = L':';
-						line[addressSize + 1] = L'\t';
-						for (size_t j = 0; j < addressSize; ++j)
-							line[j] = digits[_displayUpperDigits][((addr >> ((addressSize - j - 1) * 4)) & 0xf)];
-					}
+						if (_displayAddress) {
+							line[addressSize] = L':';
+							line[addressSize + 1] = L'\t';
+							for (size_t j = 0; j < addressSize; ++j)
+								line[j] = digits[_displayUpperDigits][((addr >> ((addressSize - j - 1) * 4)) & 0xf)];
+						}
 
-					bytesToDo = (dataLen >= 16) ? 16 : dataLen;
-					for (size_t j = 0; j < bytesToDo; ++j) {
-						line[addressSize + 2 + j * 3] = digits[_displayUpperDigits][(data[j] >> 4)];
-						line[addressSize + 2 + j * 3 + 1] = digits[_displayUpperDigits][(data[j] & 0xf)];
-						line[addressSize + 2 + j * 3 + 2] = L' ';
+						bytesToDo = (dataLen >= 16) ? 16 : dataLen;
+						for (size_t j = 0; j < bytesToDo; ++j) {
+							line[addressSize + 2 + j * 3] = digits[_displayUpperDigits][(data[j] >> 4)];
+							line[addressSize + 2 + j * 3 + 1] = digits[_displayUpperDigits][(data[j] & 0xf)];
+							line[addressSize + 2 + j * 3 + 2] = L' ';
+							if (_displayCharValues)
+								line[addressSize + 2 + 16 * 3 + j] = (data[j] >= L' ') ? data[j] : L'.';
+						}
+
 						if (_displayCharValues)
-							line[addressSize + 2 + 16 * 3 + j] = (data[j] >= L' ') ? data[j] : L'.';
+							line[addressSize + 2 + 16 * 3 - 1] = L'\t';
+				
+						tmpLines[i] = line;
+					} else ret = GetLastError();
+
+					if (ret != ERROR_SUCCESS) {
+						for (size_t j = 0; j < i; ++j)
+							HeapFree(GetProcessHeap(), 0, tmpLines[j]);
+				
+						break;
 					}
 
-					if (_displayCharValues)
-						line[addressSize + 2 + 16 * 3 - 1] = L'\t';
-				
-					tmpLines[i] = line;
-				} else ret = GetLastError();
-
-				if (ret != ERROR_SUCCESS) {
-					for (size_t j = 0; j < i; ++j)
-						HeapFree(GetProcessHeap(), 0, tmpLines[j]);
-				
-					break;
+					data += 16;
+					dataLen -= 16;
+					addr += 16;
 				}
 
-				data += 16;
-				dataLen -= 16;
-				addr += 16;
-			}
+				if (ret == ERROR_SUCCESS) {
+					*Names = NULL;
+					*Values = tmpLines;
+					*RowCount = lineCount;
+					*Handled = TRUE;
+				}
 
-			if (ret == ERROR_SUCCESS) {
-				*Names = NULL;
-				*Values = tmpLines;
-				*RowCount = lineCount;
-				*Handled = TRUE;
-			}
+				if (ret != ERROR_SUCCESS)
+					HeapFree(GetProcessHeap(), 0, tmpLines);
+			} else ret = GetLastError();
+		} else if (ExtraInfo->Format == rlfJSONArray || ExtraInfo->Format == rlfJSONLines) {
+			lineCount = 1;
+			tmpLines = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(wchar_t *));
+			if (tmpLines != NULL) {
+				tmpLines[0] = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (dataLen*2 + 1) * sizeof(wchar_t));
+				if (tmpLines[0] != NULL) {
+					wchar_t *line = tmpLines[0];
 
-			if (ret != ERROR_SUCCESS)
-				HeapFree(GetProcessHeap(), 0, tmpLines);
-		} else ret = GetLastError();
+					for (size_t j = 0; j < dataLen; ++j) {
+						line[j * 2] = digits[_displayUpperDigits][(data[j] >> 4)];
+						line[j * 2 + 1] = digits[_displayUpperDigits][(data[j] & 0xf)];
+					}
+
+					*Names = NULL;
+					*Values = tmpLines;
+					*RowCount = lineCount;
+					*Handled = TRUE;
+				} else ret = GetLastError();
+
+				if (ret != ERROR_SUCCESS)
+					HeapFree(GetProcessHeap(), 0, tmpLines);
+			} else ret = GetLastError();
+		}
 	} else if (ret == ERROR_NOT_SUPPORTED) {
 		*Handled = TRUE;
 		ret = ERROR_SUCCESS;

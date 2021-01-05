@@ -149,14 +149,14 @@ Type
   Private
     FHighlight : Boolean;
     FHighlightColor : Cardinal;
-    Procedure ProcessParsers(AParsers:TObjectList<TDataParser>; ALines:TStrings);
+    Procedure ProcessParsers(AParsers:TObjectList<TDataParser>; AFormat:ERequestLogFormat; ALines:TStrings);
   Public
     Class Function GetBaseColumnName(AColumnType:ERequestListModelColumnType):WideString;
     Function GetColumnName(AColumnType:ERequestListModelColumnType):WideString; Virtual;
     Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Virtual;
     Function GetColumnValueRaw(AColumnType:ERequestListModelColumnType; Var AValue:Pointer; Var AValueSize:Cardinal):Boolean; Virtual;
-    Procedure SaveToStream(AStream:TStream; AParsers:TObjectList<TDataParser>; ABinary:Boolean = False; ACompress:Boolean = False); Virtual;
-    Procedure SaveToFile(AFileName:WideString; AParsers:TObjectList<TDataParser>; ABinary:Boolean = False; ACompress:Boolean = False); Virtual;
+    Procedure SaveToStream(AStream:TStream; AParsers:TObjectList<TDataParser>; AFormat:ERequestLogFormat; ACompress:Boolean = False); Virtual;
+    Procedure SaveToFile(AFileName:WideString; AParsers:TObjectList<TDataParser>; AFormat:ERequestLogFormat; ACompress:Boolean = False); Virtual;
 
     Class Function CreatePrototype(AType:ERequestType):TDriverRequest;
 
@@ -237,8 +237,8 @@ Type
       Procedure Clear; Override;
       Function RowCount : Cardinal; Override;
       Function Update:Cardinal; Override;
-      Procedure SaveToStream(AStream:TStream; ABinary:Boolean = False; ACompress:Boolean = False);
-      Procedure SaveToFile(AFileName:WideString; ABinary:Boolean = False; ACompress:Boolean = False);
+      Procedure SaveToStream(AStream:TStream; AFormat:ERequestLogFormat; ACompress:Boolean = False);
+      Procedure SaveToFile(AFileName:WideString; AFormat:ERequestLogFormat; ACompress:Boolean = False);
       Procedure LoadFromStream(AStream:TStream; ARequireHeader:Boolean = True);
       Procedure LoadFromFile(AFileName:WideString; ARequireHeader:Boolean = True);
       Procedure Reevaluate;
@@ -279,7 +279,7 @@ Case AType Of
   end;
 end;
 
-Procedure TDriverRequest.ProcessParsers(AParsers:TObjectList<TDataParser>; ALines:TStrings);
+Procedure TDriverRequest.ProcessParsers(AParsers:TObjectList<TDataParser>; AFormat:ERequestLogFormat; ALines:TStrings);
 Var
   I : Integer;
   err : Cardinal;
@@ -287,89 +287,157 @@ Var
   names : TStringList;
   values : TStringList;
   pd : TDataParser;
+  tmp : WideString;
+  jsonString : WideString;
+  firstParsed : Boolean;
 begin
 If Assigned(AParsers) Then
   begin
+  firstParsed := False;
+  jsonString := '';
   names := TStringList.Create;
   values := TStringList.Create;
   For pd In AParsers Do
     begin
-    err := pd.Parse(Self, _handled, names, values);
-    If (err = ERROR_SUCCESS) And (_handled) Then
+    err := pd.Parse(AFormat, Self, _handled, names, values);
+    If (err = ERROR_SUCCESS) And (_handled) And (values.Count > 0) Then
       begin
-      ALines.Add(Format('Data (%s)', [pd.Name]));
+      If (firstParsed) And
+        ((AFormat = rlfJSONArray) Or (AFormat = rlfJSONLines)) Then
+        jsonString := jsonString + ', ';
+
+      Case AFormat Of
+        rlfText : ALines.Add(Format('Data (%s)', [pd.Name]));
+        rlfJSONArray,
+        rlfJSONLines : jsonString := jsonString + Format('"%s" : {', [pd.Name]);
+        end;
+
       For I := 0 To values.Count - 1 Do
         begin
-        If names.Count > 0 Then
-          ALines.Add(Format('  %s: %s', [names[I], values[I]]))
-        Else ALines.Add('  ' + values[I]);
+        Case AFormat Of
+          rlfText : begin
+            If names.Count > 0 Then
+              ALines.Add(Format('  %s: %s', [names[I], values[I]]))
+            Else ALines.Add('  ' + values[I]);
+            end;
+          rlfJSONArray,
+          rlfJSONLines : begin
+            If names.Count > 0 Then
+              tmp := Format('"%s" : "%s"', [names[I], StringEscape(values[I])])
+            Else tmp := Format('"Data%u" : "%s"', [I, StringEscape(values[I])]);
+
+            jsonString := jsonString + tmp;
+            If I < values.Count - 1 Then
+              jsonString := jsonString + ', ';
+
+            end;
+          end;
         end;
 
       values.Clear;
       names.Clear;
+      firstParsed := True;
+      jsonString := jsonString + '}';
       end;
     end;
 
   values.Free;
   names.Free;
+  If jsonString <> '' Then
+    ALines.Add(jsonString);
   end;
 end;
 
 
-Procedure TDriverRequest.SaveToStream(AStream: TStream; AParsers:TObjectList<TDataParser>; ABinary:Boolean = False; ACompress:Boolean = False);
+Procedure TDriverRequest.SaveToStream(AStream: TStream; AParsers:TObjectList<TDataParser>; AFormat:ERequestLogFormat; ACompress:Boolean = False);
 Var
+  tmpJson : WideString;
+  jsonString : WideString;
   tmp : PREQUEST_HEADER;
   reqSize : Cardinal;
   s : TStringList;
   value : WideString;
   ct : ERequestListModelColumnType;
+  rbs : RawByteString;
 begin
-If Not ABinary Then
-  begin
-  s := TStringList.Create;
-  For ct := Low(ERequestListModelColumnType) To High(ERequestListModelColumnType) Do
-    begin
-    If GetColumnValue(ct, value) Then
+Case AFormat Of
+  rlfText : begin
+    s := TStringList.Create;
+    For ct := Low(ERequestListModelColumnType) To High(ERequestListModelColumnType) Do
       begin
-      If value <> '' Then
-        s.Add(Format('%s = %s', [GetColumnName(ct), value]));
+      If GetColumnValue(ct, value) Then
+        begin
+        If value <> '' Then
+          s.Add(Format('%s = %s', [GetColumnName(ct), value]));
+        end;
+      end;
+
+    If DataSize > 0 Then
+      ProcessParsers(AParsers, AFormat, s);
+
+    s.SaveToStream(AStream);
+    s.Free;
+    end;
+  rlfBinary : begin
+    tmp := FRaw;
+    If ACompress Then
+      begin
+      tmp := RequestCopy(FRaw);
+      If Not Assigned(tmp) Then
+        Raise Exception.Create('Not enough memory');
+      end;
+
+    Try
+      reqSize := RequestGetSize(tmp);
+      AStream.Write(reqSize, SizeOf(reqSize));
+      AStream.Write(tmp^, reqSize);
+    Finally
+      If ACompress Then
+        RequestMemoryFree(tmp);
       end;
     end;
+  rlfJSONArray,
+  rlfJSONLines : begin
+    s := TStringList.Create;
+    jsonString := '{';
+    For ct := Low(ERequestListModelColumnType) To High(ERequestListModelColumnType) Do
+      begin
+      If GetColumnValue(ct, value) Then
+        begin
+        If value <> '' Then
+          begin
+          jsonString := jsonString + Format('"%s" : "%s"', [GetColumnName(ct), StringEscape(value)]);
+          If ct < High(ERequestListModelColumnType) Then
+            jsonString := jsonString + ', ';
+          end;
+        end;
+      end;
 
-  If DataSize > 0 Then
-    ProcessParsers(AParsers, s);
+    If DataSize > 0 Then
+      begin
+      ProcessParsers(AParsers, AFormat, s);
+      If s.Count > 0 Then
+        begin
+        jsonString := jsonString + ', "Parsers" : {';
+        jsonString := jsonString + s[0] + '}';
+        end;
+      end;
 
-  s.Add('');
-  s.SaveToStream(AStream);
-  s.Free;
-  end
-Else begin
-  tmp := FRaw;
-  If ACompress Then
-    begin
-    tmp := RequestCopy(FRaw);
-    If Not Assigned(tmp) Then
-      Raise Exception.Create('Not enough memory');
-    end;
-
-  Try
-    reqSize := RequestGetSize(tmp);
-    AStream.Write(reqSize, SizeOf(reqSize));
-    AStream.Write(tmp^, reqSize);
-  Finally
-    If ACompress Then
-      RequestMemoryFree(tmp);
+    jsonString := jsonString + '}';
+    rbs := AnsiToUtf8(jsonString);
+    AStream.Write(PAnsiChar(rbs)^, Length(rbs));
+    s.Free;
     end;
   end;
 end;
 
-Procedure TDriverRequest.SaveToFile(AFileName: WideString; AParsers:TObjectList<TDataParser>; ABinary:Boolean = False; ACompress:Boolean = False);
+Procedure TDriverRequest.SaveToFile(AFileName: WideString; AParsers:TObjectList<TDataParser>; AFormat:ERequestLogFormat; ACompress:Boolean = False);
 Var
   F : TFileStream;
 begin
 F := TFileStream.Create(AFileName, fmCreate Or fmOpenWrite);
 Try
-  SaveToStream(F, AParsers, ABinary, ACompress);
+  SaveToStream(F, AParsers, AFormat, ACompress);
 Finally
   F.Free;
   end;
@@ -849,32 +917,57 @@ FRequests.Free;
 Inherited Destroy;
 end;
 
-Procedure TRequestListModel.SaveToStream(AStream:TStream; ABinary:Boolean = False; ACompress:Boolean = False);
+Procedure TRequestListModel.SaveToStream(AStream:TStream; AFormat:ERequestLogFormat; ACompress:Boolean = False);
 Var
   bh : TBinaryLogHeader;
   I : Integer;
   dr : TDriverRequest;
+  comma : AnsiChar;
+  arrayChar : AnsiChar;
+  newLine : Packed Array [0..1] Of AnsiChar;
 begin
-If ABinary Then
-  begin
-  TBinaryLogHeader.Fill(bh);
-  AStream.Write(bh, SizeOf(bh));
+comma := ',';
+newLine[0] := #13;
+newLine[1] := #10;
+Case AFormat Of
+  rlfBinary: begin
+    TBinaryLogHeader.Fill(bh);
+    AStream.Write(bh, SizeOf(bh));
+    end;
+  rlfJSONArray : begin
+    arrayChar := '[';
+    AStream.Write(arrayChar, SizeOf(arrayChar));
+    end;
   end;
 
 For I := 0 To RowCount - 1 Do
   begin
   dr := _Item(I);
-  dr.SaveToStream(AStream, FParsers, ABinary, ACompress);
+  dr.SaveToStream(AStream, FParsers, AFormat, ACompress);
+  If I < RowCount - 1 Then
+    begin
+    Case AFormat Of
+      rlfJSONArray : AStream.Write(comma, SizeOf(comma));
+      rlfText,
+      rlfJSONLines : AStream.Write(newLine, SizeOf(newLine));
+      end;
+    end;
+  end;
+
+If AFormat = rlfJSONArray Then
+  begin
+  arrayChar := ']';
+  AStream.Write(arrayChar, SizeOf(arrayChar));
   end;
 end;
 
-Procedure TRequestListModel.SaveToFile(AFileName:WideString; ABinary:Boolean = False; ACompress:Boolean = False);
+Procedure TRequestListModel.SaveToFile(AFileName:WideString; AFormat:ERequestLogFormat; ACompress:Boolean = False);
 Var
   F : TFileStream;
 begin
 F := TFileStream.Create(AFileName, fmCreate Or fmOpenWrite);
 Try
-  SaveToStream(F, ABinary, ACompress);
+  SaveToStream(F, AFormat, ACompress);
 Finally
   F.Free;
   end;

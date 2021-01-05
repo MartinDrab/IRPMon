@@ -41,7 +41,8 @@ Type
 Implementation
 
 Uses
-  Clipbrd, Utils;
+  Clipbrd, Utils,
+  IRPMonDll;
 
 Procedure TRequestDetailsFrm.CopyClick(Sender: TObject);
 Var
@@ -92,7 +93,7 @@ names := TStringList.Create;
 values := TStringList.Create;
 For pd In FParsers Do
   begin
-  err := pd.Parse(FRequest, _handled, names, values);
+  err := pd.Parse(rlfText, FRequest, _handled, names, values);
   If (err = ERROR_SUCCESS) And (_handled) Then
     begin
     tb := TTabSheet.Create(PageControl1);

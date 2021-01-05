@@ -107,8 +107,8 @@
     <DCC_RemoteDebug>false</DCC_RemoteDebug>
     <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
     <BT_BuildType>Debug</BT_BuildType>
-    <VerInfo_Build>8</VerInfo_Build>
-    <VerInfo_Keys>CompanyName=Martin Drab;FileDescription=IRPMon Application;FileVersion=1.0.0.8;InternalName=IRPMON.EXE;LegalCopyright=Copyright (c) Martin Drab, 2015-2020;LegalTrademarks=;OriginalFilename=IRPMon.exe;ProductName=IRP Monitor;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
+    <VerInfo_Build>9</VerInfo_Build>
+    <VerInfo_Keys>CompanyName=Martin Drab;FileDescription=IRPMon Application;FileVersion=1.0.0.9;InternalName=IRPMON.EXE;LegalCopyright=Copyright (c) Martin Drab, 2015-2020;LegalTrademarks=;OriginalFilename=IRPMon.exe;ProductName=IRP Monitor;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Cfg_1_Win64)'!=''">
     <DCC_ExeOutput>..\bin\x64\$(Config)</DCC_ExeOutput>
@@ -116,8 +116,8 @@
     <BT_BuildType>Debug</BT_BuildType>
     <Debugger_CWD>..\bin\x64\$(Config)</Debugger_CWD>
     <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
-    <VerInfo_Build>8</VerInfo_Build>
-    <VerInfo_Keys>CompanyName=Martin Drab;FileDescription=IRPMon Application;FileVersion=1.0.0.8;InternalName=IRPMON.EXE;LegalCopyright=Copyright (c) Martin Drab, 2015-2020;LegalTrademarks=;OriginalFilename=IRPMon.exe;ProductName=IRP Monitor;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
+    <VerInfo_Build>9</VerInfo_Build>
+    <VerInfo_Keys>CompanyName=Martin Drab;FileDescription=IRPMon Application;FileVersion=1.0.0.9;InternalName=IRPMON.EXE;LegalCopyright=Copyright (c) Martin Drab, 2015-2020;LegalTrademarks=;OriginalFilename=IRPMon.exe;ProductName=IRP Monitor;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Cfg_2)'!=''">
     <DCC_LocalDebugSymbols>false</DCC_LocalDebugSymbols>
