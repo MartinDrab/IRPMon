@@ -289,9 +289,11 @@ Var
   pd : TDataParser;
   tmp : WideString;
   jsonString : WideString;
+  firstParsed : Boolean;
 begin
 If Assigned(AParsers) Then
   begin
+  firstParsed := False;
   jsonString := '';
   names := TStringList.Create;
   values := TStringList.Create;
@@ -300,6 +302,10 @@ If Assigned(AParsers) Then
     err := pd.Parse(AFormat, Self, _handled, names, values);
     If (err = ERROR_SUCCESS) And (_handled) And (values.Count > 0) Then
       begin
+      If (firstParsed) And
+        ((AFormat = rlfJSONArray) Or (AFormat = rlfJSONLines)) Then
+        jsonString := jsonString + ', ';
+
       Case AFormat Of
         rlfText : ALines.Add(Format('Data (%s)', [pd.Name]));
         rlfJSONArray,
@@ -330,7 +336,8 @@ If Assigned(AParsers) Then
 
       values.Clear;
       names.Clear;
-      jsonString := jsonString + '}, ';
+      firstParsed := True;
+      jsonString := jsonString + '}';
       end;
     end;
 
