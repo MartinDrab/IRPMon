@@ -317,10 +317,13 @@ If Assigned(AParsers) Then
           rlfJSONArray,
           rlfJSONLines : begin
             If names.Count > 0 Then
-              tmp := Format('"%s" : "%s",', [names[I], StringEscape(values[I])])
-            Else tmp := Format('"Data%u" : "%s",', [I, StringEscape(values[I])]);
+              tmp := Format('"%s" : "%s"', [names[I], StringEscape(values[I])])
+            Else tmp := Format('"Data%u" : "%s"', [I, StringEscape(values[I])]);
 
             jsonString := jsonString + tmp;
+            If I < values.Count - 1 Then
+              jsonString := jsonString + ', ';
+
             end;
           end;
         end;
@@ -395,7 +398,11 @@ Case AFormat Of
       If GetColumnValue(ct, value) Then
         begin
         If value <> '' Then
-          jsonString := jsonString + Format('"%s" : "%s", ', [GetColumnName(ct), StringEscape(value)]);
+          begin
+          jsonString := jsonString + Format('"%s" : "%s"', [GetColumnName(ct), StringEscape(value)]);
+          If ct < High(ERequestListModelColumnType) Then
+            jsonString := jsonString + ', ';
+          end;
         end;
       end;
 
@@ -403,7 +410,10 @@ Case AFormat Of
       begin
       ProcessParsers(AParsers, AFormat, s);
       If s.Count > 0 Then
-        jsonString := jsonString + s[0];
+        begin
+        jsonString := jsonString + ', "Parsers" : {';
+        jsonString := jsonString + s[0] + '}';
+        end;
       end;
 
     jsonString := jsonString + '}';
@@ -927,10 +937,13 @@ For I := 0 To RowCount - 1 Do
   begin
   dr := _Item(I);
   dr.SaveToStream(AStream, FParsers, AFormat, ACompress);
-  Case AFormat Of
-    rlfJSONArray : AStream.Write(comma, SizeOf(comma));
-    rlfText,
-    rlfJSONLines : AStream.Write(newLine, SizeOf(newLine));
+  If I < RowCount - 1 Then
+    begin
+    Case AFormat Of
+      rlfJSONArray : AStream.Write(comma, SizeOf(comma));
+      rlfText,
+      rlfJSONLines : AStream.Write(newLine, SizeOf(newLine));
+      end;
     end;
   end;
 
