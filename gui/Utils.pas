@@ -188,8 +188,7 @@ For I := 1 To Length(AString) Do
   begin
   ch := AString[I];
   Case ch Of
-    #8 : Result := Result + '\t';
-    #9 : Result := Result + '\b';
+    #8 : Result := Result + '\b';
     #10 : Result := Result + '\n';
     #13 : Result := Result + '\r';
     #27 : Result := Result + '\e';

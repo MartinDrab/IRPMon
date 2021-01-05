@@ -287,6 +287,7 @@ Var
   names : TStringList;
   values : TStringList;
   pd : TDataParser;
+  tmp : WideString;
   jsonString : WideString;
 begin
 If Assigned(AParsers) Then
@@ -297,12 +298,12 @@ If Assigned(AParsers) Then
   For pd In AParsers Do
     begin
     err := pd.Parse(AFormat, Self, _handled, names, values);
-    If (err = ERROR_SUCCESS) And (_handled) Then
+    If (err = ERROR_SUCCESS) And (_handled) And (values.Count > 0) Then
       begin
       Case AFormat Of
         rlfText : ALines.Add(Format('Data (%s)', [pd.Name]));
         rlfJSONArray,
-        rlfJSONLines : jsonString := Format('"%s" : {', [pd.Name]);
+        rlfJSONLines : jsonString := jsonString + Format('"%s" : {', [pd.Name]);
         end;
 
       For I := 0 To values.Count - 1 Do
@@ -316,30 +317,31 @@ If Assigned(AParsers) Then
           rlfJSONArray,
           rlfJSONLines : begin
             If names.Count > 0 Then
-              jsonString := jsonString + Format('"%s" : "%s",', [names[I], StringEscape(values[I])])
-            Else jsonString := jsonString + Format('"Data%u" : "%s",', [I, StringEscape(values[I])]);
+              tmp := Format('"%s" : "%s",', [names[I], StringEscape(values[I])])
+            Else tmp := Format('"Data%u" : "%s",', [I, StringEscape(values[I])]);
+
+            jsonString := jsonString + tmp;
             end;
           end;
         end;
 
       values.Clear;
       names.Clear;
+      jsonString := jsonString + '}, ';
       end;
     end;
 
   values.Free;
   names.Free;
   If jsonString <> '' Then
-    begin
-    jsonString := jsonString + '}';
     ALines.Add(jsonString);
-    end;
   end;
 end;
 
 
 Procedure TDriverRequest.SaveToStream(AStream: TStream; AParsers:TObjectList<TDataParser>; AFormat:ERequestLogFormat; ACompress:Boolean = False);
 Var
+  tmpJson : WideString;
   jsonString : WideString;
   tmp : PREQUEST_HEADER;
   reqSize : Cardinal;
@@ -386,17 +388,14 @@ Case AFormat Of
     end;
   rlfJSONArray,
   rlfJSONLines : begin
+    s := TStringList.Create;
     jsonString := '{';
     For ct := Low(ERequestListModelColumnType) To High(ERequestListModelColumnType) Do
       begin
       If GetColumnValue(ct, value) Then
         begin
         If value <> '' Then
-          begin
-          If RequestListModelColumnValueTypes[Ord(ct)] = rlmcvtInteger Then
-            jsonString := Format('"%s" : %s,', [GetColumnName(ct), StringEscape(value)])
-          Else jsonString := Format('"%s" : "%s",', [GetColumnName(ct), StringEscape(value)]);
-          end;
+          jsonString := jsonString + Format('"%s" : "%s", ', [GetColumnName(ct), StringEscape(value)]);
         end;
       end;
 
@@ -410,6 +409,7 @@ Case AFormat Of
     jsonString := jsonString + '}';
     rbs := AnsiToUtf8(jsonString);
     AStream.Write(PAnsiChar(rbs)^, Length(rbs));
+    s.Free;
     end;
   end;
 end;
@@ -905,14 +905,21 @@ Var
   bh : TBinaryLogHeader;
   I : Integer;
   dr : TDriverRequest;
+  comma : AnsiChar;
+  arrayChar : AnsiChar;
+  newLine : Packed Array [0..1] Of AnsiChar;
 begin
+comma := ',';
+newLine[0] := #13;
+newLine[1] := #10;
 Case AFormat Of
   rlfBinary: begin
     TBinaryLogHeader.Fill(bh);
     AStream.Write(bh, SizeOf(bh));
     end;
   rlfJSONArray : begin
-    AStream.Write(PAnsiChar('[')^, 1);
+    arrayChar := '[';
+    AStream.Write(arrayChar, SizeOf(arrayChar));
     end;
   end;
 
@@ -921,14 +928,17 @@ For I := 0 To RowCount - 1 Do
   dr := _Item(I);
   dr.SaveToStream(AStream, FParsers, AFormat, ACompress);
   Case AFormat Of
-    rlfJSONArray : AStream.Write(PAnsiChar(',')^, 1);
+    rlfJSONArray : AStream.Write(comma, SizeOf(comma));
     rlfText,
-    rlfJSONLines : AStream.Write(PAnsiChar(#13#10)^, 2);
+    rlfJSONLines : AStream.Write(newLine, SizeOf(newLine));
     end;
   end;
 
 If AFormat = rlfJSONArray Then
-  AStream.Write(PAnsiChar(']')^, 1);
+  begin
+  arrayChar := ']';
+  AStream.Write(arrayChar, SizeOf(arrayChar));
+  end;
 end;
 
 Procedure TRequestListModel.SaveToFile(AFileName:WideString; AFormat:ERequestLogFormat; ACompress:Boolean = False);
