@@ -146,13 +146,13 @@
         <DCCReference Include="MainForm.pas">
             <Form>MainFrm</Form>
         </DCCReference>
-        <DCCReference Include="IRPMonDll.pas"/>
-        <DCCReference Include="IRPMonRequest.pas"/>
-        <DCCReference Include="Utils.pas"/>
+        <DCCReference Include="..\shared\pas\IRPMonDll.pas"/>
+        <DCCReference Include="..\shared\pas\IRPMonRequest.pas"/>
+        <DCCReference Include="..\shared\pas\Utils.pas"/>
         <DCCReference Include="ListModel.pas"/>
         <DCCReference Include="RequestListModel.pas"/>
-        <DCCReference Include="IRPRequest.pas"/>
-        <DCCReference Include="NameTables.pas"/>
+        <DCCReference Include="..\shared\pas\IRPRequest.pas"/>
+        <DCCReference Include="..\shared\pas\NameTables.pas"/>
         <DCCReference Include="RequestFilter.pas"/>
         <DCCReference Include="TreeForm.pas">
             <Form>TreeFrm</Form>
@@ -178,29 +178,28 @@
             <FormType>dfm</FormType>
         </DCCReference>
         <DCCReference Include="WatchedDriverNames.pas"/>
-        <DCCReference Include="XXXDetectedRequests.pas"/>
-        <DCCReference Include="LibJSON.pas"/>
-        <DCCReference Include="FastIoRequest.pas"/>
-        <DCCReference Include="DataParsers.pas"/>
-        <DCCReference Include="FileObjectNameXXXRequest.pas"/>
+        <DCCReference Include="..\shared\pas\XXXDetectedRequests.pas"/>
+        <DCCReference Include="..\shared\pas\FastIoRequest.pas"/>
+        <DCCReference Include="..\shared\pas\DataParsers.pas"/>
+        <DCCReference Include="..\shared\pas\FileObjectNameXXXRequest.pas"/>
         <DCCReference Include="FillterForm.pas">
             <Form>FilterFrm</Form>
             <FormType>dfm</FormType>
         </DCCReference>
-        <DCCReference Include="ProcessXXXRequests.pas"/>
+        <DCCReference Include="..\shared\pas\ProcessXXXRequests.pas"/>
         <DCCReference Include="ConnectorSelectionForm.pas">
             <Form>ConnectorSelectionFrm</Form>
             <FormType>dfm</FormType>
         </DCCReference>
-        <DCCReference Include="BinaryLogHeader.pas"/>
+        <DCCReference Include="..\shared\pas\BinaryLogHeader.pas"/>
         <DCCReference Include="DLLDecider.pas"/>
-        <DCCReference Include="ImageLoadRequest.pas"/>
-        <DCCReference Include="AbstractRequest.pas"/>
-        <DCCReference Include="DriverUnloadRequest.pas"/>
-        <DCCReference Include="AddDeviceRequest.pas"/>
-        <DCCReference Include="IRPCompleteRequest.pas"/>
-        <DCCReference Include="StartIoRequest.pas"/>
-        <DCCReference Include="RequestList.pas"/>
+        <DCCReference Include="..\shared\pas\ImageLoadRequest.pas"/>
+        <DCCReference Include="..\shared\pas\AbstractRequest.pas"/>
+        <DCCReference Include="..\shared\pas\DriverUnloadRequest.pas"/>
+        <DCCReference Include="..\shared\pas\AddDeviceRequest.pas"/>
+        <DCCReference Include="..\shared\pas\IRPCompleteRequest.pas"/>
+        <DCCReference Include="..\shared\pas\StartIoRequest.pas"/>
+        <DCCReference Include="..\shared\pas\RequestList.pas"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>
