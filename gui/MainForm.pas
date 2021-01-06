@@ -378,7 +378,7 @@ Else begin
   end;
 
 FParsers := TObjectList<TDataParser>.Create;
-DataPrasersLoad(ExtractFileDir(Application.ExeName), FParsers);
+TDataParser.AddFromDirectory(ExtractFileDir(Application.ExeName), FParsers);
 FModel.Parsers := FParsers;
 ReadSettings;
 end;
