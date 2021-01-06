@@ -49,7 +49,8 @@ uses
   DriverUnloadRequest in 'DriverUnloadRequest.pas',
   AddDeviceRequest in 'AddDeviceRequest.pas',
   IRPCompleteRequest in 'IRPCompleteRequest.pas',
-  StartIoRequest in 'StartIoRequest.pas';
+  StartIoRequest in 'StartIoRequest.pas',
+  RequestList in 'RequestList.pas';
 
 {$R *.res}
 

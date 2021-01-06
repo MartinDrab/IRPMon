@@ -1,7 +1,7 @@
 ﻿Unit RequestThread;
 
 {$IFDEF FPC}
-  {$MODE Delphi}
+{$MODE Delphi}
 {$ENDIF}
 
 Interface
