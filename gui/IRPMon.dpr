@@ -7,11 +7,11 @@ program IRPMon;
 
 
 uses
-{$IFNDEF FPC}
+  {$IFNDEF FPC}
   WinSvc,
-{$ELSE}
+  {$ELSE}
   Interfaces,
-{$ENDIF}
+  {$ENDIF }
   Windows,
   SysUtils,
   Forms,
@@ -44,7 +44,12 @@ uses
   ConnectorSelectionForm in 'ConnectorSelectionForm.pas' {ConnectorSelectionFrm},
   BinaryLogHeader in 'BinaryLogHeader.pas',
   DLLDecider in 'DLLDecider.pas',
-  ImageLoadRequest in 'ImageLoadRequest.pas';
+  ImageLoadRequest in 'ImageLoadRequest.pas',
+  AbstractRequest in 'AbstractRequest.pas',
+  DriverUnloadRequest in 'DriverUnloadRequest.pas',
+  AddDeviceRequest in 'AddDeviceRequest.pas',
+  IRPCompleteRequest in 'IRPCompleteRequest.pas',
+  StartIoRequest in 'StartIoRequest.pas';
 
 {$R *.res}
 

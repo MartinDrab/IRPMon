@@ -8,7 +8,7 @@ Interface
 
 Uses
   Windows,
-  RequestListModel, IRPMonDll;
+  IRPMonRequest, IRPMonDll;
 
 Type
   TIRPRequest = Class (TDriverRequest)

@@ -11,7 +11,8 @@ Uses
   Controls, Forms, Dialogs, ComCtrls, Menus,
   Generics.Collections, RequestFilter,
   IRPMonDll, RequestListModel, ExtCtrls,
-  HookObjects, RequestThread, DataParsers
+  HookObjects, RequestThread, DataParsers,
+  IRPMonRequest
 {$IFNDEF FPC}
   , AppEvnts
 {$ENDIF}

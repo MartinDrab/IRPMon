@@ -8,7 +8,7 @@ Interface
 
 Uses
   Generics.Collections, INIFiles,
-  RequestListModel, IRPMonDll, DLLDecider;
+  IRPMonRequest, IRPMonDll, DLLDecider;
 
 Type
   RequestFilterOperatorSet = Set Of ERequestFilterOperator;

@@ -4,7 +4,7 @@ Interface
 
 Uses
   Classes, Windows, Generics.Collections,
-  IRPMonDll, IRPMonRequest;
+  IRPMonDll, AbstractRequest;
 
 Const
   DATA_PARSER_INIT_ROUTINE     = 'DataParserInit';
@@ -75,8 +75,7 @@ Procedure DataPrasersLoad(ADirectory:WideString; AList:TObjectList<TDataParser>)
 Implementation
 
 Uses
-  SysUtils,
-  RequestListModel;
+  SysUtils;
 
 Constructor TDataParser.Create(ALibraryHandle:THandle; ALibraryName:WideString; Var ARaw:IRPMON_DATA_PARSER);
 begin

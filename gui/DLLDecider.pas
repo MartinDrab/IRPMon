@@ -12,7 +12,7 @@ Interface
 
 Uses
   Windows, SysUtils, DataParsers,
-  IRPMonDll, RequestListModel;
+  IRPMonDll, IRPMonRequest;
 
 Type
   _DLL_DECIDER_DECISION = Record
