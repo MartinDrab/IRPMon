@@ -60,10 +60,10 @@ Type
       Class Function CreateForLibrary(ALibraryName:WideString; Var AError:Cardinal):TDataParser;
       Class Procedure AddFromDirectory(ADirectory:WideString; AList:TObjectList<TDataParser>);
       Class Function AddFromFile(AFileName:WideString; AList:TObjectList<TDataParser>):Cardinal;
+      Class Procedure FreeInfo(Var AInfo:IRPMON_DATA_PARSER);
 
       Function Parse(AFormat:ERequestLogFormat; ARequest:TGeneralRequest; Var AHandled:ByteBool; ANames:TStrings; AValues:TStrings):Cardinal;
       Function QueryInfo(Var AInfo:IRPMON_DATA_PARSER):Cardinal;
-      Procedure FreeInfo(Var AInfo:IRPMON_DATA_PARSER);
 
       Property Name : WideString Read FName;
       Property Description : WideString Read FDescription;
@@ -169,7 +169,7 @@ If Assigned(AInfo.Name) Then
 Else Result := ERROR_NOT_ENOUGH_MEMORY;
 end;
 
-Procedure TDataParser.FreeInfo(Var AInfo:IRPMON_DATA_PARSER);
+Class Procedure TDataParser.FreeInfo(Var AInfo:IRPMON_DATA_PARSER);
 begin
 If Assigned(AInfo.Description) Then
   FreeMem(AInfo.Description);

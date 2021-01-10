@@ -15,3 +15,7 @@ tmp/
 *.user
 gui/backup
 *.log
+/DParser/DParser.dproj.local
+/DParser/DParser.identcache
+/DParser/DParser.stat
+/shared/pas/__history
