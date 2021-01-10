@@ -74,7 +74,7 @@ Except
 If Result = 0 Then
   Result := TDataParser.AddFromFile(fn, l);
 end;
-
+;
 Function DPListAddDirectory(AList:Pointer; ADirectoryName:PWideChar):Cardinal; Cdecl;
 Var
   dn : WideString;
@@ -92,7 +92,7 @@ If Result = 0 Then
   TDataParser.AddFromDirectory(dn, l);
 end;
 
-Function DPListUnloadItem(AList:Pointer; AIndex:Integer):Cardinal;
+Function DPListUnloadItem(AList:Pointer; AIndex:Cardinal):Cardinal;
 Var
   l : TObjectList<TDataParser>;
 begin

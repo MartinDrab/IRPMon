@@ -18,7 +18,9 @@ gui/backup
 /DParser/DParser.dproj.local
 /DParser/DParser.identcache
 /DParser/DParser.stat
-/shared/pas/__history
+/DParser/__history
 /ReqList/ReqList.dproj.local
 /ReqList/ReqList.identcache
 /ReqList/ReqList.stat
+/ReqList/__history
+/shared/pas/__history
