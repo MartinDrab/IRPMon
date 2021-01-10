@@ -92,7 +92,8 @@ Type
 Implementation
 
 Uses
-  SysUtils, NameTables;
+  SysUtils,
+  NameTables;
 
 (** TGeneralRequest **)
 

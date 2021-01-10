@@ -14,7 +14,8 @@ Uses
   DataParsers;
 
 Type
-  TRequestListOnRequestProcessed = Procedure (ARequest:TDriverRequest; Var AStore:Boolean) Of Object;
+  TRequestList = Class;
+  TRequestListOnRequestProcessed = Procedure (ARequestList:TRequestList; ARequest:TDriverRequest; Var AStore:Boolean);
   TRequestList = Class
     Private
       FOnRequestProcessed : TRequestListOnRequestProcessed;
@@ -44,6 +45,11 @@ Type
       Procedure LoadFromFile(AFileName:WideString; ARequireHeader:Boolean = True);
       Function GetTotalCount:Integer;
       Procedure Reevaluate;
+
+      Function GetDriverName(AObject:Pointer; Var AName:WideString):Boolean;
+      Function GetDeviceName(AObject:Pointer; Var AName:WideString):Boolean;
+      Function GetFileName(AObject:Pointer; Var AName:WideString):Boolean;
+      Function GetProcessName(AProcessId:Cardinal; Var AName:WideString):Boolean;
 
       Property FilterDisplayOnly : Boolean Read FFilterDisplayOnly Write SetFilterDisplayOnly;
       Property Parsers : TObjectList<TDataParser> Read FParsers Write FParsers;
@@ -248,7 +254,7 @@ While Assigned(ABuffer) Do
 
   keepRequest := True;
   If Assigned(FOnRequestProcessed) Then
-    FOnRequestProcessed(dr, keepRequest);
+    FOnRequestProcessed(Self, dr, keepRequest);
 
   If keepRequest Then
     FRequests.Add(dr)
@@ -398,7 +404,7 @@ If Not FFilterDisplayOnly Then
     If Assigned(FOnRequestProcessed) Then
       begin
       store := True;
-      FOnRequestProcessed(FRequests[I], store);
+      FOnRequestProcessed(Self, FRequests[I], store);
       If Not store THen
         begin
         FRequests[I].Free;
@@ -416,7 +422,7 @@ Else begin
     begin
     store := True;
     If Assigned(FOnRequestProcessed) Then
-      FOnRequestProcessed(dr, store);
+      FOnRequestProcessed(Self, dr, store);
 
     If store Then
       FRequests.Add(dr);
@@ -431,7 +437,26 @@ If FFilterDisplayOnly Then
   Result := FAllRequests.Count;
 end;
 
+Function TRequestList.GetDriverName(AObject:Pointer; Var AName:WideString):Boolean;
+begin
+Result := FDriverMap.TryGetValue(AObject, AName);
+end;
 
+Function TRequestList.GetDeviceName(AObject:Pointer; Var AName:WideString):Boolean;
+begin
+Result := FDeviceMap.TryGetValue(AObject, AName);
+end;
+
+Function TRequestList.GetFileName(AObject:Pointer; Var AName:WideString):Boolean;
+begin
+Result := FFileMap.TryGetValue(AObject, AName);
+end;
+
+Function TRequestList.GetProcessName(AProcessId:Cardinal; Var AName:WideString):Boolean;
+begin
+Result := FProcessMap.TryGetValue(AProcessId, AName);
+end;
 
 
 End.
+
