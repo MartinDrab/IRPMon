@@ -13,8 +13,8 @@ extern "C" {
 #endif
 
 
-DWORD DriverComHookDriver(PWCHAR DriverName, PDRIVER_MONITOR_SETTINGS MonitorSettings, BOOLEAN DeviceExtensionHook, PHANDLE HookHandle, PVOID *ObjectId);
-DWORD DriverComHookedDriverSetInfo(HANDLE Driverhandle, PDRIVER_MONITOR_SETTINGS Settings);
+DWORD DriverComHookDriver(const wchar_t *DriverName, const DRIVER_MONITOR_SETTINGS *MonitorSettings, BOOLEAN DeviceExtensionHook, PHANDLE HookHandle, PVOID *ObjectId);
+DWORD DriverComHookedDriverSetInfo(HANDLE Driverhandle, const DRIVER_MONITOR_SETTINGS *Settings);
 DWORD DriverComHookedDriverGetInfo(HANDLE Driverhandle, PDRIVER_MONITOR_SETTINGS Settings, PBOOLEAN MonitoringEnabled);
 DWORD DriverComHookedDriverActivate(HANDLE DriverHandle, BOOLEAN Activate);
 DWORD DriverComUnhookDriver(HANDLE HookHandle);
@@ -46,8 +46,8 @@ DWORD DriverComClassWatchUnregister(PWCHAR ClassGuid, BOOLEAN UpperFilter, BOOLE
 DWORD DriverComClassWatchEnum(PCLASS_WATCH_RECORD *Array, PULONG Count);
 VOID DriverComClassWatchEnumFree(PCLASS_WATCH_RECORD Array, ULONG Count);
 
-DWORD DriverComDriverNameWatchRegister(PWCHAR DriverName, PDRIVER_MONITOR_SETTINGS MonitorSettings);
-DWORD DriverComDriverNameWatchUnregister(PWCHAR DriverName);
+DWORD DriverComDriverNameWatchRegister(const wchar_t *DriverName, const DRIVER_MONITOR_SETTINGS *MonitorSettings);
+DWORD DriverComDriverNameWatchUnregister(const wchar_t *DriverName);
 DWORD DriverComDriverNameWatchEnum(PDRIVER_NAME_WATCH_RECORD *Array, PULONG Count);
 VOID DriverComDriverNameWatchEnumFree(PDRIVER_NAME_WATCH_RECORD Array, ULONG Count);
 

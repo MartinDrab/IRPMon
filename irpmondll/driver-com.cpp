@@ -257,13 +257,13 @@ VOID DriverComSnapshotFree(PIRPMON_DRIVER_INFO *DriverInfo, ULONG Count)
 	return;
 }
 
-DWORD DriverComHookDriver(PWCHAR DriverName, PDRIVER_MONITOR_SETTINGS MonitorSettings, BOOLEAN DeviceExtensionHook, PHANDLE HookHandle, PVOID *ObjectId)
+DWORD DriverComHookDriver(const wchar_t *DriverName, const DRIVER_MONITOR_SETTINGS *MonitorSettings, BOOLEAN DeviceExtensionHook, PHANDLE HookHandle, PVOID *ObjectId)
 {
 	DWORD ret = ERROR_GEN_FAILURE;
 	ULONG nameLen = 0;
 	PIOCTL_IRPMNDRV_HOOK_DRIVER_INPUT input = NULL;
 	IOCTL_IRPMNDRV_HOOK_DRIVER_OUTPUT output;
-	DEBUG_ENTER_FUNCTION("DriverName=\"%S\"; MonitorSettings=0x%p; DeviceExtensionHook=%u; HookHandle=0x%p; ObjectId=0x%p", DriverName, MonitorSettings, DeviceExtensionHook, HookHandle, ObjectId);
+	DEBUG_ENTER_FUNCTION("DriverName=\"%ls\"; MonitorSettings=0x%p; DeviceExtensionHook=%u; HookHandle=0x%p; ObjectId=0x%p", DriverName, MonitorSettings, DeviceExtensionHook, HookHandle, ObjectId);
 
 	nameLen = (ULONG)wcslen(DriverName)*sizeof(wchar_t);
 	input = (PIOCTL_IRPMNDRV_HOOK_DRIVER_INPUT)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IOCTL_IRPMNDRV_HOOK_DRIVER_INPUT) + nameLen);
@@ -286,7 +286,7 @@ DWORD DriverComHookDriver(PWCHAR DriverName, PDRIVER_MONITOR_SETTINGS MonitorSet
 	return ret;
 }
 
-DWORD DriverComHookedDriverSetInfo(HANDLE Driverhandle, PDRIVER_MONITOR_SETTINGS Settings)
+DWORD DriverComHookedDriverSetInfo(HANDLE Driverhandle, const DRIVER_MONITOR_SETTINGS *Settings)
 {
 	IOCTL_IRPMNDRV_HOOK_DRIVER_SET_INFO_INPUT input;
 	DWORD ret = ERROR_GEN_FAILURE;
@@ -834,13 +834,13 @@ VOID DriverComClassWatchEnumFree(PCLASS_WATCH_RECORD Array, ULONG Count)
 /*                   DRIVER NAME WATCH                                  */
 /************************************************************************/
 
-DWORD DriverComDriverNameWatchRegister(PWCHAR DriverName, PDRIVER_MONITOR_SETTINGS MonitorSettings)
+DWORD DriverComDriverNameWatchRegister(const wchar_t *DriverName, const DRIVER_MONITOR_SETTINGS *MonitorSettings)
 {
 	DWORD ret = ERROR_GEN_FAILURE;
 	SIZE_T len = 0;
 	SIZE_T inputLen = 0;
 	PIOCTL_IRPMNDRV_DRIVER_WATCH_REGISTER_INPUT input = NULL;
-	DEBUG_ENTER_FUNCTION("DriverName=\"%S\"; MonitorSettings=0x%p", DriverName, MonitorSettings);
+	DEBUG_ENTER_FUNCTION("DriverName=\"%ls\"; MonitorSettings=0x%p", DriverName, MonitorSettings);
 
 	len = wcslen(DriverName)*sizeof(WCHAR);
 	if (len < (1 << (sizeof(USHORT) * 8))) {
@@ -860,13 +860,13 @@ DWORD DriverComDriverNameWatchRegister(PWCHAR DriverName, PDRIVER_MONITOR_SETTIN
 }
 
 
-DWORD DriverComDriverNameWatchUnregister(PWCHAR DriverName)
+DWORD DriverComDriverNameWatchUnregister(const wchar_t *DriverName)
 {
 	DWORD ret = ERROR_GEN_FAILURE;
 	SIZE_T len = 0;
 	SIZE_T inputLen = 0;
 	PIOCTL_IRPMNDRV_DRIVER_WATCH_UNREGISTER_INPUT input = NULL;
-	DEBUG_ENTER_FUNCTION("DriverName=\"%S\"", DriverName);
+	DEBUG_ENTER_FUNCTION("DriverName=\"%ls\"", DriverName);
 
 	len = wcslen(DriverName)*sizeof(WCHAR);
 	if (len < (1 << (sizeof(USHORT) * 8))) {

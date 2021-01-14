@@ -14,6 +14,7 @@
 #include "dparser.h"
 #include "reqlist.h"
 #include "irpmondll.h"
+#include "driver-hook.h"
 
 
 //	--input=[L|D|N]:<value>
@@ -36,6 +37,7 @@
 //		D = Associated data
 //		W = Name watch
 //		E = device extension hook
+//		a = all devices
 //
 //	--unhook-driver=[W]:<drivername>
 //		W = name watch
@@ -65,6 +67,7 @@ typedef struct _HOOK_DRIVER_REQUEST {
 	DRIVER_MONITOR_SETTINGS Settings;
 	bool NameWatch;
 	bool DevExtHook;
+	bool AllDevices;
 	HANDLE Handle;
 	void *ObjectId;
 } HOOK_DRIVER_REQUEST, *PHOOK_DRIVER_REQUEST;
@@ -73,6 +76,13 @@ typedef struct _UNHOOK_DRIVER_REQUEST {
 	wchar_t *DriverName;
 	bool NameWatch;
 } UNHOOK_DRIVER_REQUEST, *PUNHOOK_DRIVER_REQUEST;
+
+typedef struct _HOOK_DEVICE_REQUEST {
+	wchar_t *Name;
+	PVOID Address;
+	HANDLE Handle;
+	void *ObjectId;
+} HOOK_DEVICE_REQUEST, *PHOOK_DEVICE_REQUEST;
 
 
 static 	OPTION_RECORD opts[] = {
@@ -226,6 +236,7 @@ static int _parse_hookdriver(const wchar_t *Value)
 				case L'D': hdr.Settings.MonitorData = TRUE; break;
 				case L'E': hdr.DevExtHook = true; break;
 				case L'W': hdr.NameWatch = true; break;
+				case L'a': hdr.AllDevices = true; break;
 				default:
 					ret = -6;
 					fprintf(stderr, "[ERROR]: Unknown driver hooking modifier \"%lc\"\n", *Value);

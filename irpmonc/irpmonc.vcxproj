@@ -35,6 +35,9 @@
       <Project>{d7d49f20-b8ef-43d8-8d57-b48de51c62f3}</Project>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="driver-hook.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
