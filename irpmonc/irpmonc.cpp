@@ -1,5 +1,6 @@
 
 #include <string>
+#include <algorithm>
 #include <map>
 #include <vector>
 #include <windows.h>
@@ -14,6 +15,7 @@
 #include "dparser.h"
 #include "reqlist.h"
 #include "irpmondll.h"
+#include "request.h"
 #include "driver-hook.h"
 
 
@@ -42,6 +44,14 @@
 //	--unhook-driver=[W]:<drivername>
 //		W = name watch
 //
+//  --hook-device=<A|N>:<devicename>
+//		A = address
+//		N = name
+//
+//  --unhook-device=<A|N>:<devicename>
+//		A = address
+//		N = name
+//
 //	--boot-log={no|yes}
 
 
@@ -51,6 +61,7 @@ typedef enum _EOptionType {
 	otHookDriver,
 	otUnhookDriver,
 	otHookDevice,
+	otUnhookDevice,
 	otBootLog,
 } EOptionType, *PEOptionType;
 
@@ -62,35 +73,13 @@ typedef struct _OPTION_RECORD {
 	int MaxCount;
 } OPTION_RECORD, *POPTION_RECORD;
 
-typedef struct _HOOK_DRIVER_REQUEST {
-	wchar_t *DriverName;
-	DRIVER_MONITOR_SETTINGS Settings;
-	bool NameWatch;
-	bool DevExtHook;
-	bool AllDevices;
-	HANDLE Handle;
-	void *ObjectId;
-} HOOK_DRIVER_REQUEST, *PHOOK_DRIVER_REQUEST;
-
-typedef struct _UNHOOK_DRIVER_REQUEST {
-	wchar_t *DriverName;
-	bool NameWatch;
-} UNHOOK_DRIVER_REQUEST, *PUNHOOK_DRIVER_REQUEST;
-
-typedef struct _HOOK_DEVICE_REQUEST {
-	wchar_t *Name;
-	PVOID Address;
-	HANDLE Handle;
-	void *ObjectId;
-} HOOK_DEVICE_REQUEST, *PHOOK_DEVICE_REQUEST;
-
-
 static 	OPTION_RECORD opts[] = {
 	{otInput, L"input", true, 0, 1},
 	{otOutput, L"output", true, 0, 1},
 	{otHookDriver, L"hook-driver", false, 0, INT_MAX},
 	{otUnhookDriver, L"unhook-driver", false, 0, INT_MAX},
 	{otHookDevice, L"hook-device", false, 0, INT_MAX},
+	{otUnhookDevice, L"unhook-device", false, 0, INT_MAX},
 	{otBootLog, L"boot-log", false, 0, 1},
 };
 
@@ -99,9 +88,16 @@ static wchar_t *_inLogFileName = NULL;
 static wchar_t *_outLogFileName = NULL;
 static ERequestLogFormat _outLogFormat = rlfBinary;
 static IRPMON_INIT_INFO _initInfo;
-static std::vector<HOOK_DRIVER_REQUEST> _driversToHook;
-static std::map<std::wstring, HOOK_DRIVER_REQUEST> _hookedDrivers;
-static std::vector<UNHOOK_DRIVER_REQUEST> _unhookDrivers;
+static std::vector<CDriverHook *> _driversToHook;
+static std::vector<CDriverNameWatch*> _nwsToRegister;
+static std::vector<std::wstring> _nwsToUnregister;
+static std::vector<CDeviceHook*> _devicesToHook;
+static std::vector<void *> _devicesToUnhookAddrs;
+static std::vector<std::wstring> _devicesToUnhookNames;
+static std::map<std::wstring, CDriverHook *> _hookedDrivers;
+static std::map<std::wstring, CDriverNameWatch *> _watchedDrivers;
+static std::map<void *, CDeviceHook *> _hookedDevices;
+static std::vector<std::wstring> _unhookDrivers;
 static HANDLE _dpListHandle = NULL;
 static HANDLE _reqListHandle = NULL;
 
@@ -204,7 +200,7 @@ static int _parse_output(const wchar_t *Value)
 #endif
 	} else {
 		_outLogFileName = wcsdup(Value);
-		if (_outLogFileName == NULL) {
+		if (_outLogFileName == nullptr) {
 			ret = ENOMEM;
 			fprintf(stderr, "[ERROR]: Cannot allocate memory to hold the output log file name\n");
 		}
@@ -219,24 +215,29 @@ static int _parse_hookdriver(const wchar_t *Value)
 {
 	int ret = 0;
 	const wchar_t *delimiter = NULL;
-	HOOK_DRIVER_REQUEST hdr;
+	CDriverHook *dh = nullptr;
+	CDriverNameWatch *dnw = nullptr;
+	DRIVER_MONITOR_SETTINGS dms;
+	bool nameWatch = false;
+	bool allDevices = false;
+	bool devExtHook = false;
 
-	memset(&hdr, 0, sizeof(hdr));
+	memset(&dms, 0, sizeof(dms));
 	delimiter = wcschr(Value, L':');
 	if (delimiter != NULL) {
 		while (ret == 0 && Value != delimiter) {
 			switch (*Value) {
-				case L'I': hdr.Settings.MonitorIRP = TRUE; break;
-				case L'C': hdr.Settings.MonitorIRPCompletion = TRUE; break;
-				case L'F': hdr.Settings.MonitorFastIo = TRUE;  break;
-				case L'S': hdr.Settings.MonitorStartIo = TRUE; break;
-				case L'A': hdr.Settings.MonitorAddDevice = TRUE; break;
-				case L'U': hdr.Settings.MonitorUnload = TRUE; break;
-				case L'N': hdr.Settings.MonitorNewDevices = TRUE; break;
-				case L'D': hdr.Settings.MonitorData = TRUE; break;
-				case L'E': hdr.DevExtHook = true; break;
-				case L'W': hdr.NameWatch = true; break;
-				case L'a': hdr.AllDevices = true; break;
+				case L'I': dms.MonitorIRP = TRUE; break;
+				case L'C': dms.MonitorIRPCompletion = TRUE; break;
+				case L'F': dms.MonitorFastIo = TRUE;  break;
+				case L'S': dms.MonitorStartIo = TRUE; break;
+				case L'A': dms.MonitorAddDevice = TRUE; break;
+				case L'U': dms.MonitorUnload = TRUE; break;
+				case L'N': dms.MonitorNewDevices = TRUE; break;
+				case L'D': dms.MonitorData = TRUE; break;
+				case L'E': devExtHook = true; break;
+				case L'W': nameWatch = true; break;
+				case L'a': allDevices = true; break;
 				default:
 					ret = -6;
 					fprintf(stderr, "[ERROR]: Unknown driver hooking modifier \"%lc\"\n", *Value);
@@ -250,19 +251,72 @@ static int _parse_hookdriver(const wchar_t *Value)
 	}
 
 	if (ret == 0) {
-		hdr.DriverName = wcsdup(Value);
-		if (hdr.DriverName == NULL)
-			ret = ENOMEM;
+		for (size_t i = 0; i < sizeof(dms.IRPSettings) / sizeof(dms.IRPSettings[0]); ++i)
+			dms.IRPSettings[i] = 1;
+		
+		for (size_t i = 0; i < sizeof(dms.FastIoSettings) / sizeof(dms.FastIoSettings[0]); ++i)
+			dms.FastIoSettings[i] = 1;
+
+		if (nameWatch) {
+			dnw = new CDriverNameWatch(Value);
+			dnw->SetInfo(dms);
+			_nwsToRegister.push_back(dnw);
+		} else {
+			dh = new CDriverHook(Value);
+			dh->SetInfo(dms);
+			dh->setAllDevices(allDevices);
+			dh->setDevExtHook(devExtHook);
+			_driversToHook.push_back(dh);
+		}
+	}
+
+	return ret;
+}
+
+
+static int _parse_hookdevice(const wchar_t *Value, bool Hook)
+{
+	int ret = 0;
+	const wchar_t *delimiter = NULL;
+	CDeviceHook *dh = nullptr;
+	bool address = false;
+	bool name = false;
+	void *addr = nullptr;
+
+	delimiter = wcschr(Value, L':');
+	if (delimiter != NULL) {
+		while (ret == 0 && Value != delimiter) {
+			switch (*Value) {
+				case L'A': address = true; break;
+				case L'N': name = true; break;
+			default:
+				ret = -6;
+				fprintf(stderr, "[ERROR]: Unknown device hooking modifier \"%lc\"\n", *Value);
+				break;
+			}
+
+			++Value;
+		}
+
+		++Value;
 	}
 
 	if (ret == 0) {
-		for (size_t i = 0; i < sizeof(hdr.Settings.IRPSettings) / sizeof(hdr.Settings.IRPSettings[0]); ++i)
-			hdr.Settings.IRPSettings[i] = 1;
-		
-		for (size_t i = 0; i < sizeof(hdr.Settings.FastIoSettings) / sizeof(hdr.Settings.FastIoSettings[0]); ++i)
-			hdr.Settings.FastIoSettings[i] = 1;
-
-		_driversToHook.push_back(hdr);
+		if (address) {
+			addr = (void*)wcstoull(Value, nullptr, 0);
+			if (Hook) {
+				dh = new CDeviceHook(addr);
+				_devicesToHook.push_back(dh);
+			} else _devicesToUnhookAddrs.push_back(addr);
+		} else if (name) {
+			if (Hook)
+				dh = new CDeviceHook(Value);
+			else _devicesToUnhookNames.push_back(Value);
+			_devicesToHook.push_back(dh);
+		} else {
+			ret = -8;
+			fprintf(stderr, "[ERROR]: No device identifier type specified\n");
+		}
 	}
 
 	return ret;
@@ -273,9 +327,8 @@ static int _parse_unhookdriver(const wchar_t *Value)
 {
 	int ret = 0;
 	const wchar_t* delimiter = NULL;
-	UNHOOK_DRIVER_REQUEST udr;
+	bool nameWatch = false;
 
-	memset(&udr, 0, sizeof(udr));
 	delimiter = wcschr(Value, L':');
 	if (delimiter != NULL) {
 		if (delimiter != Value + 1) {
@@ -285,7 +338,7 @@ static int _parse_unhookdriver(const wchar_t *Value)
 		}
 
 		switch (*Value) {
-			case L'W': udr.NameWatch = true; break;
+			case L'W': nameWatch = true; break;
 			default:
 				ret = -6;
 				fprintf(stderr, "[ERROR]: Unknown driver unhooking modifier \"%lc\"\n", *Value);
@@ -296,14 +349,9 @@ static int _parse_unhookdriver(const wchar_t *Value)
 	}
 
 	if (ret == 0) {
-		udr.DriverName = wcsdup(Value);
-		if (udr.DriverName == NULL) {
-			ret = ENOMEM;
-			fprintf(stderr, "[ERROR]: Unable to allocate memory to hold the name of the unhooking driver\n");
-		}
-	
-		if (ret == 0)
-			_unhookDrivers.push_back(udr);
+		if (nameWatch)
+			_nwsToUnregister.push_back(std::wstring(Value));
+		else _unhookDrivers.push_back(std::wstring(Value));
 	}
 
 Exit:
@@ -372,6 +420,10 @@ static int _parse_arg(wchar_t *Arg)
 			ret = _parse_unhookdriver(value);
 			break;
 		case otHookDevice:
+			ret = _parse_hookdevice(value, true);
+			break;
+		case otUnhookDevice:
+			ret = _parse_hookdevice(value, false);
 			break;
 		case otBootLog:
 			break;
@@ -386,10 +438,13 @@ static int _enum_hooked_objects(void)
 {
 	int ret = 0;
 	ULONG infoCount = 0;
-	PHOOKED_DRIVER_UMINFO info = NULL;
-	HOOK_DRIVER_REQUEST hdr;
+	PHOOKED_DRIVER_UMINFO info = nullptr;
 	ULONG dnCount = 0;
-	PDRIVER_NAME_WATCH_RECORD dnArray = NULL;
+	PDRIVER_NAME_WATCH_RECORD dnArray = nullptr;
+	CDriverHook *dh = nullptr;
+	CDeviceHook* deh = nullptr;
+	CDriverNameWatch *dnw = nullptr;
+	std::wstring n;
 
 	ret = IRPMonDllDriverHooksEnumerate(&info, &infoCount);
 	if (ret == 0) {
@@ -397,21 +452,31 @@ static int _enum_hooked_objects(void)
 
 		tmp = info;
 		for (size_t i = 0; i < infoCount; ++i) {
-			memset(&hdr, 0, sizeof(hdr));
-			hdr.Settings = tmp->MonitorSettings;
-			hdr.DevExtHook = tmp->DeviceExtensionHooks;
-			hdr.NameWatch = false;
-			hdr.DriverName = (wchar_t *)calloc(tmp->DriverNameLen / sizeof(wchar_t) + 1, sizeof(wchar_t));
-			if (hdr.DriverName != NULL) {
-				memcpy(hdr.DriverName, tmp->DriverName, tmp->DriverNameLen);
-				ret = IRPMonDllOpenHookedDriver(tmp->ObjectId, &hdr.Handle);
-				if (ret == 0)
-					_hookedDrivers.insert(std::make_pair(std::wstring(hdr.DriverName), hdr));
-				
-				if (ret != 0)
-					free(hdr.DriverName);
-			} else ret = ENOMEM;
+			dh = new CDriverHook(*tmp);
+			fprintf(stderr, "[INFO]: Driver \"%ls\" is already hooked\n", dh->Name().c_str());
+			n = dh->Name();
+			std::transform(n.begin(), n.end(), n.begin(), towlower);
+			_hookedDrivers.insert(std::make_pair(n, dh));
+			if (ret == 0) {
+				const HOOKED_DEVICE_UMINFO *deviceInfo = nullptr;
 
+				deviceInfo = info->HookedDevices;
+				for (size_t j = 0; j < info->NumberOfHookedDevices; ++j) {
+					deh = new CDeviceHook(*deviceInfo);
+					fprintf(stderr, "[INFO]: Device \"%ls\" (0x%p) is already hooked\n", deh->Name().c_str(), deh->Address());
+					_hookedDevices.insert(std::make_pair(deh->Address(), deh));
+					if (ret != 0)
+						break;
+
+					++deviceInfo;
+				}
+
+				if (ret != 0) {
+					_hookedDrivers.erase(dh->Name());
+					delete dh;
+				}
+			}
+			
 			if (ret != 0)
 				break;
 
@@ -428,15 +493,11 @@ static int _enum_hooked_objects(void)
 
 			tmp = dnArray;
 			for (size_t i = 0; i < dnCount; ++i) {
-				memset(&hdr, 0, sizeof(hdr));
-				hdr.Settings = tmp->MonitorSettings;
-				hdr.NameWatch = true;
-				hdr.DevExtHook = false;
-				hdr.DriverName = wcsdup(tmp->DriverName);
-				if (hdr.DriverName != NULL) {
-					_hookedDrivers.insert(std::make_pair(std::wstring(tmp->DriverName), hdr));
-				} else ret = ENOMEM;
-				
+				dnw = new CDriverNameWatch(*tmp);
+				fprintf(stderr, "[INFO]: Already watching for driver \"%ls\"\n", dnw->DriverName().c_str());
+				n = dnw->DriverName();
+				std::transform(n.begin(), n.end(), n.begin(), towlower);
+				_watchedDrivers.insert(std::make_pair(n, dnw));
 				if (ret != 0)
 					break;
 
@@ -451,10 +512,112 @@ static int _enum_hooked_objects(void)
 }
 
 
+static DWORD _driver_action(bool Hook)
+{
+	DWORD ret = ERROR_GEN_FAILURE;
+
+	ret = 0;
+	for (auto& hdr : _driversToHook) {
+		fprintf(stderr, "[INFO]: Hooking driver \"%ls\"...\n", hdr->Name().c_str());
+		ret = (Hook) ? hdr->Hook() : hdr->Unhook();
+		if (ret != 0) {
+			if (Hook) {
+				fprintf(stderr, "[ERROR]: Failed to hook driver \"%ls\": %u\n", hdr->Name().c_str(), ret);
+				for (auto& tmp : _driversToHook) {
+					if (wcsicmp(tmp->Name().c_str(), hdr->Name().c_str()) == 0)
+						break;
+
+					fprintf(stderr, "[INFO]: Unhooking driver \"%ls\"...\n", tmp->Name().c_str());
+					tmp->Unhook();
+				}
+
+				break;
+			} else fprintf(stderr, "[WARNING]: Failed to unhook driver \"%ls\": %u\n", hdr->Name().c_str(), ret);
+		}
+	}
+
+	return ret;
+}
+
+
+static DWORD _device_action(bool Hook)
+{
+	DWORD ret = ERROR_GEN_FAILURE;
+
+	ret = 0;
+	for (auto& hdr : _devicesToHook) {
+		fprintf(stderr, "[INFO]: Hooking device \"%ls\" (0x%p)...\n", hdr->Name().c_str(), hdr->Address());
+		ret = (Hook) ? hdr->Hook() : hdr->Unhook();
+		if (ret != 0) {
+			if (Hook) {
+				fprintf(stderr, "[ERROR]: Failed to hook device \"%ls\" (0x%p): %u\n", hdr->Name().c_str(), hdr->Address(), ret);
+				for (auto& tmp : _devicesToHook) {
+					if (wcsicmp(tmp->Name().c_str(), hdr->Name().c_str()) == 0)
+						break;
+
+					fprintf(stderr, "[INFO]: Unhooking device \"%ls\" (0x%p)...\n", tmp->Name().c_str(), tmp->Address());
+					tmp->Unhook();
+				}
+
+				break;
+			} else fprintf(stderr, "[WARNING]: Failed to unhook device \"%ls\" (0x%p): %u\n", hdr->Name().c_str(), hdr->Address(), ret);
+		}
+	}
+
+	return ret;
+}
+
+
+static DWORD _prepare_output(FILE **File)
+{
+	FILE *tmp = nullptr;
+	DWORD ret = ERROR_GEN_FAILURE;
+
+	ret = 0;
+	if (_outLogFileName != nullptr) {
+		tmp = _wfopen(_outLogFileName, L"wb");
+		if (tmp == nullptr)
+			ret = errno;
+	} else tmp = stdout;
+
+	if (ret == 0)
+		*File = tmp;
+
+	return ret;
+}
+
+
+static void _free_output(FILE *File)
+{
+	if (_outLogFileName != nullptr)
+		fclose(File);
+
+	return;
+}
+
+
+static void cdecl _on_request(PREQUEST_HEADER Request, void *Context, PBOOLEAN Store)
+{
+	FILE *f = nullptr;
+	size_t requestSize = 0;
+
+	*Store = FALSE;
+	if (_outLogFormat == rlfBinary) {
+		f = (FILE *)Context;
+		requestSize = RequestGetSize(Request);
+		fwrite(&requestSize, sizeof(ULONG), 1, f);
+		fwrite(Request, requestSize, 1, f);
+	}
+
+	return;
+}
+
+
 int wmain(int argc, wchar_t *argv[])
 {
 	int ret = 0;
-	POPTION_RECORD opRec = NULL;
+	FILE * outputFile = nullptr;
+	POPTION_RECORD opRec = nullptr;
 
 	for (int i = 1; i < argc; ++i) {
 		ret = _parse_arg(argv[i]);
@@ -490,49 +653,83 @@ int wmain(int argc, wchar_t *argv[])
 				if (ret == 0) {
 					ret = _enum_hooked_objects();
 					if (ret == 0) {
-						for (auto & hdr : _driversToHook) {
-							if (!hdr.NameWatch) {
-								fprintf(stderr, "[INFO]: Hooking driver \"%ls\"...\n", hdr.DriverName);
-								ret = IRPMonDllHookDriver(hdr.DriverName, &hdr.Settings, hdr.DevExtHook, &hdr.Handle, &hdr.ObjectId);
-							} else {
-								fprintf(stderr, "[INFO]: Starting to watch for driver \"%ls\"...\n", hdr.DriverName);
-								ret = IRPMonDllDriverNameWatchRegister(hdr.DriverName, &hdr.Settings);
-							}
-
-							if (ret != 0) {
-								fprintf(stderr, "[ERROR]: Failed to hook driver \"%ls\": %u\n", hdr.DriverName, ret);
-								for (auto & tmp : _driversToHook) {
-									if (wcscmp(tmp.DriverName, hdr.DriverName) == 0)
-										break;
-
-									if (!tmp.NameWatch) {
-										fprintf(stderr, "[INFO]: Unhooking driver \"%ls\"...\n", tmp.DriverName);
-										IRPMonDllUnhookDriver(tmp.Handle);
-									} else {
-										fprintf(stderr, "[INFO]: Stopping the watch for driver \"%ls\"...\n", tmp.DriverName);
-										IRPMonDllDriverNameWatchUnregister(tmp.DriverName);
-									}
+						ret = _driver_action(true);
+						if (ret == 0) {
+							ret = _device_action(true);
+							if (ret == 0) {
+								ret = _prepare_output(&outputFile);
+								if (ret == 0) {
+									ret = ReqListSetCallback(_reqListHandle, _on_request, outputFile);
+									if (ret != 0)
+										_free_output(outputFile);
 								}
 
-								break;
+								if (ret != 0)
+									_device_action(false);
 							}
+
+							if (ret != 0)
+								_device_action(false);
 						}
 					} else fprintf(stderr, "[ERROR]: Unable to enumerate hooked objects: %u\n", ret);
 
 					if (ret == 0) {
-						for (auto & hdr : _driversToHook)
-							_hookedDrivers.insert(std::make_pair(std::wstring(hdr.DriverName), hdr));
+						switch (_initInfo.ConnectorType) {
+							case ictDevice:
+							case ictNetwork: {
+								ret = IRPMonDllConnect();
+								if (ret == 0) {
+									DWORD requestSize = 0x1000;
+									PREQUEST_HEADER request = nullptr;
+
+									request = (PREQUEST_HEADER)calloc(1, requestSize);
+									if (request != NULL) {
+										do {
+											ret = IRPMonDllGetRequest(request, RequestSize);
+											switch (ret) {
+												case 0: {
+													ret = ReqListAdd(_reqListHandle, request);
+													if (ret == 0) {
+													} else fprintf(stderr, "[ERROR]: Unable to add the request to the list: %u\n", ret);
+												} break;
+												case ERROR_INSUFFICIENT_BUFFER: {
+													PREQUEST_HEADER tmp = nullptr;
+
+													requestSize *= 2;
+													tmp = (PREQUEST_HEADER)realloc(request, requestSize);
+													if (tmp != NULL) {
+														fprintf(stderr, "[INFO]: Request size extended to %u bytes\n", requestSize);
+														request = tmp;
+													} else {
+														ret = ERROR_NOT_ENOUGH_MEMORY;
+														fprintf(stderr, "[ERROR]: Unable to extend request size to %u bytes\n", requestSize);
+													}
+												} break;
+											}
+										} while (ret == ERROR_SUCCESS);
+									
+										free(request);
+									} else fprintf(stderr, "[ERROR]: Unable to allocate memory to hold requests: %u\n", ret);
+
+									IRPMonDllDisconnect();
+								} else fprintf(stderr, "[ERROR]: Unable to connect to the event queue: %u\n", ret);
+							} break;
+							case ictNone: {
+								ret = ReqListLoad(_reqListHandle, _inLogFileName);
+								if (ret == 0) {
+
+								} else fprintf(stderr, "[ERROR]: Unable to load events from file \"%ls\": %u\n", _inLogFileName, ret);
+							} break;
+							default:
+								ret = ERROR_NOT_SUPPORTED;
+								fprintf(stderr, "[ERROR]: Unknown connection type of %u\n", _initInfo.ConnectorType);
+								break;
+						}
 
 						if (ret != 0) {
-							for (auto& tmp : _hookedDrivers) {
-								if (!tmp.second.NameWatch) {
-									fprintf(stderr, "[INFO]: Unhooking driver \"%ls\"...\n", tmp.second.DriverName);
-									IRPMonDllUnhookDriver(tmp.second.Handle);
-								} else {
-									fprintf(stderr, "[INFO]: Stopping the watch for driver \"%ls\"...\n", tmp.second.DriverName);
-									IRPMonDllDriverNameWatchUnregister(tmp.second.DriverName);
-								}
-							}
+							_free_output(outputFile);
+							_device_action(false);
+							_driver_action(false);
 						}
 					}
 

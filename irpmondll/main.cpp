@@ -135,7 +135,7 @@ VOID WINAPI IRPMonDllSnapshotFree(PIRPMON_DRIVER_INFO *DriverInfo, ULONG Count)
 }
 
 
-DWORD WINAPI IRPMonDllHookDeviceByName(PWCHAR DeviceName, PHANDLE HookHandle, PVOID *ObjectId)
+DWORD WINAPI IRPMonDllHookDeviceByName(const wchar_t *DeviceName, PHANDLE HookHandle, PVOID *ObjectId)
 {
 	return DriverComHookDeviceByName(DeviceName, HookHandle, ObjectId);
 }

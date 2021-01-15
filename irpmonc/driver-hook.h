@@ -161,6 +161,88 @@ private:
 };
 
 
+class CDeviceHook {
+public:
+	CDeviceHook(const HOOKED_DEVICE_UMINFO& Info)
+		: ObjectId_(Info.ObjectId),
+		DeviceAddress_(Info.DeviceObject),
+		Handle_(nullptr),
+		MonitoringEnabled_(false),
+		DeviceName_(Info.DeviceName, Info.DeviceName + Info.DeviceNameLen)
+	{
+		DWORD ret = ERROR_GEN_FAILURE;
+
+		ret = IRPMonDllOpenHookedDevice(ObjectId_, &Handle_);
+		if (ret != 0) {
+			// TODO: Throw an exception
+		}
+	}
+	CDeviceHook(const std::wstring& Name)
+		: DeviceName_(Name),
+		Handle_(nullptr),
+		ObjectId_(nullptr),
+		MonitoringEnabled_(false),
+		DeviceAddress_(nullptr)
+	{ }
+	CDeviceHook(void *Address)
+		: Handle_(nullptr),
+		ObjectId_(nullptr),
+		MonitoringEnabled_(false),
+		DeviceAddress_(Address)
+	{ }
+	~CDeviceHook(void)
+	{
+		if (Hooked())
+			IRPMonDllCloseHookedDeviceHandle(Handle_);
+
+		return;
+	}
+	bool Hooked(void) const { return (Handle_ != nullptr); }
+	DWORD Hook(void)
+	{
+		DWORD ret = ERROR_GEN_FAILURE;
+
+		if (!Hooked()) {
+			if (DeviceAddress_ != nullptr)
+				ret = IRPMonDllHookDeviceByAddress(DeviceAddress_, &Handle_, &ObjectId_);
+			else ret = IRPMonDllHookDeviceByName(DeviceName_.c_str(), &Handle_, &ObjectId_);
+		
+			if (ret == 0) {
+				ret = IRPMonDllHookedDeviceSetInfo(Handle_, nullptr, nullptr, TRUE);
+				MonitoringEnabled_ = (ret == 0);
+				if (ret != 0) {
+					IRPMonDllUnhookDevice(Handle_);
+					Handle_ = nullptr;
+					ObjectId_ = nullptr;
+				}
+			}
+		} else ret = ERROR_ALREADY_EXISTS;
+
+		return ret;
+	}
+	DWORD Unhook(void)
+	{
+		DWORD ret = ERROR_GEN_FAILURE;
+
+		if (Hooked()) {
+			IRPMonDllUnhookDevice(Handle_);
+			Handle_ = nullptr;
+			ObjectId_ = nullptr;
+		} else ret = ERROR_NOT_READY;
+
+		return ret;
+	}
+	std::wstring Name(void) const { return DeviceName_; }
+	void* Address(void) const { return DeviceAddress_; }
+private:
+	std::wstring DeviceName_;
+	void *DeviceAddress_;
+	bool MonitoringEnabled_;
+	void *ObjectId_;
+	HANDLE Handle_;
+};
+
+
 class CDriverNameWatch {
 public:
 	CDriverNameWatch(const DRIVER_NAME_WATCH_RECORD & Record)

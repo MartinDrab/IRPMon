@@ -295,7 +295,7 @@ DWORD WINAPI IRPMonDllUnhookDriver(HANDLE DriverHandle);
 /// be hooked. Otherwise, the function fails. Drivers can be hooked by a call to the
 /// <see cref="IRPMonDllHookDriver"/> routine.
 /// </remarks>
-DWORD WINAPI IRPMonDllHookDeviceByName(PWCHAR DeviceName, PHANDLE HookHandle, PVOID *ObjectId);
+DWORD WINAPI IRPMonDllHookDeviceByName(const wchar_t *DeviceName, PHANDLE HookHandle, PVOID *ObjectId);
 
 /// <summary>Starts monitoring events related to a given device, identified by its device object address.
 /// </summary>

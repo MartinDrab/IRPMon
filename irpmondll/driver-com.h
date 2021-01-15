@@ -24,7 +24,7 @@ DWORD DriverComDisconnect(VOID);
 DWORD DriverComGetRequest(PREQUEST_HEADER Request, DWORD Size);
 DWORD DriverComQueueClear(void);
 
-DWORD DriverComHookDeviceByName(PWCHAR DeviceName, PHANDLE HookHandle, PVOID *ObjectId);
+DWORD DriverComHookDeviceByName(const wchar_t *DeviceName, PHANDLE HookHandle, PVOID *ObjectId);
 DWORD DriverComHookDeviceByAddress(PVOID DeviceObject, PHANDLE HookHandle, PVOID *ObjectId);
 DWORD DriverComDeviceGetInfo(HANDLE DeviceHandle, PUCHAR IRPSettings, PUCHAR FastIoSettings, PBOOLEAN MonitoringEnabled);
 DWORD DriverComDeviceSetInfo(HANDLE DeviceHandle, PUCHAR IRPSettings, PUCHAR FastIoSettings, BOOLEAN MonitoringEnabled);

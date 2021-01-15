@@ -7,7 +7,7 @@
 typedef DWORD (cdecl REQLISTCREATE)(PHANDLE List);
 typedef void (cdecl REQLISTFREE)(HANDLE List);
 typedef void (cdecl REQLISTASSIGNPARSERLIST)(HANDLE List, HANDLE Parsers);
-typedef DWORD (cdecl REQLISTADD)(HANDLE List, PREQUEST_GENERAL Request);
+typedef DWORD (cdecl REQLISTADD)(HANDLE List, PREQUEST_HEADER Request);
 typedef void (cdecl REQLISTCLEAR)(HANDLE List);
 typedef DWORD (cdecl REQLISTGETOBJECTNAME)(HANDLE List, void* Object, ERequestListObjectType Type, wchar_t** Name);
 typedef void (cdecl REQLISTFREEOBJECTNAME)(wchar_t* Name);
@@ -62,7 +62,7 @@ extern "C" void ReqListAssignParserList(HANDLE List, HANDLE Parsers)
 }
 
 
-extern "C" DWORD ReqListAdd(HANDLE List, PREQUEST_GENERAL Request)
+extern "C" DWORD ReqListAdd(HANDLE List, PREQUEST_HEADER Request)
 {
 	return _ReqListAdd(List, Request);
 }

@@ -390,7 +390,7 @@ DWORD DriverComQueueClear(void)
 	return ret;
 }
 
-DWORD DriverComHookDeviceByName(PWCHAR DeviceName, PHANDLE HookHandle, PVOID *ObjectId)
+DWORD DriverComHookDeviceByName(const wchar_t *DeviceName, PHANDLE HookHandle, PVOID *ObjectId)
 {
 	DWORD ret = ERROR_GEN_FAILURE;
 	ULONG nameLen = 0;
