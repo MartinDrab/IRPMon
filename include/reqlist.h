@@ -14,7 +14,7 @@ typedef enum _ERequestListObjectType {
 } ERequestListObjectType, *PERequestListObjectType;
 
 
-typedef void (cdecl REQUEST_LIST_CALLBACK)(PREQUEST_HEADER Request, void *Context, PBOOLEAN Store);
+typedef void (cdecl REQUEST_LIST_CALLBACK)(PREQUEST_HEADER Request, HANDLE RequestHandle, void *Context, PBOOLEAN Store);
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,6 +31,7 @@ DWORD ReqListSetCallback(HANDLE List, REQUEST_LIST_CALLBACK *Routine, void *Cont
 void ReqListUnregisterCallback(HANDLE List);
 DWORD ReqListSave(HANDLE List, ERequestLogFormat Format, const wchar_t *FileName);
 DWORD ReqListLoad(HANDLE List, const wchar_t *FileName);
+DWORD RequestToStream(HANDLE RequestHandle, ERequestLogFormat Format, HANDLE Parsers, HANDLE Stream);
 
 DWORD ReqListModuleInit(const wchar_t *LibraryName);
 void ReqListModuleFinit(void);

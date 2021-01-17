@@ -14,6 +14,7 @@
 #include "general-types.h"
 #include "dparser.h"
 #include "reqlist.h"
+#include "callback-stream.h"
 #include "irpmondll.h"
 #include "request.h"
 #include "driver-hook.h"
@@ -98,8 +99,9 @@ static std::map<std::wstring, CDriverHook *> _hookedDrivers;
 static std::map<std::wstring, CDriverNameWatch *> _watchedDrivers;
 static std::map<void *, CDeviceHook *> _hookedDevices;
 static std::vector<std::wstring> _unhookDrivers;
-static HANDLE _dpListHandle = NULL;
-static HANDLE _reqListHandle = NULL;
+static HANDLE _dpListHandle = nullptr;
+static HANDLE _reqListHandle = nullptr;
+static HANDLE _streamHandle = nullptr;
 
 
 static int _parse_input(const wchar_t *Value)
@@ -193,12 +195,7 @@ static int _parse_output(const wchar_t *Value)
 	}
 
 	Value = delimiter + 1;
-	if (wcscmp(Value, L"-") == 0) {
-#ifdef _WIN32
-		if (_outLogFormat == rlfBinary)
-			setmode(fileno(stdout), O_BINARY);
-#endif
-	} else {
+	if (wcscmp(Value, L"-") != 0) {
 		_outLogFileName = wcsdup(Value);
 		if (_outLogFileName == nullptr) {
 			ret = ENOMEM;
@@ -568,20 +565,103 @@ static DWORD _device_action(bool Hook)
 }
 
 
+static DWORD cdecl _on_stream_write(const void* Buffer, ULONG Length, void* Stream, void* Context)
+{
+	DWORD ret = 0;
+	FILE* f = nullptr;
+
+	f = (FILE*)Context;
+	if (fwrite(Buffer, Length, 1, f) == 1)
+		ret = Length;
+
+	return ret;
+}
+
+
+static void cdecl _on_request(PREQUEST_HEADER Request, HANDLE RequestHandle, void* Context, PBOOLEAN Store)
+{
+	int err = 0;
+	FILE* f = nullptr;
+
+	*Store = FALSE;
+	f = (FILE*)Context;
+	err = RequestToStream(RequestHandle, _outLogFormat, _dpListHandle, _streamHandle);
+	if (err == 0) {
+		if (_outLogFormat != rlfBinary)
+			fputs("\n", f);
+	}
+	else fprintf(stderr, "[WARNING]: Unable to write requests 0x%p to stream: %u\n", Request, err);
+
+	return;
+}
+
+
 static DWORD _prepare_output(FILE **File)
 {
 	FILE *tmp = nullptr;
 	DWORD ret = ERROR_GEN_FAILURE;
+	const wchar_t *fileMode = L"wb";
+
+	if (_outLogFormat != rlfBinary)
+		fileMode = L"w";
 
 	ret = 0;
 	if (_outLogFileName != nullptr) {
-		tmp = _wfopen(_outLogFileName, L"wb");
-		if (tmp == nullptr)
+		tmp = _wfopen(_outLogFileName, fileMode);
+		if (tmp == nullptr) {
 			ret = errno;
-	} else tmp = stdout;
+			fprintf(stderr, "[ERROR]: Unable to access \"%ls\": %u\n", _outLogFileName, ret);
+		}
+	} else {
+		tmp = stdout;
+		if (_outLogFormat == rlfBinary) {
+#ifdef _WIN32
+			int fileDesc = 0;
 
-	if (ret == 0)
-		*File = tmp;
+			fileDesc = fileno(tmp);
+			if (fileDesc >= 0) {
+				if (setmode(fileDesc, O_BINARY) < 0) {
+					ret = errno;
+					fprintf(stderr, "[ERROR]: Unable to set binary mode for the standard output: %u\n", ret);
+				}
+			} else {
+				ret = errno;
+				fprintf(stderr, "[ERROR]: Unable to get file descriptor for the standard output: %u\n", ret);
+			}
+#endif
+		}
+	}
+
+	if (ret == 0) {
+		_streamHandle = CallbackStreamCreate(nullptr, _on_stream_write, nullptr, tmp);
+		if (_streamHandle == nullptr)
+			ret = ERROR_GEN_FAILURE;
+
+		if (ret == 0) {
+			ret = ReqListSetCallback(_reqListHandle, _on_request, tmp);
+			if (ret == 0) {
+				if (_outLogFormat == rlfBinary) {
+					BINARY_LOG_HEADER hdr;
+
+					memset(&hdr, 0, sizeof(hdr));
+					hdr.Signature = LOGHEADER_SIGNATURE;
+					hdr.Version = LOGHEADER_VERSION;
+					hdr.Architecture = LOGHEADER_ARCHITECTURE;
+					if (fwrite(&hdr, sizeof(hdr), 1, tmp) != 1)
+						ret = errno;
+				}
+
+				if (ret == 0)
+					*File = tmp;
+			}
+
+			if (ret != 0)
+				CallbackStreamFree(_streamHandle);
+		}
+
+		if (ret != 0 && tmp != stdout)
+			fclose(tmp);
+	}
 
 	return ret;
 }
@@ -589,6 +669,7 @@ static DWORD _prepare_output(FILE **File)
 
 static void _free_output(FILE *File)
 {
+	CallbackStreamFree(_streamHandle);
 	if (_outLogFileName != nullptr)
 		fclose(File);
 
@@ -596,18 +677,35 @@ static void _free_output(FILE *File)
 }
 
 
-static void cdecl _on_request(PREQUEST_HEADER Request, void *Context, PBOOLEAN Store)
+static int _init_dlls(void)
 {
-	FILE *f = nullptr;
-	size_t requestSize = 0;
+	int ret = 0;
 
-	*Store = FALSE;
-	if (_outLogFormat == rlfBinary) {
-		f = (FILE *)Context;
-		requestSize = RequestGetSize(Request);
-		fwrite(&requestSize, sizeof(ULONG), 1, f);
-		fwrite(Request, requestSize, 1, f);
-	}
+	ret = DPListModuleInit(L"dparser.dll");
+	if (ret == 0) {
+		ret = ReqListModuleInit(L"reqlist.dll");
+		if (ret == 0) {
+			ret = CallbackStreamModuleInit(L"callbackstream.dll");
+			if (ret == 0) {
+			} else fprintf(stderr, "[ERROR]: Unable to initialize callbackstream.dll: %u\n", ret);
+
+			if (ret != 0)
+				ReqListModuleFinit();
+		} else fprintf(stderr, "[ERROR]: Unable to initialize reqlist.dll: %u\n", ret);
+
+		if (ret != 0)
+			DPListModuleFinit();
+	} else fprintf(stderr, "[ERROR]: Unable to initialize dparser.dll: %u\n", ret);
+
+	return ret;
+}
+
+
+static void _finit_dlls(void)
+{
+	CallbackStreamModuleFinit();
+	ReqListModuleFinit();
+	DPListModuleFinit();
 
 	return;
 }
@@ -637,12 +735,9 @@ int wmain(int argc, wchar_t *argv[])
 	}
 
 	if (ret == 0) {
-		ret = DPListModuleInit(L"dparser.dll");
+		ret = _init_dlls();
 		if (ret == 0) {
 			ret = DPListCreate(&_dpListHandle);
-			if (ret == 0)
-				ret = ReqListModuleInit(L"reqlist.dll");
-			
 			if (ret == 0) {
 				ret = ReqListCreate(&_reqListHandle);
 				if (ret == 0) {
@@ -651,82 +746,78 @@ int wmain(int argc, wchar_t *argv[])
 				}
 
 				if (ret == 0) {
-					ret = _enum_hooked_objects();
-					if (ret == 0) {
-						ret = _driver_action(true);
+					if (_initInfo.ConnectorType != ictNone) {
+						ret = _enum_hooked_objects();
 						if (ret == 0) {
-							ret = _device_action(true);
+							ret = _driver_action(true);
 							if (ret == 0) {
-								ret = _prepare_output(&outputFile);
-								if (ret == 0) {
-									ret = ReqListSetCallback(_reqListHandle, _on_request, outputFile);
-									if (ret != 0)
-										_free_output(outputFile);
-								}
-
+								ret = _device_action(true);
 								if (ret != 0)
 									_device_action(false);
 							}
-
-							if (ret != 0)
-								_device_action(false);
-						}
-					} else fprintf(stderr, "[ERROR]: Unable to enumerate hooked objects: %u\n", ret);
+						} else fprintf(stderr, "[ERROR]: Unable to enumerate hooked objects: %u\n", ret);
+					}
 
 					if (ret == 0) {
-						switch (_initInfo.ConnectorType) {
-							case ictDevice:
-							case ictNetwork: {
-								ret = IRPMonDllConnect();
-								if (ret == 0) {
-									DWORD requestSize = 0x1000;
-									PREQUEST_HEADER request = nullptr;
+						ret = _prepare_output(&outputFile);
+						if (ret == 0) {
+							switch (_initInfo.ConnectorType) {
+								case ictDevice:
+								case ictNetwork: {
+									ret = IRPMonDllConnect();
+									if (ret == 0) {
+										DWORD requestSize = 0x1000;
+										PREQUEST_HEADER request = nullptr;
 
-									request = (PREQUEST_HEADER)calloc(1, requestSize);
-									if (request != NULL) {
-										do {
-											ret = IRPMonDllGetRequest(request, RequestSize);
-											switch (ret) {
-												case 0: {
-													ret = ReqListAdd(_reqListHandle, request);
-													if (ret == 0) {
-													} else fprintf(stderr, "[ERROR]: Unable to add the request to the list: %u\n", ret);
-												} break;
-												case ERROR_INSUFFICIENT_BUFFER: {
-													PREQUEST_HEADER tmp = nullptr;
+										request = (PREQUEST_HEADER)calloc(1, requestSize);
+										if (request != NULL) {
+											do {
+												ret = IRPMonDllGetRequest(request, RequestSize);
+												switch (ret) {
+													case 0: {
+														ret = ReqListAdd(_reqListHandle, request);
+														if (ret == 0) {
+														} else fprintf(stderr, "[ERROR]: Unable to add the request to the list: %u\n", ret);
+													} break;
+													case ERROR_INSUFFICIENT_BUFFER: {
+														PREQUEST_HEADER tmp = nullptr;
 
-													requestSize *= 2;
-													tmp = (PREQUEST_HEADER)realloc(request, requestSize);
-													if (tmp != NULL) {
-														fprintf(stderr, "[INFO]: Request size extended to %u bytes\n", requestSize);
-														request = tmp;
-													} else {
-														ret = ERROR_NOT_ENOUGH_MEMORY;
-														fprintf(stderr, "[ERROR]: Unable to extend request size to %u bytes\n", requestSize);
-													}
-												} break;
-											}
-										} while (ret == ERROR_SUCCESS);
+														requestSize *= 2;
+														tmp = (PREQUEST_HEADER)realloc(request, requestSize);
+														if (tmp != NULL) {
+															fprintf(stderr, "[INFO]: Request size extended to %u bytes\n", requestSize);
+															request = tmp;
+														} else {
+															ret = ERROR_NOT_ENOUGH_MEMORY;
+															fprintf(stderr, "[ERROR]: Unable to extend request size to %u bytes\n", requestSize);
+														}
+													} break;
+												}
+											} while (ret == ERROR_SUCCESS);
 									
-										free(request);
-									} else fprintf(stderr, "[ERROR]: Unable to allocate memory to hold requests: %u\n", ret);
+											free(request);
+										} else fprintf(stderr, "[ERROR]: Unable to allocate memory to hold requests: %u\n", ret);
 
-									IRPMonDllDisconnect();
-								} else fprintf(stderr, "[ERROR]: Unable to connect to the event queue: %u\n", ret);
-							} break;
-							case ictNone: {
-								ret = ReqListLoad(_reqListHandle, _inLogFileName);
-								if (ret == 0) {
+										IRPMonDllDisconnect();
+									} else fprintf(stderr, "[ERROR]: Unable to connect to the event queue: %u\n", ret);
+								} break;
+								case ictNone: {
+									ret = ReqListLoad(_reqListHandle, _inLogFileName);
+									if (ret == 0) {
 
-								} else fprintf(stderr, "[ERROR]: Unable to load events from file \"%ls\": %u\n", _inLogFileName, ret);
-							} break;
-							default:
-								ret = ERROR_NOT_SUPPORTED;
-								fprintf(stderr, "[ERROR]: Unknown connection type of %u\n", _initInfo.ConnectorType);
-								break;
+									} else fprintf(stderr, "[ERROR]: Unable to load events from file \"%ls\": %u\n", _inLogFileName, ret);
+								} break;
+								default:
+									ret = ERROR_NOT_SUPPORTED;
+									fprintf(stderr, "[ERROR]: Unknown connection type of %u\n", _initInfo.ConnectorType);
+									break;
+							}
+						
+							if (ret != 0)
+								_free_output(outputFile);
 						}
 
-						if (ret != 0) {
+						if (ret != 0 && _initInfo.ConnectorType != ictNone) {
 							_free_output(outputFile);
 							_device_action(false);
 							_driver_action(false);
@@ -739,14 +830,11 @@ int wmain(int argc, wchar_t *argv[])
 				if (_reqListHandle != NULL)
 					ReqListFree(_reqListHandle);
 
-				ReqListModuleFinit();
-			} else fprintf(stderr, "[ERROR]: Unable to initialize ReqList.dll: %u\n", ret);
-
-			if (_dpListHandle != NULL)
 				DPListFree(_dpListHandle);
+			} else fprintf(stderr, "[ERROR]: Unable to initialize parser list: %u\n", ret);
 
-			DPListModuleFinit();
-		} else fprintf(stderr, "[ERROR]: Unable to initialize DParser.dll: %u\n", ret);
+			_finit_dlls();
+		} else fprintf(stderr, "[ERROR]: Unable to initialize DLLs: %u\n", ret);
 	}
 
 	return ret;

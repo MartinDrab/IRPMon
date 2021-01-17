@@ -15,6 +15,7 @@ typedef DWORD (cdecl REQLISTSETCALLBACK)(HANDLE List, REQUEST_LIST_CALLBACK* Rou
 typedef void (cdecl REQLISTUNREGISTERCALLBACK)(HANDLE List);
 typedef DWORD (cdecl REQLISTSAVE)(HANDLE List, ERequestLogFormat Format, const wchar_t* FileName);
 typedef DWORD (cdecl REQLISTLOAD)(HANDLE List, const wchar_t* FileName);
+typedef DWORD (cdecl REQUESTTOSTREAM)(HANDLE RequestHandle, ERequestLogFormat Format, HANDLE Parsers, HANDLE Stream);
 
 
 static HMODULE _hLibrary = NULL;
@@ -29,6 +30,8 @@ static REQLISTSETCALLBACK *_ReqListSetCallback = NULL;
 static REQLISTUNREGISTERCALLBACK *_ReqListUnregisterCallback = NULL;
 static REQLISTSAVE *_ReqListSave = NULL;
 static REQLISTLOAD *_ReqListLoad = NULL;
+static REQUESTTOSTREAM *_RequestToStream = NULL;
+
 
 #define PREPARE_ROUTINE(aLibrary, aRoutine)	do {\
 	_##aRoutine = (decltype(_##aRoutine))GetProcAddress(aLibrary, #aRoutine);	\
@@ -116,11 +119,17 @@ extern "C" DWORD ReqListLoad(HANDLE List, const wchar_t *FileName)
 }
 
 
+extern "C" DWORD RequestToStream(HANDLE RequestHandle, ERequestLogFormat Format, HANDLE Parsers, HANDLE Stream)
+{
+	return _RequestToStream(RequestHandle, Format, Parsers, Stream);
+}
+
 
 extern "C" DWORD ReqListModuleInit(const wchar_t *LibraryName)
 {
 	DWORD ret = ERROR_GEN_FAILURE;
 
+	ret = 0;
 	_hLibrary = LoadLibraryW(LibraryName);
 	if (_hLibrary != NULL) {
 		PREPARE_ROUTINE(_hLibrary, ReqListCreate);
@@ -134,6 +143,7 @@ extern "C" DWORD ReqListModuleInit(const wchar_t *LibraryName)
 		PREPARE_ROUTINE(_hLibrary, ReqListUnregisterCallback);
 		PREPARE_ROUTINE(_hLibrary, ReqListSave);
 		PREPARE_ROUTINE(_hLibrary, ReqListLoad);
+		PREPARE_ROUTINE(_hLibrary, RequestToStream);
 	} else ret = GetLastError();
 
 	return ret;

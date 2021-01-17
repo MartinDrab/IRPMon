@@ -55,8 +55,12 @@ Source: "..\bin\Win32\{#ConfigMode}\server\*.dll"; DestDir: "{app}\x86"; Flags: 
 Source: "..\bin\x64\{#ConfigMode}\parser\*.dll"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Server;
 Source: "..\bin\Win32\{#ConfigMode}\parser\*.dll"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: Server;
 
-Source: "..\bin\x64\{#ConfigMode}\IRPMon.exe"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Application;
+Source: "..\bin\Win64\{#ConfigMode}\IRPMon.exe"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Application;
 Source: "..\bin\Win32\{#ConfigMode}\IRPMon.exe"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: Application;
+Source: "..\bin\Win64\{#ConfigMode}\*.dll"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Application;
+Source: "..\bin\Win32\{#ConfigMode}\*.dll"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: Application;
+Source: "..\bin\x64\{#ConfigMode}\IRPMonc.exe"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Application;
+Source: "..\bin\Win32\{#ConfigMode}\IRPMonc.exe"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: Application;
 
 Source: "..\bin\x64\{#ConfigMode}\kernel\*.dll"; DestDir: "{sysnative}\drivers\IRPMon\"; Check: Is64BitInstallMode; Flags: ignoreversion; Components: Kernel;
 Source: "..\bin\x64\{#ConfigMode}\kernel\*.sys"; DestDir: "{sysnative}\drivers\IRPMon\"; Check: Is64BitInstallMode; Flags: ignoreversion; Components: Kernel;

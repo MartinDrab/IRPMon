@@ -93,6 +93,7 @@ extern "C" DWORD DPListModuleInit(const wchar_t *LibraryName)
 {
 	DWORD ret = ERROR_GEN_FAILURE;
 
+	ret = 0;
 	_hLibrary = LoadLibraryW(LibraryName);
 	if (_hLibrary != NULL) {
 		PREPARE_ROUTINE(_hLibrary, DPListCreate);

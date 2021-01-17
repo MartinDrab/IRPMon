@@ -18,6 +18,11 @@ if %errorlevel% NEQ 0 goto failure
 MSBuild ../ReqList/ReqList.dproj /m /t:Build /p:config=%CONFIG% /p:platform=Win64
 if %errorlevel% NEQ 0 goto failure
 
+MSBuild ../callbackstream/callbackstream.dproj /m /t:Build /p:config=%CONFIG% /p:platform=Win32
+if %errorlevel% NEQ 0 goto failure
+MSBuild ../callbackstream/callbackstream.dproj /m /t:Build /p:config=%CONFIG% /p:platform=Win64
+if %errorlevel% NEQ 0 goto failure
+
 MSBuild ../gui/irpmon.dproj /m /t:Build /p:config=%CONFIG% /p:platform=Win32
 if %errorlevel% NEQ 0 goto failure
 MSBuild ../gui/irpmon.dproj /m /t:Build /p:config=%CONFIG% /p:platform=Win64

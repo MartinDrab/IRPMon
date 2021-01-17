@@ -35,7 +35,7 @@ Type
     rlotProcess
   );
 
-  REQUEST_LIST_CALLBACK = Procedure (ARequest:PREQUEST_HEADER; AContext:Pointer; Var AStore:ByteBool); Cdecl;
+  REQUEST_LIST_CALLBACK = Procedure (ARequest:PREQUEST_HEADER; ARequestHandle:Pointer; AContext:Pointer; Var AStore:ByteBool); Cdecl;
 
   _REQUEST_LIST_CALLBACK_RECORD = Record
     Routine : REQUEST_LIST_CALLBACK;
@@ -58,7 +58,7 @@ AStore := True;
 If callbacks.TryGetValue(ARequestList, r) Then
   begin
   tmp := True;
-  r.Routine(ARequest.Raw, r.Context, tmp);
+  r.Routine(ARequest.Raw, ARequest, r.Context, tmp);
   AStore := tmp;
   end;
 end;
@@ -68,8 +68,10 @@ begin
 Case Reason Of
   DLL_PROCESS_ATTACH : begin
     TablesInit('ntstatus.txt', 'ioctl.txt');
+    callbacks := TDictionary<Pointer, REQUEST_LIST_CALLBACK_RECORD>.Create;
     end;
   DLL_PROCESS_DETACH : begin
+    callbacks.Free;
     TablesFinit;
     end;
   end;
@@ -211,6 +213,23 @@ Except
   end;
 end;
 
+Function RequestToStream(ARequestHandle:Pointer; AFormat:ERequestLogFormat; AParsers:Pointer; AStream:Pointer):Cardinal; Cdecl;
+Var
+  dp : TObjectList<TDataParser>;
+  dr : TDriverRequest;
+  s : TStream;
+begin
+dr := ARequestHandle;
+s := AStream;
+dp := AParsers;
+Try
+  dr.SaveToStream(s, dp, AFormat);
+  Result := 0;
+Except
+  Result := 1;
+  end;
+end;
+
 
 Exports
   ReqListCreate,
@@ -223,7 +242,8 @@ Exports
   ReqListSetCallback,
   ReqListUnregisterCallback,
   ReqListSave,
-  ReqListLoad;
+  ReqListLoad,
+  RequestToStream;
 
 begin
 DLLProc := DllMain;

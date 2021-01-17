@@ -328,7 +328,6 @@ Procedure TRequestList.LoadFromStream(AStream:TStream; ARequireHeader:Boolean = 
 Var
   reqSize : Cardinal;
   rg : PREQUEST_GENERAL;
-  l : TList<PREQUEST_GENERAL>;
   bh : TBinaryLogHeader;
   oldPos : Int64;
   invalidHeader : Boolean;
@@ -360,22 +359,17 @@ If Not TBinaryLogHeader.ArchitectureSupported(bh) Then
 If invalidHeader Then
   AStream.Position := oldPos;
 
-l := TList<PREQUEST_GENERAL>.Create;
 While AStream.Position < AStream.Size Do
   begin
   AStream.Read(reqSize, SizeOf(reqSize));
   rg := AllocMem(reqSize);
-  AStream.Read(rg^, reqSize);
-  l.Add(rg);
-  end;
+  If Not Assigned(rg) Then
+    Raise Exception.Create(Format('Unable to allocate %u bytes for request', [reqSize]));
 
-For rg In l Do
-  begin
+  AStream.Read(rg^, reqSize);
   ProcessBuffer(rg);
   FreeMem(rg);
   end;
-
-l.Free;
 end;
 
 Procedure TRequestList.LoadFromFile(AFileName:WideString; ARequireHeader:Boolean = True);
