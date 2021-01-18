@@ -723,6 +723,55 @@ static void _finit_dlls(void)
 }
 
 
+static int _add_parsers(HANDLE ListHandle)
+{
+	int ret = 0;
+	DWORD parserCount = 0;
+	wchar_t appDir[MAX_PATH];
+	wchar_t *tmp = nullptr;
+	IRPMON_DATA_PARSER info;
+
+	if (GetModuleFileNameW(nullptr, appDir, sizeof(appDir) / sizeof(appDir[0])) == 0) {
+		ret = GetLastError();
+		fprintf(stderr, "[ERROR]: Unable to get application file name: %u\n", ret);
+	}
+
+	if (ret == 0) {
+		tmp = appDir + wcslen(appDir);
+		while (tmp != appDir && *tmp != L'\\')
+			--tmp;
+
+		if (tmp != appDir) {
+			*tmp = L'\0';
+			ret = DPListAddDirectory(ListHandle, appDir);
+			if (ret == 0) {
+				parserCount = DPListGetCount(ListHandle);
+				fprintf(stderr, "[INFO]: %u parsers loaded\n", parserCount);
+				if (parserCount > 0) {
+					for (ULONG i = 0; i < parserCount; ++i) {
+						ret = DPListGetItemInfo(ListHandle, i, &info);
+						if (ret != 0) {
+							fprintf(stderr, "[ERROR]: Unable to get info for parser %u: %u\n", i, ret);
+							break;
+						}
+					
+						fprintf(stderr, "[INFO]:   %ls (version %u.%u.%u)\n", info.Name, info.MajorVersion, info.MinorVersion, info.BuildVersion);
+						DPListItemInfoFree(&info);
+					}
+
+					fprintf(stderr, "[INFO]: \n");
+				}
+			}
+		} else {
+			ret = EINVAL;
+			fprintf(stderr, "[ERROR]: Unable to find backlash in the application file name of \"%ls\"\n", appDir);
+		}
+	}
+
+	return ret;
+}
+
+
 int wmain(int argc, wchar_t *argv[])
 {
 	int ret = 0;
@@ -751,7 +800,10 @@ int wmain(int argc, wchar_t *argv[])
 		if (ret == 0) {
 			ret = DPListCreate(&_dpListHandle);
 			if (ret == 0) {
-				ret = ReqListCreate(&_reqListHandle);
+				ret = _add_parsers(_dpListHandle);
+				if (ret == 0)
+					ret = ReqListCreate(&_reqListHandle);
+				
 				if (ret == 0) {
 					ReqListAssignParserList(_reqListHandle, _dpListHandle);
 					ret = IRPMonDllInitialize(&_initInfo);

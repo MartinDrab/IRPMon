@@ -149,11 +149,11 @@ FillChar(AInfo, SizeOf(AInfo), 0);
 AInfo.Name := StrAlloc(Length(FName));
 If Assigned(AInfo.Name) Then
   begin
-  StringToWideChar(FName, AInfo.Name, Length(FName));
+  StringToWideChar(FName, AInfo.Name, Length(FName) + 1);
   AInfo.Description := StrAlloc(Length(FDescription));
   If Assigned(AInfo.Description) Then
     begin
-    StringToWideChar(FDescription, AInfo.Description, Length(FDescription));
+    StringToWideChar(FDescription, AInfo.Description, Length(FDescription) + 1);
     AInfo.Size := SizeOf(AInfo);
     AInfo.MajorVersion := FMajorVersion;
     AInfo.MinorVersion := FMinorVersion;
@@ -164,7 +164,7 @@ If Assigned(AInfo.Name) Then
     end;
 
   If Result <> 0 Then
-    FreeMem(AInfo.Name);
+    StrDispose(AInfo.Name);
   end
 Else Result := ERROR_NOT_ENOUGH_MEMORY;
 end;
@@ -172,10 +172,10 @@ end;
 Class Procedure TDataParser.FreeInfo(Var AInfo:IRPMON_DATA_PARSER);
 begin
 If Assigned(AInfo.Description) Then
-  FreeMem(AInfo.Description);
+  StrDispose(AInfo.Description);
 
 If Assigned(AInfo.Name) Then
-  FreeMem(AInfo.Name);
+  StrDispose(AInfo.Name);
 end;
 
 
