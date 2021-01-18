@@ -43,6 +43,10 @@
     <ClInclude Include="driver-hook.h" />
     <ClInclude Include="driver-settings.h" />
     <ClInclude Include="irpmonc.h" />
+    <ClInclude Include="version.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\resources\version.rc" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
