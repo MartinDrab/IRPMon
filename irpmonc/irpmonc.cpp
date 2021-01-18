@@ -18,6 +18,9 @@
 #include "irpmondll.h"
 #include "request.h"
 #include "driver-hook.h"
+#include "driver-settings.h"
+#include "irpmonc.h"
+
 
 
 //	--input=[L|D|N]:<value>
@@ -56,35 +59,30 @@
 //	--boot-log={no|yes}
 
 
-typedef enum _EOptionType {
-	otInput,
-	otOutput,
-	otHookDriver,
-	otUnhookDriver,
-	otHookDevice,
-	otUnhookDevice,
-	otBootLog,
-} EOptionType, *PEOptionType;
-
-typedef struct _OPTION_RECORD {
-	EOptionType Type;
-	const wchar_t *Name;
-	bool Required;
-	int Count;
-	int MaxCount;
-} OPTION_RECORD, *POPTION_RECORD;
 
 static 	OPTION_RECORD opts[] = {
 	{otInput, L"input", true, 0, 1},
-	{otOutput, L"output", true, 0, 1},
+	{otOutput, L"output", false, 0, 1},
 	{otHookDriver, L"hook-driver", false, 0, INT_MAX},
 	{otUnhookDriver, L"unhook-driver", false, 0, INT_MAX},
 	{otHookDevice, L"hook-device", false, 0, INT_MAX},
 	{otUnhookDevice, L"unhook-device", false, 0, INT_MAX},
+
+	{otClearOnDisconnect, L"clear-on-disconnect", false, 0, 1},
+	{otCollectDisconnected, L"collect-disconnected", false, 0, 1 },
+	{otProcessEventsCollect, L"process-events", false, 0, 1 },
+	{otFileObjectEventsCollect, L"file-object-events", false, 0, 1 },
+	{otDriverSnapshotEventsCollect, L"snapshot-events", false, 0, 1 },
+	{otProcessEmulateOnConnect, L"process-emulate", false, 0, 1 },
+	{otDriverSnapshotOnConnect, L"snapshot-emulate", false, 0, 1 },
+	{otDataStripThreshold, L"strip-threshold", false, 0, 1},
+	{otStripData, L"strip-data", false, 0, 1},
 	{otBootLog, L"boot-log", false, 0, 1},
+	{otSettingsSave, L"save-settings", false, 0, 1},
 };
 
 
+static bool _outputPresent = false;
 static wchar_t *_inLogFileName = NULL;
 static wchar_t *_outLogFileName = NULL;
 static ERequestLogFormat _outLogFormat = rlfBinary;
@@ -409,6 +407,7 @@ static int _parse_arg(wchar_t *Arg)
 			break;
 		case otOutput:
 			ret = _parse_output(value);
+			_outputPresent = (ret == 0);
 			break;
 		case otHookDriver:
 			ret = _parse_hookdriver(value);
@@ -422,7 +421,18 @@ static int _parse_arg(wchar_t *Arg)
 		case otUnhookDevice:
 			ret = _parse_hookdevice(value, false);
 			break;
+		case otClearOnDisconnect:
+		case otCollectDisconnected:
+		case otProcessEventsCollect:
+		case otFileObjectEventsCollect:
+		case otDriverSnapshotEventsCollect:
+		case otProcessEmulateOnConnect:
+		case otDriverSnapshotOnConnect:
+		case otDataStripThreshold:
+		case otStripData:
 		case otBootLog:
+		case otSettingsSave:
+			ret = parse_setting(opRec->Type, value);
 			break;
 	}
 
@@ -600,13 +610,14 @@ static DWORD _prepare_output(FILE **File)
 {
 	FILE *tmp = nullptr;
 	DWORD ret = ERROR_GEN_FAILURE;
-	const wchar_t *fileMode = L"wb";
-
-	if (_outLogFormat != rlfBinary)
-		fileMode = L"w";
 
 	ret = 0;
 	if (_outLogFileName != nullptr) {
+		const wchar_t* fileMode = L"wb";
+
+		if (_outLogFormat != rlfBinary)
+			fileMode = L"w";
+
 		tmp = _wfopen(_outLogFileName, fileMode);
 		if (tmp == nullptr) {
 			ret = errno;
@@ -669,6 +680,7 @@ static DWORD _prepare_output(FILE **File)
 
 static void _free_output(FILE *File)
 {
+	ReqListUnregisterCallback(_reqListHandle);
 	CallbackStreamFree(_streamHandle);
 	if (_outLogFileName != nullptr)
 		fclose(File);
@@ -747,18 +759,22 @@ int wmain(int argc, wchar_t *argv[])
 
 				if (ret == 0) {
 					if (_initInfo.ConnectorType != ictNone) {
-						ret = _enum_hooked_objects();
+						ret = sync_settings();
 						if (ret == 0) {
-							ret = _driver_action(true);
+							print_settings();
+							ret = _enum_hooked_objects();
 							if (ret == 0) {
-								ret = _device_action(true);
-								if (ret != 0)
-									_device_action(false);
-							}
-						} else fprintf(stderr, "[ERROR]: Unable to enumerate hooked objects: %u\n", ret);
+								ret = _driver_action(true);
+								if (ret == 0) {
+									ret = _device_action(true);
+									if (ret != 0)
+										_device_action(false);
+								}
+							} else fprintf(stderr, "[ERROR]: Unable to enumerate hooked objects: %u\n", ret);
+						} else fprintf(stderr, "[ERROR]: Unable to sync driver settings: %u\n", ret);
 					}
 
-					if (ret == 0) {
+					if (ret == 0 && _outputPresent) {
 						ret = _prepare_output(&outputFile);
 						if (ret == 0) {
 							switch (_initInfo.ConnectorType) {

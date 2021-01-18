@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="driver-settings.cpp" />
     <ClCompile Include="irpmonc.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -40,6 +41,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="driver-hook.h" />
+    <ClInclude Include="driver-settings.h" />
+    <ClInclude Include="irpmonc.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

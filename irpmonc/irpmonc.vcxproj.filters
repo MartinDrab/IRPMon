@@ -18,9 +18,18 @@
     <ClCompile Include="irpmonc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="driver-settings.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="driver-hook.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="irpmonc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="driver-settings.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
