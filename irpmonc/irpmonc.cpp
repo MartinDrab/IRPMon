@@ -525,7 +525,9 @@ static DWORD _driver_action(bool Hook)
 
 	ret = 0;
 	for (auto& hdr : _driversToHook) {
-		fprintf(stderr, "[INFO]: Hooking driver \"%ls\"...\n", hdr->Name().c_str());
+		if (Hook)
+			fprintf(stderr, "[INFO]: Hooking driver \"%ls\"...\n", hdr->Name().c_str());
+		
 		ret = (Hook) ? hdr->Hook() : hdr->Unhook();
 		if (ret != 0) {
 			if (Hook) {
@@ -541,6 +543,62 @@ static DWORD _driver_action(bool Hook)
 				break;
 			} else fprintf(stderr, "[WARNING]: Failed to unhook driver \"%ls\": %u\n", hdr->Name().c_str(), ret);
 		}
+	}
+
+	if (ret == 0) {
+		for (auto & dnw : _nwsToRegister) {
+			if (Hook)
+				fprintf(stderr, "[INFO]: Registering a name watch for \"%ls\"...\n", dnw->DriverName().c_str());
+			
+			ret = (Hook) ? dnw->Register() : dnw->Unregister();
+			if (ret != 0) {
+				fprintf(stderr, "[ERROR]: Unable to register name watch for \"%ls\": %u\n", dnw->DriverName().c_str(), ret);
+				break;
+			}
+		}
+	}
+
+	if (ret == 0 && Hook) {
+		for (auto& dnw : _nwsToUnregister) {
+			fprintf(stderr, "[INFO]: Unregistering name watch for \"%ls\"...\n", dnw.c_str());
+			ret = IRPMonDllDriverNameWatchUnregister(dnw.c_str());
+			if (ret != 0)
+				fprintf(stderr, "[WARNING]: Unable to unregister the name watch for \"%ls\": %u\n", dnw.c_str(), ret);
+
+			ret = 0;
+		}
+	}
+
+	if (ret == 0 && Hook) {
+		HANDLE hookHandle = nullptr;
+		ULONG driverCount = 0;
+		PHOOKED_DRIVER_UMINFO driverInfo = nullptr;
+		const HOOKED_DRIVER_UMINFO* tmp = nullptr;
+
+		ret = IRPMonDllDriverHooksEnumerate(&driverInfo, &driverCount);
+		if (ret == 0) {
+			for (auto& duh : _unhookDrivers) {
+				tmp = driverInfo;
+				for (size_t i = 0; i < driverCount; ++i) {
+					if (wcsicmp(tmp->DriverName, duh.c_str()) == 0) {
+						fprintf(stderr, "[INFO]: Unhooking driver \"%ls\" (0x%p)...\n", tmp->DriverName, tmp->DriverObject);
+						ret = IRPMonDllOpenHookedDriver(tmp->ObjectId, &hookHandle);
+						if (ret == 0) {
+							ret = IRPMonDllUnhookDriver(hookHandle);
+							if (ret != 0)
+								fprintf(stderr, "[WARNING]: Unable to unhook driver \"%ls\" (0x%p): %u\n", tmp->DriverName, tmp->DriverObject, ret);
+
+							IRPMonDllCloseHookedDriverHandle(hookHandle);
+						} else fprintf(stderr, "[WARNING]: Unable to get handle for hooked driver \"%ls\" (0x%p): %u\n", tmp->DriverName, tmp->DriverObject, ret);
+					}
+
+					++tmp;
+					ret = 0;
+				}
+			}
+
+			IRPMonDllDriverHooksFree(driverInfo, driverCount);
+		} else fprintf(stderr, "[WARNING]: Unable to enumerate hooked drivers and devices: %u\n", ret);
 	}
 
 	return ret;
@@ -569,6 +627,70 @@ static DWORD _device_action(bool Hook)
 				break;
 			} else fprintf(stderr, "[WARNING]: Failed to unhook device \"%ls\" (0x%p): %u\n", hdr->Name().c_str(), hdr->Address(), ret);
 		}
+	}
+
+	if (ret == 0 && Hook) {
+		HANDLE hookHandle = nullptr;
+		ULONG driverCount = 0;
+		PHOOKED_DRIVER_UMINFO driverInfo = nullptr;
+		const HOOKED_DRIVER_UMINFO *tmp = nullptr;
+		const HOOKED_DEVICE_UMINFO *devInfo = nullptr;
+
+		ret = IRPMonDllDriverHooksEnumerate(&driverInfo, &driverCount);
+		if (ret == 0) {
+			for (auto & duh : _devicesToUnhookAddrs) {
+				tmp = driverInfo;
+				for (size_t i = 0; i < driverCount; ++i) {
+					devInfo = tmp->HookedDevices;
+					for (size_t j = 0; j < tmp->NumberOfHookedDevices; ++j) {
+						if (devInfo->DeviceObject == duh) {
+							fprintf(stderr, "[INFO]: Unhooking \"%ls\" (0x%p)...\n", devInfo->DeviceName, devInfo->DeviceObject);
+							ret = IRPMonDllOpenHookedDevice(devInfo->ObjectId, &hookHandle);
+							if (ret == 0) {
+								ret = IRPMonDllUnhookDevice(hookHandle);
+								if (ret != 0)
+									fprintf(stderr, "[WARNING]: Unable to unhook \"%ls\" (0x%p): %u\n", devInfo->DeviceName, devInfo->DeviceObject, ret);
+
+								IRPMonDllCloseHookedDeviceHandle(hookHandle);
+							} else fprintf(stderr, "[WARNING]: Unable to get handle for hooked device \"%ls\" (0x%p): %u\n", devInfo->DeviceName, devInfo->DeviceObject, ret);
+						}
+
+						++devInfo;
+						ret = 0;
+					}
+
+					++tmp;
+					ret = 0;
+				}
+			}
+	
+			for (auto& duh : _devicesToUnhookNames) {
+				tmp = driverInfo;
+				for (size_t i = 0; i < driverCount; ++i) {
+					devInfo = tmp->HookedDevices;
+					for (size_t j = 0; j < tmp->NumberOfHookedDevices; ++j) {
+						if (wcsicmp(devInfo->DeviceName, duh.c_str()) == 0) {
+							fprintf(stderr, "[INFO]: Unhooking \"%ls\" (0x%p)...\n", devInfo->DeviceName, devInfo->DeviceObject);
+							ret = IRPMonDllOpenHookedDevice(devInfo->ObjectId, &hookHandle);
+							if (ret == 0) {
+								ret = IRPMonDllUnhookDevice(hookHandle);
+								if (ret != 0)
+									fprintf(stderr, "[WARNING]: Unable to unhook \"%ls\" (0x%p): %u\n", devInfo->DeviceName, devInfo->DeviceObject, ret);
+
+								IRPMonDllCloseHookedDeviceHandle(hookHandle);
+							}
+							else fprintf(stderr, "[WARNING]: Unable to get handle for hooked device \"%ls\" (0x%p): %u\n", devInfo->DeviceName, devInfo->DeviceObject, ret);
+						}
+
+						++devInfo;
+					}
+
+					++tmp;
+				}
+			}
+
+			IRPMonDllDriverHooksFree(driverInfo, driverCount);
+		} else fprintf(stderr, "[WARNING]: Unable to enumerate hooked drivers and devices: %u\n", ret);
 	}
 
 	return ret;
@@ -860,6 +982,10 @@ int wmain(int argc, wchar_t *argv[])
 															fprintf(stderr, "[ERROR]: Unable to extend request size to %u bytes\n", requestSize);
 														}
 													} break;
+													case ERROR_NO_MORE_ITEMS:
+													case ERROR_NO_MORE_FILES:
+														Sleep(1000);
+														break;
 												}
 											} while (ret == ERROR_SUCCESS);
 									
