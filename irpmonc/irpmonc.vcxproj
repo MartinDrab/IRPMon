@@ -43,6 +43,7 @@
     <ClInclude Include="driver-hook.h" />
     <ClInclude Include="driver-settings.h" />
     <ClInclude Include="irpmonc.h" />
+    <ClInclude Include="request-output.h" />
     <ClInclude Include="version.h" />
   </ItemGroup>
   <ItemGroup>

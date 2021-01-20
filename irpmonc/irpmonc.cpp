@@ -20,6 +20,7 @@
 #include "driver-hook.h"
 #include "driver-settings.h"
 #include "irpmonc.h"
+#include "request-output.h"
 
 
 
@@ -62,7 +63,7 @@
 
 static 	OPTION_RECORD opts[] = {
 	{otInput, L"input", true, 0, 1},
-	{otOutput, L"output", false, 0, 1},
+	{otOutput, L"output", false, 0, INT_MAX},
 	{otHookDriver, L"hook-driver", false, 0, INT_MAX},
 	{otUnhookDriver, L"unhook-driver", false, 0, INT_MAX},
 	{otHookDevice, L"hook-device", false, 0, INT_MAX},
@@ -82,10 +83,8 @@ static 	OPTION_RECORD opts[] = {
 };
 
 
-static bool _outputPresent = false;
+static std::vector<CRequestOutput *> _outputs;
 static wchar_t *_inLogFileName = NULL;
-static wchar_t *_outLogFileName = NULL;
-static ERequestLogFormat _outLogFormat = rlfBinary;
 static IRPMON_INIT_INFO _initInfo;
 static std::vector<CDriverHook *> _driversToHook;
 static std::vector<CDriverNameWatch*> _nwsToRegister;
@@ -99,7 +98,6 @@ static std::map<void *, CDeviceHook *> _hookedDevices;
 static std::vector<std::wstring> _unhookDrivers;
 static HANDLE _dpListHandle = nullptr;
 static HANDLE _reqListHandle = nullptr;
-static HANDLE _streamHandle = nullptr;
 
 
 static int _parse_input(const wchar_t *Value)
@@ -167,6 +165,8 @@ static int _parse_output(const wchar_t *Value)
 {
 	int ret = 0;
 	const wchar_t* delimiter = NULL;
+	ERequestLogFormat format;
+	CRequestOutput *o = nullptr;
 
 	delimiter = wcschr(Value, L':');
 	if (delimiter == NULL) {
@@ -182,9 +182,9 @@ static int _parse_output(const wchar_t *Value)
 	}
 
 	switch (*Value) {
-		case L'B': _outLogFormat = rlfBinary; break;
-		case L'J': _outLogFormat = rlfJSONLines; break;
-		case L'T': _outLogFormat = rlfText; break;
+		case L'B': format = rlfBinary; break;
+		case L'J': format = rlfJSONLines; break;
+		case L'T': format = rlfText; break;
 		default:
 			ret = -10;
 			fprintf(stderr, "[ERROR]: Invalid output modifier \"%lc\"\n", *Value);
@@ -194,11 +194,8 @@ static int _parse_output(const wchar_t *Value)
 
 	Value = delimiter + 1;
 	if (wcscmp(Value, L"-") != 0) {
-		_outLogFileName = wcsdup(Value);
-		if (_outLogFileName == nullptr) {
-			ret = ENOMEM;
-			fprintf(stderr, "[ERROR]: Cannot allocate memory to hold the output log file name\n");
-		}
+		o = new CRequestOutput(format, Value);
+		_outputs.push_back(o);
 	}
 
 Exit:
@@ -407,7 +404,6 @@ static int _parse_arg(wchar_t *Arg)
 			break;
 		case otOutput:
 			ret = _parse_output(value);
-			_outputPresent = (ret == 0);
 			break;
 		case otHookDriver:
 			ret = _parse_hookdriver(value);
@@ -697,115 +693,49 @@ static DWORD _device_action(bool Hook)
 }
 
 
-static DWORD cdecl _on_stream_write(const void* Buffer, ULONG Length, void* Stream, void* Context)
-{
-	DWORD ret = 0;
-	FILE* f = nullptr;
-
-	f = (FILE*)Context;
-	if (fwrite(Buffer, Length, 1, f) == 1)
-		ret = Length;
-
-	return ret;
-}
-
-
 static void cdecl _on_request(PREQUEST_HEADER Request, HANDLE RequestHandle, void* Context, PBOOLEAN Store)
 {
 	int err = 0;
-	FILE* f = nullptr;
 
 	*Store = FALSE;
-	f = (FILE*)Context;
-	err = RequestToStream(RequestHandle, _outLogFormat, _dpListHandle, _streamHandle);
-	if (err == 0) {
-		if (_outLogFormat != rlfBinary)
-			fputs("\n", f);
+	for (auto & o : _outputs) {
+		err = RequestToStream(RequestHandle, o->Format(), _dpListHandle, o->StreamHandle());
+		if (err == 0) {
+			if (o->Format() != rlfBinary)
+				o->write("\n");
+		} else fprintf(stderr, "[WARNING]: Unable to write requests 0x%p to stream: %u\n", Request, err);
 	}
-	else fprintf(stderr, "[WARNING]: Unable to write requests 0x%p to stream: %u\n", Request, err);
 
 	return;
 }
 
 
-static DWORD _prepare_output(FILE **File)
+static int _prepare_output(void)
 {
-	FILE *tmp = nullptr;
-	DWORD ret = ERROR_GEN_FAILURE;
+	int ret = 0;
 
-	ret = 0;
-	if (_outLogFileName != nullptr) {
-		const wchar_t* fileMode = L"wb";
-
-		if (_outLogFormat != rlfBinary)
-			fileMode = L"w";
-
-		tmp = _wfopen(_outLogFileName, fileMode);
-		if (tmp == nullptr) {
-			ret = errno;
-			fprintf(stderr, "[ERROR]: Unable to access \"%ls\": %u\n", _outLogFileName, ret);
-		}
-	} else {
-		tmp = stdout;
-		if (_outLogFormat == rlfBinary) {
-#ifdef _WIN32
-			int fileDesc = 0;
-
-			fileDesc = fileno(tmp);
-			if (fileDesc >= 0) {
-				if (setmode(fileDesc, O_BINARY) < 0) {
-					ret = errno;
-					fprintf(stderr, "[ERROR]: Unable to set binary mode for the standard output: %u\n", ret);
-				}
-			} else {
-				ret = errno;
-				fprintf(stderr, "[ERROR]: Unable to get file descriptor for the standard output: %u\n", ret);
-			}
-#endif
+	for (auto & o : _outputs) {
+		ret = o->Prepare();
+		if (ret != 0) {
+			fprintf(stderr, "[ERROR]: Cannot initialize output \"%ls\": %u\n", o->FileName().c_str(), ret);
+			break;
 		}
 	}
 
-	if (ret == 0) {
-		_streamHandle = CallbackStreamCreate(nullptr, _on_stream_write, nullptr, tmp);
-		if (_streamHandle == nullptr)
-			ret = ERROR_GEN_FAILURE;
-
-		if (ret == 0) {
-			ret = ReqListSetCallback(_reqListHandle, _on_request, tmp);
-			if (ret == 0) {
-				if (_outLogFormat == rlfBinary) {
-					BINARY_LOG_HEADER hdr;
-
-					memset(&hdr, 0, sizeof(hdr));
-					hdr.Signature = LOGHEADER_SIGNATURE;
-					hdr.Version = LOGHEADER_VERSION;
-					hdr.Architecture = LOGHEADER_ARCHITECTURE;
-					if (fwrite(&hdr, sizeof(hdr), 1, tmp) != 1)
-						ret = errno;
-				}
-
-				if (ret == 0)
-					*File = tmp;
-			}
-
-			if (ret != 0)
-				CallbackStreamFree(_streamHandle);
-		}
-
-		if (ret != 0 && tmp != stdout)
-			fclose(tmp);
-	}
+	if (ret == 0)
+		ret = ReqListSetCallback(_reqListHandle, _on_request, nullptr);
 
 	return ret;
 }
 
 
-static void _free_output(FILE *File)
+static void _free_output(void)
 {
 	ReqListUnregisterCallback(_reqListHandle);
-	CallbackStreamFree(_streamHandle);
-	if (_outLogFileName != nullptr)
-		fclose(File);
+	for (auto & o : _outputs)
+		delete o;
+
+	_outputs.clear();
 
 	return;
 }
@@ -897,7 +827,6 @@ static int _add_parsers(HANDLE ListHandle)
 int wmain(int argc, wchar_t *argv[])
 {
 	int ret = 0;
-	FILE * outputFile = nullptr;
 	POPTION_RECORD opRec = nullptr;
 
 	for (int i = 1; i < argc; ++i) {
@@ -948,8 +877,8 @@ int wmain(int argc, wchar_t *argv[])
 						} else fprintf(stderr, "[ERROR]: Unable to sync driver settings: %u\n", ret);
 					}
 
-					if (ret == 0 && _outputPresent) {
-						ret = _prepare_output(&outputFile);
+					if (ret == 0 && _outputs.size() > 0) {
+						ret = _prepare_output();
 						if (ret == 0) {
 							switch (_initInfo.ConnectorType) {
 								case ictDevice:
@@ -1008,11 +937,10 @@ int wmain(int argc, wchar_t *argv[])
 							}
 						
 							if (ret != 0)
-								_free_output(outputFile);
+								_free_output();
 						}
 
 						if (ret != 0 && _initInfo.ConnectorType != ictNone) {
-							_free_output(outputFile);
 							_device_action(false);
 							_driver_action(false);
 						}
