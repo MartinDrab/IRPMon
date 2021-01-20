@@ -64,11 +64,45 @@ public:
 		if (Handle_ == nullptr) {
 			ret = IRPMonDllHookDriver(DriverName_.c_str(), &Settings_, DevExtHook_, &Handle_, &ObjectId_);
 			if (ret == 0) {
-				ret = IRPMonDllDriverStartMonitoring(Handle_);
-				MonitoringEnabled_ = (ret == 0);
+				if (AllDevices_) {
+					void* obješctId = nullptr;
+					HANDLE hookHandle = nullptr;
+					ULONG driverCount = 0;
+					PIRPMON_DRIVER_INFO *driverInfo = nullptr;
+					const IRPMON_DRIVER_INFO *tmpDriver = nullptr;
+					const IRPMON_DEVICE_INFO* tmpDevice = nullptr;
+
+					ret = IRPMonDllSnapshotRetrieve(&driverInfo, &driverCount);
+					if (ret == 0) {
+						for (ULONG i = 0; i < driverCount; ++i) {
+							tmpDriver = driverInfo[i];
+							if (wcsicmp(DriverName_.c_str(), tmpDriver->DriverName) == 0) {
+								for (size_t j = 0; j < tmpDriver->DeviceCount; ++j) {
+									tmpDevice = tmpDriver->Devices[j];
+									ret = IRPMonDllHookDeviceByAddress(tmpDevice->DeviceObject, &hookHandle, &obješctId);
+									if (ret == 0)
+										IRPMonDllCloseHookedDeviceHandle(hookHandle);
+
+									ret = 0;
+								}
+
+								break;
+							}
+						}
+
+						IRPMonDllSnapshotFree(driverInfo, driverCount);
+					}
+				}
+
+				if (ret == 0) {
+					ret = IRPMonDllDriverStartMonitoring(Handle_);
+					MonitoringEnabled_ = (ret == 0);
+				}
+
 				if (ret != 0) {
 					IRPMonDllUnhookDriver(Handle_);
 					Handle_ = nullptr;
+					ObjectId_ = nullptr;
 				}
 			}
 		} else ret = ERROR_ALREADY_EXISTS;
@@ -88,6 +122,7 @@ public:
 				ret = IRPMonDllUnhookDriver(Handle_);
 				if (ret == 0) {
 					Handle_ = nullptr;
+					ObjectId_ = nullptr;
 					MonitoringEnabled_ = false;
 				}
 
