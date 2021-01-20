@@ -6,6 +6,7 @@ set FILES=^
 	..\bin\Win64\%CONFIG%\DParser.dll^
 	..\bin\Win64\%CONFIG%\ReqList.dll^
 	..\bin\Win64\%CONFIG%\CallbackStream.dll^
+	..\bin\x64\%CONFIG%\irpmonc.exe^
 	..\bin\x64\%CONFIG%\kernel\irpmndrv.sys^
 	..\bin\x64\%CONFIG%\kernel\kbase.dll^
 	..\bin\x64\%CONFIG%\dlls\irpmondll.dll^
@@ -24,6 +25,7 @@ set FILES=^
 	..\bin\Win32\%CONFIG%\DParser.dll^
 	..\bin\Win32\%CONFIG%\ReqList.dll^
 	..\bin\Win32\%CONFIG%\CallbackStream.dll^
+	..\bin\Win32\%CONFIG%\irpmonc.exe^
 	..\bin\Win32\%CONFIG%\kernel\irpmndrv.sys^
 	..\bin\Win32\%CONFIG%\kernel\kbase.dll^
 	..\bin\Win32\%CONFIG%\dlls\irpmondll.dll^

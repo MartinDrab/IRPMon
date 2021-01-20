@@ -41,6 +41,7 @@ Name: "custom"; Description: "Custom installation"; Flags: iscustom
 [Components]
 Name: "Runtime"; Description: "Microsoft runtime libraries required by the program"; Types: full custom; Flags: fixed
 Name: "Libraries"; Description: "Libraries implementing basic IRPMon functionality"; Types: full custom; Flags: fixed
+Name: "CmdLine"; Description: "Command-line interface"; Types: full custom; Flags: fixed
 Name: "Kernel"; Description: "Kernel driver for monitoring device driver requests"; Types: full custom;
 Name: "Application"; Description: "Application for setting up the monitoring, browsing log files and managing IRPMon as a whole"; Types: full custom;
 Name: "Server"; Description: "Console application and service for receiving commands accross the network"; Types: full custom;
@@ -57,10 +58,11 @@ Source: "..\bin\Win32\{#ConfigMode}\parser\*.dll"; DestDir: "{app}\x86"; Flags: 
 
 Source: "..\bin\Win64\{#ConfigMode}\IRPMon.exe"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Application;
 Source: "..\bin\Win32\{#ConfigMode}\IRPMon.exe"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: Application;
-Source: "..\bin\Win64\{#ConfigMode}\*.dll"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Application;
-Source: "..\bin\Win32\{#ConfigMode}\*.dll"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: Application;
-Source: "..\bin\x64\{#ConfigMode}\IRPMonc.exe"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Application;
-Source: "..\bin\Win32\{#ConfigMode}\IRPMonc.exe"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: Application;
+
+Source: "..\bin\Win64\{#ConfigMode}\*.dll"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: CmdLine;
+Source: "..\bin\Win32\{#ConfigMode}\*.dll"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: CmdLine;
+Source: "..\bin\x64\{#ConfigMode}\IRPMonc.exe"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: CmdLine;
+Source: "..\bin\Win32\{#ConfigMode}\IRPMonc.exe"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: CmdLine;
 
 Source: "..\bin\x64\{#ConfigMode}\kernel\*.dll"; DestDir: "{sysnative}\drivers\IRPMon\"; Check: Is64BitInstallMode; Flags: ignoreversion; Components: Kernel;
 Source: "..\bin\x64\{#ConfigMode}\kernel\*.sys"; DestDir: "{sysnative}\drivers\IRPMon\"; Check: Is64BitInstallMode; Flags: ignoreversion; Components: Kernel;
