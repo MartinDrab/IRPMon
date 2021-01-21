@@ -57,7 +57,14 @@
 //		A = address
 //		N = name
 //
-//	--boot-log={no|yes}
+// --clear-on-disconnect={yes|no|true|false}
+// --process-events={yes|no|true|false}
+// --file-object-events={yes|no|true|false}
+// --snapshot-events={yes|no|true|false}
+// --strip-threshold={yes|no|true|false}
+// --strip-data={yes|no|true|false}
+// --save-settings={yes|no|true|false}
+//	--boot-log={yes|no|true|false}
 
 
 
