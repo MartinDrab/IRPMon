@@ -65,6 +65,8 @@
 // --strip-data={yes|no|true|false}
 // --save-settings={yes|no|true|false}
 //	--boot-log={yes|no|true|false}
+// --help
+//
 
 
 
@@ -87,9 +89,12 @@ static 	OPTION_RECORD opts[] = {
 	{otStripData, L"strip-data", false, 0, 1},
 	{otBootLog, L"boot-log", false, 0, 1},
 	{otSettingsSave, L"save-settings", false, 0, 1},
+
+	{otHelp, L"help", false, 0, 1},
 };
 
 
+static bool _help = false;
 static std::vector<CRequestOutput *> _outputs;
 static wchar_t *_inLogFileName = NULL;
 static IRPMON_INIT_INFO _initInfo;
@@ -374,15 +379,16 @@ static int _parse_arg(wchar_t *Arg)
 	}
 
 	delimiter = wcschr(Arg, L'=');
-	if (delimiter == NULL) {
-		ret = -2;
-		fprintf(stderr, "[ERROR]: No \"=\" delimiter in the \"%ls\" argument\n", Arg);
-		goto Exit;
-	}
+	if (delimiter == NULL)
+		delimiter = Arg + wcslen(Arg);
 
 	name = Arg + 2;
-	value = delimiter + 1;
-	*delimiter = L'\0';
+	value = delimiter;
+	if (*delimiter != L'\0') {
+		value = delimiter + 1;
+		*delimiter = L'\0';
+	}
+
 	opRec = opts;
 	for (size_t i = 0; i < sizeof(opts) / sizeof(opts[0]); ++i) {
 		if (wcsicmp(opRec->Name, name) == 0) {
@@ -436,6 +442,9 @@ static int _parse_arg(wchar_t *Arg)
 		case otBootLog:
 		case otSettingsSave:
 			ret = parse_setting(opRec->Type, value);
+			break;
+		case otHelp:
+			_help = true;
 			break;
 	}
 

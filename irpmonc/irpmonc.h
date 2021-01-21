@@ -23,6 +23,7 @@ typedef enum _EOptionType {
 	otStripData,
 	otBootLog,
 	otSettingsSave,
+	otHelp,
 } EOptionType, * PEOptionType;
 
 typedef struct _OPTION_RECORD {
