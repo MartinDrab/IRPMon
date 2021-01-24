@@ -29,11 +29,13 @@
 //		N:localhost:1234
 //		L:C:\binarylog.log
 //
-//	--output=[T|J|B]:[filename|-]
-//		- = stdout
+//	--output=<T|J|B>:<filename|->
+//		T = text lines
 //		J = JSON lines, the array mode is not supported
+//		B = output to IRPMon's binary log format
+//		- = stdout
 //
-//	--hook-driver=[ICFASUNDW]:<drivername>
+//	--hook-driver=[I][C][F][A][S][U][N][D][W][E][a]:<drivername>
 //		I = IRP
 //		C = IRP completion
 //		F = fast IO
@@ -49,11 +51,11 @@
 //	--unhook-driver=[W]:<drivername>
 //		W = name watch
 //
-//  --hook-device=<A|N>:<devicename>
+//  --hook-device=<A|N>:<devicename|address>
 //		A = address
 //		N = name
 //
-//  --unhook-device=<A|N>:<devicename>
+//  --unhook-device=<A|N>:<devicename|address>
 //		A = address
 //		N = name
 //
