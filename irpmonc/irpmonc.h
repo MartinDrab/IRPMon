@@ -23,16 +23,18 @@ typedef enum _EOptionType {
 	otStripData,
 	otBootLog,
 	otSettingsSave,
+	
 	otHelp,
-} EOptionType, * PEOptionType;
+	otStop,
+} EOptionType, *PEOptionType;
 
 typedef struct _OPTION_RECORD {
 	EOptionType Type;
-	const wchar_t* Name;
+	const wchar_t *Name;
 	bool Required;
 	int Count;
 	int MaxCount;
-} OPTION_RECORD, * POPTION_RECORD;
+} OPTION_RECORD, *POPTION_RECORD;
 
 
 

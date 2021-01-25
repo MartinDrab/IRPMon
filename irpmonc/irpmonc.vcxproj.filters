@@ -21,6 +21,9 @@
     <ClCompile Include="driver-settings.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="stop-event.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="driver-hook.h">
@@ -36,6 +39,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="request-output.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="stop-event.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

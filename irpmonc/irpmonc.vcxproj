@@ -29,6 +29,7 @@
   <ItemGroup>
     <ClCompile Include="driver-settings.cpp" />
     <ClCompile Include="irpmonc.cpp" />
+    <ClCompile Include="stop-event.c" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\irpmondll\irpmondll.vcxproj">
@@ -52,6 +53,7 @@
     <ClInclude Include="driver-settings.h" />
     <ClInclude Include="irpmonc.h" />
     <ClInclude Include="request-output.h" />
+    <ClInclude Include="stop-event.h" />
     <ClInclude Include="version.h" />
   </ItemGroup>
   <ItemGroup>

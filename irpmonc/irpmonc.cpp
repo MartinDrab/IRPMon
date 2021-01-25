@@ -19,8 +19,9 @@
 #include "request.h"
 #include "driver-hook.h"
 #include "driver-settings.h"
-#include "irpmonc.h"
 #include "request-output.h"
+#include "stop-event.h"
+#include "irpmonc.h"
 
 
 
@@ -93,10 +94,13 @@ static 	OPTION_RECORD opts[] = {
 	{otSettingsSave, L"save-settings", false, 0, 1},
 
 	{otHelp, L"help", false, 0, 1},
+	{otStop, L"stop", false, 0, 1},
 };
 
 
 static bool _help = false;
+static bool _stop = false;
+static DWORD _stopProcessId = 0;
 static std::vector<CRequestOutput *> _outputs;
 static wchar_t *_inLogFileName = NULL;
 static IRPMON_INIT_INFO _initInfo;
@@ -365,6 +369,25 @@ Exit:
 }
 
 
+static int _parse_stop(const wchar_t *Value)
+{
+	int ret = 0;
+	wchar_t *endPtr = nullptr;
+
+	if (*Value != L'\0') {
+		errno = 0;
+		_stopProcessId = wcstoul(Value, &endPtr, 0);
+		if (_stopProcessId == ULONG_MAX && errno == ERANGE)
+			ret = errno;
+		else if (endPtr == Value)
+			ret = EINVAL;
+	}
+
+	_stop = (ret == 0);
+
+	return ret;
+}
+
 static int _parse_arg(wchar_t *Arg)
 {
 	int ret = 0;
@@ -447,6 +470,9 @@ static int _parse_arg(wchar_t *Arg)
 			break;
 		case otHelp:
 			_help = true;
+			break;
+		case otStop:
+			ret = _parse_stop(value);
 			break;
 	}
 
@@ -865,6 +891,22 @@ int wmain(int argc, wchar_t *argv[])
 	}
 
 	if (ret == 0) {
+		if (_help) {
+		} else if (_stop) {
+			if (_stopProcessId != 0)
+				fprintf(stderr, "[INFO]: Sending a stop signal to irpmonc process with PID %u...\n", _stopProcessId);
+			else fprintf(stderr, "[INFO]: Sending a stop signal to all irpmonc processes...\n");
+
+			ret = stop_event_oepn(_stopProcessId);
+			if (ret == 0) {
+				stop_event_set();
+				stop_event_finit();
+				fprintf(stderr, "[INFO]: Done\n");
+			} else fprintf(stderr, "[ERROR]: Unable to access the stop event object: %u\n", ret);
+		
+			return ret;
+		}
+		
 		ret = _init_dlls();
 		if (ret == 0) {
 			ret = DPListCreate(&_dpListHandle);
@@ -880,19 +922,28 @@ int wmain(int argc, wchar_t *argv[])
 
 				if (ret == 0) {
 					if (_initInfo.ConnectorType != ictNone) {
-						ret = sync_settings();
+						ret = stop_event_create();
 						if (ret == 0) {
-							print_settings();
-							ret = _enum_hooked_objects();
+							ret = sync_settings();
 							if (ret == 0) {
-								ret = _driver_action(true);
+								print_settings();
+								ret = _enum_hooked_objects();
 								if (ret == 0) {
-									ret = _device_action(true);
-									if (ret != 0)
-										_device_action(false);
-								}
-							} else fprintf(stderr, "[ERROR]: Unable to enumerate hooked objects: %u\n", ret);
-						} else fprintf(stderr, "[ERROR]: Unable to sync driver settings: %u\n", ret);
+									ret = _driver_action(true);
+									if (ret == 0) {
+										ret = _device_action(true);
+										if (ret != 0)
+											_device_action(false);
+									}
+								} else fprintf(stderr, "[ERROR]: Unable to enumerate hooked objects: %u\n", ret);
+							} else fprintf(stderr, "[ERROR]: Unable to sync driver settings: %u\n", ret);
+						
+							if (ret != 0)
+								stop_event_finit();
+						} else {
+							ret = GetLastError();
+							fprintf(stderr, "[ERROR]: Unable to create the global stopping event: %u\n", ret);
+						}
 					}
 
 					if (ret == 0 && _outputs.size() > 0) {
@@ -931,11 +982,19 @@ int wmain(int argc, wchar_t *argv[])
 													} break;
 													case ERROR_NO_MORE_ITEMS:
 													case ERROR_NO_MORE_FILES:
-														Sleep(1000);
+														ret = 0;
+														if (stop_event_wait(1000) == 0)
+															ret = ERROR_NO_MORE_ITEMS;
+														break;
+													default:
+														fprintf(stderr, "[ERROR]: Call to IRPMonDllGetRequest failed with error %u\n", ret);
 														break;
 												}
 											} while (ret == ERROR_SUCCESS);
 									
+											if (ret == ERROR_NO_MORE_ITEMS)
+												ret = ERROR_SUCCESS;
+
 											free(request);
 										} else fprintf(stderr, "[ERROR]: Unable to allocate memory to hold requests: %u\n", ret);
 
@@ -958,9 +1017,13 @@ int wmain(int argc, wchar_t *argv[])
 								_free_output();
 						}
 
-						if (ret != 0 && _initInfo.ConnectorType != ictNone) {
-							_device_action(false);
-							_driver_action(false);
+						if (_initInfo.ConnectorType != ictNone) {
+							if (ret != 0) {
+								_device_action(false);
+								_driver_action(false);
+							}
+							
+							stop_event_finit();
 						}
 					}
 
