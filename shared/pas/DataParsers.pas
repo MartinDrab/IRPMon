@@ -4,7 +4,7 @@ Interface
 
 Uses
   Classes, Windows, Generics.Collections,
-  IRPMonDll, IRPMonRequest;
+  IRPMonDll, AbstractRequest;
 
 Const
   DATA_PARSER_INIT_ROUTINE     = 'DataParserInit';
@@ -56,9 +56,14 @@ Type
     Public
       Constructor Create(ALibraryHandle:THandle; ALibraryName:WideString; Var ARaw:IRPMON_DATA_PARSER); Reintroduce;
       Destructor Destroy; Override;
+
       Class Function CreateForLibrary(ALibraryName:WideString; Var AError:Cardinal):TDataParser;
+      Class Procedure AddFromDirectory(ADirectory:WideString; AList:TObjectList<TDataParser>);
+      Class Function AddFromFile(AFileName:WideString; AList:TObjectList<TDataParser>):Cardinal;
+      Class Procedure FreeInfo(Var AInfo:IRPMON_DATA_PARSER);
 
       Function Parse(AFormat:ERequestLogFormat; ARequest:TGeneralRequest; Var AHandled:ByteBool; ANames:TStrings; AValues:TStrings):Cardinal;
+      Function QueryInfo(Var AInfo:IRPMON_DATA_PARSER):Cardinal;
 
       Property Name : WideString Read FName;
       Property Description : WideString Read FDescription;
@@ -70,13 +75,10 @@ Type
     end;
 
 
-Procedure DataPrasersLoad(ADirectory:WideString; AList:TObjectList<TDataParser>);
-
 Implementation
 
 Uses
-  SysUtils,
-  RequestListModel;
+  SysUtils;
 
 Constructor TDataParser.Create(ALibraryHandle:THandle; ALibraryName:WideString; Var ARaw:IRPMON_DATA_PARSER);
 begin
@@ -140,6 +142,43 @@ If (Result = 0) And (_handled) Then
   end;
 end;
 
+Function TDataParser.QueryInfo(Var AInfo:IRPMON_DATA_PARSER):Cardinal;
+begin
+Result := 0;
+FillChar(AInfo, SizeOf(AInfo), 0);
+AInfo.Name := StrAlloc(Length(FName));
+If Assigned(AInfo.Name) Then
+  begin
+  StringToWideChar(FName, AInfo.Name, Length(FName) + 1);
+  AInfo.Description := StrAlloc(Length(FDescription));
+  If Assigned(AInfo.Description) Then
+    begin
+    StringToWideChar(FDescription, AInfo.Description, Length(FDescription) + 1);
+    AInfo.Size := SizeOf(AInfo);
+    AInfo.MajorVersion := FMajorVersion;
+    AInfo.MinorVersion := FMinorVersion;
+    AInfo.BuildVersion := FBuildNumber;
+    AInfo.Priority := FPriority;
+    AInfo.ParseRoutine := FParseRoutine;
+    AInfo.FreeRoutine := FFreeRoutine;
+    end;
+
+  If Result <> 0 Then
+    StrDispose(AInfo.Name);
+  end
+Else Result := ERROR_NOT_ENOUGH_MEMORY;
+end;
+
+Class Procedure TDataParser.FreeInfo(Var AInfo:IRPMON_DATA_PARSER);
+begin
+If Assigned(AInfo.Description) Then
+  StrDispose(AInfo.Description);
+
+If Assigned(AInfo.Name) Then
+  StrDispose(AInfo.Name);
+end;
+
+
 Class Function TDataParser.CreateForLibrary(ALibraryName:WideString; Var AError:Cardinal):TDataParser;
 Var
   p : PIRPMON_DATA_PARSER;
@@ -184,7 +223,7 @@ If Assigned(initRoutine) Then
 end;
 
 
-Procedure DataPrasersLoad(ADirectory:WideString; AList:TObjectList<TDataParser>);
+Class Procedure TDataParser.AddFromDirectory(ADirectory:WideString; AList:TObjectList<TDataParser>);
 Var
   mask : WideString;
   hSearch : THandle;
@@ -210,6 +249,24 @@ If hSearch <> INVALID_HANDLE_VALUE THen
 
   Windows.FindClose(hSearch);
   end;
+end;
+
+Class Function TDataParser.AddFromFile(AFileName:WideString; AList:TObjectList<TDataParser>):Cardinal;
+Var
+  dp : TDataParser;
+  err : Cardinal;
+begin
+Result := 0;
+dp := TDataParser.CreateForLibrary(AFileName, err);
+If Assigned(dp) Then
+  begin
+  Try
+    AList.Add(dp);
+  Except
+    dp.Free;
+    end;
+  end
+Else Result := err;
 end;
 
 

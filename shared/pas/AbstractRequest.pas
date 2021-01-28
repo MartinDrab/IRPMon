@@ -1,15 +1,13 @@
-unit IRPMonRequest;
+Unit AbstractRequest;
 
 {$IFDEF FPC}
-  {$MODE Delphi}
+{$MODE Delphi}
 {$ENDIF}
 
-interface
+Interface
 
 Uses
-  Windows,
   IRPMonDll;
-
 
 Type
   TGeneralRequest = Class
@@ -41,16 +39,17 @@ Type
     FAdmin : Boolean;
     FImpersonated : Boolean;
     FImpersonatedAdmin : Boolean;
-    Procedure SetDriverName(AName:WideString);
-    Procedure SetDeviceName(AName:WideString);
-    Procedure SetFileName(AName:WideString);
-    Procedure SetProcessName(AName:WideString);
-    Procedure SetFileObject(AObject:Pointer);
   Public
     Constructor Create(Var ARequest:REQUEST_HEADER); Overload;
     Destructor Destroy; Override;
 
     Function AssignData(AData:Pointer; ASize:NativeUInt; AWithinRequest:Boolean = True):Boolean;
+
+    Procedure SetDriverName(AName:WideString);
+    Procedure SetDeviceName(AName:WideString);
+    Procedure SetFileName(AName:WideString);
+    Procedure SetProcessName(AName:WideString);
+    Procedure SetFileObject(AObject:Pointer);
 
     Class Function IOCTLToString(AControlCode:Cardinal):WideString;
     Class Function RequestTypeToString(ARequestType:ERequestType):WideString;
@@ -90,10 +89,13 @@ Type
     Property ImpersonatedAdmin : Boolean Read FImpersonatedAdmin;
   end;
 
-implementation
+Implementation
 
 Uses
-  SysUtils, NameTables;
+  SysUtils,
+  NameTables;
+
+(** TGeneralRequest **)
 
 Constructor TGeneralRequest.Create(Var ARequest:REQUEST_HEADER);
 begin
@@ -461,4 +463,4 @@ Case ALevel Of
 end;
 
 
-end.
+End.

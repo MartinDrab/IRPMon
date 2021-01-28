@@ -6,7 +6,7 @@ Uses
   Windows, Messages, SysUtils, Variants,
   Classes, Graphics,
   Controls, Forms, Dialogs, StdCtrls,
-  Generics.Collections, RequestFilter, RequestListModel, ExtCtrls,
+  Generics.Collections, RequestFilter, ExtCtrls,
   ComCtrls
 {$IFDEF FPC}
   ,ColorBox
@@ -93,7 +93,7 @@ Implementation
 Uses
   UITypes,
   IniFiles,
-  IRPMonDll, IRPRequest, FastIoRequest, Utils,
+  IRPMonDll, IRPMonRequest, IRPRequest, FastIoRequest, Utils,
   FileObjectNameXxxRequest, XXXDetectedRequests;
 
 Constructor TFilterFrm.Create(AOwner:TApplication; AFilterList:TObjectList<TRequestFilter>);

@@ -64,8 +64,6 @@
     <DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;Vcl;Vcl.Imaging;Vcl.Touch;Vcl.Samples;Vcl.Shell;$(DCC_Namespace)</DCC_Namespace>
     <Icon_MainIcon>$(BDS)\bin\delphi_PROJECTICON.ico</Icon_MainIcon>
     <DCC_UsePackage>dbexpress;bindcompfmx;CustomIPTransport;dsnap;fmx;rtl;dbrtl;fmxase;IndyCore;bindcomp;IndySystem;DbxClientDriver;DBXInterBaseDriver;inet;fmxobj;xmlrtl;DbxCommonDriver;fmxdae;IndyProtocols;DBXMySQLDriver;dbxcds;bindengine;IPIndyImpl;$(DCC_UsePackage)</DCC_UsePackage>
-    <DCC_DcuOutput>..\tmp\IRPMon\$(Platform)\$(Config)</DCC_DcuOutput>
-    <DCC_ExeOutput>..\bin\$(Platform)\$(Config)</DCC_ExeOutput>
     <DCC_E>false</DCC_E>
     <DCC_N>false</DCC_N>
     <DCC_S>false</DCC_S>
@@ -79,7 +77,6 @@
   <PropertyGroup Condition="'$(Base_Win32)'!=''">
     <DCC_UsePackage>bindcompvcl;vcltouch;vcldbx;VclSmp;vcl;CloudService;vclib;dsnapcon;vclx;svnui;ibxpress;svn;vclimg;fmi;bdertl;vclactnband;vcldb;adortl;vcldsnap;$(DCC_UsePackage)</DCC_UsePackage>
     <DCC_Namespace>Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;Bde;$(DCC_Namespace)</DCC_Namespace>
-    <VerInfo_Locale>1033</VerInfo_Locale>
     <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
     <UWP_DelphiLogo44>$(BDS)\bin\Artwork\Windows\UWP\delphi_UwpDefault_44.png</UWP_DelphiLogo44>
     <UWP_DelphiLogo150>$(BDS)\bin\Artwork\Windows\UWP\delphi_UwpDefault_150.png</UWP_DelphiLogo150>
@@ -87,44 +84,41 @@
   <PropertyGroup Condition="'$(Base_Win64)'!=''">
     <DCC_UsePackage>bindcompvcl;vcltouch;VclSmp;vcl;dsnapcon;vclx;vclimg;vclactnband;vcldb;vcldsnap;$(DCC_UsePackage)</DCC_UsePackage>
     <DCC_Namespace>Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;$(DCC_Namespace)</DCC_Namespace>
-    <VerInfo_Locale>1033</VerInfo_Locale>
     <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
     <UWP_DelphiLogo44>$(BDS)\bin\Artwork\Windows\UWP\delphi_UwpDefault_44.png</UWP_DelphiLogo44>
     <UWP_DelphiLogo150>$(BDS)\bin\Artwork\Windows\UWP\delphi_UwpDefault_150.png</UWP_DelphiLogo150>
   </PropertyGroup>
+  <Import Project="..\General.optset" Condition="'$(Cfg_1)'!='' And Exists('..\General.optset')" />
   <PropertyGroup Condition="'$(Cfg_1)'!=''">
     <DCC_Define>DEBUG;$(DCC_Define)</DCC_Define>
     <DCC_Optimize>false</DCC_Optimize>
     <DCC_GenerateStackFrames>true</DCC_GenerateStackFrames>
     <DCC_DebugInfoInExe>true</DCC_DebugInfoInExe>
     <DCC_RemoteDebug>true</DCC_RemoteDebug>
+    <CfgDependentOn>..\General.optset</CfgDependentOn>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Cfg_1_Win32)'!=''">
-    <Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
-    <DCC_ExeOutput>..\bin\$(Platform)\$(Config)</DCC_ExeOutput>
-    <VerInfo_Locale>1033</VerInfo_Locale>
-    <DCC_DcuOutput>..\tmp\IRPMon\$(Platform)\$(Config)</DCC_DcuOutput>
     <DCC_RemoteDebug>false</DCC_RemoteDebug>
     <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
     <BT_BuildType>Debug</BT_BuildType>
-    <VerInfo_Build>9</VerInfo_Build>
-    <VerInfo_Keys>CompanyName=Martin Drab;FileDescription=IRPMon Application;FileVersion=1.0.0.9;InternalName=IRPMON.EXE;LegalCopyright=Copyright (c) Martin Drab, 2015-2020;LegalTrademarks=;OriginalFilename=IRPMon.exe;ProductName=IRP Monitor;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
+    <VerInfo_Build>13</VerInfo_Build>
+    <VerInfo_Keys>CompanyName=Martin Drab;FileDescription=IRPMon Application;FileVersion=1.0.0.13;InternalName=IRPMON.EXE;LegalCopyright=Copyright (c) Martin Drab, 2015-2020;LegalTrademarks=;OriginalFilename=IRPMon.exe;ProductName=IRP Monitor;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Cfg_1_Win64)'!=''">
-    <DCC_ExeOutput>..\bin\x64\$(Config)</DCC_ExeOutput>
-    <VerInfo_Locale>1033</VerInfo_Locale>
     <BT_BuildType>Debug</BT_BuildType>
     <Debugger_CWD>..\bin\x64\$(Config)</Debugger_CWD>
     <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
-    <VerInfo_Build>9</VerInfo_Build>
-    <VerInfo_Keys>CompanyName=Martin Drab;FileDescription=IRPMon Application;FileVersion=1.0.0.9;InternalName=IRPMON.EXE;LegalCopyright=Copyright (c) Martin Drab, 2015-2020;LegalTrademarks=;OriginalFilename=IRPMon.exe;ProductName=IRP Monitor;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
+    <VerInfo_Build>13</VerInfo_Build>
+    <VerInfo_Keys>CompanyName=Martin Drab;FileDescription=IRPMon Application;FileVersion=1.0.0.13;InternalName=IRPMON.EXE;LegalCopyright=Copyright (c) Martin Drab, 2015-2020;LegalTrademarks=;OriginalFilename=IRPMon.exe;ProductName=IRP Monitor;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
   </PropertyGroup>
+  <Import Project="..\General.optset" Condition="'$(Cfg_2)'!='' And Exists('..\General.optset')" />
   <PropertyGroup Condition="'$(Cfg_2)'!=''">
     <DCC_LocalDebugSymbols>false</DCC_LocalDebugSymbols>
     <DCC_Define>RELEASE;$(DCC_Define)</DCC_Define>
     <DCC_SymbolReferenceInfo>0</DCC_SymbolReferenceInfo>
     <DCC_DebugInformation>0</DCC_DebugInformation>
     <DCC_AssertionsAtRuntime>false</DCC_AssertionsAtRuntime>
+    <CfgDependentOn>..\General.optset</CfgDependentOn>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Cfg_2_Win32)'!=''">
     <BT_BuildType>Debug</BT_BuildType>
@@ -133,7 +127,6 @@
     <VerInfo_Keys>CompanyName=Martin Drab;FileDescription=IRPMon Application;FileVersion=1.0.0.333;InternalName=IRPMON.EXE;LegalCopyright=Copyright (c) Martin Drab, 2015-2020;LegalTrademarks=;OriginalFilename=IRPMon.exe;ProductName=IRP Monitor;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Cfg_2_Win64)'!=''">
-    <DCC_ExeOutput>..\bin\x64\$(Config)</DCC_ExeOutput>
     <BT_BuildType>Debug</BT_BuildType>
     <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
     <VerInfo_Build>9</VerInfo_Build>
@@ -146,13 +139,13 @@
     <DCCReference Include="MainForm.pas">
       <Form>MainFrm</Form>
     </DCCReference>
-    <DCCReference Include="IRPMonDll.pas" />
-    <DCCReference Include="IRPMonRequest.pas" />
-    <DCCReference Include="Utils.pas" />
+    <DCCReference Include="..\shared\pas\IRPMonDll.pas" />
+    <DCCReference Include="..\shared\pas\IRPMonRequest.pas" />
+    <DCCReference Include="..\shared\pas\Utils.pas" />
     <DCCReference Include="ListModel.pas" />
     <DCCReference Include="RequestListModel.pas" />
-    <DCCReference Include="IRPRequest.pas" />
-    <DCCReference Include="NameTables.pas" />
+    <DCCReference Include="..\shared\pas\IRPRequest.pas" />
+    <DCCReference Include="..\shared\pas\NameTables.pas" />
     <DCCReference Include="RequestFilter.pas" />
     <DCCReference Include="TreeForm.pas">
       <Form>TreeFrm</Form>
@@ -178,26 +171,32 @@
       <FormType>dfm</FormType>
     </DCCReference>
     <DCCReference Include="WatchedDriverNames.pas" />
-    <DCCReference Include="XXXDetectedRequests.pas" />
-    <DCCReference Include="LibJSON.pas" />
-    <DCCReference Include="FastIoRequest.pas" />
-    <DCCReference Include="DataParsers.pas" />
-    <DCCReference Include="FileObjectNameXXXRequest.pas" />
+    <DCCReference Include="..\shared\pas\XXXDetectedRequests.pas" />
+    <DCCReference Include="..\shared\pas\FastIoRequest.pas" />
+    <DCCReference Include="..\shared\pas\DataParsers.pas" />
+    <DCCReference Include="..\shared\pas\FileObjectNameXXXRequest.pas" />
     <DCCReference Include="FillterForm.pas">
       <Form>FilterFrm</Form>
       <FormType>dfm</FormType>
     </DCCReference>
-    <DCCReference Include="ProcessXXXRequests.pas" />
+    <DCCReference Include="..\shared\pas\ProcessXXXRequests.pas" />
     <DCCReference Include="ConnectorSelectionForm.pas">
       <Form>ConnectorSelectionFrm</Form>
       <FormType>dfm</FormType>
     </DCCReference>
-    <DCCReference Include="BinaryLogHeader.pas" />
+    <DCCReference Include="..\shared\pas\BinaryLogHeader.pas" />
     <DCCReference Include="DLLDecider.pas" />
-    <DCCReference Include="ImageLoadRequest.pas" />
+    <DCCReference Include="..\shared\pas\ImageLoadRequest.pas" />
+    <DCCReference Include="..\shared\pas\AbstractRequest.pas" />
+    <DCCReference Include="..\shared\pas\DriverUnloadRequest.pas" />
+    <DCCReference Include="..\shared\pas\AddDeviceRequest.pas" />
+    <DCCReference Include="..\shared\pas\IRPCompleteRequest.pas" />
+    <DCCReference Include="..\shared\pas\StartIoRequest.pas" />
+    <DCCReference Include="..\shared\pas\RequestList.pas" />
     <BuildConfiguration Include="Release">
       <Key>Cfg_2</Key>
       <CfgParent>Base</CfgParent>
+      <DependentOn>..\General.optset</DependentOn>
     </BuildConfiguration>
     <BuildConfiguration Include="Base">
       <Key>Base</Key>
@@ -205,6 +204,7 @@
     <BuildConfiguration Include="Debug">
       <Key>Cfg_1</Key>
       <CfgParent>Base</CfgParent>
+      <DependentOn>..\General.optset</DependentOn>
     </BuildConfiguration>
   </ItemGroup>
   <ProjectExtensions>
@@ -257,6 +257,12 @@
         <DeployFile LocalName="..\bin\x64\Debug\IRPMon.exe" Configuration="Debug" Class="ProjectOutput">
           <Platform Name="Win64">
             <RemoteName>IRPMon.exe</RemoteName>
+            <Overwrite>true</Overwrite>
+          </Platform>
+        </DeployFile>
+        <DeployFile LocalName="..\bin\x64\Debug\IRPMon.rsm" Configuration="Debug" Class="DebugSymbols">
+          <Platform Name="Win64">
+            <RemoteName>IRPMon.rsm</RemoteName>
             <Overwrite>true</Overwrite>
           </Platform>
         </DeployFile>

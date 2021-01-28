@@ -7,22 +7,22 @@ program IRPMon;
 
 
 uses
-{$IFNDEF FPC}
+  {$IFNDEF FPC}
   WinSvc,
-{$ELSE}
+  {$ELSE}
   Interfaces,
-{$ENDIF}
+  {$ENDIF }
   Windows,
   SysUtils,
   Forms,
   MainForm in 'MainForm.pas' {MainFrm},
-  IRPMonDll in 'IRPMonDll.pas',
-  IRPMonRequest in 'IRPMonRequest.pas',
-  Utils in 'Utils.pas',
+  IRPMonDll in '..\shared\pas\IRPMonDll.pas',
+  IRPMonRequest in '..\shared\pas\IRPMonRequest.pas',
+  Utils in '..\shared\pas\Utils.pas',
   ListModel in 'ListModel.pas',
   RequestListModel in 'RequestListModel.pas',
-  IRPRequest in 'IRPRequest.pas',
-  NameTables in 'NameTables.pas',
+  IRPRequest in '..\shared\pas\IRPRequest.pas',
+  NameTables in '..\shared\pas\NameTables.pas',
   RequestFilter in 'RequestFilter.pas',
   TreeForm in 'TreeForm.pas' {TreeFrm},
   HookObjects in 'HookObjects.pas',
@@ -34,17 +34,22 @@ uses
   ClassWatchAdd in 'ClassWatchAdd.pas' {ClassWatchAddFrm},
   DriverNameWatchAddForm in 'DriverNameWatchAddForm.pas' {DriverNameWatchAddFrm},
   WatchedDriverNames in 'WatchedDriverNames.pas',
-  XXXDetectedRequests in 'XXXDetectedRequests.pas',
-  LibJSON in 'LibJSON.pas',
-  FastIoRequest in 'FastIoRequest.pas',
-  DataParsers in 'DataParsers.pas',
-  FileObjectNameXXXRequest in 'FileObjectNameXXXRequest.pas',
+  XXXDetectedRequests in '..\shared\pas\XXXDetectedRequests.pas',
+  FastIoRequest in '..\shared\pas\FastIoRequest.pas',
+  DataParsers in '..\shared\pas\DataParsers.pas',
+  FileObjectNameXXXRequest in '..\shared\pas\FileObjectNameXXXRequest.pas',
   FillterForm in 'FillterForm.pas' {FilterFrm},
-  ProcessXXXRequests in 'ProcessXXXRequests.pas',
+  ProcessXXXRequests in '..\shared\pas\ProcessXXXRequests.pas',
   ConnectorSelectionForm in 'ConnectorSelectionForm.pas' {ConnectorSelectionFrm},
-  BinaryLogHeader in 'BinaryLogHeader.pas',
+  BinaryLogHeader in '..\shared\pas\BinaryLogHeader.pas',
   DLLDecider in 'DLLDecider.pas',
-  ImageLoadRequest in 'ImageLoadRequest.pas';
+  ImageLoadRequest in '..\shared\pas\ImageLoadRequest.pas',
+  AbstractRequest in '..\shared\pas\AbstractRequest.pas',
+  DriverUnloadRequest in '..\shared\pas\DriverUnloadRequest.pas',
+  AddDeviceRequest in '..\shared\pas\AddDeviceRequest.pas',
+  IRPCompleteRequest in '..\shared\pas\IRPCompleteRequest.pas',
+  StartIoRequest in '..\shared\pas\StartIoRequest.pas',
+  RequestList in '..\shared\pas\RequestList.pas';
 
 {$R *.res}
 

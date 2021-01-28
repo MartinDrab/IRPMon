@@ -4,7 +4,7 @@ Interface
 
 Uses
   Windows,
-  RequestListModel, IRPMonDll;
+  IRPMonRequest, IRPMonDll;
 
 Type
   TFastIoRequest = Class (TDriverRequest)

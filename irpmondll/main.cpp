@@ -109,7 +109,7 @@ DWORD WINAPI IRPMonDllQueueClear(void)
 }
 
 
-DWORD WINAPI IRPMonDllHookDriver(PWCHAR DriverName, PDRIVER_MONITOR_SETTINGS MonitorSettings, BOOLEAN DeviceExtensionHook, PHANDLE DriverHandle, PVOID *ObjectId)
+DWORD WINAPI IRPMonDllHookDriver(const wchar_t *DriverName, const DRIVER_MONITOR_SETTINGS *MonitorSettings, BOOLEAN DeviceExtensionHook, PHANDLE DriverHandle, PVOID *ObjectId)
 {
 	return DriverComHookDriver(DriverName, MonitorSettings, DeviceExtensionHook, DriverHandle, ObjectId);
 }
@@ -135,7 +135,7 @@ VOID WINAPI IRPMonDllSnapshotFree(PIRPMON_DRIVER_INFO *DriverInfo, ULONG Count)
 }
 
 
-DWORD WINAPI IRPMonDllHookDeviceByName(PWCHAR DeviceName, PHANDLE HookHandle, PVOID *ObjectId)
+DWORD WINAPI IRPMonDllHookDeviceByName(const wchar_t *DeviceName, PHANDLE HookHandle, PVOID *ObjectId)
 {
 	return DriverComHookDeviceByName(DeviceName, HookHandle, ObjectId);
 }
@@ -183,7 +183,7 @@ DWORD WINAPI IRPMonDllDriverStopMonitoring(HANDLE Driverhandle)
 }
 
 
-DWORD WINAPI IRPMonDllDriverSetInfo(HANDLE DriverHandle, PDRIVER_MONITOR_SETTINGS Settings)
+DWORD WINAPI IRPMonDllDriverSetInfo(HANDLE DriverHandle, const DRIVER_MONITOR_SETTINGS *Settings)
 {
 	return DriverComHookedDriverSetInfo(DriverHandle, Settings);
 }
@@ -268,13 +268,13 @@ VOID WINAPI IRPMonDllClassWatchEnumFree(PCLASS_WATCH_RECORD Array, ULONG Count)
 /*                  DRIVER NAME WATCHES                                 */
 /************************************************************************/
 
-DWORD WINAPI IRPMonDllDriverNameWatchRegister(PWCHAR DriverName, PDRIVER_MONITOR_SETTINGS MonitorSettings)
+DWORD WINAPI IRPMonDllDriverNameWatchRegister(const wchar_t *DriverName, const DRIVER_MONITOR_SETTINGS *MonitorSettings)
 {
 	return DriverComDriverNameWatchRegister(DriverName, MonitorSettings);
 }
 
 
-DWORD WINAPI IRPMonDllDriverNameWatchUnregister(PWCHAR DriverName)
+DWORD WINAPI IRPMonDllDriverNameWatchUnregister(const wchar_t *DriverName)
 {
 	return DriverComDriverNameWatchUnregister(DriverName);
 }

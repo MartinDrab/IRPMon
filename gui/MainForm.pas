@@ -11,7 +11,8 @@ Uses
   Controls, Forms, Dialogs, ComCtrls, Menus,
   Generics.Collections, RequestFilter,
   IRPMonDll, RequestListModel, ExtCtrls,
-  HookObjects, RequestThread, DataParsers
+  HookObjects, RequestThread, DataParsers,
+  IRPMonRequest
 {$IFNDEF FPC}
   , AppEvnts
 {$ENDIF}
@@ -168,9 +169,13 @@ Uses
   ListModel, HookProgressForm,
   Utils, TreeForm, RequestDetailsForm, AboutForm,
   ClassWatchAdd, ClassWatch, DriverNameWatchAddForm,
-  WatchedDriverNames, FillterForm;
+  WatchedDriverNames, FillterForm, RequestList;
 
 
+Procedure _OnRequestProcessed(AList:TRequestList; ARequest:TDriverRequest; Var AStore:Boolean);
+begin
+MainFrm.OnRequestProcessed(ARequest, AStore);
+end;
 
 Procedure TMainFrm.EnumerateHooks;
 Var
@@ -319,7 +324,7 @@ FHookedDrivers := TDictionary<Pointer, TDriverHookObject>.Create;
 FHookedDevices := TDictionary<Pointer, TDeviceHookObject>.Create;
 FHookedDeviceDriverMap := TDictionary<Pointer, Pointer>.Create;
 FModel := TRequestListModel.Create;
-FModel.OnRequestProcessed := OnRequestProcessed;
+FModel.OnRequestProcessed := _OnRequestProcessed;
 FModel.ColumnUpdateBegin;
 FModel.
     ColumnAdd(TDriverRequest.GetBaseColumnName(rlmctId), Ord(rlmctId), False, 60).
@@ -377,7 +382,7 @@ Else begin
   end;
 
 FParsers := TObjectList<TDataParser>.Create;
-DataPrasersLoad(ExtractFileDir(Application.ExeName), FParsers);
+TDataParser.AddFromDirectory(ExtractFileDir(Application.ExeName), FParsers);
 FModel.Parsers := FParsers;
 ReadSettings;
 end;

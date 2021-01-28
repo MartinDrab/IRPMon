@@ -8,7 +8,7 @@ Interface
 
 Uses
   Windows,
-  RequestListModel, IRPMonDll;
+  IRPMonDll, IRPMonRequest;
 
 Type
   TImageLoadRequest = Class (TDriverRequest)

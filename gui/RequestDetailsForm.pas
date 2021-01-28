@@ -10,7 +10,7 @@ Uses
   Windows, Messages, SysUtils, Variants,
   Classes, Graphics,
   Controls, Forms, Dialogs, ExtCtrls, StdCtrls,
-  RequestListModel, ComCtrls,
+  IRPMonRequest, ComCtrls,
   Generics.Collections, DataParsers,
   Menus;
 

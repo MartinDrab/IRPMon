@@ -7,7 +7,7 @@ Unit Utils;
 Interface
 
 Uses
-  Graphics;
+  Vcl.Graphics;
 
 Procedure ErrorMessage(AMsg:WideString);
 Procedure WarningMessage(AMsg:WideString);

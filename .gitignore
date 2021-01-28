@@ -1,17 +1,15 @@
 bin/
 .vs/
 dumps/
-gui/*.bak
-gui/__history
-launcher/.bak
-launcher/__history
+.bak
+__history
+*.dproj.local
+*.identcache
+*.stat
 lib/
 tmp/
 *.sdf
 
-/gui/IRPMon.dproj.local
-/gui/IRPMon.identcache
-/gui/IRPMon.stat
 *.user
-gui/backup
 *.log
+/shared/pas/__history

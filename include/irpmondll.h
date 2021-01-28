@@ -101,7 +101,7 @@ VOID WINAPI IRPMonDllDriverHooksFree(PHOOKED_DRIVER_UMINFO HookedDrivers, ULONG 
 /// <see cref="IRPMonDllSnapshotRetrieve"/> function.
 /// </para>
 /// </remarks>
-DWORD WINAPI IRPMonDllHookDriver(PWCHAR DriverName, PDRIVER_MONITOR_SETTINGS MonitorSettings, BOOLEAN DeviceExtensionHook, PHANDLE DriverHandle, PVOID *ObjectId);
+DWORD WINAPI IRPMonDllHookDriver(const wchar_t *DriverName, const DRIVER_MONITOR_SETTINGS *MonitorSettings, BOOLEAN DeviceExtensionHook, PHANDLE DriverHandle, PVOID *ObjectId);
 
 /// <summary>Starts monitoring of a driver.
 /// </summary>
@@ -215,7 +215,7 @@ DWORD WINAPI IRPMonDllDriverStopMonitoring(HANDLE Driverhandle);
 /// only the value stored in the <see cref="_DRIVER_MONITOR_SETTINGS:MonitorNewDevices"/> field
 /// passed in the <paramref name="Settings"/> parameter takes effect.
 /// </remarks>
-DWORD WINAPI IRPMonDllDriverSetInfo(HANDLE DriverHandle, PDRIVER_MONITOR_SETTINGS Settings);
+DWORD WINAPI IRPMonDllDriverSetInfo(HANDLE DriverHandle, const DRIVER_MONITOR_SETTINGS *Settings);
 
 /// <summary>Unhooks a given driver.
 /// </summary>
@@ -295,7 +295,7 @@ DWORD WINAPI IRPMonDllUnhookDriver(HANDLE DriverHandle);
 /// be hooked. Otherwise, the function fails. Drivers can be hooked by a call to the
 /// <see cref="IRPMonDllHookDriver"/> routine.
 /// </remarks>
-DWORD WINAPI IRPMonDllHookDeviceByName(PWCHAR DeviceName, PHANDLE HookHandle, PVOID *ObjectId);
+DWORD WINAPI IRPMonDllHookDeviceByName(const wchar_t *DeviceName, PHANDLE HookHandle, PVOID *ObjectId);
 
 /// <summary>Starts monitoring events related to a given device, identified by its device object address.
 /// </summary>
@@ -788,7 +788,7 @@ VOID WINAPI IRPMonDllClassWatchEnumFree(PCLASS_WATCH_RECORD Array, ULONG Count);
 /// Use <see cref="IRPMonDllDriverNameWatchUnregister"/> to stop watching for the given driver.
 /// </para>
 /// </remarks>
-DWORD WINAPI IRPMonDllDriverNameWatchRegister(PWCHAR DriverName, PDRIVER_MONITOR_SETTINGS MonitorSettings);
+DWORD WINAPI IRPMonDllDriverNameWatchRegister(const wchar_t *DriverName, const DRIVER_MONITOR_SETTINGS *MonitorSettings);
 
 /// <summary>Stops watching for driver with given name.
 /// </summary>
@@ -818,7 +818,7 @@ DWORD WINAPI IRPMonDllDriverNameWatchRegister(PWCHAR DriverName, PDRIVER_MONITOR
 /// This routine is exact opposite to <see cref="IRPMonDllDriverNameWatchRegister"/> one.
 /// </para>
 /// </remarks>
-DWORD WINAPI IRPMonDllDriverNameWatchUnregister(PWCHAR DriverName);
+DWORD WINAPI IRPMonDllDriverNameWatchUnregister(const wchar_t *DriverName);
 
 /// <summary>Enumerates names of drivers on the watch list.
 /// </summary>

@@ -65,8 +65,8 @@ Implementation
 {$R *.dfm}
 
 Uses
-  Utils, RequestListModel, HookProgressForm,
-  FastIoRequest;
+  Utils, HookProgressForm,
+  FastIoRequest, IRPMonRequest;
 
 Procedure TTreeFrm.BuildDeviceStack(ALowest:TDeviceHookObject);
 Var
