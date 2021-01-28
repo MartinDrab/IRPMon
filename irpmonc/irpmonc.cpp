@@ -215,10 +215,11 @@ static int _parse_output(const wchar_t *Value)
 	}
 
 	Value = delimiter + 1;
-	if (wcscmp(Value, L"-") != 0) {
-		o = new CRequestOutput(format, Value);
-		_outputs.push_back(o);
-	}
+	if (wcscmp(Value, L"-") == 0)
+		Value = L"";
+
+	o = new CRequestOutput(format, Value);
+	_outputs.push_back(o);
 
 Exit:
 	return ret;
@@ -467,6 +468,7 @@ static int _parse_arg(wchar_t *Arg)
 	}
 
 	if (!found) {
+		ret = ENOENT;
 		fprintf(stderr, "[ERROR]: Unknown option \"--%ls\"\n", name);
 		goto Exit;
 	}
@@ -608,20 +610,28 @@ static DWORD _driver_action(bool Hook)
 	for (auto& hdr : _driversToHook) {
 		if (Hook)
 			fprintf(stderr, "[INFO]: Hooking driver \"%ls\"...\n", hdr->Name().c_str());
-		
+		else fprintf(stderr, "[INFO]: Unhooking driver \"%ls\"...\n", hdr->Name().c_str());
+
 		ret = (Hook) ? hdr->Hook() : hdr->Unhook();
 		if (ret != 0) {
 			if (Hook) {
-				fprintf(stderr, "[ERROR]: Failed to hook driver \"%ls\": %u\n", hdr->Name().c_str(), ret);
-				for (auto& tmp : _driversToHook) {
-					if (wcsicmp(tmp->Name().c_str(), hdr->Name().c_str()) == 0)
-						break;
-
-					fprintf(stderr, "[INFO]: Unhooking driver \"%ls\"...\n", tmp->Name().c_str());
-					tmp->Unhook();
+				if (ret == ERROR_ALREADY_EXISTS) {
+					ret = 0;
+					fprintf(stderr, "[WARNING]: Driver \"%ls\" already hooked\n", hdr->Name().c_str());
 				}
 
-				break;
+				if (ret != 0) {
+					fprintf(stderr, "[ERROR]: Failed to hook driver \"%ls\": %u\n", hdr->Name().c_str(), ret);
+					for (auto& tmp : _driversToHook) {
+						if (wcsicmp(tmp->Name().c_str(), hdr->Name().c_str()) == 0)
+							break;
+
+						fprintf(stderr, "[INFO]: Unhooking driver \"%ls\"...\n", tmp->Name().c_str());
+						tmp->Unhook();
+					}
+
+					break;
+				}
 			} else fprintf(stderr, "[WARNING]: Failed to unhook driver \"%ls\": %u\n", hdr->Name().c_str(), ret);
 		}
 	}
@@ -692,7 +702,7 @@ static DWORD _device_action(bool Hook)
 
 	ret = 0;
 	for (auto& hdr : _devicesToHook) {
-		fprintf(stderr, "[INFO]: Hooking device \"%ls\" (0x%p)...\n", hdr->Name().c_str(), hdr->Address());
+		fprintf(stderr, "[INFO]: %ls device \"%ls\" (0x%p)...\n", (Hook) ? L"Hooking" : L"Unhooking", hdr->Name().c_str(), hdr->Address());
 		ret = (Hook) ? hdr->Hook() : hdr->Unhook();
 		if (ret != 0) {
 			if (Hook) {
@@ -807,8 +817,16 @@ static int _prepare_output(void)
 		}
 	}
 
-	if (ret == 0)
+	if (ret == 0) {
 		ret = ReqListSetCallback(_reqListHandle, _on_request, nullptr);
+		if (ret != 0) {
+			fprintf(stderr, "[ERROR]: Unable to register Request List Callback: %u\n", ret);
+			for (auto& o : _outputs)
+				delete o;
+
+			_outputs.clear();
+		}
+	}
 
 	return ret;
 }
@@ -1060,6 +1078,7 @@ int wmain(int argc, wchar_t *argv[])
 							switch (_initInfo.ConnectorType) {
 								case ictDevice:
 								case ictNetwork: {
+									fprintf(stderr, "[INFO]: Connecting to the driver...\n");
 									ret = IRPMonDllConnect();
 									if (ret == 0) {
 										DWORD requestSize = 0x1000;
@@ -1068,7 +1087,7 @@ int wmain(int argc, wchar_t *argv[])
 										request = (PREQUEST_HEADER)calloc(1, requestSize);
 										if (request != NULL) {
 											do {
-												ret = IRPMonDllGetRequest(request, RequestSize);
+												ret = IRPMonDllGetRequest(request, requestSize);
 												switch (ret) {
 													case 0: {
 														ret = ReqListAdd(_reqListHandle, request);
@@ -1080,9 +1099,10 @@ int wmain(int argc, wchar_t *argv[])
 
 														requestSize *= 2;
 														tmp = (PREQUEST_HEADER)realloc(request, requestSize);
-														if (tmp != NULL) {
+														if (tmp != nullptr) {
 															fprintf(stderr, "[INFO]: Request size extended to %u bytes\n", requestSize);
 															request = tmp;
+															ret = 0;
 														} else {
 															ret = ERROR_NOT_ENOUGH_MEMORY;
 															fprintf(stderr, "[ERROR]: Unable to extend request size to %u bytes\n", requestSize);
@@ -1106,6 +1126,7 @@ int wmain(int argc, wchar_t *argv[])
 											free(request);
 										} else fprintf(stderr, "[ERROR]: Unable to allocate memory to hold requests: %u\n", ret);
 
+										fprintf(stderr, "[INFO]: Disconnecting the driver...\n");
 										IRPMonDllDisconnect();
 									} else fprintf(stderr, "[ERROR]: Unable to connect to the event queue: %u\n", ret);
 								} break;
