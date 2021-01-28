@@ -221,7 +221,7 @@ NTSTATUS PWDDriverNameRegister(PUNICODE_STRING Name, PDRIVER_MONITOR_SETTINGS Se
 			if (!NT_SUCCESS(status))
 				HeapMemoryFree(rec);
 		} else status = STATUS_INSUFFICIENT_RESOURCES;
-	} else status = STATUS_ALREADY_REGISTERED;
+	} else status = STATUS_OBJECT_NAME_COLLISION;
 
 	FltReleasePushLock(&_driverNamesLock);
 
