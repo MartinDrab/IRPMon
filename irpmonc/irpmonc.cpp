@@ -643,8 +643,15 @@ static DWORD _driver_action(bool Hook)
 			
 			ret = (Hook) ? dnw->Register() : dnw->Unregister();
 			if (ret != 0) {
-				fprintf(stderr, "[ERROR]: Unable to register name watch for \"%ls\": %u\n", dnw->DriverName().c_str(), ret);
-				break;
+				if (ret == ERROR_ALREADY_EXISTS) {
+					ret = 0;
+					fprintf(stderr, "[WARNING]: Name watch for \"%ls\" already registered\n", dnw->DriverName().c_str());
+				}
+
+				if (ret != 0) {
+					fprintf(stderr, "[ERROR]: Unable to register name watch for \"%ls\": %u\n", dnw->DriverName().c_str(), ret);
+					break;
+				}
 			}
 		}
 	}
