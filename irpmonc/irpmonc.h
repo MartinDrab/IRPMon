@@ -26,6 +26,8 @@ typedef enum _EOptionType {
 	
 	otHelp,
 	otStop,
+	otLoad,
+	otUnload,
 } EOptionType, *PEOptionType;
 
 typedef struct _OPTION_RECORD {

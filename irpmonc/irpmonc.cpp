@@ -95,6 +95,8 @@ static 	OPTION_RECORD opts[] = {
 
 	{otHelp, L"help", false, 0, 1},
 	{otStop, L"stop", false, 0, 1},
+	{otLoad, L"load", false, 0, 1},
+	{otUnload, L"unload", false, 0, 1},
 };
 
 
@@ -116,6 +118,8 @@ static std::map<void *, CDeviceHook *> _hookedDevices;
 static std::vector<std::wstring> _unhookDrivers;
 static HANDLE _dpListHandle = nullptr;
 static HANDLE _reqListHandle = nullptr;
+static std::wstring _loadServiceName;
+static std::wstring _unloadServiceName;
 
 
 static int _parse_input(const wchar_t *Value)
@@ -388,6 +392,37 @@ static int _parse_stop(const wchar_t *Value)
 	return ret;
 }
 
+
+static int _parse_load(const wchar_t *Value)
+{
+	int ret = 0;
+
+	if (*Value != L'\0')
+		_loadServiceName = std::wstring(Value);
+
+	if (_loadServiceName.empty())
+		_loadServiceName = L"irpmndrv";
+
+
+	return ret;
+}
+
+
+static int _parse_unload(const wchar_t *Value)
+{
+	int ret = 0;
+
+	if (*Value != L'\0')
+		_unloadServiceName = std::wstring(Value);
+
+	if (_unloadServiceName.empty())
+		_unloadServiceName = L"irpmndrv";
+
+
+	return ret;
+}
+
+
 static int _parse_arg(wchar_t *Arg)
 {
 	int ret = 0;
@@ -473,6 +508,12 @@ static int _parse_arg(wchar_t *Arg)
 			break;
 		case otStop:
 			ret = _parse_stop(value);
+			break;
+		case otLoad:
+			ret = _parse_load(value);
+			break;
+		case otUnload:
+			ret = _parse_unload(value);
 			break;
 	}
 
@@ -868,6 +909,70 @@ static int _add_parsers(HANDLE ListHandle)
 }
 
 
+static int _service_action(bool Load)
+{
+	int ret = 0;
+	DWORD access = 0;
+	SC_HANDLE hScm = nullptr;
+	SC_HANDLE hService = nullptr;
+	const wchar_t* serviceName = nullptr;
+
+	if ((Load && !_loadServiceName.empty()) ||
+		(!Load && !_unloadServiceName.empty())) {
+		hScm = OpenSCManagerW(nullptr, nullptr, SC_MANAGER_CONNECT);
+		if (hScm != nullptr) {
+			access = (Load) ? SERVICE_START : SERVICE_STOP;
+			serviceName = (Load) ? _loadServiceName.c_str() : _unloadServiceName.c_str();
+			hService = OpenServiceW(hScm, serviceName, access);
+			if (hService != nullptr) {
+				if (Load) {
+					if (!StartServiceW(hService, 0, nullptr)) {
+						ret = GetLastError();
+						if (ret == ERROR_SERVICE_ALREADY_RUNNING) {
+							ret = 0;
+							fprintf(stderr, "[WARNING]: The \"%ls\" service is already running, nothing to sart\n", serviceName);
+						}
+
+						if (ret != 0)
+							fprintf(stderr, "[ERROR]: Unable to start the \"%ls\" service: %u\n", serviceName, ret);
+					}
+				} else {
+					SERVICE_STATUS ss;
+					
+					if (!ControlService(hService, SERVICE_CONTROL_STOP, &ss)) {
+						ret = GetLastError();
+						if (ret == ERROR_SERVICE_NOT_ACTIVE) {
+							ret = 0;
+							fprintf(stderr, "[WARNING]: The \"%ls\" service is not active, nothing to stop\n", serviceName);
+						}
+
+						if (ret != 0)
+							fprintf(stderr, "[ERROR]: Unable to stop the \"%ls\" service: %u\n", serviceName, ret);
+					}
+				}
+
+				CloseServiceHandle(hService);
+			} else {
+				ret = GetLastError();
+				if (ret == ERROR_ACCESS_DENIED) {
+					ret = 0;
+					fprintf(stderr, "[WARNING]: Not enough privileges to access the \"%ls\" service, no action taken\n",serviceName);
+				}
+
+				if (ret != 0)
+					fprintf(stderr, "[ERROR]: Unable to access driver service: %u\n", ret);
+			}
+
+			CloseServiceHandle(hScm);
+		} else {
+			ret = GetLastError();
+			fprintf(stderr, "[ERROR]: Unable to open SCM: %u\n", ret);
+		}
+	}
+
+	return ret;
+}
+
 int wmain(int argc, wchar_t *argv[])
 {
 	int ret = 0;
@@ -888,6 +993,9 @@ int wmain(int argc, wchar_t *argv[])
 				break;
 			}
 		}
+
+		if (ret == 0)
+			ret = _service_action(true);
 	}
 
 	if (ret == 0) {
@@ -1038,6 +1146,8 @@ int wmain(int argc, wchar_t *argv[])
 
 			_finit_dlls();
 		} else fprintf(stderr, "[ERROR]: Unable to initialize DLLs: %u\n", ret);
+	
+		_service_action(false);
 	}
 
 	return ret;
