@@ -8,6 +8,8 @@
 #define MyAppUpdateURL "https://github.com/MartinDrab/IRPMon/releases"
 #define ConfigMode "Release"
 
+#include "path.iss"
+
 [Setup]
 AppId={{F913732F-475C-46F8-84AA-80FE454CC7ED}
 AppName={#MyAppName}
@@ -30,6 +32,7 @@ Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
 ArchitecturesInstallIn64BitMode=x64
+ChangesEnvironment=true
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -41,7 +44,7 @@ Name: "custom"; Description: "Custom installation"; Flags: iscustom
 [Components]
 Name: "Runtime"; Description: "Microsoft runtime libraries required by the program"; Types: full custom; Flags: fixed
 Name: "Libraries"; Description: "Libraries implementing basic IRPMon functionality"; Types: full custom; Flags: fixed
-Name: "CmdLine"; Description: "Command-line interface"; Types: full custom; Flags: fixed
+Name: "CmdLine"; Description: "Command-line interface"; Types: full custom;
 Name: "Kernel"; Description: "Kernel driver for monitoring device driver requests"; Types: full custom;
 Name: "Application"; Description: "Application for setting up the monitoring, browsing log files and managing IRPMon as a whole"; Types: full custom;
 Name: "Server"; Description: "Console application and service for receiving commands accross the network"; Types: full custom;
@@ -88,6 +91,7 @@ Name: ServerInstall; Description: "Install IRPMon server service"; Components: S
 Name: ServerAuto; Description: "Run IRPMon server on startup"; Components: Server and Kernel; GroupDescription: "Server service";
 Name: AppDesktop; Description: "Create Desktop shortcuts"; Components: Application; GroupDescription: "GUI Application";
 Name: AppStartMenu; Description: "Create Start Menu shortcuts"; Components: Application; GroupDescription: "GUI Application";
+Name: envPath; Description: "Add to PATH variable"; 
 
 [Run]
 Filename: "sc.exe"; Parameters: "start IRPMonDrv"; Description: "Start IRPMon driver"; Flags: postinstall shellexec unchecked;
@@ -314,8 +318,35 @@ If (Not Succeeded) And (servicesInstalled) Then
 end;
 
 Procedure CurStepChanged(CurStep: TSetupStep);
+Var
+  p : String;
 begin
+If (CurStep = ssPostInstall) And (IsTaskSelected('envPath')) Then
+  begin
+  p := ExpandConstant('{app}');
+  If IsWin64 Then
+    p := p + '\x64'
+   Else p := p + '\x86';
+
+  EnvAddPath(p);
+  end;
+
 Succeeded := (CurStep = ssDone);
+end;
+
+Procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+Var
+  p : String;
+begin
+If CurUninstallStep = usPostUninstall Then
+  begin
+  p := ExpandConstant('{app}');
+  If IsWin64 Then
+    p := p + '\x64'
+   Else p := p + '\x86';
+
+  EnvRemovePath(p);
+  end;
 end;
 
 Procedure InitializeUninstallProgressForm();
