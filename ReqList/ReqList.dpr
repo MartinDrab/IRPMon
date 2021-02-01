@@ -25,7 +25,9 @@ uses
   Utils in '..\shared\pas\Utils.pas',
   NameTables in '..\shared\pas\NameTables.pas',
   DataParsers in '..\shared\pas\DataParsers.pas',
-  BinaryLogHeader in '..\shared\pas\BinaryLogHeader.pas';
+  BinaryLogHeader in '..\shared\pas\BinaryLogHeader.pas',
+  ProcessList in '..\shared\pas\ProcessList.pas',
+  RefObject in '..\shared\pas\RefObject.pas';
 
 Type
   ERequestListObjectType = (
@@ -133,6 +135,7 @@ Function ReqListGetObjectName(AList:Pointer; AObject:Pointer; AType:ERequestList
 Var
   ret : Boolean;
   l : TRequestList;
+  pe : TProcessEntry;
   nameString : WideString;
 begin
 ret := False;
@@ -143,7 +146,14 @@ Case AType Of
   rlotDriver : ret := l.GetDriverName(AObject, nameString);
   rlotDevice : ret := l.GetDeviceName(AObject, nameString);
   rlotFile : ret := l.GetFileName(AObject, nameString);
-  rlotProcess : ret := l.GetProcessName(Cardinal(AObject), nameString);
+  rlotProcess : begin
+    ret := l.GetProcess(Cardinal(AObject), pe);
+    If ret Then
+      begin
+      nameString := pe.ImageName;
+      pe.Free;
+      end;
+    end;
   Else Result := ERROR_INVALID_PARAMETER;
   end;
 

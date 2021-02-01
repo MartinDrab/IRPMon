@@ -11,7 +11,8 @@ Uses
   IRPMonDll,
   AbstractRequest,
   IRPMonRequest,
-  DataParsers;
+  DataParsers,
+  ProcessList;
 
 Type
   TRequestList = Class;
@@ -25,7 +26,7 @@ Type
       FDriverMap : TDictionary<Pointer, WideString>;
       FDeviceMap : TDictionary<Pointer, WideString>;
       FFileMap : TDictionary<Pointer, WideString>;
-      FProcessMap : TDictionary<Cardinal, WideString>;
+      FProcessMap : TObjectDictionary<Cardinal, TProcessEntry>;
       FParsers : TObjectList<TDataParser>;
     Protected
       Function GetCount:Integer;
@@ -49,7 +50,7 @@ Type
       Function GetDriverName(AObject:Pointer; Var AName:WideString):Boolean;
       Function GetDeviceName(AObject:Pointer; Var AName:WideString):Boolean;
       Function GetFileName(AObject:Pointer; Var AName:WideString):Boolean;
-      Function GetProcessName(AProcessId:Cardinal; Var AName:WideString):Boolean;
+      Function GetProcess(AProcessId:Cardinal; Var AEntry:TProcessEntry):Boolean;
 
       Property FilterDisplayOnly : Boolean Read FFilterDisplayOnly Write SetFilterDisplayOnly;
       Property Parsers : TObjectList<TDataParser> Read FParsers Write FParsers;
@@ -83,7 +84,7 @@ FAllRequests := TList<TDriverRequest>.Create;
 FDriverMap := TDictionary<Pointer, WideString>.Create;
 FDeviceMap := TDictionary<Pointer, WideString>.Create;
 FFileMap := TDictionary<Pointer, WideString>.Create;
-FProcessMap := TDictionary<Cardinal, WideString>.Create;
+FProcessMap := TObjectDictionary<Cardinal, TProcessEntry>.Create;
 RefreshMaps;
 end;
 
@@ -178,7 +179,7 @@ Var
   deviceName : WideString;
   driverName : WideString;
   fileName : WideString;
-  processName : WideString;
+  pe : TProcessEntry;
 begin
 Result := 0;
 While Assigned(ABuffer) Do
@@ -224,15 +225,22 @@ While Assigned(ABuffer) Do
       If FProcessMap.ContainsKey(Cardinal(dr.DriverObject)) Then
         FProcessMap.Remove(Cardinal(dr.DriverObject));
 
-      FProcessMap.Add(Cardinal(dr.DriverObject), dr.DriverName);
+      pe := TProcessEntry.Create(dr As TProcessCreatedRequest);;
+      FProcessMap.Add(Cardinal(dr.DriverObject), pe);
       end;
-    ertProcessExitted : dr := TProcessExittedRequest.Create(ABuffer.ProcessExitted);
+    ertProcessExitted : begin
+      dr := TProcessExittedRequest.Create(ABuffer.ProcessExitted);
+      If FProcessMap.TryGetValue(dr.ProcessId, pe) Then
+        pe.Terminate;
+      end;
     ertImageLoad : begin
       dr := TImageLoadRequest.Create(ABuffer.ImageLoad);
       If FFileMap.ContainsKey(dr.FileObject) Then
         FFileMap.Remove(dr.FileObject);
 
       FFileMap.Add(dr.FileObject, dr.FileName);
+      If FProcessMap.TryGetValue(dr.ProcessId, pe) Then
+        pe.AddImage(dr As TImageLoadRequest);
       end;
     Else dr := TDriverRequest.Create(ABuffer.Header);
     end;
@@ -246,8 +254,8 @@ While Assigned(ABuffer) Do
   If FFileMap.TryGetValue(dr.FileObject, fileName) Then
     dr.SetFileName(fileName);
 
-  If FProcessMap.TryGetValue(dr.ProcessId, processName) Then
-    dr.SetProcessName(processName);
+  If FProcessMap.TryGetValue(dr.ProcessId, pe) Then
+    dr.SetProcessName(pe.BaseName);
 
   If FFilterDisplayOnly Then
     FAllRequests.Add(dr);
@@ -446,9 +454,11 @@ begin
 Result := FFileMap.TryGetValue(AObject, AName);
 end;
 
-Function TRequestList.GetProcessName(AProcessId:Cardinal; Var AName:WideString):Boolean;
+Function TRequestList.GetProcess(AProcessId:Cardinal; Var AEntry:TProcessEntry):Boolean;
 begin
-Result := FProcessMap.TryGetValue(AProcessId, AName);
+Result := FProcessMap.TryGetValue(AProcessId, AEntry);
+If Result Then
+  AEntry.Reference;
 end;
 
 

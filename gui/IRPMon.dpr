@@ -49,7 +49,9 @@ uses
   AddDeviceRequest in '..\shared\pas\AddDeviceRequest.pas',
   IRPCompleteRequest in '..\shared\pas\IRPCompleteRequest.pas',
   StartIoRequest in '..\shared\pas\StartIoRequest.pas',
-  RequestList in '..\shared\pas\RequestList.pas';
+  RequestList in '..\shared\pas\RequestList.pas',
+  ProcessList in '..\shared\pas\ProcessList.pas',
+  RefObject in '..\shared\pas\RefObject.pas';
 
 {$R *.res}
 
