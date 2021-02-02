@@ -5,6 +5,7 @@
 #include "request.h"
 #include "utils.h"
 #include "req-queue.h"
+#include "process-events.h"
 #include "image-load.h"
 
 
@@ -45,6 +46,9 @@ static void _ImageNotify(PUNICODE_STRING FullImageName, HANDLE ProcessId, PIMAGE
 		ilr->DataSize = uImageName.Length;
 		memcpy(ilr + 1, uImageName.Buffer, uImageName.Length);
 		_SetRequestFlags(&ilr->Header, &clientInfo);
+		if (!ilr->KernelDriver)
+			RecordImageLoad(ilr);
+		
 		RequestQueueInsert(&ilr->Header);
 	}
 

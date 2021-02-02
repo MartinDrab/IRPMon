@@ -8,6 +8,7 @@ EXPORTS
 	RequestEmulateFileNameDeleted
 	RequestEmulateProcessCreated
 	RequestEmulateProcessExitted
+	RequestEmulateImageLoad
 	RequestMemoryAlloc
 	RequestMemoryFree
 

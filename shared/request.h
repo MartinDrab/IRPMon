@@ -42,6 +42,7 @@ ERROR_TYPE RequestEmulateFileNameAssigned(void *FileObject, const wchar_t *FileN
 ERROR_TYPE RequestEmulateFileNameDeleted(void *FileObject, PREQUEST_FILE_OBJECT_NAME_DELETED *Request);
 ERROR_TYPE RequestEmulateProcessCreated(HANDLE ProcessId, HANDLE ParentId, const wchar_t *ImageName, const wchar_t *CommandLine, PREQUEST_PROCESS_CREATED *Request);
 ERROR_TYPE RequestEmulateProcessExitted(HANDLE ProcessId, PREQUEST_PROCESS_EXITTED *Request);
+ERROR_TYPE RequestEmulateImageLoad(HANDLE ProcessId, void *BaseAddress, size_t ImageSize, const wchar_t *ImageName, PREQUEST_IMAGE_LOAD *Request);
 
 #ifdef _KERNEL_MODE
 void _SetRequestFlags(PREQUEST_HEADER Request, const BASIC_CLIENT_INFO *Info);

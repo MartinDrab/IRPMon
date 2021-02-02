@@ -1,5 +1,6 @@
 
 #include <ntifs.h>
+#include <fltkernel.h>
 #include "preprocessor.h"
 #include "allocator.h"
 #include "process-context-table.h"
@@ -102,6 +103,8 @@ NTSTATUS PsTableInsert(PPS_CONTEXT_TABLE Table, HANDLE ProcessId, const void *Bu
 			memset(psc, 0, sizeof(PROCESS_OBJECT_CONTEXT) + Length);
 			InterlockedExchange(&psc->ReferenceCount, 1);
 			psc->FreeRoutine = Table->PsCFreeRoutine;
+			InitializeListHead(&psc->DllListHead);
+			FltInitializePushLock(&psc->DllListLock);
 			psc->DataSize = Length;
 			memcpy(psc + 1, Buffer, Length);
 			entry.ProcessId = ProcessId;
@@ -222,11 +225,20 @@ NTSTATUS PsTableEnum(PPS_CONTEXT_TABLE Table, PPROCESS_OBJECT_CONTEXT **PsContex
 
 void PsContextDereference(PPROCESS_OBJECT_CONTEXT PsContext)
 {
+	PPROCESS_DLL_ENTRY tmp = NULL;
+	PPROCESS_DLL_ENTRY old = NULL;
 	DEBUG_ENTER_FUNCTION("PsContext=0x%p", PsContext);
 
 	if (InterlockedDecrement(&PsContext->ReferenceCount) == 0) {
 		if (PsContext->FreeRoutine != NULL)
 			PsContext->FreeRoutine(PS_CONTEXT_TO_DATA(PsContext));
+
+		tmp = CONTAINING_RECORD(PsContext->DllListHead.Flink, PROCESS_DLL_ENTRY, Entry);
+		while (&tmp->Entry != &PsContext->DllListHead) {
+			old = tmp;
+			tmp = CONTAINING_RECORD(tmp->Entry.Flink, PROCESS_DLL_ENTRY, Entry);
+			HeapMemoryFree(old);
+		}
 
 		HeapMemoryFree(PsContext);
 	}

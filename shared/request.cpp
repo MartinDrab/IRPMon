@@ -296,6 +296,32 @@ ERROR_TYPE RequestEmulateProcessExitted(HANDLE ProcessId, PREQUEST_PROCESS_EXITT
 }
 
 
+ERROR_TYPE RequestEmulateImageLoad(HANDLE ProcessId, void *BaseAddress, size_t ImageSize, const wchar_t *ImageName, PREQUEST_IMAGE_LOAD *Request)
+{
+	size_t nameLen = 0;
+	ERROR_TYPE ret = ERROR_VALUE_INVAL;
+	PREQUEST_IMAGE_LOAD tmpRequest = NULL;
+
+	if (ImageName != NULL)
+		nameLen = wcslen(ImageName)*sizeof(wchar_t);
+
+	tmpRequest = (PREQUEST_IMAGE_LOAD)RequestMemoryAlloc(sizeof(REQUEST_IMAGE_LOAD) + nameLen);
+	if (tmpRequest != NULL) {
+		_RequestHeaderInit(&tmpRequest->Header, NULL, NULL, ertImageLoad);
+		tmpRequest->Header.ProcessId = ProcessId;
+		tmpRequest->ImageBase = BaseAddress;
+		tmpRequest->ImageSize = ImageSize;
+		tmpRequest->KernelDriver = (ProcessId == NULL);
+		tmpRequest->DataSize = (ULONG)nameLen;
+		memcpy(tmpRequest + 1, ImageName, tmpRequest->DataSize);
+		*Request = tmpRequest;
+		ret = ERROR_VALUE_SUCCESS;
+	} else ret = ERROR_VALUE_NOMEM;
+
+	return ret;
+}
+
+
 PREQUEST_HEADER RequestMemoryAlloc(size_t Size)
 {
 	PREQUEST_HEADER ret = NULL;

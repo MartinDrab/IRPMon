@@ -113,6 +113,29 @@ static NTSTATUS _ProcessExittedEventAlloc(HANDLE ProcessId, PREQUEST_PROCESS_EXI
 }
 
 
+static NTSTATUS _ImageLoadEventAlloc(HANDLE ProcessId, const PROCESS_DLL_ENTRY *Entry, PREQUEST_IMAGE_LOAD *Request)
+{
+	PREQUEST_IMAGE_LOAD tmpRequest = NULL;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION("ProcessId=0x%p; Entry=0x%p; Request=0x%p", ProcessId, Entry, Request);
+
+	tmpRequest = (PREQUEST_IMAGE_LOAD)RequestMemoryAlloc(sizeof(REQUEST_IMAGE_LOAD) + Entry->InageNameLen);
+	if (tmpRequest != NULL) {
+		RequestHeaderInit(&tmpRequest->Header, NULL, NULL, ertImageLoad);
+		tmpRequest->Header.ProcessId = ProcessId;
+		tmpRequest->ImageBase = Entry->ImageBase;
+		tmpRequest->ImageSize = Entry->ImageSize;
+		tmpRequest->DataSize = Entry->InageNameLen;
+		memcpy(tmpRequest + 1, Entry + 1, tmpRequest->DataSize);
+		*Request = tmpRequest;
+		status = STATUS_SUCCESS;
+	} else status = STATUS_INSUFFICIENT_RESOURCES;
+
+	DEBUG_EXIT_FUNCTION("0x%x, *Request=0x%p", status, *Request);
+	return status;
+}
+
+
 static void _ProcessNotifyEx(PEPROCESS Process, HANDLE ProcessId, PPS_CREATE_NOTIFY_INFO CreateInfo)
 {
 	PPROCESS_RECORD pr = NULL;
@@ -241,16 +264,18 @@ NTSTATUS ListProcessesByEvents(PLIST_ENTRY EventListHead)
 	ULONG count = 0;
 	PS_CREATE_NOTIFY_INFO info;
 	PPROCESS_RECORD record = NULL;
+	PREQUEST_IMAGE_LOAD ilr = NULL;
 	PPROCESS_OBJECT_CONTEXT psc = NULL;
 	PREQUEST_PROCESS_CREATED request = NULL;
 	PPROCESS_OBJECT_CONTEXT *contexts = NULL;
+	const PROCESS_DLL_ENTRY *dllEntry = NULL;
 	NTSTATUS status = STATUS_INSUFFICIENT_RESOURCES;
 	DEBUG_ENTER_FUNCTION("EventListHead=0x%p", EventListHead);
 
 	status = PsTableEnum(&_processTable, &contexts, &count);
 	if (NT_SUCCESS(status)) {
 		if (count > 0) {
-			for (ULONG i = 0; i < count; ++i) {
+			for (size_t i = 0; i < count; ++i) {
 				psc = contexts[i];
 				if (NT_SUCCESS(status)) {
 					record = (PPROCESS_RECORD)PS_CONTEXT_TO_DATA(psc);
@@ -263,6 +288,19 @@ NTSTATUS ListProcessesByEvents(PLIST_ENTRY EventListHead)
 					if (NT_SUCCESS(status)) {
 						request->Header.Flags |= REQUEST_FLAG_EMULATED;
 						InsertTailList(EventListHead, &request->Header.Entry);
+						FltAcquirePushLockShared(&psc->DllListLock);
+						dllEntry = CONTAINING_RECORD(psc->DllListHead.Flink, PROCESS_DLL_ENTRY, Entry);
+						while (&dllEntry->Entry != &psc->DllListHead) {
+							status = _ImageLoadEventAlloc(record->ProcessId, dllEntry, &ilr);
+							if (NT_SUCCESS(status)) {
+								ilr->Header.Flags |= REQUEST_FLAG_EMULATED;
+								InsertTailList(EventListHead, &ilr->Header.Entry);
+							}
+
+							dllEntry = CONTAINING_RECORD(dllEntry->Entry.Flink, PROCESS_DLL_ENTRY, Entry);
+						}
+
+						FltReleasePushLock(&psc->DllListLock);
 					}
 				}
 
@@ -278,6 +316,37 @@ NTSTATUS ListProcessesByEvents(PLIST_ENTRY EventListHead)
 }
 
 
+NTSTATUS RecordImageLoad(const REQUEST_IMAGE_LOAD *Request)
+{
+	PPROCESS_DLL_ENTRY pde = NULL;
+	PPROCESS_OBJECT_CONTEXT psc = NULL;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION("Request=0x%p", Request);
+
+	status = STATUS_SUCCESS;
+	psc = PsTableGet(&_processTable, Request->Header.ProcessId);
+	if (psc != NULL) {
+		pde = HeapMemoryAllocPaged(sizeof(PROCESS_DLL_ENTRY) + Request->DataSize);
+		if (pde != NULL) {
+			RtlSecureZeroMemory(pde, sizeof(PROCESS_DLL_ENTRY) + Request->DataSize);
+			InitializeListHead(&pde->Entry);
+			pde->ImageBase = Request->ImageBase;
+			pde->ImageSize = Request->ImageSize;
+			pde->InageNameLen = Request->DataSize;
+			memcpy(pde + 1, Request + 1, pde->InageNameLen);
+			FltAcquirePushLockExclusive(&psc->DllListLock);
+			InsertTailList(&psc->DllListHead, &pde->Entry);
+			FltReleasePushLock(&psc->DllListLock);
+		} else status = STATUS_INSUFFICIENT_RESOURCES;
+
+		PsContextDereference(psc);
+	} else status = STATUS_NOT_FOUND;
+
+	DEBUG_EXIT_FUNCTION("0x%x", status);
+	return status;
+}
+
+
 /************************************************************************/
 /*                   INITIALIZATION AND FINALIZATION                    */
 /************************************************************************/
@@ -285,7 +354,6 @@ NTSTATUS ListProcessesByEvents(PLIST_ENTRY EventListHead)
 
 NTSTATUS ProcessEventsModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context)
 {
-//	PKLDR_DATA_TABLE_ENTRY loaderEntry = NULL;
 	UNICODE_STRING uRoutineName;
 	OSVERSIONINFOW vi;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;

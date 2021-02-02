@@ -109,6 +109,7 @@ EXPORTS
 	RequestEmulateFileNameDeleted
 	RequestEmulateProcessCreated
 	RequestEmulateProcessExitted
+	RequestEmulateImageLoad
 	_SetRequestFlags
 	RequestMemoryAlloc
 	RequestMemoryFree
@@ -182,6 +183,7 @@ EXPORTS
 	HookHandlerFastIoMdlWriteCompleteCompressed
 	HookHandlerIRPDisptach
 	ListProcessesByEvents
+	RecordImageLoad
 	ProxySetDriverObject
 
 	BLEnabled
