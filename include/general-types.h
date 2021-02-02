@@ -113,7 +113,12 @@ typedef enum _ERequestHeaderFlags {
 	REQUEST_FLAG_PAGED = 0x80,
 	/// The request data was allocated from nonpaged pool.
 	REQUEST_FLAG_NONPAGED = 0x100,
+	/// Last REQUEST_STACKTRACE_SIZE*sizeof(void*)s of the request is its usermode stacktrace.
+	REQUEST_FLAG_STACKTRACE	= 0x200,
 } ERequestHeaderFlags, * PERequestHeaderFlags;
+
+/// Number of frames in the stacktrace.
+#define REQUEST_STACKTRACE_SIZE				32
 
 /// Header, containing information common for all request types.
 typedef struct _REQUEST_HEADER {

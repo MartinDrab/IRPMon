@@ -143,6 +143,9 @@ size_t RequestGetSize(const REQUEST_HEADER *Header)
 			break;
 	}
 
+	if ((Header->Flags & REQUEST_FLAG_STACKTRACE) != 0)
+		ret += REQUEST_STACKTRACE_SIZE *sizeof(void *);
+
 	return ret;
 }
 

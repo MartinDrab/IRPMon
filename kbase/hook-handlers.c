@@ -29,14 +29,35 @@ static FO_CONTEXT_TABLE _foTable;
 /*                        HELPER ROUTINES                               */
 /************************************************************************/
 
+static ULONG _CaptureStackTrace(size_t FrameCount, void **Frames)
+{
+	ULONG ret = 0;
+
+	RtlSecureZeroMemory(Frames, FrameCount*sizeof(void *));
+	if (KeGetCurrentIrql() == PASSIVE_LEVEL && 
+		ExGetPreviousMode() == UserMode)
+		ret = RtlWalkFrameChain(Frames, (ULONG)FrameCount, 1);
+
+	return ret;
+}
+
 
 static PREQUEST_FASTIO _CreateFastIoRequest(EFastIoOperationType FastIoType, PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT DeviceObject, PVOID FileObject, PVOID Arg1, PVOID Arg2, PVOID Arg3, PVOID Arg4, PVOID Arg5, PVOID Arg6, PVOID Arg7, SIZE_T ExtraBytes)
 {
 	PREQUEST_FASTIO ret = NULL;
 	BASIC_CLIENT_INFO clientInfo;
 	PFILE_OBJECT_CONTEXT foc = NULL;
+	ULONG frameCount = 0;
+	void *frames[REQUEST_STACKTRACE_SIZE];
+	size_t stackTraceSize = 0;
+	size_t totalSize = 0;
 
-	ret = (PREQUEST_FASTIO)RequestMemoryAlloc(sizeof(REQUEST_FASTIO) + ExtraBytes);
+	frameCount = _CaptureStackTrace(sizeof(frames) / sizeof(frames[0]), frames);
+	if (frameCount > 0)
+		stackTraceSize = sizeof(frames);
+
+	totalSize = sizeof(REQUEST_FASTIO) + ExtraBytes + stackTraceSize;
+	ret = (PREQUEST_FASTIO)RequestMemoryAlloc(totalSize);
 	if (ret != NULL) {
 		RequestHeaderInit(&ret->Header, DriverObject, DeviceObject, ertFastIo);
 		ret->FastIoType = FastIoType;
@@ -52,6 +73,11 @@ static PREQUEST_FASTIO _CreateFastIoRequest(EFastIoOperationType FastIoType, PDR
 		ret->DataSize = (ULONG)ExtraBytes;
 		ret->IOSBInformation = 0;
 		ret->IOSBStatus = STATUS_UNSUCCESSFUL;
+		if (frameCount > 0) {
+			ret->Header.Flags |= REQUEST_FLAG_STACKTRACE;
+			memcpy((unsigned char *)ret + totalSize - stackTraceSize, frames, stackTraceSize);
+		}
+
 		foc = FoTableGet(&_foTable, FileObject);
 		if (foc != NULL) {
 			clientInfo = *(PBASIC_CLIENT_INFO)(foc + 1);
@@ -1432,12 +1458,21 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 
 			if (driverRecord->MonitorIRP) {
 				DATA_LOGGER_RESULT loggedData;
+				ULONG frameCount = 0;
+				void *frames[REQUEST_STACKTRACE_SIZE];
+				size_t stackTraceSize = 0;
+				size_t totalSize = 0;
 
 				memset(&loggedData, 0, sizeof(loggedData));
 				if (driverRecord->MonitorData)
 					IRPDataLogger(Deviceobject, Irp, irpStack, FALSE, &loggedData);
 
-				request = (PREQUEST_IRP)RequestMemoryAlloc(sizeof(REQUEST_IRP) + loggedData.BufferSize);
+				frameCount = _CaptureStackTrace(sizeof(frames) / sizeof(frames[0]), frames);
+				if (frameCount > 0)
+					stackTraceSize = sizeof(frames);
+
+				totalSize = sizeof(REQUEST_IRP) + loggedData.BufferSize + stackTraceSize;
+				request = (PREQUEST_IRP)RequestMemoryAlloc(totalSize);
 				if (request != NULL) {
 					RequestHeaderInit(&request->Header, Deviceobject->DriverObject, Deviceobject, ertIRP);
 					RequestHeaderSetResult(request->Header, NTSTATUS, STATUS_PENDING);
@@ -1457,6 +1492,11 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 					request->RequestorProcessId = IoGetRequestorProcessId(Irp);
 					_SetRequestFlags(&request->Header, &clientInfo);
 					IRPDataLoggerSetRequestFlags(&request->Header, &loggedData);
+					if (frameCount > 0) {
+						request->Header.Flags |= REQUEST_FLAG_STACKTRACE;
+						memcpy((unsigned char*)request + totalSize - stackTraceSize, frames, stackTraceSize);
+					}
+
 					if (loggedData.BufferSize > 0 && loggedData.Buffer != NULL) {
 						request->DataSize = loggedData.BufferSize;
 						__try {
