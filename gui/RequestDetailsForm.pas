@@ -25,6 +25,8 @@ Type
     CopyValueMenuItem: TMenuItem;
     CopyLineMenuItem: TMenuItem;
     CopyAllMenuItem: TMenuItem;
+    StackTabSheet: TTabSheet;
+    StackListView: TListView;
     Procedure OkButtonClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure CopyClick(Sender: TObject);
@@ -33,6 +35,7 @@ Type
     FRequest : TDriverRequest;
     FParsers : TObjectList<TDataParser>;
     Procedure ProcessParsers;
+    Procedure ProcessStack;
   Public
     Constructor Create(AOwner:TComponent; ARequest:TDriverRequest; AParsers:TObjectList<TDataParser>); Reintroduce;
   end;
@@ -127,6 +130,23 @@ values.Free;
 names.Free;
 end;
 
+Procedure TRequestDetailsFrm.ProcessStack;
+Var
+  I : Integer;
+  pframe : PPointer;
+begin
+pframe := FRequest.StackFrames;
+For I := 0 To FRequest.StackFrameCount - 1 Do
+  begin
+  With StackListView.Items.Add Do
+    begin
+    Caption := Format('0x%p', [pframe^]);
+    end;
+
+  Inc(pframe);
+  end;
+end;
+
 Procedure TRequestDetailsFrm.FormCreate(Sender: TObject);
 Var
   value : WideString;
@@ -149,6 +169,9 @@ With NameValueListVIew.Items.Add Do
   Caption := 'Data size';
   SubItems.Add(Format('%d', [FRequest.DataSize]));
   end;
+
+If FRequest.StackFrameCount > 0 Then
+  ProcessStack;
 
 If FRequest.DataSize > 0 Then
   ProcessParsers;
