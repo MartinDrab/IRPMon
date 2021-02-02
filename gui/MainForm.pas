@@ -12,7 +12,7 @@ Uses
   Generics.Collections, RequestFilter,
   IRPMonDll, RequestListModel, ExtCtrls,
   HookObjects, RequestThread, DataParsers,
-  IRPMonRequest
+  IRPMonRequest, ProcessList
 {$IFNDEF FPC}
   , AppEvnts
 {$ENDIF}
@@ -90,6 +90,10 @@ Type
     AutoStartMenuItem: TMenuItem;
     DemandStartMenuItem: TMenuItem;
     DisabledStartMenuItem: TMenuItem;
+    ProcessTabSheet: TTabSheet;
+    ProcessLowerPanel: TPanel;
+    DLLListView: TListView;
+    ProcessListView: TListView;
     Procedure ClearMenuItemClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure CaptureEventsMenuItemClick(Sender: TObject);
@@ -119,6 +123,11 @@ Type
     procedure IgnoreLogFileHeadersMenuItemClick(Sender: TObject);
     procedure CopyVisibleColumnsMenuItemClick(Sender: TObject);
     procedure DriverStartMenuItemClick(Sender: TObject);
+    procedure DLLListViewData(Sender: TObject; Item: TListItem);
+    procedure ProcessListViewData(Sender: TObject; Item: TListItem);
+    procedure ProcessListViewSelectItem(Sender: TObject; Item: TListItem;
+      Selected: Boolean);
+    procedure ProcessTabSheetShow(Sender: TObject);
   Private
 {$IFDEF FPC}
     FAppEvents: TApplicationProperties;
@@ -133,6 +142,8 @@ Type
     FRequestMsgCode : Cardinal;
     FParsers : TObjectList<TDataParser>;
     FFilters : TObjectList<TRequestFilter>;
+    FProcesses : TObjectList<TProcessEntry>;
+    FDLLList : TObjectList<TImageEntry>;
     Procedure EnumerateHooks;
     Procedure EnumerateClassWatches;
     Procedure EnumerateDriverNameWatches;
@@ -285,13 +296,17 @@ With THookProgressFrm.Create(Application, taskList) Do
   end;
 
 FFilters.Free;
+FDLLList.Free;
+FProcesses.Free;
 end;
 
 Procedure TMainFrm.FormCreate(Sender: TObject);
 Var
   fileName : WideString;
   filtersLoaded : Boolean;
-  begin
+begin
+FProcesses := TObjectList<TProcessEntry>.Create;
+FDLLList := TObjectList<TImageEntry>.Create;
 FFilters := TObjectList<TRequestFilter>.Create;
 filtersLoaded := False;
 fileName := GetLocalSettingsDirectory + 'filters.ini';
@@ -520,6 +535,19 @@ end;
 Procedure TMainFrm.DataParsersTabSheetShow(Sender: TObject);
 begin
 DataParsersListView.Items.Count := FParsers.Count;
+end;
+
+Procedure TMainFrm.DLLListViewData(Sender: TObject; Item: TListItem);
+Var
+  entry : TImageEntry;
+begin
+With Item Do
+  begin
+  entry := FDLLList[Index];
+  Caption := Format('0x%p', [entry.BaseAddress]);
+  SubItems.Add(Format('%u', [entry.ImageSize]));
+  SubItems.Add(entry.FiileName);
+  end;
 end;
 
 Procedure TMainFrm.Documentation1Click(Sender: TObject);
@@ -1106,6 +1134,55 @@ If Not invalidButton Then
     Else ErrorMessage('Unable to set filter condition');
     end
   Else Clipboard.AsText := value;
+  end;
+end;
+
+Procedure TMainFrm.ProcessListViewData(Sender: TObject; Item: TListItem);
+Var
+  entry : TProcessEntry;
+begin
+With Item Do
+  begin
+  entry := FProcesses[Index];
+  Caption := Format('%u', [entry.ProcessId]);
+  SubItems.Add(entry.ImageName);
+  SubItems.Add(BoolToStr(entry.Terminated));
+  end;
+end;
+
+Procedure TMainFrm.ProcessListViewSelectItem(Sender: TObject; Item: TListItem;
+  Selected: Boolean);
+Var
+  entry : TProcessEntry;
+begin
+DLLListView.Items.Count := 0;
+FDLLList.Clear;
+If (Assigned(Item)) And (Selected) Then
+  begin
+  entry := FProcesses[Item.Index];
+  entry.EnumImages(FDLLList);
+  DLLListView.Items.Count := FDLLList.Count;
+  end;
+end;
+
+Procedure TMainFrm.ProcessTabSheetShow(Sender: TObject);
+Var
+  I : Integer;
+  L : TListItem;
+  selectedEntry : TProcessEntry;
+begin
+selectedEntry := Nil;
+L := ProcessListView.Selected;
+If Assigned(L) Then
+  selectedEntry := FProcesses[L.Index];
+
+FProcesses.Clear;
+FModel.List.EnumProcesses(FProcesses);
+ProcessListView.Items.Count := FProcesses.Count;
+For I := 0 To FProcesses.Count - 1 Do
+  begin
+  If FProcesses[I] = selectedEntry Then
+    ProcessListView.Items[I].Selected := True;
   end;
 end;
 

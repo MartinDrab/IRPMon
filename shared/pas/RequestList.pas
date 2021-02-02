@@ -51,6 +51,7 @@ Type
       Function GetDeviceName(AObject:Pointer; Var AName:WideString):Boolean;
       Function GetFileName(AObject:Pointer; Var AName:WideString):Boolean;
       Function GetProcess(AProcessId:Cardinal; Var AEntry:TProcessEntry):Boolean;
+      Procedure EnumProcesses(AList:TObjectList<TProcessEntry>);
 
       Property FilterDisplayOnly : Boolean Read FFilterDisplayOnly Write SetFilterDisplayOnly;
       Property Parsers : TObjectList<TDataParser> Read FParsers Write FParsers;
@@ -459,6 +460,18 @@ begin
 Result := FProcessMap.TryGetValue(AProcessId, AEntry);
 If Result Then
   AEntry.Reference;
+end;
+
+Procedure TRequestList.EnumProcesses(AList:TObjectList<TProcessEntry>);
+Var
+  entry : TProcessEntry;
+  p : TPair<Cardinal, TProcessEntry>;
+begin
+For p In FProcessMap Do
+  begin
+  entry := p.Value.Reference As TProcessEntry;
+  AList.Add(entry);
+  end;
 end;
 
 

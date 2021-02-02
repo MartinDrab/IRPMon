@@ -46,6 +46,7 @@ Type
       Property OnRequestProcessed : TRequestListOnRequestProcessed Read GetOnRequestProcessed Write SetOnRequestProcessed;
       Property TotalCount : Integer Read GetTotalCount;
       Property Parsers : TObjectList<TDataParser> Read GetParsers Write SetParsers;
+      Property List : TRequestList Read FList;
     end;
 
 Implementation
