@@ -138,7 +138,6 @@ Const
     'FileMaximumInformation'
   );
 
-
 Type
   BUS_QUERY_ID_TYPE = (
     BusQueryDeviceID = 0,       // <Enumerator>\<Enumerator-specific device id>
@@ -412,6 +411,9 @@ Const
   REQUEST_FLAG_NEXT_AVAILABLE      = $20;
   REQUEST_FLAG_PAGED					     = $80;
   REQUEST_FLAG_NONPAGED				     = $100;
+  REQUEST_FLAG_STACKTRACE          = $200;
+
+  REQUEST_STACKTRACE_SIZE          = 32;
 
 Type
   (** Header, containing information common for all request types. *)

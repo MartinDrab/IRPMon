@@ -39,6 +39,8 @@ Type
     FAdmin : Boolean;
     FImpersonated : Boolean;
     FImpersonatedAdmin : Boolean;
+    FStackFrames : PPointer;
+    FStackFrameCount : Cardinal;
   Public
     Constructor Create(Var ARequest:REQUEST_HEADER); Overload;
     Destructor Destroy; Override;
@@ -87,6 +89,8 @@ Type
     Property DataStripped : Boolean Read FDataStripped;
     Property ProcessName : WideString Read FProcessName;
     Property ImpersonatedAdmin : Boolean Read FImpersonatedAdmin;
+    Property StackFrames : PPointer Read FStackFrames;
+    Property StackFrameCount : Cardinal Read FStackFrameCount;
   end;
 
 Implementation
@@ -98,6 +102,8 @@ Uses
 (** TGeneralRequest **)
 
 Constructor TGeneralRequest.Create(Var ARequest:REQUEST_HEADER);
+Var
+  frame : Pointer;
 begin
 Inherited Create;
 FId := ARequest.Id;
@@ -129,6 +135,17 @@ FDataStripped := (ARequest.Flags And REQUEST_FLAG_DATA_STRIPPED) <> 0;
 FAdmin := (ARequest.Flags And REQUEST_FLAG_ADMIN) <> 0;
 FImpersonated := (ARequest.Flags And REQUEST_FLAG_IMPERSONATED) <> 0;
 FImpersonatedAdmin := (ARequest.Flags And REQUEST_FLAG_IMPERSONATED_ADMIN) <> 0;
+If (ARequest.Flags And REQUEST_FLAG_STACKTRACE) <> 0 Then
+  begin
+  FStackFrames := PPointer(PByte(FRaw) + FRawSize - SizeOf(Pointer)*REQUEST_STACKTRACE_SIZE);
+  FStackFrameCount := REQUEST_STACKTRACE_SIZE;
+  Repeat
+  frame := PPointer(PByte(FStackFrames) + SizeOf(Pointer)*(FStackFrameCount - 1))^;
+  If Assigned(frame) Then
+    Dec(FStackFrameCount);
+
+  Until (FStackFrameCount = 0) Or (Assigned(frame));
+  end;
 end;
 
 Destructor TGeneralRequest.Destroy;
