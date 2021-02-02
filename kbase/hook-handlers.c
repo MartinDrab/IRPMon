@@ -29,18 +29,6 @@ static FO_CONTEXT_TABLE _foTable;
 /*                        HELPER ROUTINES                               */
 /************************************************************************/
 
-static ULONG _CaptureStackTrace(size_t FrameCount, void **Frames)
-{
-	ULONG ret = 0;
-
-	RtlSecureZeroMemory(Frames, FrameCount*sizeof(void *));
-	if (KeGetCurrentIrql() == PASSIVE_LEVEL && 
-		ExGetPreviousMode() == UserMode)
-		ret = RtlWalkFrameChain(Frames, (ULONG)FrameCount, 1);
-
-	return ret;
-}
-
 
 static PREQUEST_FASTIO _CreateFastIoRequest(EFastIoOperationType FastIoType, PDRIVER_OBJECT DriverObject, PDEVICE_OBJECT DeviceObject, PVOID FileObject, PVOID Arg1, PVOID Arg2, PVOID Arg3, PVOID Arg4, PVOID Arg5, PVOID Arg6, PVOID Arg7, SIZE_T ExtraBytes)
 {
@@ -52,7 +40,7 @@ static PREQUEST_FASTIO _CreateFastIoRequest(EFastIoOperationType FastIoType, PDR
 	size_t stackTraceSize = 0;
 	size_t totalSize = 0;
 
-	frameCount = _CaptureStackTrace(sizeof(frames) / sizeof(frames[0]), frames);
+	frameCount = UtilsCaptureStackTrace(sizeof(frames) / sizeof(frames[0]), frames);
 	if (frameCount > 0)
 		stackTraceSize = sizeof(frames);
 
@@ -1467,7 +1455,7 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 				if (driverRecord->MonitorData)
 					IRPDataLogger(Deviceobject, Irp, irpStack, FALSE, &loggedData);
 
-				frameCount = _CaptureStackTrace(sizeof(frames) / sizeof(frames[0]), frames);
+				frameCount = UtilsCaptureStackTrace(sizeof(frames) / sizeof(frames[0]), frames);
 				if (frameCount > 0)
 					stackTraceSize = sizeof(frames);
 
