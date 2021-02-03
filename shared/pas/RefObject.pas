@@ -34,7 +34,8 @@ end;
 
 Procedure TRefObject.Free;
 begin
-If InterlockedDecrement(FReferenceCount) = 0 Then
+If (Assigned(Self)) And
+  (InterlockedDecrement(FReferenceCount) = 0) Then
   Inherited Free;
 end;
 

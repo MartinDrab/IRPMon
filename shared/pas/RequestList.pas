@@ -181,6 +181,8 @@ Var
   driverName : WideString;
   fileName : WideString;
   pe : TProcessEntry;
+  ilr : TImageLoadRequest;
+  pcr : TProcessCreatedRequest;
 begin
 Result := 0;
 While Assigned(ABuffer) Do
@@ -226,7 +228,8 @@ While Assigned(ABuffer) Do
       If FProcessMap.ContainsKey(Cardinal(dr.DriverObject)) Then
         FProcessMap.Remove(Cardinal(dr.DriverObject));
 
-      pe := TProcessEntry.Create(dr As TProcessCreatedRequest);;
+      pcr := dr As TProcessCreatedRequest;
+      pe := TProcessEntry.Create(Cardinal(pcr.DriverObject), pcr.Raw.ProcessId, pcr.FileName, pcr.DeviceName);
       FProcessMap.Add(Cardinal(dr.DriverObject), pe);
       end;
     ertProcessExitted : begin
@@ -241,7 +244,10 @@ While Assigned(ABuffer) Do
 
       FFileMap.Add(dr.FileObject, dr.FileName);
       If FProcessMap.TryGetValue(dr.ProcessId, pe) Then
-        pe.AddImage(dr As TImageLoadRequest);
+        begin
+        ilr := dr As TImageLoadRequest;
+        pe.AddImage(ilr.Raw.Time, ilr.ImageBase, ilr.ImageSize, ilr.FileName);
+        end;
       end;
     Else dr := TDriverRequest.Create(ABuffer.Header);
     end;
@@ -256,7 +262,10 @@ While Assigned(ABuffer) Do
     dr.SetFileName(fileName);
 
   If FProcessMap.TryGetValue(dr.ProcessId, pe) Then
+    begin
+    dr.Process := pe;
     dr.SetProcessName(pe.BaseName);
+    end;
 
   If FFilterDisplayOnly Then
     FAllRequests.Add(dr);

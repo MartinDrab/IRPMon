@@ -7,7 +7,8 @@ Unit AbstractRequest;
 Interface
 
 Uses
-  IRPMonDll;
+  IRPMonDll,
+  ProcessList;
 
 Type
   TGeneralRequest = Class
@@ -41,6 +42,10 @@ Type
     FImpersonatedAdmin : Boolean;
     FStackFrames : PPointer;
     FStackFrameCount : Cardinal;
+    FProcess : TProcessEntry;
+  Protected
+    Function GetProcess:TProcessEntry;
+    Procedure SetProcess(AProcess:TProcessEntry);
   Public
     Constructor Create(Var ARequest:REQUEST_HEADER); Overload;
     Destructor Destroy; Override;
@@ -91,6 +96,7 @@ Type
     Property ImpersonatedAdmin : Boolean Read FImpersonatedAdmin;
     Property StackFrames : PPointer Read FStackFrames;
     Property StackFrameCount : Cardinal Read FStackFrameCount;
+    Property Process : TProcessEntry Read GetProcess Write SetProcess;
   end;
 
 Implementation
@@ -150,6 +156,7 @@ end;
 
 Destructor TGeneralRequest.Destroy;
 begin
+FProcess.Free;
 If Assigned(FRaw) Then
   RequestMemoryFree(FRaw);
 
@@ -212,6 +219,22 @@ begin
 FFileObject := AObject;
 end;
 
+Function TGeneralRequest.GetProcess:TProcessEntry;
+begin
+If Assigned(FProcess) Then
+  FProcess.Reference;
+
+Result := FProcess;
+end;
+
+Procedure TGeneralRequest.SetProcess(AProcess:TProcessEntry);
+begin
+FProcess.Free;
+If Assigned(AProcess) Then
+  AProcess.Reference;
+
+FProcess := AProcess;
+end;
 
 Class Function TGeneralRequest.IOCTLToString(AControlCode:Cardinal):WideString;
 begin
@@ -480,4 +503,6 @@ Case ALevel Of
 end;
 
 
+
 End.
+

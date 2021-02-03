@@ -4,13 +4,12 @@ Interface
 
 Uses
   Generics.Collections,
-  ProcessXXXRequests,
-  ImageLoadRequest,
   RefObject;
 
 Type
   TImageEntry = Class (TRefObject)
     Public
+      Time : UInt64;
       BaseAddress : Pointer;
       ImageSize : NativeUInt;
       FiileName : WideString;
@@ -26,10 +25,10 @@ Type
       FTerminated : Boolean;
       FImageMap : TObjectList<TImageEntry>;
     Public
-      Constructor Create(ARequest:TProcessCreatedRequest); Reintroduce;
+      Constructor Create(AProcessId:Cardinal; ACreatorProcessId:Cardinal; AFileName:WideString; ACommandLine:WideString); Reintroduce;
       Destructor Destroy; Override;
 
-      Procedure AddImage(ARequest:TImageLoadRequest);
+      Procedure AddImage(ATime:UInt64; ABase:Pointer; ASize:NativeUInt; AFileName:WideString);
       Procedure Terminate;
       Function ImageByAddress(AAddress:Pointer; AImageList:TList<TImageEntry>):Boolean; Overload;
       Function ImageByAddress(AAddress:Pointer):TImageEntry; Overload;
@@ -45,16 +44,20 @@ Type
 
 Implementation
 
+Uses
+  SysUtils,
+  Generics.Defaults;
+
 (** TProcessEntry **)
 
-Constructor TProcessEntry.Create(ARequest:TProcessCreatedRequest);
+Constructor TProcessEntry.Create(AProcessId:Cardinal; ACreatorProcessId:Cardinal; AFileName:WideString; ACommandLine:WideString);
 begin
 Inherited Create;
-FCreatorProcessId := ARequest.ProcessId;
-FProcessId := Cardinal(ARequest.DriverObject);
-FImageName := ARequest.FileName;
-FBaseName := ARequest.DriverName;
-FCommandLine := ARequest.DeviceName;
+FCreatorProcessId := ACreatorProcessId;
+FProcessId := AProcessId;
+FImageName := AFileName;
+FBaseName := ExtractFileName(AFileName);
+FCommandLine := ACommandLine;
 FImageMap := TObjectList<TImageEntry>.Create;
 end;
 
@@ -64,18 +67,28 @@ FImageMap.Free;
 Inherited Destroy;
 end;
 
-Procedure TProcessEntry.AddImage(ARequest:TImageLoadRequest);
+Procedure TProcessEntry.AddImage(ATime:UInt64; ABase:Pointer; ASize:NativeUInt; AFileName:WideString);
 Var
   ie : TImageEntry;
 begin
-If Not ARequest.KernelDriver Then
-  begin
-  ie := TImageEntry.Create;
-  ie.BaseAddress := ARequest.ImageBase;
-  ie.ImageSize := ARequest.ImageSize;
-  ie.FiileName := ARequest.FileName;
-  FImageMap.Add(ie);
-  end;
+ie := TImageEntry.Create;
+ie.Time := ATime;
+ie.BaseAddress := ABase;
+ie.ImageSize := ASize;
+ie.FiileName := AFileName;
+FImageMap.Add(ie);
+FImageMap.Sort(
+  TComparer<TImageEntry>.Construct(
+    Function(const A, B: TImageEntry): Integer
+    begin
+    Result := 0;
+    If A.Time < B.Time Then
+      Result := -1
+    Else If A.Time > B.Time Then
+      Result := 1;
+    end
+  )
+);
 end;
 
 Procedure TProcessEntry.Terminate;
