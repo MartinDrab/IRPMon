@@ -546,7 +546,7 @@ With Item Do
   entry := FDLLList[Index];
   Caption := Format('0x%p', [entry.BaseAddress]);
   SubItems.Add(Format('%u', [entry.ImageSize]));
-  SubItems.Add(entry.FiileName);
+  SubItems.Add(entry.FileName);
   end;
 end;
 

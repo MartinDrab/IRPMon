@@ -881,6 +881,10 @@ object MainFrm: TMainFrm
     TabOrder = 0
     object RequestTabSheet: TTabSheet
       Caption = 'Requests'
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object RequestListView: TListView
         Left = 0
         Top = 0
@@ -901,6 +905,10 @@ object MainFrm: TMainFrm
       Caption = 'Data Parsers'
       ImageIndex = 1
       OnShow = DataParsersTabSheetShow
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object DataParsersListView: TListView
         Left = 0
         Top = 0
@@ -940,6 +948,8 @@ object MainFrm: TMainFrm
       OnShow = ProcessTabSheetShow
       ExplicitLeft = 8
       ExplicitTop = 22
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object ProcessLowerPanel: TPanel
         Left = 0
         Top = 104

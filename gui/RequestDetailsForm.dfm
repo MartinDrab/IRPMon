@@ -893,7 +893,7 @@ object RequestDetailsFrm: TRequestDetailsFrm
     Top = 0
     Width = 560
     Height = 281
-    ActivePage = HeadersTabSheet
+    ActivePage = StackTabSheet
     Align = alClient
     TabOrder = 1
     object HeadersTabSheet: TTabSheet
@@ -945,13 +945,14 @@ object RequestDetailsFrm: TRequestDetailsFrm
           end
           item
             Caption = 'Offset'
+            Width = 75
           end>
         ReadOnly = True
         ShowWorkAreas = True
         TabOrder = 0
         ViewStyle = vsReport
-        ExplicitLeft = 24
-        ExplicitWidth = 528
+        ExplicitLeft = 16
+        ExplicitWidth = 536
       end
     end
   end

@@ -12,7 +12,7 @@ Type
       Time : UInt64;
       BaseAddress : Pointer;
       ImageSize : NativeUInt;
-      FiileName : WideString;
+      FileName : WideString;
     end;
 
   TProcessEntry = Class (TRefObject)
@@ -75,7 +75,7 @@ ie := TImageEntry.Create;
 ie.Time := ATime;
 ie.BaseAddress := ABase;
 ie.ImageSize := ASize;
-ie.FiileName := AFileName;
+ie.FileName := AFileName;
 FImageMap.Add(ie);
 FImageMap.Sort(
   TComparer<TImageEntry>.Construct(

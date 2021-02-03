@@ -44,8 +44,10 @@ Type
 Implementation
 
 Uses
-  Clipbrd, Utils,
-  IRPMonDll;
+  Clipbrd,
+  Utils,
+  IRPMonDll,
+  ProcessList;
 
 Procedure TRequestDetailsFrm.CopyClick(Sender: TObject);
 Var
@@ -133,18 +135,34 @@ end;
 Procedure TRequestDetailsFrm.ProcessStack;
 Var
   I : Integer;
+  pe : TProcessEntry;
   pframe : PPointer;
+  il : TObjectList<TImageEntry>;
+  ie : TImageEntry;
 begin
+pe := FRequest.Process;
+il := TObjectList<TImageEntry>.Create;
 pframe := FRequest.StackFrames;
 For I := 0 To FRequest.StackFrameCount - 1 Do
   begin
   With StackListView.Items.Add Do
     begin
     Caption := Format('0x%p', [pframe^]);
+    If pe.ImageByAddress(pframe^, il) Then
+      begin
+      ie := il[0];
+      SubItems.Add(ExtractFileName(ie.FileName));
+      SubItems.Add('');
+      SubItems.Add(Format('0x%x', [NativeUInt(pframe^) - NativeUInt(ie.BaseAddress)]));
+      il.Clear;
+      end;
     end;
 
   Inc(pframe);
   end;
+
+il.Free;
+pe.Free;
 end;
 
 Procedure TRequestDetailsFrm.FormCreate(Sender: TObject);
