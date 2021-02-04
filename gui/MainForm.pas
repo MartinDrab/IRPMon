@@ -12,7 +12,7 @@ Uses
   Generics.Collections, RequestFilter,
   IRPMonDll, RequestListModel, ExtCtrls,
   HookObjects, RequestThread, DataParsers,
-  IRPMonRequest, ProcessList
+  IRPMonRequest, ProcessList, SymTables
 {$IFNDEF FPC}
   , AppEvnts
 {$ENDIF}
@@ -144,6 +144,7 @@ Type
     FFilters : TObjectList<TRequestFilter>;
     FProcesses : TObjectList<TProcessEntry>;
     FDLLList : TObjectList<TImageEntry>;
+    FSymStore : TModuleSymbolStore;
     Procedure EnumerateHooks;
     Procedure EnumerateClassWatches;
     Procedure EnumerateDriverNameWatches;
@@ -298,6 +299,7 @@ With THookProgressFrm.Create(Application, taskList) Do
 FFilters.Free;
 FDLLList.Free;
 FProcesses.Free;
+FSymStore.Free;
 end;
 
 Procedure TMainFrm.FormCreate(Sender: TObject);
@@ -305,6 +307,7 @@ Var
   fileName : WideString;
   filtersLoaded : Boolean;
 begin
+FSymStore := TModuleSymbolStore.Create(GetCurrentProcess);
 FProcesses := TObjectList<TProcessEntry>.Create;
 FDLLList := TObjectList<TImageEntry>.Create;
 FFilters := TObjectList<TRequestFilter>.Create;
