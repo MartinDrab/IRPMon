@@ -13,7 +13,8 @@ Uses
   AbstractRequest,
   IRPMonRequest,
   DataParsers,
-  ProcessList;
+  ProcessList,
+  SymTables;
 
 Type
   TRequestList = Class;
@@ -27,12 +28,14 @@ Type
       FDriverMap : TDictionary<Pointer, WideString>;
       FDeviceMap : TDictionary<Pointer, WideString>;
       FFileMap : TDictionary<Pointer, WideString>;
-      FProcessMap : TObjectDictionary<Cardinal, TProcessEntry>;
+      FProcessMap : TRefObjectDictionary<Cardinal, TProcessEntry>;
       FParsers : TObjectList<TDataParser>;
+      FSymStore : TModuleSymbolStore;
     Protected
       Function GetCount:Integer;
       Function GetItem(AIndex:Integer):TDriverRequest;
       Procedure SetFilterDisplayOnly(AValue:Boolean);
+      Procedure SetSymStore(AStore:TModuleSymbolStore);
     Public
       Constructor Create;
       Destructor Destroy; Override;
@@ -59,6 +62,7 @@ Type
       Property Count : Integer Read GetCount;
       Property Items [Index:Integer] : TDriverRequest Read GetItem; Default;
       Property OnRequestProcessed : TRequestListOnRequestProcessed Read FOnRequestProcessed Write FOnRequestProcessed;
+      Property SymStore : TModuleSymbolStore Read FSymStore Write SetSymStore;
     end;
 
 Implementation
@@ -86,7 +90,7 @@ FAllRequests := TRefObjectList<TDriverRequest>.Create;
 FDriverMap := TDictionary<Pointer, WideString>.Create;
 FDeviceMap := TDictionary<Pointer, WideString>.Create;
 FFileMap := TDictionary<Pointer, WideString>.Create;
-FProcessMap := TObjectDictionary<Cardinal, TProcessEntry>.Create;
+FProcessMap := TRefObjectDictionary<Cardinal, TProcessEntry>.Create;
 RefreshMaps;
 end;
 
@@ -183,6 +187,7 @@ begin
 Result := 0;
 While Assigned(ABuffer) Do
   begin
+  pe := Nil;
   Case ABuffer.Header.RequestType Of
     ertIRP: dr := TIRPRequest.Build(ABuffer.Irp);
     ertIRPCompletion: dr := TIRPCompleteRequest.Create(ABuffer.IrpComplete);
@@ -227,6 +232,7 @@ While Assigned(ABuffer) Do
       pcr := dr As TProcessCreatedRequest;
       pe := TProcessEntry.Create(Cardinal(pcr.DriverObject), pcr.Raw.ProcessId, pcr.FileName, pcr.DeviceName);
       FProcessMap.Add(Cardinal(dr.DriverObject), pe);
+      pe.Free;
       end;
     ertProcessExitted : begin
       dr := TProcessExittedRequest.Create(ABuffer.ProcessExitted);
@@ -471,6 +477,12 @@ Var
 begin
 For p In FProcessMap Do
   AList.Add(p.Value);
+end;
+
+Procedure TRequestList.SetSymStore(AStore:TModuleSymbolStore);
+begin
+FSymStore.Free;
+FSymStore := AStore;
 end;
 
 

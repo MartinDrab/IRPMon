@@ -96,6 +96,10 @@ Type
     ProcessListView: TListView;
     SymTabSheet: TTabSheet;
     SymListView: TListView;
+    SymbolsMenuItem: TMenuItem;
+    SymAddFileMenuItem: TMenuItem;
+    SymAddDirectoryMenuItem: TMenuItem;
+    SymFileDialog: TOpenDialog;
     Procedure ClearMenuItemClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure CaptureEventsMenuItemClick(Sender: TObject);
@@ -131,6 +135,8 @@ Type
       Selected: Boolean);
     procedure ProcessTabSheetShow(Sender: TObject);
     procedure RequestListViewData(Sender: TObject; Item: TListItem);
+    procedure SymAddFileMenuItemClick(Sender: TObject);
+    procedure SymListViewData(Sender: TObject; Item: TListItem);
   Private
 {$IFDEF FPC}
     FAppEvents: TApplicationProperties;
@@ -405,6 +411,7 @@ Else begin
 FParsers := TObjectList<TDataParser>.Create;
 TDataParser.AddFromDirectory(ExtractFileDir(Application.ExeName), FParsers);
 FModel.Parsers := FParsers;
+FModel.SymStore := FSymStore;
 ReadSettings;
 end;
 
@@ -732,7 +739,7 @@ begin
 rq := FModel.Selected;
 If Assigned(rq) Then
   begin
-  With TRequestDetailsFrm.Create(Self, rq, FParsers) Do
+  With TRequestDetailsFrm.Create(Self, rq, FParsers, FSymStore) Do
     begin
     ShowModal;
     Free;
@@ -889,6 +896,31 @@ If err = ERROR_SUCCESS Then
 Else statusText := Format('Unable to get driver information: %s (%u)', [SysErrorMessage(err), err]);
 
 StatusBar1.SimpleText := statusText;
+end;
+
+Procedure TMainFrm.SymAddFileMenuItemClick(Sender: TObject);
+Var
+  M : TMenuItem;
+begin
+M := Sender As TMenuItem;
+If SymFileDialog.Execute Then
+  begin
+  FSymStore.AddFile(SymFileDialog.FileName);
+  SymListView.Items.Count := FSymStore.ModuleCount;
+  end;
+end;
+
+Procedure TMainFrm.SymListViewData(Sender: TObject; Item: TListItem);
+Var
+  st : TSymTable;
+begin
+With Item Do
+  begin
+  st := FSymStore.ModuleByIndex[Index];
+  Caption := ExtractFileName(st.Name);
+  SubItems.Add(st.Name);
+  SubItems.Add(Format('%d', [st.Count]));
+  end;
 end;
 
 Procedure TMainFrm.WatchClassMenuItemClick(Sender: TObject);

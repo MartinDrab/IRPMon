@@ -148,7 +148,7 @@ If (ARequest.Flags And REQUEST_FLAG_STACKTRACE) <> 0 Then
   FStackFrameCount := REQUEST_STACKTRACE_SIZE;
   Repeat
   frame := PPointer(PByte(FStackFrames) + SizeOf(Pointer)*(FStackFrameCount - 1))^;
-  If Assigned(frame) Then
+  If Not Assigned(frame) Then
     Dec(FStackFrameCount);
 
   Until (FStackFrameCount = 0) Or (Assigned(frame));

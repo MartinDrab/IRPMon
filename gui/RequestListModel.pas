@@ -9,7 +9,7 @@ Interface
 Uses
   Windows, Classes, Generics.Collections, Generics.Defaults,
   IRPMonDll, ListModel, IRPMonRequest, DataParsers, ComCtrls,
-  Graphics, RequestList;
+  Graphics, RequestList, SymTables;
 
 Type
   TRequestListModel = Class (TListModel<TDriverRequest>)
@@ -27,6 +27,8 @@ Type
       Function GetOnRequestProcessed:TRequestListOnRequestProcessed;
       Procedure SetParsers(AValue:TObjectList<TDataParser>);
       Function GetParsers:TObjectList<TDataParser>;
+      Procedure SetSymStore(AStore:TModuleSymbolStore);
+      Function GetSymStore:TModuleSymbolStore;
     Public
       UpdateRequest : TList<PREQUEST_GENERAL>;
       Constructor Create; Reintroduce;
@@ -46,6 +48,7 @@ Type
       Property OnRequestProcessed : TRequestListOnRequestProcessed Read GetOnRequestProcessed Write SetOnRequestProcessed;
       Property TotalCount : Integer Read GetTotalCount;
       Property Parsers : TObjectList<TDataParser> Read GetParsers Write SetParsers;
+      Property SymStore : TModuleSymbolStore Read GetSymStore Write SetSymStore;
       Property List : TRequestList Read FList;
     end;
 
@@ -206,6 +209,17 @@ Function TRequestListModel.GetParsers:TObjectList<TDataParser>;
 begin
 Result := FList.Parsers;
 end;
+
+Procedure TRequestListModel.SetSymStore(AStore:TModuleSymbolStore);
+begin
+FList.SymStore := AStore;
+end;
+
+Function TRequestListModel.GetSymStore:TModuleSymbolStore;
+begin
+Result := FList.SymStore;
+end;
+
 
 
 End.

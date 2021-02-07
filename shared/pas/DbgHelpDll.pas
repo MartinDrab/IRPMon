@@ -21,6 +21,10 @@ Const
   sfPdb                   = 2;
   sfMpd                   = 3;
 
+  SSRVOPT_DWORD           = $2;
+  SSRVOPT_DWORDPTR        = $4;
+  SSRVOPT_GUIDPTR         = $8;
+
 Type
   _SYMBOL_INFOW = Record
     SizeOfStruct : Cardinal;
@@ -43,6 +47,7 @@ Type
   PSYMBOL_INFOW = ^SYMBOL_INFOW;
 
   SymEnumeratesymbolsCallback = Function (pSymInfo:PSYMBOL_INFOW; SymbolSize:Cardinal; UserContext:Pointer):BOOL; StdCall;
+  PfindfileinpathcallbackW = Function (FileName:PWideChar; Context:Pointer):BOOL; StdCall;
 
 Function SymInitializeW(hProcess:THandle; UserSearchPath:PWideChar; fInvadeProcess:BOOL):BOOL; StdCall;
 Function SymCleanup(hProcess:THandle):BOOL; StdCall;
@@ -50,6 +55,8 @@ Function SymEnumSymbolsW(hProcess:THandle; BaseOfDll:NativeUInt; Mask:PWideChar;
 Function SymLoadModuleExW(hProcess:THandle; hFile:THandle; ImageName:PWideChar; ModuleName:PWideChar; BaseOfDll:UInt64; DllSize:Cardinal; Data:Pointer; Flags:Cardinal):Cardinal; StdCall;
 Function SymUnloadModule64(hProcess:THandle; BaseOfDll:UInt64):BOOL; StdCall;
 Function SymGetSymbolFileW(hProcess:THandle; SymPath:PWideChar; ImageFile:PWideChar; FileType:Cardinal; SymbolFile:PWideChar; cSymbolFile:NativeUInt; DbgFile:PWideChar; cDebugFile:NativeUInt):BOOL; StdCall;
+Function SymSrvGetFileIndexesW(AFile:PWideChar; Var Id:TGuid; Var Val1:Cardinal; Var Val2:Cardinal; flags:Cardinal):BOOL; StdCall;
+Function SymFindFileInPathW(hProcess:THandle; SearchPath:PWideChar; FileName:PWideChar; Id:Pointer; two:Cardinal; three:Cardinal; flags:Cardinal; Found:PWideChar; callback:PfindfileinpathcallbackW; context:Pointer):BOOL; StdCall;
 
 Implementation
 
@@ -62,6 +69,8 @@ Function SymEnumSymbolsW(hProcess:THandle; BaseOfDll:NativeUInt; Mask:PWideChar;
 Function SymLoadModuleExW(hProcess:THandle; hFile:THandle; ImageName:PWideChar; ModuleName:PWideChar; BaseOfDll:UInt64; DllSize:Cardinal; Data:Pointer; Flags:Cardinal):Cardinal; StdCall; External LibraryName;
 Function SymUnloadModule64(hProcess:THandle; BaseOfDll:UInt64):BOOL; StdCall; External LibraryName;
 Function SymGetSymbolFileW(hProcess:THandle; SymPath:PWideChar; ImageFile:PWideChar; FileType:Cardinal; SymbolFile:PWideChar; cSymbolFile:NativeUInt; DbgFile:PWideChar; cDebugFile:NativeUInt):BOOL; StdCall; External LibraryName;
+Function SymSrvGetFileIndexesW(AFile:PWideChar; Var Id:TGuid; Var Val1:Cardinal; Var Val2:Cardinal; flags:Cardinal):BOOL; StdCall; External LibraryName;
+Function SymFindFileInPathW(hProcess:THandle; SearchPath:PWideChar; FileName:PWideChar; Id:Pointer; two:Cardinal; three:Cardinal; flags:Cardinal; Found:PWideChar; callback:PfindfileinpathcallbackW; context:Pointer):BOOL; StdCall; External LibraryName;
 
 
 End.

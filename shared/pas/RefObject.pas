@@ -25,6 +25,13 @@ Type
   Public
   end;
 
+  TRefObjectDictionary<K;V:TRefObject> = Class (TObjectDictionary<K, V>)
+  Protected
+    Procedure ValueNotify(const Value: V; Action: TCollectionNotification); Override;
+  Public
+    Constructor Create; Reintroduce;
+  end;
+
 Implementation
 
 Uses
@@ -70,6 +77,25 @@ If Assigned(Value) THen
 
 If Assigned(OnNotify) Then
   OnNotify(Self, Value, Action);
+end;
+
+
+(** TRefObjectDictionary **)
+
+Constructor TRefObjectDictionary<K,V>.Create;
+begin
+Inherited Create([doOwnsValues]);
+end;
+
+Procedure TRefObjectDictionary<K,V>.ValueNotify(const Value: V; Action: TCollectionNotification);
+begin
+Case Action Of
+  cnAdded : Value.Reference;
+  cnRemoved : Value.Free;
+  end;
+
+If Assigned(OnValueNotify) Then
+  OnValueNotify(Self, Value, Action);
 end;
 
 

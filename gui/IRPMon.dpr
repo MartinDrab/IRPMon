@@ -89,7 +89,7 @@ Var
   connType : EIRPMonConnectorType;
   initInfo : IRPMON_INIT_INFO;
 Begin
-If SymInitializeW(GetCurrentProcess, Nil, False) Then
+If SymInitializeW(GetCurrentProcess, 'srv*d:\symbols*https://msdl.microsoft.com/download/symbols', False) Then
   begin
   connType := ictNone;
   driverStarted := False;

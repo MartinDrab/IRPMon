@@ -893,15 +893,11 @@ object RequestDetailsFrm: TRequestDetailsFrm
     Top = 0
     Width = 560
     Height = 281
-    ActivePage = StackTabSheet
+    ActivePage = HeadersTabSheet
     Align = alClient
     TabOrder = 1
     object HeadersTabSheet: TTabSheet
       Caption = 'Headers'
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object NameValueListView: TListView
         Left = 0
         Top = 0
@@ -928,10 +924,6 @@ object RequestDetailsFrm: TRequestDetailsFrm
     object StackTabSheet: TTabSheet
       Caption = 'Stack'
       ImageIndex = 1
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object StackListView: TListView
         Left = 0
         Top = 0
@@ -940,8 +932,11 @@ object RequestDetailsFrm: TRequestDetailsFrm
         Align = alClient
         Columns = <
           item
+            Caption = '#'
+          end
+          item
             Caption = 'Address'
-            Width = 100
+            Width = 125
           end
           item
             AutoSize = True
@@ -953,14 +948,15 @@ object RequestDetailsFrm: TRequestDetailsFrm
           end
           item
             Caption = 'Offset'
-            Width = 75
+            Width = 100
           end>
         ReadOnly = True
+        RowSelect = True
         ShowWorkAreas = True
         TabOrder = 0
         ViewStyle = vsReport
-        ExplicitLeft = 16
-        ExplicitWidth = 536
+        ExplicitLeft = 32
+        ExplicitWidth = 520
       end
     end
   end

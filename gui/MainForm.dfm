@@ -876,15 +876,11 @@ object MainFrm: TMainFrm
     Top = 0
     Width = 582
     Height = 296
-    ActivePage = RequestTabSheet
+    ActivePage = SymTabSheet
     Align = alClient
     TabOrder = 0
     object RequestTabSheet: TTabSheet
       Caption = 'Requests'
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object RequestListView: TListView
         Left = 0
         Top = 0
@@ -906,10 +902,6 @@ object MainFrm: TMainFrm
       Caption = 'Data Parsers'
       ImageIndex = 1
       OnShow = DataParsersTabSheetShow
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object DataParsersListView: TListView
         Left = 0
         Top = 0
@@ -947,10 +939,6 @@ object MainFrm: TMainFrm
       Caption = 'Processes'
       ImageIndex = 2
       OnShow = ProcessTabSheetShow
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object ProcessLowerPanel: TPanel
         Left = 0
         Top = 104
@@ -1016,10 +1004,6 @@ object MainFrm: TMainFrm
     object SymTabSheet: TTabSheet
       Caption = 'Symbols'
       ImageIndex = 3
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object SymListView: TListView
         Left = 0
         Top = 0
@@ -1034,6 +1018,10 @@ object MainFrm: TMainFrm
           item
             AutoSize = True
             Caption = 'Full path'
+          end
+          item
+            Caption = 'Symbols'
+            Width = 60
           end>
         OwnerData = True
         ReadOnly = True
@@ -1041,8 +1029,9 @@ object MainFrm: TMainFrm
         ShowWorkAreas = True
         TabOrder = 0
         ViewStyle = vsReport
-        ExplicitLeft = 16
-        ExplicitWidth = 558
+        OnData = SymListViewData
+        ExplicitLeft = 24
+        ExplicitWidth = 550
       end
     end
   end
@@ -1237,6 +1226,16 @@ object MainFrm: TMainFrm
         end
       end
     end
+    object SymbolsMenuItem: TMenuItem
+      Caption = 'Symbols'
+      object SymAddFileMenuItem: TMenuItem
+        Caption = 'Add file...'
+        OnClick = SymAddFileMenuItemClick
+      end
+      object SymAddDirectoryMenuItem: TMenuItem
+        Caption = 'Add directory...'
+      end
+    end
     object ColumnsMenuItem: TMenuItem
       Caption = 'Columns'
     end
@@ -1320,5 +1319,10 @@ object MainFrm: TMainFrm
     OnTimer = StatusTimerTimer
     Left = 20
     Top = 56
+  end
+  object SymFileDialog: TOpenDialog
+    Options = [ofReadOnly, ofHideReadOnly, ofFileMustExist, ofEnableSizing]
+    Left = 276
+    Top = 88
   end
 end

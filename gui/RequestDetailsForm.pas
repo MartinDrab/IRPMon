@@ -11,7 +11,7 @@ Uses
   Classes, Graphics,
   Controls, Forms, Dialogs, ExtCtrls, StdCtrls,
   IRPMonRequest, ComCtrls,
-  Generics.Collections, DataParsers,
+  Generics.Collections, DataParsers, SymTables,
   Menus;
 
 Type
@@ -34,10 +34,11 @@ Type
   Private
     FRequest : TDriverRequest;
     FParsers : TObjectList<TDataParser>;
+    FSymStore : TModuleSymbolStore;
     Procedure ProcessParsers;
     Procedure ProcessStack;
   Public
-    Constructor Create(AOwner:TComponent; ARequest:TDriverRequest; AParsers:TObjectList<TDataParser>); Reintroduce;
+    Constructor Create(AOwner:TComponent; ARequest:TDriverRequest; AParsers:TObjectList<TDataParser>; ASymStore:TModuleSymbolStore); Reintroduce;
   end;
 
 
@@ -71,10 +72,11 @@ If t <> '' Then
   Clipboard.AsText := t;
 end;
 
-Constructor TRequestDetailsFrm.Create(AOwner:TComponent; ARequest:TDriverRequest; AParsers:TObjectList<TDataParser>);
+Constructor TRequestDetailsFrm.Create(AOwner:TComponent; ARequest:TDriverRequest; AParsers:TObjectList<TDataParser>; ASymStore:TModuleSymbolStore);
 begin
 FRequest := ARequest;
 FParsers := AParsers;
+FSymStore := ASymStore;
 Inherited Create(AOwner);
 end;
 
@@ -140,6 +142,9 @@ Var
   pframe : PPointer;
   il : TRefObjectList<TImageEntry>;
   ie : TImageEntry;
+  st : TSymTable;
+  symbolName : WideString;
+  offset : UInt64;
 begin
 pe := FRequest.Process;
 il := TRefObjectList<TImageEntry>.Create;
@@ -148,13 +153,20 @@ For I := 0 To FRequest.StackFrameCount - 1 Do
   begin
   With StackListView.Items.Add Do
     begin
-    Caption := Format('0x%p', [pframe^]);
+    Caption := Format('%d', [I]);
+    SubItems.Add(Format('0x%p', [pframe^]));
     If pe.ImageByAddress(pframe^, il) Then
       begin
+      symbolName := '';
+      offset := NativeUInt(pframe^) - NativeUInt(ie.BaseAddress);
       ie := il[0];
       SubItems.Add(ExtractFileName(ie.FileName));
-      SubItems.Add('');
-      SubItems.Add(Format('0x%x', [NativeUInt(pframe^) - NativeUInt(ie.BaseAddress)]));
+      st := FSymStore.Module[ExtractFileName(ie.FileName)];
+      If Assigned(st) Then
+        st.FindSymbol(offset, symbolName);
+
+      SubItems.Add(symbolName);
+      SubItems.Add(Format('0x%x', [offset]));
       il.Clear;
       end;
     end;
