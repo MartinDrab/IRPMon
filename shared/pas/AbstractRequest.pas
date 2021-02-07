@@ -8,10 +8,11 @@ Interface
 
 Uses
   IRPMonDll,
+  RefObject,
   ProcessList;
 
 Type
-  TGeneralRequest = Class
+  TGeneralRequest = Class (TRefObject)
   Private
     FDataBufferAllocated : Boolean;
   Protected

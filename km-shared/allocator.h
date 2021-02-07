@@ -48,7 +48,7 @@ PVOID DebugAllocatorAlloc(POOL_TYPE PoolType, SIZE_T NumberOfBytes, PCHAR Functi
 void DebugAllocatorFree(PVOID Address);
 
 #if defined(_DEBUG) || defined(DBG)
-#define MEMORY_LEAK_DETECTION
+// #define MEMORY_LEAK_DETECTION
 #endif
 
 #ifdef MEMORY_LEAK_DETECTION

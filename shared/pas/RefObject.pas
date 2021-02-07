@@ -11,6 +11,7 @@ Type
 
     Function Reference:TRefObject;
     Procedure Free; Reintroduce;
+    Procedure DisposeOf; Reintroduce;
 
     Property ReferenceCount : Integer Read FReferenceCount;
   end;
@@ -39,5 +40,10 @@ If (Assigned(Self)) And
   Inherited Free;
 end;
 
+Procedure TRefObject.DisposeOf;
+begin
+Free;
+end;
 
 End.
+
