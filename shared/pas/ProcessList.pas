@@ -23,16 +23,16 @@ Type
       FProcessId : Cardinal;
       FCreatorProcessId : Cardinal;
       FTerminated : Boolean;
-      FImageMap : TObjectList<TImageEntry>;
+      FImageMap : TRefObjectList<TImageEntry>;
     Public
       Constructor Create(AProcessId:Cardinal; ACreatorProcessId:Cardinal; AFileName:WideString; ACommandLine:WideString); Reintroduce;
       Destructor Destroy; Override;
 
       Procedure AddImage(ATime:UInt64; ABase:Pointer; ASize:NativeUInt; AFileName:WideString);
       Procedure Terminate;
-      Function ImageByAddress(AAddress:Pointer; AImageList:TList<TImageEntry>):Boolean; Overload;
+      Function ImageByAddress(AAddress:Pointer; AImageList:TRefObjectList<TImageEntry>):Boolean; Overload;
       Function ImageByAddress(AAddress:Pointer):TImageEntry; Overload;
-      Procedure EnumImages(AList:TObjectList<TImageEntry>);
+      Procedure EnumImages(AList:TRefObjectList<TImageEntry>);
 
       Property ImageName : WideString Read FImageName;
       Property BaseName : WideString Read FBaseName;
@@ -58,7 +58,7 @@ FProcessId := AProcessId;
 FImageName := AFileName;
 FBaseName := ExtractFileName(AFileName);
 FCommandLine := ACommandLine;
-FImageMap := TObjectList<TImageEntry>.Create;
+FImageMap := TRefObjectList<TImageEntry>.Create;
 end;
 
 Destructor TProcessEntry.Destroy;
@@ -89,6 +89,8 @@ FImageMap.Sort(
     end
   )
 );
+
+ie.Free;
 end;
 
 Procedure TProcessEntry.Terminate;
@@ -96,7 +98,7 @@ begin
 FTerminated := True;
 end;
 
-Function TProcessEntry.ImageByAddress(AAddress:Pointer; AImageList:TList<TImageEntry>):Boolean;
+Function TProcessEntry.ImageByAddress(AAddress:Pointer; AImageList:TRefObjectList<TImageEntry>):Boolean;
 Var
   ie : TImageEntry;
 begin
@@ -106,7 +108,6 @@ For ie In FImageMap Do
   If (NativeUInt(ie.BaseAddress) <= NativeUInt(AAddress)) And
     (NativeUInt(AAddress) < NativeUInt(ie.BaseAddress) + ie.ImageSize) Then
       begin
-      ie.Reference;
       AImageList.Add(ie);
       Result := True;
       end;
@@ -130,12 +131,12 @@ For ie In FImageMap Do
   end;
 end;
 
-Procedure TProcessEntry.EnumImages(AList:TObjectList<TImageEntry>);
+Procedure TProcessEntry.EnumImages(AList:TRefObjectList<TImageEntry>);
 Var
   ie : TImageEntry;
 begin
 For ie In FImageMap Do
-  AList.Add(ie.Reference As TImageEntry);
+  AList.Add(ie);
 end;
 
 

@@ -12,7 +12,7 @@ Uses
   Generics.Collections, RequestFilter,
   IRPMonDll, RequestListModel, ExtCtrls,
   HookObjects, RequestThread, DataParsers,
-  IRPMonRequest, ProcessList, SymTables
+  IRPMonRequest, ProcessList, SymTables, RefObject
 {$IFNDEF FPC}
   , AppEvnts
 {$ENDIF}
@@ -145,8 +145,8 @@ Type
     FRequestMsgCode : Cardinal;
     FParsers : TObjectList<TDataParser>;
     FFilters : TObjectList<TRequestFilter>;
-    FProcesses : TObjectList<TProcessEntry>;
-    FDLLList : TObjectList<TImageEntry>;
+    FProcesses : TRefObjectList<TProcessEntry>;
+    FDLLList : TRefObjectList<TImageEntry>;
     FSymStore : TModuleSymbolStore;
     Procedure EnumerateHooks;
     Procedure EnumerateClassWatches;
@@ -311,8 +311,8 @@ Var
   filtersLoaded : Boolean;
 begin
 FSymStore := TModuleSymbolStore.Create(GetCurrentProcess);
-FProcesses := TObjectList<TProcessEntry>.Create;
-FDLLList := TObjectList<TImageEntry>.Create;
+FProcesses := TRefObjectList<TProcessEntry>.Create;
+FDLLList := TRefObjectList<TImageEntry>.Create;
 FFilters := TObjectList<TRequestFilter>.Create;
 filtersLoaded := False;
 fileName := GetLocalSettingsDirectory + 'filters.ini';

@@ -9,6 +9,7 @@ Interface
 Uses
   Classes, Generics.Collections,
   IRPMonDll,
+  RefObject,
   AbstractRequest,
   IRPMonRequest,
   DataParsers,
@@ -21,8 +22,8 @@ Type
     Private
       FOnRequestProcessed : TRequestListOnRequestProcessed;
       FFilterDisplayOnly : Boolean;
-      FAllRequests : TList<TDriverRequest>;
-      FRequests : TList<TDriverRequest>;
+      FAllRequests : TRefObjectList<TDriverRequest>;
+      FRequests : TRefObjectList<TDriverRequest>;
       FDriverMap : TDictionary<Pointer, WideString>;
       FDeviceMap : TDictionary<Pointer, WideString>;
       FFileMap : TDictionary<Pointer, WideString>;
@@ -51,7 +52,7 @@ Type
       Function GetDeviceName(AObject:Pointer; Var AName:WideString):Boolean;
       Function GetFileName(AObject:Pointer; Var AName:WideString):Boolean;
       Function GetProcess(AProcessId:Cardinal; Var AEntry:TProcessEntry):Boolean;
-      Procedure EnumProcesses(AList:TObjectList<TProcessEntry>);
+      Procedure EnumProcesses(AList:TRefObjectList<TProcessEntry>);
 
       Property FilterDisplayOnly : Boolean Read FFilterDisplayOnly Write SetFilterDisplayOnly;
       Property Parsers : TObjectList<TDataParser> Read FParsers Write FParsers;
@@ -80,8 +81,8 @@ Uses
 Constructor TRequestList.Create;
 begin
 Inherited Create;
-FRequests := TList<TDriverRequest>.Create;
-FAllRequests := TList<TDriverRequest>.Create;
+FRequests := TRefObjectList<TDriverRequest>.Create;
+FAllRequests := TRefObjectList<TDriverRequest>.Create;
 FDriverMap := TDictionary<Pointer, WideString>.Create;
 FDeviceMap := TDictionary<Pointer, WideString>.Create;
 FFileMap := TDictionary<Pointer, WideString>.Create;
@@ -147,12 +148,7 @@ Result := FRequests[AIndex];
 end;
 
 Procedure TRequestList.Clear;
-Var
-  dr : TDriverRequest;
 begin
-For dr In FRequests Do
-  dr.Free;
-
 FRequests.Clear;
 FAllRequests.Clear;
 end;
@@ -275,10 +271,9 @@ While Assigned(ABuffer) Do
     FOnRequestProcessed(Self, dr, keepRequest);
 
   If keepRequest Then
-    FRequests.Add(dr)
-  Else If Not FFilterDisplayOnly Then
-    dr.Free;
+    FRequests.Add(dr);
 
+  dr.Free;
   If Not Assigned(ABuffer.Header.Next) Then
     Break;
 
@@ -419,7 +414,6 @@ If Not FFilterDisplayOnly Then
       FOnRequestProcessed(Self, FRequests[I], store);
       If Not store THen
         begin
-        FRequests[I].Free;
         FRequests.Delete(I);
         Continue;
         end;
@@ -471,16 +465,12 @@ If Result Then
   AEntry.Reference;
 end;
 
-Procedure TRequestList.EnumProcesses(AList:TObjectList<TProcessEntry>);
+Procedure TRequestList.EnumProcesses(AList:TRefObjectList<TProcessEntry>);
 Var
-  entry : TProcessEntry;
   p : TPair<Cardinal, TProcessEntry>;
 begin
 For p In FProcessMap Do
-  begin
-  entry := p.Value.Reference As TProcessEntry;
-  AList.Add(entry);
-  end;
+  AList.Add(p.Value);
 end;
 
 

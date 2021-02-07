@@ -2,6 +2,9 @@ Unit RefObject;
 
 Interface
 
+Uses
+  Generics.Collections;
+
 Type
   TRefObject = Class
   Private
@@ -16,10 +19,18 @@ Type
     Property ReferenceCount : Integer Read FReferenceCount;
   end;
 
+  TRefObjectList<T: TRefObject> = Class (TObjectList<T>)
+  Protected
+    Procedure Notify(const Value: T; Action: TCollectionNotification); Override;
+  Public
+  end;
+
 Implementation
 
 Uses
   Windows;
+
+(** TRefObject **)
 
 Constructor TRefObject.Create;
 begin
@@ -44,6 +55,23 @@ Procedure TRefObject.DisposeOf;
 begin
 Free;
 end;
+
+(** TRefObjectList **)
+
+Procedure TRefObjectList<T>.Notify(const Value: T; Action: TCollectionNotification);
+begin
+If Assigned(Value) THen
+  begin
+  Case action Of
+    cnAdded: Value.Reference;
+    cnRemoved: Value.Free;
+    end;
+  end;
+
+If Assigned(OnNotify) Then
+  OnNotify(Self, Value, Action);
+end;
+
 
 End.
 

@@ -47,6 +47,7 @@ Uses
   Clipbrd,
   Utils,
   IRPMonDll,
+  RefObject,
   ProcessList;
 
 Procedure TRequestDetailsFrm.CopyClick(Sender: TObject);
@@ -137,11 +138,11 @@ Var
   I : Integer;
   pe : TProcessEntry;
   pframe : PPointer;
-  il : TObjectList<TImageEntry>;
+  il : TRefObjectList<TImageEntry>;
   ie : TImageEntry;
 begin
 pe := FRequest.Process;
-il := TObjectList<TImageEntry>.Create;
+il := TRefObjectList<TImageEntry>.Create;
 pframe := FRequest.StackFrames;
 For I := 0 To FRequest.StackFrameCount - 1 Do
   begin
