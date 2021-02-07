@@ -10,9 +10,9 @@ uses
   IRPMonDll in '..\shared\pas\IRPMonDll.pas',
   AbstractRequest in '..\shared\pas\AbstractRequest.pas',
   NameTables in '..\shared\pas\NameTables.pas',
-  Utils in '..\shared\pas\Utils.pas';
-
-
+  Utils in '..\shared\pas\Utils.pas',
+  ProcessList in '..\shared\pas\ProcessList.pas',
+  RefObject in '..\shared\pas\RefObject.pas';
 
 Procedure DllMain(reason: Integer);
 begin

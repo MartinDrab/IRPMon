@@ -894,6 +894,7 @@ object MainFrm: TMainFrm
         PopupMenu = RequestPopupMenu
         TabOrder = 0
         ViewStyle = vsReport
+        OnData = RequestListViewData
         OnDblClick = RequestDetailsMenuItemClick
       end
     end
@@ -901,10 +902,6 @@ object MainFrm: TMainFrm
       Caption = 'Data Parsers'
       ImageIndex = 1
       OnShow = DataParsersTabSheetShow
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object DataParsersListView: TListView
         Left = 0
         Top = 0
@@ -942,10 +939,6 @@ object MainFrm: TMainFrm
       Caption = 'Processes'
       ImageIndex = 2
       OnShow = ProcessTabSheetShow
-      ExplicitLeft = 8
-      ExplicitTop = 22
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object ProcessLowerPanel: TPanel
         Left = 0
         Top = 104
@@ -979,8 +972,6 @@ object MainFrm: TMainFrm
           TabOrder = 0
           ViewStyle = vsReport
           OnData = DLLListViewData
-          ExplicitLeft = 0
-          ExplicitTop = 0
         end
       end
       object ProcessListView: TListView
@@ -1008,7 +999,34 @@ object MainFrm: TMainFrm
         ViewStyle = vsReport
         OnData = ProcessListViewData
         OnSelectItem = ProcessListViewSelectItem
-        ExplicitTop = -5
+      end
+    end
+    object SymTabSheet: TTabSheet
+      Caption = 'Symbols'
+      ImageIndex = 3
+      object SymListView: TListView
+        Left = 0
+        Top = 0
+        Width = 574
+        Height = 268
+        Align = alClient
+        Columns = <
+          item
+            Caption = 'Module'
+            Width = 100
+          end
+          item
+            AutoSize = True
+            Caption = 'Full path'
+          end>
+        OwnerData = True
+        ReadOnly = True
+        RowSelect = True
+        ShowWorkAreas = True
+        TabOrder = 0
+        ViewStyle = vsReport
+        ExplicitLeft = 16
+        ExplicitWidth = 558
       end
     end
   end

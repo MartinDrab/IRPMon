@@ -94,6 +94,8 @@ Type
     ProcessLowerPanel: TPanel;
     DLLListView: TListView;
     ProcessListView: TListView;
+    SymTabSheet: TTabSheet;
+    SymListView: TListView;
     Procedure ClearMenuItemClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure CaptureEventsMenuItemClick(Sender: TObject);
@@ -128,6 +130,7 @@ Type
     procedure ProcessListViewSelectItem(Sender: TObject; Item: TListItem;
       Selected: Boolean);
     procedure ProcessTabSheetShow(Sender: TObject);
+    procedure RequestListViewData(Sender: TObject; Item: TListItem);
   Private
 {$IFDEF FPC}
     FAppEvents: TApplicationProperties;
@@ -738,6 +741,18 @@ If Assigned(rq) Then
 Else begin
   If Sender <> RequestListView Then
     WarningMessage('No request selected');
+  end;
+end;
+
+Procedure TMainFrm.RequestListViewData(Sender: TObject; Item: TListItem);
+Var
+  st : TSymTable;
+begin
+With Item Do
+  begin
+  st := FSymStore.ModuleByIndex[Index];
+  Caption := ExtractFileName(st.Name);
+  SubItems.Add(st.Name);
   end;
 end;
 
