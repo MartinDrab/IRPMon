@@ -80,33 +80,10 @@ Var
   err : Cardinal;
   hFile : THandle;
   fileSize : Int64;
-  pdbFileBuffer : Packed Array [0..MAX_PATH - 1] Of WideChar;
-  dbgFileBuffer : Packed Array [0..MAX_PATH - 1] Of WideChar;
-  i1 : TGuid;
-  i2 : Cardinal;
-  i3 : Cardinal;
-  found : Packed Array [0..MAX_PATH - 1] Of WideChar;
 begin
 Inherited Create;
 FName := AFileName;
 FNames := TDictionary<UInt64, WideString>.Create;
-(*
-FillChar(i1, SizeOf(i1), 0);
-FillChar(i2, SizeOf(i2), 0);
-FillChar(i3, SizeOf(i3), 0);
-If Not SymSrvGetFileIndexesW(PWideChar(AFileName), i1, i2, i3, 0) Then
-  begin
-  err := GetLastError;
-  Raise Exception.Create(Format('Unable to get the PDB file IDs: %u', [err]));
-  end;
-
-FillChar(found, SizeOf(found), 0);
-If Not SymFindFileInPathW(AProcess, Nil, PWideChar(ChangeFileExt(ExtractFileName(AFileName), '.pdb')), @i1, i2, i3, SSRVOPT_GUIDPTR, found, Nil, Nil) Then
-  begin
-  err := GetLastError;
-  Raise Exception.Create(Format('Unable to fetch the PDB file: %u', [err]));
-  end;
-*)
 hFile := CreateFileW(PWideChar(AFileName), GENERIC_READ, FILE_SHARE_READ, Nil, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
 If hFile = INVALID_HANDLE_VALUE Then
   begin
