@@ -1020,8 +1020,20 @@ object MainFrm: TMainFrm
             Caption = 'Full path'
           end
           item
+            Caption = 'Type'
+            Width = 60
+          end
+          item
             Caption = 'Symbols'
             Width = 60
+          end
+          item
+            Caption = 'Checksum'
+            Width = 100
+          end
+          item
+            Caption = 'Timestamp'
+            Width = 150
           end>
         OwnerData = True
         ReadOnly = True
@@ -1031,7 +1043,6 @@ object MainFrm: TMainFrm
         ViewStyle = vsReport
         OnData = SymListViewData
         OnSelectItem = SymListViewSelectItem
-        ExplicitTop = -2
       end
     end
   end

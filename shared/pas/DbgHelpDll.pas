@@ -49,6 +49,32 @@ Type
   SymEnumeratesymbolsCallback = Function (pSymInfo:PSYMBOL_INFOW; SymbolSize:Cardinal; UserContext:Pointer):BOOL; StdCall;
   PfindfileinpathcallbackW = Function (FileName:PWideChar; Context:Pointer):BOOL; StdCall;
 
+  _SYM_TYPE = (
+    SymNone,
+    SymCoff,
+    SymCv,
+    SymPdb,
+    SymExport,
+    SymDeferred,
+	  SymSym);
+  SYM_TYPE = _SYM_TYPE;
+  PSYM_TYPE = ^SYM_TYPE;
+
+  _IMAGEHLP_MODULE64W = Record
+    SizeOfStruct : Cardinal;
+    BaseOfImage : UInt64;
+    ImageSize : Cardinal;
+    TimeDateStamp : Cardinal;
+    CheckSum : Cardinal;
+    NumSyms : Cardinal;
+    SymType : SYM_TYPE;
+    ModuleName : Packed Array [0..31] Of WideChar;
+    ImageName : Packed Array [0..255] Of WideChar;
+    LoadedImageName : Packed Array [0..255] Of WideChar;
+    end;
+  IMAGEHLP_MODULE64W  = _IMAGEHLP_MODULE64W;
+  PIMAGEHLP_MODULE64W  = ^IMAGEHLP_MODULE64W;
+
 Function SymInitializeW(hProcess:THandle; UserSearchPath:PWideChar; fInvadeProcess:BOOL):BOOL; StdCall;
 Function SymCleanup(hProcess:THandle):BOOL; StdCall;
 Function SymEnumSymbolsW(hProcess:THandle; BaseOfDll:NativeUInt; Mask:PWideChar; EnumSymbolsCallback:SymEnumeratesymbolsCallback; UserContext:Pointer):BOOL; StdCall;
@@ -57,6 +83,7 @@ Function SymUnloadModule64(hProcess:THandle; BaseOfDll:UInt64):BOOL; StdCall;
 Function SymGetSymbolFileW(hProcess:THandle; SymPath:PWideChar; ImageFile:PWideChar; FileType:Cardinal; SymbolFile:PWideChar; cSymbolFile:NativeUInt; DbgFile:PWideChar; cDebugFile:NativeUInt):BOOL; StdCall;
 Function SymSrvGetFileIndexesW(AFile:PWideChar; Var Id:TGuid; Var Val1:Cardinal; Var Val2:Cardinal; flags:Cardinal):BOOL; StdCall;
 Function SymFindFileInPathW(hProcess:THandle; SearchPath:PWideChar; FileName:PWideChar; Id:Pointer; two:Cardinal; three:Cardinal; flags:Cardinal; Found:PWideChar; callback:PfindfileinpathcallbackW; context:Pointer):BOOL; StdCall;
+Function SymGetModuleInfoW64(hProcess:THandle; Addr:UInt64; Var ModInfo:IMAGEHLP_MODULE64W):BOOL; StdCall;
 
 Implementation
 
@@ -71,6 +98,7 @@ Function SymUnloadModule64(hProcess:THandle; BaseOfDll:UInt64):BOOL; StdCall; Ex
 Function SymGetSymbolFileW(hProcess:THandle; SymPath:PWideChar; ImageFile:PWideChar; FileType:Cardinal; SymbolFile:PWideChar; cSymbolFile:NativeUInt; DbgFile:PWideChar; cDebugFile:NativeUInt):BOOL; StdCall; External LibraryName;
 Function SymSrvGetFileIndexesW(AFile:PWideChar; Var Id:TGuid; Var Val1:Cardinal; Var Val2:Cardinal; flags:Cardinal):BOOL; StdCall; External LibraryName;
 Function SymFindFileInPathW(hProcess:THandle; SearchPath:PWideChar; FileName:PWideChar; Id:Pointer; two:Cardinal; three:Cardinal; flags:Cardinal; Found:PWideChar; callback:PfindfileinpathcallbackW; context:Pointer):BOOL; StdCall; External LibraryName;
+Function SymGetModuleInfoW64(hProcess:THandle; Addr:UInt64; Var ModInfo:IMAGEHLP_MODULE64W):BOOL; StdCall; External LibraryName;
 
 
 End.

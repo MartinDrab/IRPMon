@@ -23,6 +23,10 @@ Type
     Private
       FName : WideString;
       FNames : TRefObjectDictionary<UInt64, TModuleSymbol>;
+      FImageSize : Cardinal;
+      FTimeDateStamp : Cardinal;
+      FChecksum : Cardinal;
+      FSymType : SYM_TYPE;
     Protected
       Function GetSymbolCount:Integer;
     Public
@@ -31,8 +35,14 @@ Type
 
       Function FindSymbol(Var AOffset:UInt64):TModuleSymbol;
 
+      Class Function SymTypeToString(AType:SYM_TYPE):WideString;
+
       Property Name : WideString Read FName;
       Property Count : Integer Read GetSymbolCount;
+      Property TimeDateStamp : Cardinal Read FTimeDateStamp;
+      Property CheckSum : Cardinal Read FCheckSum;
+      Property SymType:SYM_TYPE Read FSymType;
+      Property ImageSize : Cardinal Read FImageSize;
     end;
 
   TModuleSymbolStore = Class
@@ -107,6 +117,7 @@ Var
   hFile : THandle;
   fileSize : Int64;
   symBase : Cardinal;
+  info : IMAGEHLP_MODULE64W;
 begin
 Inherited Create;
 hLib := 0;
@@ -132,6 +143,15 @@ Try
 
   If Not SymEnumSymbolsW(AProcess, hLib, PWideChar(ExtractFileName(AFileName) + '!*'), _EnumCallback, Self) Then
     Raise Exception.Create(Format('Unable to enumerate symbols: %u', [GetLastError]));
+
+  info.SizeOfStruct := SizeOf(info);
+  If Not SymGetModuleInfoW64(AProcess, hLib, info) Then
+    Raise Exception.Create(Format('Unable to get module info: %u', [GetLastError]));
+
+  FImageSize := info.ImageSize;
+  FTimeDateStamp := info.TimeDateStamp;
+  FCheckSum := info.CheckSum;
+  FSymType := info.SymType;
 Finally
   If symBase <> 0 THen
     SymUnloadModule64(AProcess, hLib);
@@ -177,6 +197,20 @@ If Assigned(Result) Then
   begin
   AOffset := minOffset;
   Result.Reference;
+  end;
+end;
+
+Class Function TSymTable.SymTypeToString(AType:SYM_TYPE):WideString;
+begin
+Case AType Of
+  SymCoff : Result := 'COFF';
+  SymCv : Result := 'CodeView';
+  SymDeferred : Result := 'Deferred';
+  SymExport : Result := 'Exports';
+  SymNone : Result := 'None';
+  SymPdb : Result := 'PDB';
+  SymSym : Result := 'SYM';
+  Else Result := Format('%u', [Ord(AType)]);
   end;
 end;
 

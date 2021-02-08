@@ -184,6 +184,7 @@ Implementation
 {$R *.dfm}
 
 Uses
+  DateUtils,
   WinSvc,
 {$IFNDEF FPC}
   IOUtils,
@@ -940,7 +941,10 @@ With Item Do
   st := FSymStore.ModuleByIndex[Index];
   Caption := ExtractFileName(st.Name);
   SubItems.Add(st.Name);
+  SubItems.Add(TSymTable.SymTypeToString(st.SymType));
   SubItems.Add(Format('%d', [st.Count]));
+  SubItems.Add(IntToHex(st.CheckSum, 8));
+  SubItems.Add(DateTimeToStr(UnixToDateTime(st.TimeDateStamp, True)));
   end;
 end;
 
