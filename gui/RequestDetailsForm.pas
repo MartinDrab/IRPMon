@@ -145,6 +145,7 @@ Var
   st : TSymTable;
   symbolName : WideString;
   offset : UInt64;
+  ms : TModuleSymbol;
 begin
 pe := FRequest.Process;
 il := TRefObjectList<TImageEntry>.Create;
@@ -163,7 +164,14 @@ For I := 0 To FRequest.StackFrameCount - 1 Do
       SubItems.Add(ExtractFileName(ie.FileName));
       st := FSymStore.Module[ExtractFileName(ie.FileName)];
       If Assigned(st) Then
-        st.FindSymbol(offset, symbolName);
+        begin
+        ms := st.FindSymbol(offset);
+        If Assigned(ms) Then
+          begin
+          symbolName := ms.Name;
+          ms.Free;
+          end;
+        end;
 
       SubItems.Add(symbolName);
       SubItems.Add(Format('0x%x', [offset]));

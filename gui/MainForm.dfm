@@ -876,7 +876,7 @@ object MainFrm: TMainFrm
     Top = 0
     Width = 582
     Height = 296
-    ActivePage = SymTabSheet
+    ActivePage = RequestTabSheet
     Align = alClient
     TabOrder = 0
     object RequestTabSheet: TTabSheet
@@ -1030,8 +1030,8 @@ object MainFrm: TMainFrm
         TabOrder = 0
         ViewStyle = vsReport
         OnData = SymListViewData
-        ExplicitLeft = 24
-        ExplicitWidth = 550
+        OnSelectItem = SymListViewSelectItem
+        ExplicitTop = -2
       end
     end
   end
@@ -1234,6 +1234,11 @@ object MainFrm: TMainFrm
       end
       object SymAddDirectoryMenuItem: TMenuItem
         Caption = 'Add directory...'
+      end
+      object SymDeleteMenuItem: TMenuItem
+        Caption = 'Delete'
+        Enabled = False
+        OnClick = SymDeleteMenuItemClick
       end
     end
     object ColumnsMenuItem: TMenuItem

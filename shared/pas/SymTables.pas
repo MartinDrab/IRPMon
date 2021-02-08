@@ -8,17 +8,28 @@ Uses
   DbgHelpDll;
 
 Type
+  TModuleSymbol = Class (TRefObject)
+  Private
+    FOffset : Uint64;
+    FName : WideString;
+  Public
+    Constructor Create(AOffset:UInt64; AName:WideString); Reintroduce;
+
+    Property Offset : UInt64 Read FOffset;
+    Property Name : WideString Read FName;
+  end;
+
   TSymTable = Class (TRefObject)
     Private
       FName : WideString;
-      FNames : TDictionary<UInt64, WideString>;
+      FNames : TRefObjectDictionary<UInt64, TModuleSymbol>;
     Protected
       Function GetSymbolCount:Integer;
     Public
       Constructor Create(AProcess:THandle; AFileName:WideString); Reintroduce;
       Destructor Destroy; Override;
 
-      Function FindSymbol(Var AOffset:UInt64; Var AName:WideString):Boolean;
+      Function FindSymbol(Var AOffset:UInt64):TModuleSymbol;
 
       Property Name : WideString Read FName;
       Property Count : Integer Read GetSymbolCount;
@@ -28,17 +39,18 @@ Type
     Private
       FhProcess : THandle;
       FKeys : TList<WideString>;
-      FSymTables : TObjectDictionary<WideString, TSymTable>;
+      FSymTables : TRefObjectDictionary<WideString, TSymTable>;
     Protected
       Function GetModule(ABaseName:WideString):TSymTable;
       Function GetModuleCount:Integer;
       Function GetModuleByIndex(AIndex:Integer):TSymTable;
     Public
       Constructor Create(AProcess:THandle); Reintroduce;
-      Destructor Destroy;
+      Destructor Destroy; Override;
 
       Function AddFile(AFileName:WideString):Boolean;
       Function AddDirectory(ADirName:WideString):Boolean;
+      Function Delete(AModuleName:WideString):Boolean;
 
       Property Module [ABaseName:WideString] : TSymTable Read GetModule;
       Property ModuleByIndex [AIndex:Integer] : TSymTable Read GetModuleByIndex;
@@ -51,6 +63,15 @@ Uses
   Windows,
   SysUtils;
 
+(** TModuleSymbol **)
+
+Constructor TModuleSymbol.Create(AOffset:UInt64; AName:WideString);
+begin
+Inherited Create;
+FName := AName;
+FOffset := AOffset;
+end;
+
 (** TSymTable **)
 
 Function _EnumCallback(pSymInfo:PSYMBOL_INFOW; SymbolSize:Cardinal; UserContext:Pointer):BOOL; StdCall;
@@ -58,6 +79,7 @@ Var
   symName : WideString;
   table : TSymTable;
   offset : UInt64;
+  ms : TModuleSymbol;
 begin
 table := TSymTable(UserContext);
 If (pSymInfo.Address <> 0) Then
@@ -66,7 +88,12 @@ If (pSymInfo.Address <> 0) Then
   Move(pSymInfo.Name, PWideChar(symName)^, Length(symName)*SizeOf(WideChar));
   offset := pSymInfo.Address - pSymInfo.ModBase;
   Try
-    table.FNames.Add(offset, symName);
+    Try
+      ms := TModuleSymbol.Create(offset, symName);
+      table.FNames.Add(offset, ms);
+    Finally
+      ms.Free;
+      end;
   Except
     end;
   end;
@@ -77,55 +104,44 @@ end;
 Constructor TSymTable.Create(AProcess:THandle; AFileName:WideString);
 Var
   hLib : THandle;
-  err : Cardinal;
   hFile : THandle;
   fileSize : Int64;
+  symBase : Cardinal;
 begin
 Inherited Create;
+hLib := 0;
+symBase := 0;
+hFile := INVALID_HANDLE_VALUE;
 FName := AFileName;
-FNames := TDictionary<UInt64, WideString>.Create;
-hFile := CreateFileW(PWideChar(AFileName), GENERIC_READ, FILE_SHARE_READ, Nil, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-If hFile = INVALID_HANDLE_VALUE Then
-  begin
-  err := GetLastError;
-  Raise Exception.Create(Format('Unable to open the file: %u', [err]));
-  end;
+FNames := TRefObjectDictionary<UInt64, TModuleSymbol>.Create;
+Try
+  hFile := CreateFileW(PWideChar(AFileName), GENERIC_READ, FILE_SHARE_READ, Nil, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+  If hFile = INVALID_HANDLE_VALUE Then
+    Raise Exception.Create(Format('Unable to open the file: %u', [GetLastError]));
 
-If Not GetFileSizeEx(hFile, fileSize) Then
-  begin
-  err := GetLastError;
-  CloseHandle(hFile);
-  Raise Exception.Create(Format('Unable to get the file size: %u', [err]));
-  end;
+  If Not GetFileSizeEx(hFile, fileSize) Then
+    Raise Exception.Create(Format('Unable to get the file size: %u', [GetLastError]));
 
-hLib := LoadLibraryExW(PWideChar(AFileName), 0, DONT_RESOLVE_DLL_REFERENCES);
-If hLib = 0 Then
-  begin
-  err := GetLastError;
-  CloseHandle(hFile);
-  Raise Exception.Create(Format('Unable to load library: %u', [err]));
-  end;
+  hLib := LoadLibraryExW(PWideChar(AFileName), 0, DONT_RESOLVE_DLL_REFERENCES);
+  If hLib = 0 Then
+    Raise Exception.Create(Format('Unable to load library: %u', [GetLastError]));
 
-If SymLoadModuleExW(AProcess, hFile, PWideChar(AFileName), Nil, hLib, fileSize, Nil, 0) = 0 Then
-  begin
-  err := GetLastError;
-  FreeLibrary(hLib);
-  CloseHandle(hFile);
-  Raise Exception.Create(Format('Unable to load symbols: %u', [err]));
-  end;
+  symBase := SymLoadModuleExW(AProcess, hFile, PWideChar(AFileName), Nil, hLib, fileSize, Nil, 0);
+  If symBase = 0 Then
+    Raise Exception.Create(Format('Unable to load symbols: %u', [GetLastError]));
 
-If Not SymEnumSymbolsW(AProcess, hLib, PWideChar(ExtractFileName(AFileName) + '!*'), _EnumCallback, Self) Then
-  begin
-  err := GetLastError;
-  SymUnloadModule64(AProcess, hLib);
-  FreeLibrary(hLib);
-  CloseHandle(hFile);
-  Raise Exception.Create(Format('Unable to enumerate symbols: %u', [err]));
-  end;
+  If Not SymEnumSymbolsW(AProcess, hLib, PWideChar(ExtractFileName(AFileName) + '!*'), _EnumCallback, Self) Then
+    Raise Exception.Create(Format('Unable to enumerate symbols: %u', [GetLastError]));
+Finally
+  If symBase <> 0 THen
+    SymUnloadModule64(AProcess, hLib);
 
-SymUnloadModule64(AProcess, hLib);
-FreeLibrary(hLib);
-CloseHandle(hFile);
+  If hLib <> 0 Then
+    FreeLibrary(hLib);
+
+  If hFile <> INVALID_HANDLE_VALUE Then
+    CloseHandle(hFile);
+  end;
 end;
 
 Destructor TSymTable.Destroy;
@@ -139,30 +155,28 @@ begin
 Result := FNames.Count;
 end;
 
-Function TSymTable.FindSymbol(Var AOffset:UInt64; Var AName:WideString):Boolean;
+Function TSymTable.FindSymbol(Var AOffset:UInt64):TModuleSymbol;
 Var
-  p : TPair<UInt64, WideString>;
+  p : TPair<UInt64, TModuleSymbol>;
   minOffset : UInt64;
-  minName : WideString;
 begin
-Result := False;
+Result := Nil;
 For p In FNames Do
   begin
   If p.Key < AOffset Then
     begin
-    Result := True;
     If AOffset - p.Key < minOffset Then
       begin
       minOffset := AOffset - p.Key;
-      minName := p.Value;
+      Result := p.Value;
       end;
     end;
   end;
 
-If Result Then
+If Assigned(Result) Then
   begin
   AOffset := minOffset;
-  AName := minName;
+  Result.Reference;
   end;
 end;
 
@@ -172,7 +186,7 @@ Constructor TModuleSymbolStore.Create(AProcess:THandle);
 begin
 Inherited Create;
 FhProcess := AProcess;
-FSymTables := TObjectDictionary<WideString, TSymTable>.Create;
+FSymTables := TRefObjectDictionary<WideString, TSymTable>.Create;
 FKeys := TList<WideString>.Create;
 end;
 
@@ -205,6 +219,7 @@ If Result Then
   Else FKeys.Add(k);
 
   FSymTables.AddOrSetValue(k, st);
+  st.Free;
   end;
 end;
 
@@ -243,6 +258,21 @@ Var
 begin
 k := FKeys[AIndex];
 Result := GetModule(k);
+end;
+
+Function TModuleSymbolStore.Delete(AModuleName:WideString):Boolean;
+Var
+  index : Integer;
+  baseName : WideString;
+begin
+baseName := WideUpperCase(ExtractFileName(AModuleName));
+index := FKeys.IndexOf(baseName);
+Result := index <> -1;
+If Result Then
+  begin
+  FKeys.Delete(index);
+  FSymTables.Remove(baseName);
+  end;
 end;
 
 End.

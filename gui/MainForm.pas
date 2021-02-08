@@ -100,6 +100,7 @@ Type
     SymAddFileMenuItem: TMenuItem;
     SymAddDirectoryMenuItem: TMenuItem;
     SymFileDialog: TOpenDialog;
+    SymDeleteMenuItem: TMenuItem;
     Procedure ClearMenuItemClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure CaptureEventsMenuItemClick(Sender: TObject);
@@ -137,6 +138,9 @@ Type
     procedure RequestListViewData(Sender: TObject; Item: TListItem);
     procedure SymAddFileMenuItemClick(Sender: TObject);
     procedure SymListViewData(Sender: TObject; Item: TListItem);
+    procedure SymDeleteMenuItemClick(Sender: TObject);
+    procedure SymListViewSelectItem(Sender: TObject; Item: TListItem;
+      Selected: Boolean);
   Private
 {$IFDEF FPC}
     FAppEvents: TApplicationProperties;
@@ -910,6 +914,23 @@ If SymFileDialog.Execute Then
   end;
 end;
 
+Procedure TMainFrm.SymDeleteMenuItemClick(Sender: TObject);
+Var
+  L : TListItem;
+  st : TSymTable;
+begin
+L := SymListView.Selected;
+If Assigned(L) Then
+  begin
+  L.Selected := False;
+  st := FSymStore.ModuleByIndex[L.Index];
+  st.Reference;
+  FSymStore.Delete(st.Name);
+  st.Free;
+  SymListView.Items.Count := FSymStore.ModuleCount;
+  end;
+end;
+
 Procedure TMainFrm.SymListViewData(Sender: TObject; Item: TListItem);
 Var
   st : TSymTable;
@@ -921,6 +942,12 @@ With Item Do
   SubItems.Add(st.Name);
   SubItems.Add(Format('%d', [st.Count]));
   end;
+end;
+
+Procedure TMainFrm.SymListViewSelectItem(Sender: TObject; Item: TListItem;
+  Selected: Boolean);
+begin
+SymDeleteMenuItem.Enabled := Selected;
 end;
 
 Procedure TMainFrm.WatchClassMenuItemClick(Sender: TObject);

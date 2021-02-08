@@ -898,6 +898,10 @@ object RequestDetailsFrm: TRequestDetailsFrm
     TabOrder = 1
     object HeadersTabSheet: TTabSheet
       Caption = 'Headers'
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object NameValueListView: TListView
         Left = 0
         Top = 0
@@ -924,6 +928,10 @@ object RequestDetailsFrm: TRequestDetailsFrm
     object StackTabSheet: TTabSheet
       Caption = 'Stack'
       ImageIndex = 1
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object StackListView: TListView
         Left = 0
         Top = 0
