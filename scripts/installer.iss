@@ -6,7 +6,7 @@
 #define MyAppPublisher "Martin Dráb"
 #define MyAppURL "https://github.com/MartinDrab/IRPMon"
 #define MyAppUpdateURL "https://github.com/MartinDrab/IRPMon/releases"
-#define ConfigMode "Release"
+#define ConfigMode "Debug"
 
 #include "path.iss"
 
@@ -83,6 +83,8 @@ Source: "..\resources\winerr.txt"; DestDir: "{app}\x86"; Flags: ignoreversion; C
 
 Source: "..\dlls\Win32\{#ConfigMode}\*.dll"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: Runtime;
 Source: "..\dlls\x64\{#ConfigMode}\*.dll"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Runtime;
+Source: "..\dlls\Win32\*.dll"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: Runtime;
+Source: "..\dlls\x64\*.dll"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Runtime;
 
 [Tasks]
 Name: DriverInstall; Description: "Install IRPMon driver service"; Components: Kernel; GroupDescription: "Monitoring driver";
