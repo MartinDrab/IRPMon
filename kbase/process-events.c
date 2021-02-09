@@ -22,6 +22,8 @@ typedef struct _PROCESS_RECORD {
 	LARGE_INTEGER CreateTime;
 	UNICODE_STRING ImageName;
 	UNICODE_STRING CommandLine;
+	size_t FrameCount;
+	void *Stack[REQUEST_STACKTRACE_SIZE];
 } PROCESS_RECORD, *PPROCESS_RECORD;
 
 
@@ -53,15 +55,16 @@ static void _PsRecordFree(void *PsContext)
 }
 
 
-static NTSTATUS _ProcessCreateEventAlloc(HANDLE ProcessId, const PS_CREATE_NOTIFY_INFO *NotifyInfo, PREQUEST_PROCESS_CREATED *Record)
+static NTSTATUS _ProcessCreateEventAlloc(HANDLE ProcessId, const PS_CREATE_NOTIFY_INFO *NotifyInfo, const void *Frames, size_t FrameCount, PREQUEST_PROCESS_CREATED *Record)
 {
 	size_t cmdLineOffset = 0;
 	size_t imageNameOffset = 0;
+	size_t totalSize = 0;
 	size_t cmdLineSize = 0;
 	size_t imageNameSize = 0;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	PREQUEST_PROCESS_CREATED tmpRecord = NULL;
-	DEBUG_ENTER_FUNCTION("ProcessId=0x%p; NotifyInfo=0x%p; Record=0x%p", ProcessId, NotifyInfo, Record);
+	DEBUG_ENTER_FUNCTION("ProcessId=0x%p; NotifyInfo=0x%p; Frames=0x%p; FrameCount=%zu; Record=0x%p", ProcessId, NotifyInfo, Frames, FrameCount, Record);
 
 	if (NotifyInfo->ImageFileName != NULL)
 		imageNameSize = NotifyInfo->ImageFileName->Length;
@@ -69,7 +72,8 @@ static NTSTATUS _ProcessCreateEventAlloc(HANDLE ProcessId, const PS_CREATE_NOTIF
 	if (NotifyInfo->CommandLine != NULL)
 		cmdLineSize = NotifyInfo->CommandLine->Length;
 
-	tmpRecord = (PREQUEST_PROCESS_CREATED)RequestMemoryAlloc(sizeof(REQUEST_PROCESS_CREATED) + imageNameSize + cmdLineSize);
+	totalSize = sizeof(REQUEST_PROCESS_CREATED) + imageNameSize + cmdLineSize + FrameCount * sizeof(void*);
+	tmpRecord = (PREQUEST_PROCESS_CREATED)RequestMemoryAlloc(totalSize);
 	if (tmpRecord != NULL) {
 		RequestHeaderInit(&tmpRecord->Header, NULL, NULL, ertProcessCreated);
 		tmpRecord->ProcessId = ProcessId;
@@ -85,6 +89,11 @@ static NTSTATUS _ProcessCreateEventAlloc(HANDLE ProcessId, const PS_CREATE_NOTIF
 		if (cmdLineSize > 0)
 			memcpy((unsigned char *)tmpRecord + cmdLineOffset, NotifyInfo->CommandLine->Buffer, tmpRecord->CommandLineLength);
 		
+		if (FrameCount > 0) {
+			memcpy((unsigned char *)tmpRecord + totalSize - sizeof(void *)*FrameCount, Frames, sizeof(void *)*FrameCount);
+			tmpRecord->Header.Flags |= REQUEST_FLAG_STACKTRACE;
+		}
+
 		*Record = tmpRecord;
 		status = STATUS_SUCCESS;
 	} else status = STATUS_INSUFFICIENT_RESOURCES;
@@ -140,16 +149,23 @@ static void _ProcessNotifyEx(PEPROCESS Process, HANDLE ProcessId, PPS_CREATE_NOT
 {
 	PPROCESS_RECORD pr = NULL;
 	BASIC_CLIENT_INFO clientInfo;
+	size_t frameCount = 0;
+	size_t stackTraceSize = 0;
+	void *frames[REQUEST_STACKTRACE_SIZE];
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("Process=0x%p; ProcessId=0x%p; CreateInfo=0x%p", Process, ProcessId, CreateInfo);
 
 	status = STATUS_SUCCESS;
 	QueryClientBasicInformation(&clientInfo);
 	if (CreateInfo != NULL) {
+		frameCount = UtilsCaptureStackTrace(sizeof(frames) / sizeof(frames[0]), frames);
+		if (frameCount > 0)
+			stackTraceSize = sizeof(frames);
+
 		if (_driverSettings->ProcessEventsCollect) {
 			PREQUEST_PROCESS_CREATED createRecord = NULL;
 
-			status = _ProcessCreateEventAlloc(ProcessId, CreateInfo, &createRecord);
+			status = _ProcessCreateEventAlloc(ProcessId, CreateInfo, frames, frameCount, &createRecord);
 			if (NT_SUCCESS(status)) {
 				_SetRequestFlags(&createRecord->Header, &clientInfo);
 				RequestQueueInsert(&createRecord->Header);
@@ -171,9 +187,15 @@ static void _ProcessNotifyEx(PEPROCESS Process, HANDLE ProcessId, PPS_CREATE_NOT
 			if (!NT_SUCCESS(status) && CreateInfo->ImageFileName != NULL)
 				HeapMemoryFree(pr->ImageName.Buffer);
 
-			if (NT_SUCCESS(status))
+			if (NT_SUCCESS(status)) {
+				if (frameCount > 0) {
+					pr->FrameCount = frameCount;
+					memcpy(pr->Stack, frames, frameCount*sizeof(void *));
+				}
+
 				status = PsTableInsert(&_processTable, pr->ProcessId, pr, sizeof(PROCESS_RECORD));
-								
+			}
+
 			HeapMemoryFree(pr);
 		} else status = STATUS_INSUFFICIENT_RESOURCES;
 	} else {
@@ -284,7 +306,7 @@ NTSTATUS ListProcessesByEvents(PLIST_ENTRY EventListHead)
 					info.CommandLine = &record->CommandLine;
 					info.ImageFileName = &record->ImageName;
 					info.ParentProcessId = record->ParentId;
-					status = _ProcessCreateEventAlloc(record->ProcessId, &info, &request);
+					status = _ProcessCreateEventAlloc(record->ProcessId, &info, record->Stack, record->FrameCount, &request);
 					if (NT_SUCCESS(status)) {
 						request->Header.Flags |= REQUEST_FLAG_EMULATED;
 						InsertTailList(EventListHead, &request->Header.Entry);
