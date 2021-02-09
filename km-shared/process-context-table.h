@@ -5,6 +5,7 @@
 
 #include <ntifs.h>
 #include <fltKernel.h>
+#include "general-types.h"
 
 
 typedef void (PS_CONTEXT_FREE_ROUTINE)(void *PsContext);
@@ -15,6 +16,8 @@ typedef struct _PROCESS_DLL_ENTRY {
 	size_t ImageSize;
 	ULONG InageNameLen;
 	ULONG Padding;
+	size_t FrameCount;
+	void *Stack[REQUEST_STACKTRACE_SIZE];
 	// Image name
 } PROCESS_DLL_ENTRY, *PPROCESS_DLL_ENTRY;
 

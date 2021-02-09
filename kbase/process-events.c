@@ -124,11 +124,13 @@ static NTSTATUS _ProcessExittedEventAlloc(HANDLE ProcessId, PREQUEST_PROCESS_EXI
 
 static NTSTATUS _ImageLoadEventAlloc(HANDLE ProcessId, const PROCESS_DLL_ENTRY *Entry, PREQUEST_IMAGE_LOAD *Request)
 {
+	size_t totalSize = 0;
 	PREQUEST_IMAGE_LOAD tmpRequest = NULL;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("ProcessId=0x%p; Entry=0x%p; Request=0x%p", ProcessId, Entry, Request);
 
-	tmpRequest = (PREQUEST_IMAGE_LOAD)RequestMemoryAlloc(sizeof(REQUEST_IMAGE_LOAD) + Entry->InageNameLen);
+	totalSize = sizeof(REQUEST_IMAGE_LOAD) + Entry->InageNameLen + Entry->FrameCount*sizeof(void *);
+	tmpRequest = (PREQUEST_IMAGE_LOAD)RequestMemoryAlloc(totalSize);
 	if (tmpRequest != NULL) {
 		RequestHeaderInit(&tmpRequest->Header, NULL, NULL, ertImageLoad);
 		tmpRequest->Header.ProcessId = ProcessId;
@@ -136,6 +138,11 @@ static NTSTATUS _ImageLoadEventAlloc(HANDLE ProcessId, const PROCESS_DLL_ENTRY *
 		tmpRequest->ImageSize = Entry->ImageSize;
 		tmpRequest->DataSize = Entry->InageNameLen;
 		memcpy(tmpRequest + 1, Entry + 1, tmpRequest->DataSize);
+		if (Entry->FrameCount > 0) {
+			tmpRequest->Header.Flags |= REQUEST_FLAG_STACKTRACE;
+			memcpy((unsigned char *)tmpRequest + totalSize - Entry->FrameCount*sizeof(void *), Entry->Stack, Entry->FrameCount*sizeof(void *));
+		}
+
 		*Request = tmpRequest;
 		status = STATUS_SUCCESS;
 	} else status = STATUS_INSUFFICIENT_RESOURCES;
@@ -340,11 +347,13 @@ NTSTATUS ListProcessesByEvents(PLIST_ENTRY EventListHead)
 
 NTSTATUS RecordImageLoad(const REQUEST_IMAGE_LOAD *Request)
 {
+	size_t requestSize = 0;
 	PPROCESS_DLL_ENTRY pde = NULL;
 	PPROCESS_OBJECT_CONTEXT psc = NULL;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("Request=0x%p", Request);
 
+	requestSize = RequestGetSize(&Request->Header);
 	status = STATUS_SUCCESS;
 	psc = PsTableGet(&_processTable, Request->Header.ProcessId);
 	if (psc != NULL) {
@@ -356,6 +365,11 @@ NTSTATUS RecordImageLoad(const REQUEST_IMAGE_LOAD *Request)
 			pde->ImageSize = Request->ImageSize;
 			pde->InageNameLen = Request->DataSize;
 			memcpy(pde + 1, Request + 1, pde->InageNameLen);
+			if (Request->Header.Flags & REQUEST_FLAG_STACKTRACE) {
+				pde->FrameCount = REQUEST_STACKTRACE_SIZE;
+				memcpy(pde->Stack, (unsigned char *)Request + requestSize - pde->FrameCount*sizeof(void *), pde->FrameCount*sizeof(void *));
+			}
+
 			FltAcquirePushLockExclusive(&psc->DllListLock);
 			InsertTailList(&psc->DllListHead, &pde->Entry);
 			FltReleasePushLock(&psc->DllListLock);
