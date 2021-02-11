@@ -748,6 +748,7 @@ Type
     MonitorIRP : ByteBool;
     MonitorIRPCompletion : ByteBool;
     MonitorData : ByteBool;
+    MonitorStackTrace : ByteBool;
     IRPSettings : IRP_SETTINGS;
     FastIoSettings : FASTIO_SETTINGS;
     end;

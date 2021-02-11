@@ -493,6 +493,8 @@ typedef struct _DRIVER_MONITOR_SETTINGS {
 	BOOLEAN MonitorIRPCompletion;
 	/// Collect additional data for intercepted requests.
 	BOOLEAN MonitorData;
+	/// Collect information about stacktrace for user-mode requests.
+	BOOLEAN MonitorStackTrace;
 	/// IRPSettings for newly hooked devices.
 	UCHAR IRPSettings[0x1b + 1];
 	/// FastIoSettings for newly hooked devices.

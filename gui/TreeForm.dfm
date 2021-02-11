@@ -973,6 +973,10 @@ object TreeFrm: TTreeFrm
       Caption = 'Data'
       OnClick = TreePopupMenuClick
     end
+    object StackTraceMenuItem: TMenuItem
+      Caption = 'Stack trace'
+      OnClick = TreePopupMenuClick
+    end
     object IRPMenuItem: TMenuItem
       Caption = 'IRP'
       OnClick = TreePopupMenuClick

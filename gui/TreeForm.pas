@@ -35,6 +35,7 @@ Type
     OkButton: TButton;
     DataMenuItem: TMenuItem;
     DeviceExtensionMenuItem: TMenuItem;
+    StackTraceMenuItem: TMenuItem;
     Procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure DeviceTreeViewPopupMenuPopup(Sender: TObject);
@@ -415,6 +416,7 @@ If Assigned(tn) Then
   DriverUnloadMenuItem.Checked := hdr.Settings.MonitorUnload;
   NewDevicesMenuItem.Checked := hdr.Settings.MonitorNewDevices;
   DataMenuItem.Checked := hdr.Settings.MonitorData;
+  StackTraceMenuItem.Checked := hdr.Settings.MonitorStackTrace;
   end;
 end;
 
@@ -502,6 +504,8 @@ For cdr In FCurrentlyHookedDrivers Do
       (dr.Settings.MonitorUnload <> cdr.Settings.MonitorUnload) Or
       (dr.Settings.MonitorFastIo <> cdr.Settings.MonitorFastIo) Or
       (dr.Settings.MonitorIRP <> cdr.Settings.MonitorIRP) Or
+      (dr.Settings.MonitorData <> cdr.Settings.MonitorData) Or
+      (dr.Settings.MonitorStackTrace <> cdr.Settings.MonitorStackTrace) Or
       (dr.Settings.MonitorIRPCompletion <> cdr.Settings.MonitorIRPCompletion) Then
       opList
         .Add(hooStop, dr)
@@ -607,7 +611,9 @@ If Assigned(tn) Then
   Else If M = DriverUnloadMenuItem Then
     hdr.Settings.MonitorUnload := M.Checked
   Else If M = DataMenuItem Then
-    hdr.Settings.MonitorData := M.Checked;
+    hdr.Settings.MonitorData := M.Checked
+  Else If M = StackTraceMenuItem Then
+    hdr.Settings.MonitorStackTrace := M.Checked;
   end;
 
 DeviceTreeView.Invalidate;

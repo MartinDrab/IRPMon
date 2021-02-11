@@ -178,7 +178,6 @@ void IRPDataLogger(PDEVICE_OBJECT DeviceObject, PIRP Irp, PIO_STACK_LOCATION Irp
 										ProbeForRead(Result->Buffer, Result->BufferSize, 1);
 									} __except (EXCEPTION_EXECUTE_HANDLER) {
 										DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, "DANGEROUS BUFFER: Irp=0x%p; IrpStack=0x%p; Buffer=0x%p; Size=%zu\n", Irp, IrpStack, Result->Buffer, Result->BufferSize);
-										__debugbreak();
 										Result->Buffer = NULL;
 										Result->BufferSize = 0;
 									}
@@ -190,7 +189,6 @@ void IRPDataLogger(PDEVICE_OBJECT DeviceObject, PIRP Irp, PIO_STACK_LOCATION Irp
 										ProbeForRead(Irp->UserBuffer, IrpStack->Parameters.DeviceIoControl.OutputBufferLength, 1);
 									} __except (EXCEPTION_EXECUTE_HANDLER) {
 										DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, "DANGEROUS BUFFER: Irp=0x%p; IrpStack=0x%p; Buffer=0x%p; Size=%zu\n", Irp, IrpStack, Irp->UserBuffer, IrpStack->Parameters.DeviceIoControl.OutputBufferLength);
-										__debugbreak();
 										Result->Buffer = NULL;
 										Result->BufferSize = 0;
 									}
