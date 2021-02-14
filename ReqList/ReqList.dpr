@@ -27,7 +27,9 @@ uses
   DataParsers in '..\shared\pas\DataParsers.pas',
   BinaryLogHeader in '..\shared\pas\BinaryLogHeader.pas',
   ProcessList in '..\shared\pas\ProcessList.pas',
-  RefObject in '..\shared\pas\RefObject.pas';
+  RefObject in '..\shared\pas\RefObject.pas',
+  SymTables in '..\shared\pas\SymTables.pas',
+  DbgHelpDll in '..\shared\pas\DbgHelpDll.pas';
 
 Type
   ERequestListObjectType = (

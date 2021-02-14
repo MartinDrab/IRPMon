@@ -60,6 +60,7 @@ FKernelDriver := ARequest.KernelDriver;
 FMappedToAllPids := ARequest.MappedToAllPids;
 FExtraInfo := ARequest.ExtraInfo;
 FPartialMap := ARequest.PartialMap;
+tmp := '';
 SetLength(tmp, FDataSize Div SIzeOf(WideChar));
 Move(FData^, PWideChar(tmp)^, FDataSize);
 SetFileName(tmp);

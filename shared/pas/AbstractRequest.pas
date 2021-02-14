@@ -191,6 +191,8 @@ If ASize > 0 Then
   Else begin
     FDataSize := ASize;
     FData := PByte(FRaw) + FRawSize - FDataSize;
+    If (FRaw.Flags And REQUEST_FLAG_STACKTRACE) <> 0 Then
+      Dec(PByte(FData), REQUEST_STACKTRACE_SIZE*SizeOf(Pointer));
     end;
   end;
 end;
