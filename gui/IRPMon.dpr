@@ -53,7 +53,9 @@ uses
   ProcessList in '..\shared\pas\ProcessList.pas',
   RefObject in '..\shared\pas\RefObject.pas',
   SymTables in '..\shared\pas\SymTables.pas',
-  DbgHelpDll in '..\shared\pas\DbgHelpDll.pas';
+  DbgHelpDll in '..\shared\pas\DbgHelpDll.pas',
+  SetSymPathForm in 'SetSymPathForm.pas' {SetSymPathFrm},
+  AddEditSymServerForm in 'AddEditSymServerForm.pas' {AddEditSymServerFrm};
 
 {$R *.res}
 
@@ -89,8 +91,6 @@ Var
   connType : EIRPMonConnectorType;
   initInfo : IRPMON_INIT_INFO;
 Begin
-If SymInitializeW(GetCurrentProcess, 'srv*d:\symbols*https://msdl.microsoft.com/download/symbols', False) Then
-  begin
   connType := ictNone;
   driverStarted := False;
   Application.Initialize;
@@ -157,12 +157,5 @@ If SymInitializeW(GetCurrentProcess, 'srv*d:\symbols*https://msdl.microsoft.com/
     TablesFinit;
     end
   Else WinErrorMessage('Unable to initialize name tables', err);
-
-  SymCleanup(GetCurrentProcess);
-  end
-Else begin
-  err := GetLastError;
-  WinErrorMessage('Unable to initialize DbgHelp.dll', err);
-  end;
 End.
 

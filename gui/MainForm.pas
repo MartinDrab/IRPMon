@@ -101,6 +101,9 @@ Type
     SymAddDirectoryMenuItem: TMenuItem;
     SymFileDialog: TOpenDialog;
     SymDeleteMenuItem: TMenuItem;
+    N7: TMenuItem;
+    SymbolSearchPathMenuItem: TMenuItem;
+    SymbolDirectoryDialog: TFileOpenDialog;
     Procedure ClearMenuItemClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure CaptureEventsMenuItemClick(Sender: TObject);
@@ -141,6 +144,8 @@ Type
     procedure SymDeleteMenuItemClick(Sender: TObject);
     procedure SymListViewSelectItem(Sender: TObject; Item: TListItem;
       Selected: Boolean);
+    procedure SymbolSearchPathMenuItemClick(Sender: TObject);
+    procedure SymAddDirectoryMenuItemClick(Sender: TObject);
   Private
 {$IFDEF FPC}
     FAppEvents: TApplicationProperties;
@@ -195,6 +200,7 @@ Uses
   ListModel, HookProgressForm,
   Utils, TreeForm, RequestDetailsForm, AboutForm,
   ClassWatchAdd, ClassWatch, DriverNameWatchAddForm,
+  SetSymPathForm,
   WatchedDriverNames, FillterForm, RequestList;
 
 
@@ -321,7 +327,7 @@ Var
   fileName : WideString;
   filtersLoaded : Boolean;
 begin
-FSymStore := TModuleSymbolStore.Create(GetCurrentProcess);
+FSymStore := TModuleSymbolStore.Create(GetCurrentProcess, 'srv*d:\symbols*https://msdl.microsoft.com/download/symbols');
 FProcesses := TRefObjectList<TProcessEntry>.Create;
 FDLLList := TRefObjectList<TImageEntry>.Create;
 FFilters := TObjectList<TRequestFilter>.Create;
@@ -903,6 +909,12 @@ Else statusText := Format('Unable to get driver information: %s (%u)', [SysError
 StatusBar1.SimpleText := statusText;
 end;
 
+Procedure TMainFrm.SymAddDirectoryMenuItemClick(Sender: TObject);
+begin
+If SymbolDirectoryDialog.Execute Then
+  FSymStore.AddDirectory(SymbolDirectoryDialog.FileName);
+end;
+
 Procedure TMainFrm.SymAddFileMenuItemClick(Sender: TObject);
 Var
   M : TMenuItem;
@@ -912,6 +924,21 @@ If SymFileDialog.Execute Then
   begin
   FSymStore.AddFile(SymFileDialog.FileName);
   SymListView.Items.Count := FSymStore.ModuleCount;
+  end;
+end;
+
+Procedure TMainFrm.SymbolSearchPathMenuItemClick(Sender: TObject);
+begin
+With TSetSymPathFrm.Create(Application, FSymStore.SymPath) Do
+  begin
+  ShowModal;
+  If Not Cancelled Then
+    begin
+    If FSymStore.SetSymPath(SymPath) Then
+      WinErrorMessage(Format('Unable to change symbol search path to "%s"', [SymPath]), GetLastError);
+    end;
+
+  Free;
   end;
 end;
 
@@ -1336,6 +1363,8 @@ If Assigned(iniFile) Then
         end;
 
       end;
+
+    iniFIle.WriteString('Symbols', 'SymPath', FSymStore.SymPath);
   Except
     WarningMessage('Unable to save program settings');
     end;
@@ -1353,6 +1382,7 @@ Var
   iniFile : TIniFile;
   settingsFile : WideString;
   settingsDir : WideString;
+  symSearchPath : WideString;
 begin
 iniFIle := Nil;
 settingsFile := ChangeFileExt(ExtractFileName(Application.ExeName), '.ini');
@@ -1393,6 +1423,9 @@ If FileExists(settingsDir + settingsFile) Then
       end;
 
     FModel.ColumnUpdateEnd;
+    symSearchPath := iniFIle.ReadString('Symbols', 'SymPath', 'srv*');
+    If Not FSymStore.SetSymPath(symSearchPath) Then
+      WinErrorMessage(Format('Unable to set symbol search path to "%s"', [symSearchPath]), GetLastError);
   Finally
     iniFIle.Free;
     End;

@@ -1245,11 +1245,19 @@ object MainFrm: TMainFrm
       end
       object SymAddDirectoryMenuItem: TMenuItem
         Caption = 'Add directory...'
+        OnClick = SymAddDirectoryMenuItemClick
       end
       object SymDeleteMenuItem: TMenuItem
         Caption = 'Delete'
         Enabled = False
         OnClick = SymDeleteMenuItemClick
+      end
+      object N7: TMenuItem
+        Caption = '-'
+      end
+      object SymbolSearchPathMenuItem: TMenuItem
+        Caption = 'Symbol search path...'
+        OnClick = SymbolSearchPathMenuItemClick
       end
     end
     object ColumnsMenuItem: TMenuItem
@@ -1340,5 +1348,15 @@ object MainFrm: TMainFrm
     Options = [ofReadOnly, ofHideReadOnly, ofFileMustExist, ofEnableSizing]
     Left = 276
     Top = 88
+  end
+  object SymbolDirectoryDialog: TFileOpenDialog
+    ClientGuid = '{f702737d-0c22-4549-b852-770f09794461}'
+    FavoriteLinks = <>
+    FileTypes = <>
+    OkButtonLabel = 'Select'
+    Options = []
+    Title = 'Select directory to add symbol DLLs '
+    Left = 100
+    Top = 168
   end
 end

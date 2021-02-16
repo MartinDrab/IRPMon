@@ -47,6 +47,8 @@ Type
 
   TModuleSymbolStore = Class
     Private
+      FInitialized : Boolean;
+      FSymPath : WideString;
       FhProcess : THandle;
       FKeys : TList<WideString>;
       FSymTables : TRefObjectDictionary<WideString, TSymTable>;
@@ -55,16 +57,19 @@ Type
       Function GetModuleCount:Integer;
       Function GetModuleByIndex(AIndex:Integer):TSymTable;
     Public
-      Constructor Create(AProcess:THandle); Reintroduce;
+      Constructor Create(AProcess:THandle; ASymPath:WideString = ''); Reintroduce;
       Destructor Destroy; Override;
 
       Function AddFile(AFileName:WideString):Boolean;
       Function AddDirectory(ADirName:WideString):Boolean;
       Function Delete(AModuleName:WideString):Boolean;
 
+      Function SetSymPath(APath:WideString):Boolean;
+
       Property Module [ABaseName:WideString] : TSymTable Read GetModule;
       Property ModuleByIndex [AIndex:Integer] : TSymTable Read GetModuleByIndex;
       Property ModuleCount : Integer Read GetModuleCount;
+      Property SymPath : WideString Read FSymPath;
     end;
 
 Implementation
@@ -216,16 +221,30 @@ end;
 
 (** TModuleSymbolStore **)
 
-Constructor TModuleSymbolStore.Create(AProcess:THandle);
+Constructor TModuleSymbolStore.Create(AProcess:THandle; ASymPath:WideString = '');
+Var
+  pwSymPath : PWideChar;
 begin
 Inherited Create;
 FhProcess := AProcess;
 FSymTables := TRefObjectDictionary<WideString, TSymTable>.Create;
 FKeys := TList<WideString>.Create;
+FSymPath := ASymPath;
+pwSymPath := Nil;
+If FSymPath <> '' Then
+  pwSymPath := PWideChar(FSymPath);
+
+If Not SymInitializeW(FhProcess, pwSymPath, False) Then
+  Raise Exception.Create(Format('SymInitialize: %u', [GetLastError]));
+
+FInitialized := True;
 end;
 
 Destructor TModuleSymbolStore.Destroy;
 begin
+If FInitialized Then
+  SymCleanup(FhProcess);
+
 FKeys.Free;
 FSymTables.Free;
 Inherited Destroy;
@@ -308,6 +327,12 @@ If Result Then
   FSymTables.Remove(baseName);
   end;
 end;
+
+Function TModuleSymbolStore.SetSymPath(APath:WideString):Boolean;
+begin
+Result := SymSetSearchPathW(FhProcess, PWideChar(APath));
+end;
+
 
 End.
 

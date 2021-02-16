@@ -84,6 +84,7 @@ Function SymGetSymbolFileW(hProcess:THandle; SymPath:PWideChar; ImageFile:PWideC
 Function SymSrvGetFileIndexesW(AFile:PWideChar; Var Id:TGuid; Var Val1:Cardinal; Var Val2:Cardinal; flags:Cardinal):BOOL; StdCall;
 Function SymFindFileInPathW(hProcess:THandle; SearchPath:PWideChar; FileName:PWideChar; Id:Pointer; two:Cardinal; three:Cardinal; flags:Cardinal; Found:PWideChar; callback:PfindfileinpathcallbackW; context:Pointer):BOOL; StdCall;
 Function SymGetModuleInfoW64(hProcess:THandle; Addr:UInt64; Var ModInfo:IMAGEHLP_MODULE64W):BOOL; StdCall;
+Function SymSetSearchPathW(hProcess:THandle; SearchPath:PWideChar):BOOL; StdCall;
 
 Implementation
 
@@ -99,6 +100,7 @@ Function SymGetSymbolFileW(hProcess:THandle; SymPath:PWideChar; ImageFile:PWideC
 Function SymSrvGetFileIndexesW(AFile:PWideChar; Var Id:TGuid; Var Val1:Cardinal; Var Val2:Cardinal; flags:Cardinal):BOOL; StdCall; External LibraryName;
 Function SymFindFileInPathW(hProcess:THandle; SearchPath:PWideChar; FileName:PWideChar; Id:Pointer; two:Cardinal; three:Cardinal; flags:Cardinal; Found:PWideChar; callback:PfindfileinpathcallbackW; context:Pointer):BOOL; StdCall; External LibraryName;
 Function SymGetModuleInfoW64(hProcess:THandle; Addr:UInt64; Var ModInfo:IMAGEHLP_MODULE64W):BOOL; StdCall; External LibraryName;
+Function SymSetSearchPathW(hProcess:THandle; SearchPath:PWideChar):BOOL; StdCall; External LibraryName;
 
 
 End.
