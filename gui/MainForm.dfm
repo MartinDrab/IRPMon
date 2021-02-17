@@ -1135,10 +1135,6 @@ object MainFrm: TMainFrm
         Caption = 'Hide excluded requests'
         OnClick = HideExcludedRequestsMenuItemClick
       end
-      object CompressMenuItem: TMenuItem
-        Caption = 'Compress'
-        OnClick = CompressMenuItemClick
-      end
       object IgnoreLogFileHeadersMenuItem: TMenuItem
         Caption = 'Ignore log file headers'
         OnClick = IgnoreLogFileHeadersMenuItemClick

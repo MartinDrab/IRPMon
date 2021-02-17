@@ -44,9 +44,9 @@ Type
       Procedure Clear;
       Function ProcessBuffer(ABuffer:PREQUEST_GENERAL):Cardinal;
 
-      Procedure SaveToStream(AStream:TStream; AFormat:ERequestLogFormat; ACompress:Boolean = False);
+      Procedure SaveToStream(AStream:TStream; AFormat:ERequestLogFormat);
       Procedure LoadFromStream(AStream:TStream; ARequireHeader:Boolean = True);
-      Procedure SaveToFile(AFileName:WideString; AFormat:ERequestLogFormat; ACompress:Boolean = False);
+      Procedure SaveToFile(AFileName:WideString; AFormat:ERequestLogFormat);
       Procedure LoadFromFile(AFileName:WideString; ARequireHeader:Boolean = True);
       Function GetTotalCount:Integer;
       Procedure Reevaluate;
@@ -287,7 +287,7 @@ While Assigned(ABuffer) Do
   end;
 end;
 
-Procedure TRequestList.SaveToStream(AStream:TStream; AFormat:ERequestLogFormat; ACompress:Boolean = False);
+Procedure TRequestList.SaveToStream(AStream:TStream; AFormat:ERequestLogFormat);
 Var
   bh : TBinaryLogHeader;
   I : Integer;
@@ -313,7 +313,7 @@ Case AFormat Of
 For I := 0 To FRequests.Count - 1 Do
   begin
   dr := FRequests[I];
-  dr.SaveToStream(AStream, FParsers, AFormat, ACompress);
+  dr.SaveToStream(AStream, FParsers, AFormat, FSymStore);
   If I < FRequests.Count - 1 Then
     begin
     Case AFormat Of
@@ -331,13 +331,13 @@ If AFormat = rlfJSONArray Then
   end;
 end;
 
-Procedure TRequestList.SaveToFile(AFileName:WideString; AFormat:ERequestLogFormat; ACompress:Boolean = False);
+Procedure TRequestList.SaveToFile(AFileName:WideString; AFormat:ERequestLogFormat);
 Var
   F : TFileStream;
 begin
 F := TFileStream.Create(AFileName, fmCreate Or fmOpenWrite);
 Try
-  SaveToStream(F, AFormat, ACompress);
+  SaveToStream(F, AFormat);
 Finally
   F.Free;
   end;

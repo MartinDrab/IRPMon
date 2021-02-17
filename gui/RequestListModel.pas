@@ -38,8 +38,8 @@ Type
       Procedure Clear; Override;
       Function RowCount : Cardinal; Override;
       Function Update:Cardinal; Override;
-      Procedure SaveToStream(AStream:TStream; AFormat:ERequestLogFormat; ACompress:Boolean = False);
-      Procedure SaveToFile(AFileName:WideString; AFormat:ERequestLogFormat; ACompress:Boolean = False);
+      Procedure SaveToStream(AStream:TStream; AFormat:ERequestLogFormat);
+      Procedure SaveToFile(AFileName:WideString; AFormat:ERequestLogFormat);
       Procedure LoadFromStream(AStream:TStream; ARequireHeader:Boolean = True);
       Procedure LoadFromFile(AFileName:WideString; ARequireHeader:Boolean = True);
       Procedure Reevaluate;
@@ -128,14 +128,14 @@ FList.Free;
 Inherited Destroy;
 end;
 
-Procedure TRequestListModel.SaveToStream(AStream:TStream; AFormat:ERequestLogFormat; ACompress:Boolean = False);
+Procedure TRequestListModel.SaveToStream(AStream:TStream; AFormat:ERequestLogFormat);
 begin
-FList.SaveToStream(AStream, AFormat, ACompress);
+FList.SaveToStream(AStream, AFormat);
 end;
 
-Procedure TRequestListModel.SaveToFile(AFileName:WideString; AFormat:ERequestLogFormat; ACompress:Boolean = False);
+Procedure TRequestListModel.SaveToFile(AFileName:WideString; AFormat:ERequestLogFormat);
 begin
-FList.SaveToFile(AFilename, AFormat, ACompress);
+FList.SaveToFile(AFilename, AFormat);
 end;
 
 Procedure TRequestListModel.LoadFromStream(AStream:TStream; ARequireHeader:Boolean = True);

@@ -62,7 +62,7 @@ Type
       Destructor Destroy; Override;
 
       Function AddFile(AFileName:WideString):Boolean;
-      Function AddDirectory(ADirName:WideString):Boolean;
+      Function AddDirectory(ADirName:WideString; AMask:WideString = '*'):Boolean;
       Function Delete(AModuleName:WideString):Boolean;
       Function TranslateAddress(AProcessEntry:TProcessEntry; AAddress:Pointer; Var AModule:WideString; Var AFunction:WideString; Var AOffset:NativeUInt):Boolean;
       Function SetSymPath(APath:WideString):Boolean;
@@ -277,12 +277,12 @@ If Result Then
   end;
 end;
 
-Function TModuleSymbolStore.AddDirectory(ADirName:WideString):Boolean;
+Function TModuleSymbolStore.AddDirectory(ADirName:WideString; AMask:WideString = '*'):Boolean;
 Var
   d : TSearchRec;
 begin
 Result := True;
-If FindFirst(ADirName + '\*', FaAnyFile, d) = 0 Then
+If FindFirst(ADirName + '\' + AMask, FaAnyFile, d) = 0 Then
   begin
   Repeat
   If (d.Attr And FaDirectory) <> 0 Then

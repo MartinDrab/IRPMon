@@ -73,7 +73,6 @@ Type
     DriverSnapshotEventsCollectMenuItem: TMenuItem;
     ProcessEmulateOnConnectMenuItem: TMenuItem;
     DriverSnapshotOnConnectMenuItem: TMenuItem;
-    CompressMenuItem: TMenuItem;
     IgnoreLogFileHeadersMenuItem: TMenuItem;
     StripRequestDataMenuItem: TMenuItem;
     MaxRequestDataSizeMenuItem: TMenuItem;
@@ -862,7 +861,7 @@ If LogSaveDialog.Execute Then
     end;
 
   If logFormat <> rlfUnknown Then
-    FModel.SaveToFile(fn, logFormat, CompressMenuItem.Checked)
+    FModel.SaveToFile(fn, logFormat)
   Else WarningMessage(Format('Invalid log format specified (%u)', [Ord(logFormat)]));
   end;
 end;
@@ -1350,7 +1349,6 @@ If Assigned(iniFile) Then
     iniFIle.WriteBool('Driver', 'uninstall_on_exit', UninstallOnExitMenuItem.Checked);
     iniFile.WriteBool('General', 'CaptureEvents', CaptureEventsMenuItem.Checked);
     iniFile.WriteBool('General', 'filter_display_only', HideExcludedRequestsMenuItem.Checked);
-    iniFile.WriteBool('Log', 'compress_requests', CompressMenuItem.Checked);
     iniFile.WriteBool('Log', 'ignore_headers', IgnoreLogFileHeadersMenuItem.Checked);
     For I := 0 To FModel.ColumnCount - 1 Do
       begin
@@ -1396,7 +1394,6 @@ If FileExists(settingsDir + settingsFile) Then
     iniFile := TIniFile.Create(settingsDir + settingsFile);
     UnloadOnExitMenuItem.Checked := iniFIle.ReadBool('Driver', 'unload_on_exit', False);
     UninstallOnExitMenuItem.Checked := iniFIle.ReadBool('Driver', 'uninstall_on_exit', True);
-    CompressMenuItem.Checked := iniFIle.ReadBool('Log', 'compress_requests', False);
     IgnoreLogFileHeadersMenuItem.Checked := iniFile.ReadBool('Log', 'ignore_headers', False);
     If IRPMonDllInitialized Then
       begin
