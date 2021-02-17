@@ -5,17 +5,18 @@ Interface
 Uses
   Generics.Collections,
   RefObject,
-  DbgHelpDll;
+  DbgHelpDll,
+  ProcessList;
 
 Type
   TModuleSymbol = Class (TRefObject)
   Private
-    FOffset : Uint64;
+    FOffset : NativeUInt;
     FName : WideString;
   Public
-    Constructor Create(AOffset:UInt64; AName:WideString); Reintroduce;
+    Constructor Create(AOffset:NativeUInt; AName:WideString); Reintroduce;
 
-    Property Offset : UInt64 Read FOffset;
+    Property Offset : NativeUInt Read FOffset;
     Property Name : WideString Read FName;
   end;
 
@@ -33,7 +34,7 @@ Type
       Constructor Create(AProcess:THandle; AFileName:WideString); Reintroduce;
       Destructor Destroy; Override;
 
-      Function FindSymbol(Var AOffset:UInt64):TModuleSymbol;
+      Function FindSymbol(Var AOffset:NativeUInt):TModuleSymbol;
 
       Class Function SymTypeToString(AType:SYM_TYPE):WideString;
 
@@ -63,7 +64,7 @@ Type
       Function AddFile(AFileName:WideString):Boolean;
       Function AddDirectory(ADirName:WideString):Boolean;
       Function Delete(AModuleName:WideString):Boolean;
-
+      Function TranslateAddress(AProcessEntry:TProcessEntry; AAddress:Pointer; Var AModule:WideString; Var AFunction:WideString; Var AOffset:NativeUInt):Boolean;
       Function SetSymPath(APath:WideString):Boolean;
 
       Property Module [ABaseName:WideString] : TSymTable Read GetModule;
@@ -80,7 +81,7 @@ Uses
 
 (** TModuleSymbol **)
 
-Constructor TModuleSymbol.Create(AOffset:UInt64; AName:WideString);
+Constructor TModuleSymbol.Create(AOffset:NativeUInt; AName:WideString);
 begin
 Inherited Create;
 FName := AName;
@@ -180,7 +181,7 @@ begin
 Result := FNames.Count;
 end;
 
-Function TSymTable.FindSymbol(Var AOffset:UInt64):TModuleSymbol;
+Function TSymTable.FindSymbol(Var AOffset:NativeUInt):TModuleSymbol;
 Var
   p : TPair<UInt64, TModuleSymbol>;
   minOffset : UInt64;
@@ -326,6 +327,36 @@ If Result Then
   FKeys.Delete(index);
   FSymTables.Remove(baseName);
   end;
+end;
+
+Function TModuleSymbolStore.TranslateAddress(AProcessEntry:TProcessEntry; AAddress:Pointer; Var AModule:WideString; Var AFunction:WideString; Var AOffset:NativeUInt):Boolean;
+Var
+  st : TSymTable;
+  ie : TImageEntry;
+  ms : TModuleSymbol;
+  il : TRefObjectList<TImageEntry>;
+begin
+il := TRefObjectList<TImageEntry>.Create;
+Result := AProcessEntry.ImageByAddress(AAddress, il);
+If Result Then
+  begin
+  AFunction := '';
+  ie := il[0];
+  AOffset := NativeUInt(AAddress) - NativeUInt(ie.BaseAddress);
+  AModule := ExtractFileName(ie.FileName);
+  st := Module[AModule];
+  If Assigned(st) Then
+    begin
+    ms := st.FindSymbol(Aoffset);
+    If Assigned(ms) Then
+      begin
+      AFunction := ms.Name;
+      ms.Free;
+      end;
+    end;
+  end;
+
+il.Free;
 end;
 
 Function TModuleSymbolStore.SetSymPath(APath:WideString):Boolean;

@@ -140,15 +140,11 @@ Var
   I : Integer;
   pe : TProcessEntry;
   pframe : PPointer;
-  il : TRefObjectList<TImageEntry>;
-  ie : TImageEntry;
-  st : TSymTable;
-  symbolName : WideString;
-  offset : UInt64;
-  ms : TModuleSymbol;
+  offset : NativeUInt;
+  moduleName : WideString;
+  functionName : WideString;
 begin
 pe := FRequest.Process;
-il := TRefObjectList<TImageEntry>.Create;
 pframe := FRequest.StackFrames;
 For I := 0 To FRequest.StackFrameCount - 1 Do
   begin
@@ -156,33 +152,17 @@ For I := 0 To FRequest.StackFrameCount - 1 Do
     begin
     Caption := Format('%d', [I]);
     SubItems.Add(Format('0x%p', [pframe^]));
-    If pe.ImageByAddress(pframe^, il) Then
+    If FSymStore.TranslateAddress(pe, pframe^, moduleName, functionName, offset) Then
       begin
-      symbolName := '';
-      offset := NativeUInt(pframe^) - NativeUInt(ie.BaseAddress);
-      ie := il[0];
-      SubItems.Add(ExtractFileName(ie.FileName));
-      st := FSymStore.Module[ExtractFileName(ie.FileName)];
-      If Assigned(st) Then
-        begin
-        ms := st.FindSymbol(offset);
-        If Assigned(ms) Then
-          begin
-          symbolName := ms.Name;
-          ms.Free;
-          end;
-        end;
-
-      SubItems.Add(symbolName);
+      SubItems.Add(moduleName);
+      SubItems.Add(functionName);
       SubItems.Add(Format('0x%x', [offset]));
-      il.Clear;
       end;
     end;
 
   Inc(pframe);
   end;
 
-il.Free;
 pe.Free;
 end;
 
