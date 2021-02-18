@@ -1,0 +1,84 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{64093543-CF7D-49F9-B24F-3DE8E8EBD7C1}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="ReqList\ReqList.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="CallbackStream\CallbackStream.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="DParser\DParser.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="LibSymbols\Symbols.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="gui\IRPMon.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="ReqList">
+        <MSBuild Projects="ReqList\ReqList.dproj"/>
+    </Target>
+    <Target Name="ReqList:Clean">
+        <MSBuild Projects="ReqList\ReqList.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="ReqList:Make">
+        <MSBuild Projects="ReqList\ReqList.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="CallbackStream">
+        <MSBuild Projects="CallbackStream\CallbackStream.dproj"/>
+    </Target>
+    <Target Name="CallbackStream:Clean">
+        <MSBuild Projects="CallbackStream\CallbackStream.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="CallbackStream:Make">
+        <MSBuild Projects="CallbackStream\CallbackStream.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="DParser">
+        <MSBuild Projects="DParser\DParser.dproj"/>
+    </Target>
+    <Target Name="DParser:Clean">
+        <MSBuild Projects="DParser\DParser.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="DParser:Make">
+        <MSBuild Projects="DParser\DParser.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Symbols">
+        <MSBuild Projects="LibSymbols\Symbols.dproj"/>
+    </Target>
+    <Target Name="Symbols:Clean">
+        <MSBuild Projects="LibSymbols\Symbols.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Symbols:Make">
+        <MSBuild Projects="LibSymbols\Symbols.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="IRPMon">
+        <MSBuild Projects="gui\IRPMon.dproj"/>
+    </Target>
+    <Target Name="IRPMon:Clean">
+        <MSBuild Projects="gui\IRPMon.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="IRPMon:Make">
+        <MSBuild Projects="gui\IRPMon.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="ReqList;CallbackStream;DParser;Symbols;IRPMon"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="ReqList:Clean;CallbackStream:Clean;DParser:Clean;Symbols:Clean;IRPMon:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="ReqList:Make;CallbackStream:Make;DParser:Make;Symbols:Make;IRPMon:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>

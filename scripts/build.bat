@@ -5,29 +5,13 @@ MSBuild ..\irpmon.sln /m /Property:Configuration=%CONFIG% /Property:Platform=Win
 if %errorlevel% NEQ 0 goto failure
 MSBuild ..\irpmon.sln /m /Property:Configuration=%CONFIG% /Property:Platform=x64
 if %errorlevel% NEQ 0 goto failure
+
 call rsvars
 if %errorlevel% NEQ 0 goto failure
-
-MSBuild ../DParser/DParser.dproj /m /t:Build /p:config=%CONFIG% /p:platform=Win32
+MSBuild ../irpmon.groupproj /m /t:Build /p:config=%CONFIG% /p:platform=Win32
 if %errorlevel% NEQ 0 goto failure
-MSBuild ../DParser/DParser.dproj /m /t:Build /p:config=%CONFIG% /p:platform=Win64
+MSBuild ../irpmon.groupproj /m /t:Build /p:config=%CONFIG% /p:platform=Win64
 if %errorlevel% NEQ 0 goto failure
-
-MSBuild ../ReqList/ReqList.dproj /m /t:Build /p:config=%CONFIG% /p:platform=Win32
-if %errorlevel% NEQ 0 goto failure
-MSBuild ../ReqList/ReqList.dproj /m /t:Build /p:config=%CONFIG% /p:platform=Win64
-if %errorlevel% NEQ 0 goto failure
-
-MSBuild ../callbackstream/callbackstream.dproj /m /t:Build /p:config=%CONFIG% /p:platform=Win32
-if %errorlevel% NEQ 0 goto failure
-MSBuild ../callbackstream/callbackstream.dproj /m /t:Build /p:config=%CONFIG% /p:platform=Win64
-if %errorlevel% NEQ 0 goto failure
-
-MSBuild ../gui/irpmon.dproj /m /t:Build /p:config=%CONFIG% /p:platform=Win32
-if %errorlevel% NEQ 0 goto failure
-MSBuild ../gui/irpmon.dproj /m /t:Build /p:config=%CONFIG% /p:platform=Win64
-if %errorlevel% NEQ 0 goto failure
-
 
 goto success
 :failure
