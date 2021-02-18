@@ -24,7 +24,7 @@ Type
 {$R *.RES}
 
 
-Function SymStoreCreate(ASymPath:PWideChar; Var AHandle:Pointer):BOOL; Cdecl;
+Function SymStoreCreate(ASymPath:PWideChar; Var AHandle:Pointer):Cardinal; Cdecl;
 Var
   mss : TModuleSymbolStore;
   sp : WideString;
@@ -33,9 +33,9 @@ sp := WideCharToString(ASymPath);
 Try
   mss := TModuleSymbolStore.Create(GetCurrentProcess, sp);
   AHandle := mss;
-  Result := True;
+  Result := 0;
 Except
-  Result := False;
+  Result := GetLastError;
   end;
 end;
 
@@ -43,43 +43,49 @@ Procedure SymStoreFree(AHandle:Pointer); Cdecl;
 Var
   mss : TModuleSymbolStore;
 begin
-mss := TModuleSymbolStore(AHandle);
+mss := AHandle;
 mss.Free;
 end;
 
-Function SymStoreAddFile(AHandle:Pointer; AFileName:PWideChar):BOOL; Cdecl;
+Function SymStoreAddFile(AHandle:Pointer; AFileName:PWideChar):Cardinal; Cdecl;
 Var
   fn : WideString;
   mss : TModuleSymbolStore;
 begin
+Result := 0;
 mss := TModuleSymbolStore(AHandle);
 fn := WideCharToString(AFileName);
-Result := mss.AddFile(fn);
+If Not mss.AddFile(fn) Then
+  Result := GetLastError;
 end;
 
-Function SymStoreAddDirectory(AHandle:Pointer; ADirName:PWideChar; AMask:PWideChar):BOOL; Cdecl;
+Function SymStoreAddDirectory(AHandle:Pointer; ADirName:PWideChar; AMask:PWideChar):Cardinal; Cdecl;
 Var
   dn : WideString;
   m : WideString;
   mss : TModuleSymbolStore;
 begin
+Result := 0;
 mss := TModuleSymbolStore(AHandle);
 dn := WideCharToString(ADirName);
 If Assigned(AMask) Then
   m := WideCharToString(AMask)
 Else m := '*';
 
-Result := mss.AddDirectory(dn, m);
+If Not mss.AddDirectory(dn, m) Then
+  Result := GetLastError;
 end;
 
-Function SymPathSetSymPath(AHandle:Pointer; APath:PWideChar):BOOL; Cdecl;
+Function SymPathSetSymPath(AHandle:Pointer; APath:PWideChar):Cardinal; Cdecl;
 Var
   p : WideString;
   mss : TModuleSymbolStore;
 begin
+Result := 0;
 p := WideCharToString(APath);
 mss := TModuleSymbolStore(AHandle);
-Result := mss.SetSymPath(p);
+If Not mss.SetSymPath(p) Then
+  Result := GetLastError;
 end;
 
 

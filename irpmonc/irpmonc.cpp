@@ -15,6 +15,7 @@
 #include "dparser.h"
 #include "reqlist.h"
 #include "callback-stream.h"
+#include "symbols.h"
 #include "irpmondll.h"
 #include "request.h"
 #include "driver-hook.h"
@@ -862,6 +863,12 @@ static int _init_dlls(void)
 		if (ret == 0) {
 			ret = CallbackStreamModuleInit(L"callbackstream.dll");
 			if (ret == 0) {
+				ret = SymbolsModuleInit(L"symbols.dll");
+				if (ret != 0)
+					fprintf(stderr, "[ERROR]: Unable to initialize symbols.dll: %u\n", ret);
+
+				if (ret != 0)
+					SymbolsModuleFinit();
 			} else fprintf(stderr, "[ERROR]: Unable to initialize callbackstream.dll: %u\n", ret);
 
 			if (ret != 0)
@@ -878,6 +885,7 @@ static int _init_dlls(void)
 
 static void _finit_dlls(void)
 {
+	SymbolsModuleFinit();
 	CallbackStreamModuleFinit();
 	ReqListModuleFinit();
 	DPListModuleFinit();
