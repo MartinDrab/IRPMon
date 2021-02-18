@@ -225,7 +225,15 @@ Except
   end;
 end;
 
-Function RequestToStream(ARequestHandle:Pointer; AFormat:ERequestLogFormat; AParsers:Pointer; AStream:Pointer):Cardinal; Cdecl;
+Procedure ReqListSetSymStore(AList:Pointer; ASymStore:Pointer); Cdecl;
+Var
+  l : TRequestList;
+begin
+l := AList;
+l.SymStore := ASymStore;
+end;
+
+Function RequestToStream(ARequestHandle:Pointer; AFormat:ERequestLogFormat; AParsers:Pointer; ASymStore:Pointer; AStream:Pointer):Cardinal; Cdecl;
 Var
   dp : TObjectList<TDataParser>;
   dr : TDriverRequest;
@@ -235,7 +243,7 @@ dr := ARequestHandle;
 s := AStream;
 dp := AParsers;
 Try
-  dr.SaveToStream(s, dp, AFormat);
+  dr.SaveToStream(s, dp, AFormat, ASymStore);
   Result := 0;
 Except
   Result := 1;
@@ -255,6 +263,7 @@ Exports
   ReqListUnregisterCallback,
   ReqListSave,
   ReqListLoad,
+  ReqListSetSymStore,
   RequestToStream;
 
 begin

@@ -15,7 +15,8 @@ typedef DWORD (cdecl REQLISTSETCALLBACK)(HANDLE List, REQUEST_LIST_CALLBACK* Rou
 typedef void (cdecl REQLISTUNREGISTERCALLBACK)(HANDLE List);
 typedef DWORD (cdecl REQLISTSAVE)(HANDLE List, ERequestLogFormat Format, const wchar_t* FileName);
 typedef DWORD (cdecl REQLISTLOAD)(HANDLE List, const wchar_t* FileName);
-typedef DWORD (cdecl REQUESTTOSTREAM)(HANDLE RequestHandle, ERequestLogFormat Format, HANDLE Parsers, HANDLE Stream);
+typedef void (cdecl REQLISTSETSYMSTORE)(HANDLE List, HANDLE SymStore);
+typedef DWORD (cdecl REQUESTTOSTREAM)(HANDLE RequestHandle, ERequestLogFormat Format, HANDLE Parsers, HANDLE SymStore, HANDLE Stream);
 
 
 static HMODULE _hLibrary = NULL;
@@ -30,6 +31,7 @@ static REQLISTSETCALLBACK *_ReqListSetCallback = NULL;
 static REQLISTUNREGISTERCALLBACK *_ReqListUnregisterCallback = NULL;
 static REQLISTSAVE *_ReqListSave = NULL;
 static REQLISTLOAD *_ReqListLoad = NULL;
+static REQLISTSETSYMSTORE *_ReqListSetSymStore = NULL;
 static REQUESTTOSTREAM *_RequestToStream = NULL;
 
 
@@ -119,9 +121,17 @@ extern "C" DWORD ReqListLoad(HANDLE List, const wchar_t *FileName)
 }
 
 
-extern "C" DWORD RequestToStream(HANDLE RequestHandle, ERequestLogFormat Format, HANDLE Parsers, HANDLE Stream)
+extern "C" void ReqListSetSymStore(HANDLE List, HANDLE SymStore)
 {
-	return _RequestToStream(RequestHandle, Format, Parsers, Stream);
+	_ReqListSetSymStore(List, SymStore);
+
+	return;
+}
+
+
+extern "C" DWORD RequestToStream(HANDLE RequestHandle, ERequestLogFormat Format, HANDLE Parsers, HANDLE SymStore, HANDLE Stream)
+{
+	return _RequestToStream(RequestHandle, Format, Parsers, SymStore, Stream);
 }
 
 
@@ -143,6 +153,7 @@ extern "C" DWORD ReqListModuleInit(const wchar_t *LibraryName)
 		PREPARE_ROUTINE(_hLibrary, ReqListUnregisterCallback);
 		PREPARE_ROUTINE(_hLibrary, ReqListSave);
 		PREPARE_ROUTINE(_hLibrary, ReqListLoad);
+		PREPARE_ROUTINE(_hLibrary, ReqListSetSymStore);
 		PREPARE_ROUTINE(_hLibrary, RequestToStream);
 	} else ret = GetLastError();
 

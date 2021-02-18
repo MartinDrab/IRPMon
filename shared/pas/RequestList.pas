@@ -96,6 +96,7 @@ end;
 
 Destructor TRequestList.Destroy;
 begin
+FSymStore.Free;
 FProcessMap.Free;
 FFileMap.Free;
 FDriverMap.Free;
@@ -482,7 +483,7 @@ end;
 Procedure TRequestList.SetSymStore(AStore:TModuleSymbolStore);
 begin
 FSymStore.Free;
-FSymStore := AStore;
+FSymStore := AStore.Reference As TModuleSymbolStore;
 end;
 
 

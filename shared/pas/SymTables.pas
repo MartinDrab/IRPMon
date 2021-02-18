@@ -46,7 +46,7 @@ Type
       Property ImageSize : Cardinal Read FImageSize;
     end;
 
-  TModuleSymbolStore = Class
+  TModuleSymbolStore = Class (TRefObject)
     Private
       FInitialized : Boolean;
       FSymPath : WideString;

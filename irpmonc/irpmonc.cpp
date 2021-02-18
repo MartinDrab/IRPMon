@@ -118,6 +118,7 @@ static std::map<void *, CDeviceHook *> _hookedDevices;
 static std::vector<std::wstring> _unhookDrivers;
 static HANDLE _dpListHandle = nullptr;
 static HANDLE _reqListHandle = nullptr;
+static HANDLE _symStore = nullptr;
 static std::wstring _loadServiceName;
 static std::wstring _unloadServiceName;
 
@@ -801,7 +802,7 @@ static void cdecl _on_request(PREQUEST_HEADER Request, HANDLE RequestHandle, voi
 
 	*Store = FALSE;
 	for (auto & o : _outputs) {
-		err = RequestToStream(RequestHandle, o->Format(), _dpListHandle, o->StreamHandle());
+		err = RequestToStream(RequestHandle, o->Format(), _dpListHandle, _symStore, o->StreamHandle());
 		if (err == 0) {
 			if (o->Format() != rlfBinary)
 				o->write("\n");
