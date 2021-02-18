@@ -48,9 +48,9 @@ This sample hooks primary keyboard device (`\Device\KeyboardClass0`) and display
 
 If you wish to support development of this tool, you may donate some stuff to the following addresses:
 
-* 17tEADhePvhHPj2X5GWn8vfiYhZCRH1f7V (BTC)
+* **BTC**: `17tEADhePvhHPj2X5GWn8vfiYhZCRH1f7V`
+* **XMR**: `843axNixjKbLhibVSfx1NBVqhrjwfjw95EpbTZDL7uZuGyhQd4gj6TkFTkgRA1dhisPXURPTMMaY2QrT2fXDRAiF31E2sXP`
 * [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=6QWP4WH49Y3Z2&item_name=IRPMon&currency_code=CZK&source=url)
-* [IRPMon on OpenCollective](https://opencollective.com/irpmon)
 
 ## Contact Me
 
