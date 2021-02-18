@@ -483,7 +483,9 @@ end;
 Procedure TRequestList.SetSymStore(AStore:TModuleSymbolStore);
 begin
 FSymStore.Free;
-FSymStore := AStore.Reference As TModuleSymbolStore;
+FSymStore := Nil;
+If Assigned(AStore) Then
+  FSymStore := AStore.Reference As TModuleSymbolStore;
 end;
 
 

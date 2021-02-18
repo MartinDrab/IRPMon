@@ -62,14 +62,25 @@
 //		N = name
 //
 // --clear-on-disconnect={yes|no|true|false}
+// --collect-disconnected={yes|no|true|false}
 // --process-events={yes|no|true|false}
 // --file-object-events={yes|no|true|false}
 // --snapshot-events={yes|no|true|false}
+// --process-emulate={yes|no|true|false}
+// --snapshot-emulate={yes|no|true|false}
 // --strip-threshold={yes|no|true|false}
 // --strip-data={yes|no|true|false}
-// --save-settings={yes|no|true|false}
 //	--boot-log={yes|no|true|false}
+// --save-settings={yes|no|true|false}
+//
+// --sym-path=<Path>
+// --sym-file=<filename>
+// --sym-dir=<dir>|[mask]
+//
 // --help
+// --stop[=<PID>]
+// --load=<ServiceName>
+// --unload=<ServiceName>
 //
 
 
@@ -93,6 +104,10 @@ static 	OPTION_RECORD opts[] = {
 	{otStripData, L"strip-data", false, 0, 1},
 	{otBootLog, L"boot-log", false, 0, 1},
 	{otSettingsSave, L"save-settings", false, 0, 1},
+
+	{otSymPath, L"sym-path", false, 0, 1},
+	{otSymFile, L"sym-file", false, 0, INT_MAX},
+	{otSymDirectory, L"sym-dir", false, 0, INT_MAX},
 
 	{otHelp, L"help", false, 0, 1},
 	{otStop, L"stop", false, 0, 1},
@@ -426,6 +441,34 @@ static int _parse_unload(const wchar_t *Value)
 }
 
 
+static int _parse_sympath(EOptionType OpType, const wchar_t *Value)
+{
+	int ret = 0;
+
+	switch (OpType) {
+		case otSymPath: {
+			ret = SymStoreSetSymPath(_symStore, Value);
+			if (ret != 0)
+				fprintf(stderr, "[ERROR]: Unable to set symbol path to \"%ls\": %u\n", Value, ret);
+		} break;
+		case otSymFile: {
+			ret = SymStoreAddFile(_symStore, Value);
+			if (ret != 0)
+				fprintf(stderr, "[ERROR]: Unable to add file \"%ls\" to symbol store: %u\n", Value, ret);
+		} break;
+		case otSymDirectory: {
+			ret = SymStoreAddDirectory(_symStore, Value, NULL);
+			if (ret != 0)
+				fprintf(stderr, "[ERROR]: Unable to add directory \"%ls\" to symbol store: %u\n", Value, ret);
+		} break;
+		default:
+			break;
+	}
+
+	return ret;
+}
+
+
 static int _parse_arg(wchar_t *Arg)
 {
 	int ret = 0;
@@ -518,6 +561,11 @@ static int _parse_arg(wchar_t *Arg)
 			break;
 		case otUnload:
 			ret = _parse_unload(value);
+			break;
+		case otSymPath:
+		case otSymFile:
+		case otSymDirectory:
+			ret = _parse_sympath(opRec->Type, value);
 			break;
 	}
 
@@ -864,8 +912,14 @@ static int _init_dlls(void)
 			ret = CallbackStreamModuleInit(L"callbackstream.dll");
 			if (ret == 0) {
 				ret = SymbolsModuleInit(L"symbols.dll");
-				if (ret != 0)
-					fprintf(stderr, "[ERROR]: Unable to initialize symbols.dll: %u\n", ret);
+				if (ret == 0) {
+					ret = SymStoreCreate(NULL, &_symStore);
+					if (ret != 0)
+						fprintf(stderr, "[ERROR]: Unable to initialize the symbol store: %u\n", ret);
+
+					if (ret != 0)
+						SymbolsModuleFinit();
+				} else fprintf(stderr, "[ERROR]: Unable to initialize symbols.dll: %u\n", ret);
 
 				if (ret != 0)
 					SymbolsModuleFinit();
@@ -885,6 +939,7 @@ static int _init_dlls(void)
 
 static void _finit_dlls(void)
 {
+	SymStoreFree(_symStore);
 	SymbolsModuleFinit();
 	CallbackStreamModuleFinit();
 	ReqListModuleFinit();
@@ -1012,45 +1067,45 @@ int wmain(int argc, wchar_t *argv[])
 	int ret = 0;
 	POPTION_RECORD opRec = nullptr;
 
-	for (int i = 1; i < argc; ++i) {
-		ret = _parse_arg(argv[i]);
-		if (ret != 0)
-			break;
-	}
-
+	ret = _init_dlls();
 	if (ret == 0) {
-		opRec = opts;
-		for (size_t i = 0; i < sizeof(opts) / sizeof(opts[0]); ++i) {
-			if (opRec->Count == 0 && opRec->Required) {
-				ret = -5;
-				fprintf(stderr, "[ERROR]: The required argument \"--%ls\" not specified\n", opRec->Name);
+		for (int i = 1; i < argc; ++i) {
+			ret = _parse_arg(argv[i]);
+			if (ret != 0)
 				break;
-			}
 		}
 
-		if (ret == 0)
-			ret = _service_action(true);
-	}
-
-	if (ret == 0) {
-		if (_help) {
-		} else if (_stop) {
-			if (_stopProcessId != 0)
-				fprintf(stderr, "[INFO]: Sending a stop signal to irpmonc process with PID %u...\n", _stopProcessId);
-			else fprintf(stderr, "[INFO]: Sending a stop signal to all irpmonc processes...\n");
-
-			ret = stop_event_oepn(_stopProcessId);
-			if (ret == 0) {
-				stop_event_set();
-				stop_event_finit();
-				fprintf(stderr, "[INFO]: Done\n");
-			} else fprintf(stderr, "[ERROR]: Unable to access the stop event object: %u\n", ret);
-		
-			return ret;
-		}
-		
-		ret = _init_dlls();
 		if (ret == 0) {
+			opRec = opts;
+			for (size_t i = 0; i < sizeof(opts) / sizeof(opts[0]); ++i) {
+				if (opRec->Count == 0 && opRec->Required) {
+					ret = -5;
+					fprintf(stderr, "[ERROR]: The required argument \"--%ls\" not specified\n", opRec->Name);
+					break;
+				}
+			}
+
+			if (ret == 0)
+				ret = _service_action(true);
+		}
+
+		if (ret == 0) {
+			if (_help) {
+			} else if (_stop) {
+				if (_stopProcessId != 0)
+					fprintf(stderr, "[INFO]: Sending a stop signal to irpmonc process with PID %u...\n", _stopProcessId);
+				else fprintf(stderr, "[INFO]: Sending a stop signal to all irpmonc processes...\n");
+
+				ret = stop_event_oepn(_stopProcessId);
+				if (ret == 0) {
+					stop_event_set();
+					stop_event_finit();
+					fprintf(stderr, "[INFO]: Done\n");
+				} else fprintf(stderr, "[ERROR]: Unable to access the stop event object: %u\n", ret);
+		
+				return ret;
+			}
+		
 			ret = DPListCreate(&_dpListHandle);
 			if (ret == 0) {
 				ret = _add_parsers(_dpListHandle);
@@ -1059,6 +1114,7 @@ int wmain(int argc, wchar_t *argv[])
 				
 				if (ret == 0) {
 					ReqListAssignParserList(_reqListHandle, _dpListHandle);
+					ReqListSetSymStore(_reqListHandle, _symStore);
 					ret = IRPMonDllInitialize(&_initInfo);
 				}
 
@@ -1180,12 +1236,12 @@ int wmain(int argc, wchar_t *argv[])
 
 				DPListFree(_dpListHandle);
 			} else fprintf(stderr, "[ERROR]: Unable to initialize parser list: %u\n", ret);
-
-			_finit_dlls();
-		} else fprintf(stderr, "[ERROR]: Unable to initialize DLLs: %u\n", ret);
 	
-		_service_action(false);
-	}
+			_service_action(false);
+		}
+
+		_finit_dlls();
+	}  else fprintf(stderr, "[ERROR]: Unable to initialize DLLs: %u\n", ret);
 
 	return ret;
 }
