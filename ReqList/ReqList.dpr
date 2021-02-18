@@ -25,7 +25,11 @@ uses
   Utils in '..\shared\pas\Utils.pas',
   NameTables in '..\shared\pas\NameTables.pas',
   DataParsers in '..\shared\pas\DataParsers.pas',
-  BinaryLogHeader in '..\shared\pas\BinaryLogHeader.pas';
+  BinaryLogHeader in '..\shared\pas\BinaryLogHeader.pas',
+  ProcessList in '..\shared\pas\ProcessList.pas',
+  RefObject in '..\shared\pas\RefObject.pas',
+  SymTables in '..\shared\pas\SymTables.pas',
+  DbgHelpDll in '..\shared\pas\DbgHelpDll.pas';
 
 Type
   ERequestListObjectType = (
@@ -133,6 +137,7 @@ Function ReqListGetObjectName(AList:Pointer; AObject:Pointer; AType:ERequestList
 Var
   ret : Boolean;
   l : TRequestList;
+  pe : TProcessEntry;
   nameString : WideString;
 begin
 ret := False;
@@ -143,7 +148,14 @@ Case AType Of
   rlotDriver : ret := l.GetDriverName(AObject, nameString);
   rlotDevice : ret := l.GetDeviceName(AObject, nameString);
   rlotFile : ret := l.GetFileName(AObject, nameString);
-  rlotProcess : ret := l.GetProcessName(Cardinal(AObject), nameString);
+  rlotProcess : begin
+    ret := l.GetProcess(Cardinal(AObject), pe);
+    If ret Then
+      begin
+      nameString := pe.ImageName;
+      pe.Free;
+      end;
+    end;
   Else Result := ERROR_INVALID_PARAMETER;
   end;
 
@@ -213,7 +225,15 @@ Except
   end;
 end;
 
-Function RequestToStream(ARequestHandle:Pointer; AFormat:ERequestLogFormat; AParsers:Pointer; AStream:Pointer):Cardinal; Cdecl;
+Procedure ReqListSetSymStore(AList:Pointer; ASymStore:Pointer); Cdecl;
+Var
+  l : TRequestList;
+begin
+l := AList;
+l.SymStore := ASymStore;
+end;
+
+Function RequestToStream(ARequestHandle:Pointer; AFormat:ERequestLogFormat; AParsers:Pointer; ASymStore:Pointer; AStream:Pointer):Cardinal; Cdecl;
 Var
   dp : TObjectList<TDataParser>;
   dr : TDriverRequest;
@@ -223,7 +243,7 @@ dr := ARequestHandle;
 s := AStream;
 dp := AParsers;
 Try
-  dr.SaveToStream(s, dp, AFormat);
+  dr.SaveToStream(s, dp, AFormat, ASymStore);
   Result := 0;
 Except
   Result := 1;
@@ -243,6 +263,7 @@ Exports
   ReqListUnregisterCallback,
   ReqListSave,
   ReqListLoad,
+  ReqListSetSymStore,
   RequestToStream;
 
 begin

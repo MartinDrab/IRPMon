@@ -4,13 +4,28 @@
 
 
 #include <ntifs.h>
+#include <fltKernel.h>
+#include "general-types.h"
 
 
 typedef void (PS_CONTEXT_FREE_ROUTINE)(void *PsContext);
 
+typedef struct _PROCESS_DLL_ENTRY {
+	LIST_ENTRY Entry;
+	void *ImageBase;
+	size_t ImageSize;
+	ULONG InageNameLen;
+	ULONG Padding;
+	size_t FrameCount;
+	void *Stack[REQUEST_STACKTRACE_SIZE];
+	// Image name
+} PROCESS_DLL_ENTRY, *PPROCESS_DLL_ENTRY;
+
 typedef struct _PROCESS_OBJECT_CONTEXT {
 	volatile LONG ReferenceCount;
 	CLONG DataSize;
+	EX_PUSH_LOCK DllListLock;
+	LIST_ENTRY DllListHead;
 	PS_CONTEXT_FREE_ROUTINE *FreeRoutine;
 	// Data
 } PROCESS_OBJECT_CONTEXT, *PPROCESS_OBJECT_CONTEXT;

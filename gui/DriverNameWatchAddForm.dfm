@@ -3,7 +3,7 @@ object DriverNameWatchAddFrm: TDriverNameWatchAddFrm
   Top = 0
   BorderIcons = [biSystemMenu]
   Caption = 'Watch for a driver'
-  ClientHeight = 203
+  ClientHeight = 221
   ClientWidth = 311
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -902,9 +902,9 @@ object DriverNameWatchAddFrm: TDriverNameWatchAddFrm
     end
     object MonitorSettingsCheckListBox: TCheckListBox
       Left = 99
-      Top = 40
+      Top = 35
       Width = 198
-      Height = 105
+      Height = 126
       ItemHeight = 13
       Items.Strings = (
         'New devices'
@@ -914,13 +914,14 @@ object DriverNameWatchAddFrm: TDriverNameWatchAddFrm
         'Fast I/O'
         'Start IO'
         'AddDevice'
-        'Unload')
+        'Unload'
+        'Stacktrace')
       TabOrder = 1
     end
   end
   object CancelButton: TButton
     Left = 238
-    Top = 167
+    Top = 180
     Width = 65
     Height = 33
     Caption = 'Cancel'
@@ -929,7 +930,7 @@ object DriverNameWatchAddFrm: TDriverNameWatchAddFrm
   end
   object OkButton: TButton
     Left = 167
-    Top = 167
+    Top = 180
     Width = 65
     Height = 33
     Caption = 'Ok'

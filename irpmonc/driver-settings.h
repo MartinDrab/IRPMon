@@ -10,7 +10,7 @@
 extern "C" {
 #endif
 
-int parse_setting(EOptionType Type, const wchar_t* Value);
+int parse_setting(EOptionType Type, const wchar_t *Value);
 int sync_settings(void);
 void print_settings(void);
 

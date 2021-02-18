@@ -101,15 +101,15 @@
     <DCC_RemoteDebug>false</DCC_RemoteDebug>
     <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
     <BT_BuildType>Debug</BT_BuildType>
-    <VerInfo_Build>13</VerInfo_Build>
-    <VerInfo_Keys>CompanyName=Martin Drab;FileDescription=IRPMon Application;FileVersion=1.0.0.13;InternalName=IRPMON.EXE;LegalCopyright=Copyright (c) Martin Drab, 2015-2020;LegalTrademarks=;OriginalFilename=IRPMon.exe;ProductName=IRP Monitor;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
+    <VerInfo_Build>20</VerInfo_Build>
+    <VerInfo_Keys>CompanyName=Martin Drab;FileDescription=IRPMon Application;FileVersion=1.0.0.20;InternalName=IRPMON.EXE;LegalCopyright=Copyright (c) Martin Drab, 2015-2020;LegalTrademarks=;OriginalFilename=IRPMon.exe;ProductName=IRP Monitor;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Cfg_1_Win64)'!=''">
     <BT_BuildType>Debug</BT_BuildType>
     <Debugger_CWD>..\bin\x64\$(Config)</Debugger_CWD>
     <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
-    <VerInfo_Build>13</VerInfo_Build>
-    <VerInfo_Keys>CompanyName=Martin Drab;FileDescription=IRPMon Application;FileVersion=1.0.0.13;InternalName=IRPMON.EXE;LegalCopyright=Copyright (c) Martin Drab, 2015-2020;LegalTrademarks=;OriginalFilename=IRPMon.exe;ProductName=IRP Monitor;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
+    <VerInfo_Build>20</VerInfo_Build>
+    <VerInfo_Keys>CompanyName=Martin Drab;FileDescription=IRPMon Application;FileVersion=1.0.0.20;InternalName=IRPMON.EXE;LegalCopyright=Copyright (c) Martin Drab, 2015-2020;LegalTrademarks=;OriginalFilename=IRPMon.exe;ProductName=IRP Monitor;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
   </PropertyGroup>
   <Import Project="..\General.optset" Condition="'$(Cfg_2)'!='' And Exists('..\General.optset')" />
   <PropertyGroup Condition="'$(Cfg_2)'!=''">
@@ -164,11 +164,9 @@
     <DCCReference Include="ClassWatch.pas" />
     <DCCReference Include="ClassWatchAdd.pas">
       <Form>ClassWatchAddFrm</Form>
-      <FormType>dfm</FormType>
     </DCCReference>
     <DCCReference Include="DriverNameWatchAddForm.pas">
       <Form>DriverNameWatchAddFrm</Form>
-      <FormType>dfm</FormType>
     </DCCReference>
     <DCCReference Include="WatchedDriverNames.pas" />
     <DCCReference Include="..\shared\pas\XXXDetectedRequests.pas" />
@@ -177,12 +175,10 @@
     <DCCReference Include="..\shared\pas\FileObjectNameXXXRequest.pas" />
     <DCCReference Include="FillterForm.pas">
       <Form>FilterFrm</Form>
-      <FormType>dfm</FormType>
     </DCCReference>
     <DCCReference Include="..\shared\pas\ProcessXXXRequests.pas" />
     <DCCReference Include="ConnectorSelectionForm.pas">
       <Form>ConnectorSelectionFrm</Form>
-      <FormType>dfm</FormType>
     </DCCReference>
     <DCCReference Include="..\shared\pas\BinaryLogHeader.pas" />
     <DCCReference Include="DLLDecider.pas" />
@@ -193,6 +189,18 @@
     <DCCReference Include="..\shared\pas\IRPCompleteRequest.pas" />
     <DCCReference Include="..\shared\pas\StartIoRequest.pas" />
     <DCCReference Include="..\shared\pas\RequestList.pas" />
+    <DCCReference Include="..\shared\pas\ProcessList.pas" />
+    <DCCReference Include="..\shared\pas\RefObject.pas" />
+    <DCCReference Include="..\shared\pas\SymTables.pas" />
+    <DCCReference Include="..\shared\pas\DbgHelpDll.pas" />
+    <DCCReference Include="SetSymPathForm.pas">
+      <Form>SetSymPathFrm</Form>
+      <FormType>dfm</FormType>
+    </DCCReference>
+    <DCCReference Include="AddEditSymServerForm.pas">
+      <Form>AddEditSymServerFrm</Form>
+      <FormType>dfm</FormType>
+    </DCCReference>
     <BuildConfiguration Include="Release">
       <Key>Cfg_2</Key>
       <CfgParent>Base</CfgParent>
@@ -254,13 +262,13 @@
             <Overwrite>true</Overwrite>
           </Platform>
         </DeployFile>
-        <DeployFile LocalName="..\bin\x64\Debug\IRPMon.exe" Configuration="Debug" Class="ProjectOutput">
+        <DeployFile LocalName="..\bin\Win64\Debug\IRPMon.exe" Configuration="Debug" Class="ProjectOutput">
           <Platform Name="Win64">
             <RemoteName>IRPMon.exe</RemoteName>
             <Overwrite>true</Overwrite>
           </Platform>
         </DeployFile>
-        <DeployFile LocalName="..\bin\x64\Debug\IRPMon.rsm" Configuration="Debug" Class="DebugSymbols">
+        <DeployFile LocalName="..\bin\Win64\Debug\IRPMon.rsm" Configuration="Debug" Class="DebugSymbols">
           <Platform Name="Win64">
             <RemoteName>IRPMon.rsm</RemoteName>
             <Overwrite>true</Overwrite>

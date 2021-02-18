@@ -44,6 +44,9 @@
     <ProjectReference Include="..\libreqlistdll\libreqlistdll.vcxproj">
       <Project>{5668d361-e0d3-449e-93aa-570fb0fa0f06}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\libsymbolsdll\libsymbolsdll.vcxproj">
+      <Project>{a22e6eee-4dce-477a-8316-66ae65ee4843}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\requests\requests.vcxproj">
       <Project>{d7d49f20-b8ef-43d8-8d57-b48de51c62f3}</Project>
     </ProjectReference>

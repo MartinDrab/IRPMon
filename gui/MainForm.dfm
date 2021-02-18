@@ -1,7 +1,7 @@
 object MainFrm: TMainFrm
   Left = 207
   Top = 129
-  Caption = 'IRPMon'
+  Caption = 'IRPMon v1.0'
   ClientHeight = 329
   ClientWidth = 582
   Color = clBtnFace
@@ -881,10 +881,6 @@ object MainFrm: TMainFrm
     TabOrder = 0
     object RequestTabSheet: TTabSheet
       Caption = 'Requests'
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object RequestListView: TListView
         Left = 0
         Top = 0
@@ -898,6 +894,7 @@ object MainFrm: TMainFrm
         PopupMenu = RequestPopupMenu
         TabOrder = 0
         ViewStyle = vsReport
+        OnData = RequestListViewData
         OnDblClick = RequestDetailsMenuItemClick
       end
     end
@@ -905,10 +902,6 @@ object MainFrm: TMainFrm
       Caption = 'Data Parsers'
       ImageIndex = 1
       OnShow = DataParsersTabSheetShow
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object DataParsersListView: TListView
         Left = 0
         Top = 0
@@ -942,6 +935,116 @@ object MainFrm: TMainFrm
         OnData = DataParsersListViewData
       end
     end
+    object ProcessTabSheet: TTabSheet
+      Caption = 'Processes'
+      ImageIndex = 2
+      OnShow = ProcessTabSheetShow
+      object ProcessLowerPanel: TPanel
+        Left = 0
+        Top = 104
+        Width = 574
+        Height = 164
+        Align = alBottom
+        TabOrder = 0
+        object DLLListView: TListView
+          Left = 1
+          Top = 1
+          Width = 572
+          Height = 162
+          Align = alClient
+          Columns = <
+            item
+              Caption = 'Address'
+              Width = 100
+            end
+            item
+              Caption = 'Size'
+              Width = 75
+            end
+            item
+              AutoSize = True
+              Caption = 'File name'
+            end>
+          OwnerData = True
+          ReadOnly = True
+          RowSelect = True
+          ShowWorkAreas = True
+          TabOrder = 0
+          ViewStyle = vsReport
+          OnData = DLLListViewData
+        end
+      end
+      object ProcessListView: TListView
+        Left = 0
+        Top = 0
+        Width = 574
+        Height = 104
+        Align = alClient
+        Columns = <
+          item
+            Caption = 'PID'
+          end
+          item
+            AutoSize = True
+            Caption = 'File name'
+          end
+          item
+            Caption = 'Terminated'
+          end>
+        OwnerData = True
+        ReadOnly = True
+        RowSelect = True
+        ShowWorkAreas = True
+        TabOrder = 1
+        ViewStyle = vsReport
+        OnData = ProcessListViewData
+        OnSelectItem = ProcessListViewSelectItem
+      end
+    end
+    object SymTabSheet: TTabSheet
+      Caption = 'Symbols'
+      ImageIndex = 3
+      object SymListView: TListView
+        Left = 0
+        Top = 0
+        Width = 574
+        Height = 268
+        Align = alClient
+        Columns = <
+          item
+            Caption = 'Module'
+            Width = 100
+          end
+          item
+            AutoSize = True
+            Caption = 'Full path'
+          end
+          item
+            Caption = 'Type'
+            Width = 60
+          end
+          item
+            Caption = 'Symbols'
+            Width = 60
+          end
+          item
+            Caption = 'Checksum'
+            Width = 100
+          end
+          item
+            Caption = 'Timestamp'
+            Width = 150
+          end>
+        OwnerData = True
+        ReadOnly = True
+        RowSelect = True
+        ShowWorkAreas = True
+        TabOrder = 0
+        ViewStyle = vsReport
+        OnData = SymListViewData
+        OnSelectItem = SymListViewSelectItem
+      end
+    end
   end
   object StatusBar1: TStatusBar
     Left = 0
@@ -952,8 +1055,8 @@ object MainFrm: TMainFrm
     SimplePanel = True
   end
   object MainMenu1: TMainMenu
-    Left = 168
-    Top = 176
+    Left = 144
+    Top = 56
     object ActionMenuItem: TMenuItem
       Caption = 'Action'
       object SelectDriversDevicesMenuItem: TMenuItem
@@ -1031,10 +1134,6 @@ object MainFrm: TMainFrm
       object HideExcludedRequestsMenuItem: TMenuItem
         Caption = 'Hide excluded requests'
         OnClick = HideExcludedRequestsMenuItemClick
-      end
-      object CompressMenuItem: TMenuItem
-        Caption = 'Compress'
-        OnClick = CompressMenuItemClick
       end
       object IgnoreLogFileHeadersMenuItem: TMenuItem
         Caption = 'Ignore log file headers'
@@ -1134,6 +1233,29 @@ object MainFrm: TMainFrm
         end
       end
     end
+    object SymbolsMenuItem: TMenuItem
+      Caption = 'Symbols'
+      object SymAddFileMenuItem: TMenuItem
+        Caption = 'Add file...'
+        OnClick = SymAddFileMenuItemClick
+      end
+      object SymAddDirectoryMenuItem: TMenuItem
+        Caption = 'Add directory...'
+        OnClick = SymAddDirectoryMenuItemClick
+      end
+      object SymDeleteMenuItem: TMenuItem
+        Caption = 'Delete'
+        Enabled = False
+        OnClick = SymDeleteMenuItemClick
+      end
+      object N7: TMenuItem
+        Caption = '-'
+      end
+      object SymbolSearchPathMenuItem: TMenuItem
+        Caption = 'Symbol search path...'
+        OnClick = SymbolSearchPathMenuItemClick
+      end
+    end
     object ColumnsMenuItem: TMenuItem
       Caption = 'Columns'
     end
@@ -1153,18 +1275,18 @@ object MainFrm: TMainFrm
     Filter = 
       'Text log files [*.log]|*.log|Binary log files [*.bin]|*.bin|JSON' +
       ' Array [*.json]|*.json|JSON Lines [*.json]|*.json'
-    Left = 160
-    Top = 88
+    Left = 80
+    Top = 56
   end
   object LogOpenDialog: TOpenDialog
     Filter = 'Binary log files [*.bin]|*.bin|All files [*.*]|*.*'
-    Left = 200
+    Left = 112
     Top = 56
   end
   object RequestPopupMenu: TPopupMenu
     OnPopup = RequestPopupMenuPopup
-    Left = 68
-    Top = 168
+    Left = 52
+    Top = 56
     object RPDetailsMenuItem: TMenuItem
       Caption = 'Details...'
       OnClick = RPDetailsMenuItemClick
@@ -1210,12 +1332,27 @@ object MainFrm: TMainFrm
     end
   end
   object HighlightColorDialog: TColorDialog
-    Left = 300
-    Top = 112
+    Left = 172
+    Top = 56
   end
   object StatusTimer: TTimer
     OnTimer = StatusTimerTimer
-    Left = 52
-    Top = 104
+    Left = 20
+    Top = 56
+  end
+  object SymFileDialog: TOpenDialog
+    Options = [ofReadOnly, ofHideReadOnly, ofFileMustExist, ofEnableSizing]
+    Left = 276
+    Top = 88
+  end
+  object SymbolDirectoryDialog: TFileOpenDialog
+    ClientGuid = '{f702737d-0c22-4549-b852-770f09794461}'
+    FavoriteLinks = <>
+    FileTypes = <>
+    OkButtonLabel = 'Select'
+    Options = []
+    Title = 'Select directory to add symbol DLLs '
+    Left = 100
+    Top = 168
   end
 end

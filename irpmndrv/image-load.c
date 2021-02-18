@@ -5,6 +5,7 @@
 #include "request.h"
 #include "utils.h"
 #include "req-queue.h"
+#include "process-events.h"
 #include "image-load.h"
 
 
@@ -20,13 +21,20 @@ static void _ImageNotify(PUNICODE_STRING FullImageName, HANDLE ProcessId, PIMAGE
 	BASIC_CLIENT_INFO clientInfo;
 	const IMAGE_INFO_EX *infoEx = NULL;
 	DEBUG_ENTER_FUNCTION("FullImageName=\"%wZ\"; ProcessId=0x%p; ImageInfo=0x%p", FullImageName, ProcessId, ImageInfo);
+	void *frames[REQUEST_STACKTRACE_SIZE];
+	size_t frameCount = 0;
+	size_t stackTraceSize = 0;
 
 	memset(&uImageName, 0, sizeof(uImageName));
 	if (FullImageName != NULL)
 		uImageName = *FullImageName;
 
 	QueryClientBasicInformation(&clientInfo);
-	ilr = (PREQUEST_IMAGE_LOAD)RequestMemoryAlloc(sizeof(REQUEST_IMAGE_LOAD) + uImageName.Length);
+	frameCount = UtilsCaptureStackTrace(sizeof(frames) / sizeof(frames[0]), frames);
+	if (frameCount > 0)
+		stackTraceSize = sizeof(frames);
+	
+	ilr = (PREQUEST_IMAGE_LOAD)RequestMemoryAlloc(sizeof(REQUEST_IMAGE_LOAD) + uImageName.Length + stackTraceSize);
 	if (ilr != NULL) {
 		RequestHeaderInit(&ilr->Header, NULL, NULL, ertImageLoad);
 		ilr->ImageBase = ImageInfo->ImageBase;
@@ -45,6 +53,14 @@ static void _ImageNotify(PUNICODE_STRING FullImageName, HANDLE ProcessId, PIMAGE
 		ilr->DataSize = uImageName.Length;
 		memcpy(ilr + 1, uImageName.Buffer, uImageName.Length);
 		_SetRequestFlags(&ilr->Header, &clientInfo);
+		if (frameCount > 0) {
+			ilr->Header.Flags |= REQUEST_FLAG_STACKTRACE;
+			memcpy((unsigned char *)(ilr + 1) + ilr->DataSize, frames, stackTraceSize);
+		}
+		
+		if (!ilr->KernelDriver)
+			RecordImageLoad(ilr);
+		
 		RequestQueueInsert(&ilr->Header);
 	}
 

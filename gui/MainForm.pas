@@ -12,7 +12,7 @@ Uses
   Generics.Collections, RequestFilter,
   IRPMonDll, RequestListModel, ExtCtrls,
   HookObjects, RequestThread, DataParsers,
-  IRPMonRequest
+  IRPMonRequest, ProcessList, SymTables, RefObject
 {$IFNDEF FPC}
   , AppEvnts
 {$ENDIF}
@@ -73,7 +73,6 @@ Type
     DriverSnapshotEventsCollectMenuItem: TMenuItem;
     ProcessEmulateOnConnectMenuItem: TMenuItem;
     DriverSnapshotOnConnectMenuItem: TMenuItem;
-    CompressMenuItem: TMenuItem;
     IgnoreLogFileHeadersMenuItem: TMenuItem;
     StripRequestDataMenuItem: TMenuItem;
     MaxRequestDataSizeMenuItem: TMenuItem;
@@ -90,6 +89,20 @@ Type
     AutoStartMenuItem: TMenuItem;
     DemandStartMenuItem: TMenuItem;
     DisabledStartMenuItem: TMenuItem;
+    ProcessTabSheet: TTabSheet;
+    ProcessLowerPanel: TPanel;
+    DLLListView: TListView;
+    ProcessListView: TListView;
+    SymTabSheet: TTabSheet;
+    SymListView: TListView;
+    SymbolsMenuItem: TMenuItem;
+    SymAddFileMenuItem: TMenuItem;
+    SymAddDirectoryMenuItem: TMenuItem;
+    SymFileDialog: TOpenDialog;
+    SymDeleteMenuItem: TMenuItem;
+    N7: TMenuItem;
+    SymbolSearchPathMenuItem: TMenuItem;
+    SymbolDirectoryDialog: TFileOpenDialog;
     Procedure ClearMenuItemClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure CaptureEventsMenuItemClick(Sender: TObject);
@@ -119,6 +132,19 @@ Type
     procedure IgnoreLogFileHeadersMenuItemClick(Sender: TObject);
     procedure CopyVisibleColumnsMenuItemClick(Sender: TObject);
     procedure DriverStartMenuItemClick(Sender: TObject);
+    procedure DLLListViewData(Sender: TObject; Item: TListItem);
+    procedure ProcessListViewData(Sender: TObject; Item: TListItem);
+    procedure ProcessListViewSelectItem(Sender: TObject; Item: TListItem;
+      Selected: Boolean);
+    procedure ProcessTabSheetShow(Sender: TObject);
+    procedure RequestListViewData(Sender: TObject; Item: TListItem);
+    procedure SymAddFileMenuItemClick(Sender: TObject);
+    procedure SymListViewData(Sender: TObject; Item: TListItem);
+    procedure SymDeleteMenuItemClick(Sender: TObject);
+    procedure SymListViewSelectItem(Sender: TObject; Item: TListItem;
+      Selected: Boolean);
+    procedure SymbolSearchPathMenuItemClick(Sender: TObject);
+    procedure SymAddDirectoryMenuItemClick(Sender: TObject);
   Private
 {$IFDEF FPC}
     FAppEvents: TApplicationProperties;
@@ -133,6 +159,9 @@ Type
     FRequestMsgCode : Cardinal;
     FParsers : TObjectList<TDataParser>;
     FFilters : TObjectList<TRequestFilter>;
+    FProcesses : TRefObjectList<TProcessEntry>;
+    FDLLList : TRefObjectList<TImageEntry>;
+    FSymStore : TModuleSymbolStore;
     Procedure EnumerateHooks;
     Procedure EnumerateClassWatches;
     Procedure EnumerateDriverNameWatches;
@@ -159,6 +188,7 @@ Implementation
 {$R *.dfm}
 
 Uses
+  DateUtils,
   WinSvc,
 {$IFNDEF FPC}
   IOUtils,
@@ -169,6 +199,7 @@ Uses
   ListModel, HookProgressForm,
   Utils, TreeForm, RequestDetailsForm, AboutForm,
   ClassWatchAdd, ClassWatch, DriverNameWatchAddForm,
+  SetSymPathForm,
   WatchedDriverNames, FillterForm, RequestList;
 
 
@@ -285,13 +316,19 @@ With THookProgressFrm.Create(Application, taskList) Do
   end;
 
 FFilters.Free;
+FDLLList.Free;
+FProcesses.Free;
+FSymStore.Free;
 end;
 
 Procedure TMainFrm.FormCreate(Sender: TObject);
 Var
   fileName : WideString;
   filtersLoaded : Boolean;
-  begin
+begin
+FSymStore := TModuleSymbolStore.Create(GetCurrentProcess, 'srv*d:\symbols*https://msdl.microsoft.com/download/symbols');
+FProcesses := TRefObjectList<TProcessEntry>.Create;
+FDLLList := TRefObjectList<TImageEntry>.Create;
 FFilters := TObjectList<TRequestFilter>.Create;
 filtersLoaded := False;
 fileName := GetLocalSettingsDirectory + 'filters.ini';
@@ -384,6 +421,7 @@ Else begin
 FParsers := TObjectList<TDataParser>.Create;
 TDataParser.AddFromDirectory(ExtractFileDir(Application.ExeName), FParsers);
 FModel.Parsers := FParsers;
+FModel.SymStore := FSymStore;
 ReadSettings;
 end;
 
@@ -520,6 +558,19 @@ end;
 Procedure TMainFrm.DataParsersTabSheetShow(Sender: TObject);
 begin
 DataParsersListView.Items.Count := FParsers.Count;
+end;
+
+Procedure TMainFrm.DLLListViewData(Sender: TObject; Item: TListItem);
+Var
+  entry : TImageEntry;
+begin
+With Item Do
+  begin
+  entry := FDLLList[Index];
+  Caption := Format('0x%p', [entry.BaseAddress]);
+  SubItems.Add(Format('%u', [entry.ImageSize]));
+  SubItems.Add(entry.FileName);
+  end;
 end;
 
 Procedure TMainFrm.Documentation1Click(Sender: TObject);
@@ -698,7 +749,7 @@ begin
 rq := FModel.Selected;
 If Assigned(rq) Then
   begin
-  With TRequestDetailsFrm.Create(Self, rq, FParsers) Do
+  With TRequestDetailsFrm.Create(Self, rq, FParsers, FSymStore) Do
     begin
     ShowModal;
     Free;
@@ -707,6 +758,18 @@ If Assigned(rq) Then
 Else begin
   If Sender <> RequestListView Then
     WarningMessage('No request selected');
+  end;
+end;
+
+Procedure TMainFrm.RequestListViewData(Sender: TObject; Item: TListItem);
+Var
+  st : TSymTable;
+begin
+With Item Do
+  begin
+  st := FSymStore.ModuleByIndex[Index];
+  Caption := ExtractFileName(st.Name);
+  SubItems.Add(st.Name);
   end;
 end;
 
@@ -798,7 +861,7 @@ If LogSaveDialog.Execute Then
     end;
 
   If logFormat <> rlfUnknown Then
-    FModel.SaveToFile(fn, logFormat, CompressMenuItem.Checked)
+    FModel.SaveToFile(fn, logFormat)
   Else WarningMessage(Format('Invalid log format specified (%u)', [Ord(logFormat)]));
   end;
 end;
@@ -843,6 +906,78 @@ If err = ERROR_SUCCESS Then
 Else statusText := Format('Unable to get driver information: %s (%u)', [SysErrorMessage(err), err]);
 
 StatusBar1.SimpleText := statusText;
+end;
+
+Procedure TMainFrm.SymAddDirectoryMenuItemClick(Sender: TObject);
+begin
+If SymbolDirectoryDialog.Execute Then
+  FSymStore.AddDirectory(SymbolDirectoryDialog.FileName);
+end;
+
+Procedure TMainFrm.SymAddFileMenuItemClick(Sender: TObject);
+Var
+  M : TMenuItem;
+begin
+M := Sender As TMenuItem;
+If SymFileDialog.Execute Then
+  begin
+  FSymStore.AddFile(SymFileDialog.FileName);
+  SymListView.Items.Count := FSymStore.ModuleCount;
+  end;
+end;
+
+Procedure TMainFrm.SymbolSearchPathMenuItemClick(Sender: TObject);
+begin
+With TSetSymPathFrm.Create(Application, FSymStore.SymPath) Do
+  begin
+  ShowModal;
+  If Not Cancelled Then
+    begin
+    If FSymStore.SetSymPath(SymPath) Then
+      WinErrorMessage(Format('Unable to change symbol search path to "%s"', [SymPath]), GetLastError);
+    end;
+
+  Free;
+  end;
+end;
+
+Procedure TMainFrm.SymDeleteMenuItemClick(Sender: TObject);
+Var
+  L : TListItem;
+  st : TSymTable;
+begin
+L := SymListView.Selected;
+If Assigned(L) Then
+  begin
+  L.Selected := False;
+  st := FSymStore.ModuleByIndex[L.Index];
+  st.Reference;
+  FSymStore.Delete(st.Name);
+  st.Free;
+  SymListView.Items.Count := FSymStore.ModuleCount;
+  end;
+end;
+
+Procedure TMainFrm.SymListViewData(Sender: TObject; Item: TListItem);
+Var
+  st : TSymTable;
+begin
+With Item Do
+  begin
+  st := FSymStore.ModuleByIndex[Index];
+  Caption := ExtractFileName(st.Name);
+  SubItems.Add(st.Name);
+  SubItems.Add(TSymTable.SymTypeToString(st.SymType));
+  SubItems.Add(Format('%d', [st.Count]));
+  SubItems.Add(IntToHex(st.CheckSum, 8));
+  SubItems.Add(DateTimeToStr(UnixToDateTime(st.TimeDateStamp, True)));
+  end;
+end;
+
+Procedure TMainFrm.SymListViewSelectItem(Sender: TObject; Item: TListItem;
+  Selected: Boolean);
+begin
+SymDeleteMenuItem.Enabled := Selected;
 end;
 
 Procedure TMainFrm.WatchClassMenuItemClick(Sender: TObject);
@@ -1109,6 +1244,55 @@ If Not invalidButton Then
   end;
 end;
 
+Procedure TMainFrm.ProcessListViewData(Sender: TObject; Item: TListItem);
+Var
+  entry : TProcessEntry;
+begin
+With Item Do
+  begin
+  entry := FProcesses[Index];
+  Caption := Format('%u', [entry.ProcessId]);
+  SubItems.Add(entry.ImageName);
+  SubItems.Add(BoolToStr(entry.Terminated));
+  end;
+end;
+
+Procedure TMainFrm.ProcessListViewSelectItem(Sender: TObject; Item: TListItem;
+  Selected: Boolean);
+Var
+  entry : TProcessEntry;
+begin
+DLLListView.Items.Count := 0;
+FDLLList.Clear;
+If (Assigned(Item)) And (Selected) Then
+  begin
+  entry := FProcesses[Item.Index];
+  entry.EnumImages(FDLLList);
+  DLLListView.Items.Count := FDLLList.Count;
+  end;
+end;
+
+Procedure TMainFrm.ProcessTabSheetShow(Sender: TObject);
+Var
+  I : Integer;
+  L : TListItem;
+  selectedEntry : TProcessEntry;
+begin
+selectedEntry := Nil;
+L := ProcessListView.Selected;
+If Assigned(L) Then
+  selectedEntry := FProcesses[L.Index];
+
+FProcesses.Clear;
+FModel.List.EnumProcesses(FProcesses);
+ProcessListView.Items.Count := FProcesses.Count;
+For I := 0 To FProcesses.Count - 1 Do
+  begin
+  If FProcesses[I] = selectedEntry Then
+    ProcessListView.Items[I].Selected := True;
+  end;
+end;
+
 Procedure TMainFrm.EnumerateDriverNameWatches;
 Var
   M : TMenuItem;
@@ -1165,7 +1349,6 @@ If Assigned(iniFile) Then
     iniFIle.WriteBool('Driver', 'uninstall_on_exit', UninstallOnExitMenuItem.Checked);
     iniFile.WriteBool('General', 'CaptureEvents', CaptureEventsMenuItem.Checked);
     iniFile.WriteBool('General', 'filter_display_only', HideExcludedRequestsMenuItem.Checked);
-    iniFile.WriteBool('Log', 'compress_requests', CompressMenuItem.Checked);
     iniFile.WriteBool('Log', 'ignore_headers', IgnoreLogFileHeadersMenuItem.Checked);
     For I := 0 To FModel.ColumnCount - 1 Do
       begin
@@ -1178,6 +1361,8 @@ If Assigned(iniFile) Then
         end;
 
       end;
+
+    iniFIle.WriteString('Symbols', 'SymPath', FSymStore.SymPath);
   Except
     WarningMessage('Unable to save program settings');
     end;
@@ -1195,6 +1380,7 @@ Var
   iniFile : TIniFile;
   settingsFile : WideString;
   settingsDir : WideString;
+  symSearchPath : WideString;
 begin
 iniFIle := Nil;
 settingsFile := ChangeFileExt(ExtractFileName(Application.ExeName), '.ini');
@@ -1208,7 +1394,6 @@ If FileExists(settingsDir + settingsFile) Then
     iniFile := TIniFile.Create(settingsDir + settingsFile);
     UnloadOnExitMenuItem.Checked := iniFIle.ReadBool('Driver', 'unload_on_exit', False);
     UninstallOnExitMenuItem.Checked := iniFIle.ReadBool('Driver', 'uninstall_on_exit', True);
-    CompressMenuItem.Checked := iniFIle.ReadBool('Log', 'compress_requests', False);
     IgnoreLogFileHeadersMenuItem.Checked := iniFile.ReadBool('Log', 'ignore_headers', False);
     If IRPMonDllInitialized Then
       begin
@@ -1235,6 +1420,9 @@ If FileExists(settingsDir + settingsFile) Then
       end;
 
     FModel.ColumnUpdateEnd;
+    symSearchPath := iniFIle.ReadString('Symbols', 'SymPath', 'srv*');
+    If Not FSymStore.SetSymPath(symSearchPath) Then
+      WinErrorMessage(Format('Unable to set symbol search path to "%s"', [symSearchPath]), GetLastError);
   Finally
     iniFIle.Free;
     End;

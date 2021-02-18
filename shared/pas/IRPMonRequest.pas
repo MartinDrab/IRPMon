@@ -10,7 +10,8 @@ Uses
   Windows, Classes, Generics.Collections,
   IRPMonDll,
   DataParsers,
-  AbstractRequest;
+  AbstractRequest,
+  SymTables;
 
 
 Type
@@ -151,13 +152,14 @@ Type
     FHighlight : Boolean;
     FHighlightColor : Cardinal;
     Procedure ProcessParsers(AParsers:TObjectList<TDataParser>; AFormat:ERequestLogFormat; ALines:TStrings);
+    Procedure ProcessStack(ASymStore:TModuleSymbolStore; AFormat:ERequestLogFormat; ALines:TStrings);
   Public
     Class Function GetBaseColumnName(AColumnType:ERequestListModelColumnType):WideString;
     Function GetColumnName(AColumnType:ERequestListModelColumnType):WideString; Virtual;
     Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Virtual;
     Function GetColumnValueRaw(AColumnType:ERequestListModelColumnType; Var AValue:Pointer; Var AValueSize:Cardinal):Boolean; Virtual;
-    Procedure SaveToStream(AStream:TStream; AParsers:TObjectList<TDataParser>; AFormat:ERequestLogFormat; ACompress:Boolean = False); Virtual;
-    Procedure SaveToFile(AFileName:WideString; AParsers:TObjectList<TDataParser>; AFormat:ERequestLogFormat; ACompress:Boolean = False); Virtual;
+    Procedure SaveToStream(AStream:TStream; AParsers:TObjectList<TDataParser>; AFormat:ERequestLogFormat; ASymStore:TModuleSymbolStore); Virtual;
+    Procedure SaveToFile(AFileName:WideString; AParsers:TObjectList<TDataParser>; AFormat:ERequestLogFormat; ASymStore:TModuleSymbolStore); Virtual;
 
     Class Function CreatePrototype(AType:ERequestType):TDriverRequest;
 
@@ -274,7 +276,77 @@ If Assigned(AParsers) Then
 end;
 
 
-Procedure TDriverRequest.SaveToStream(AStream: TStream; AParsers:TObjectList<TDataParser>; AFormat:ERequestLogFormat; ACompress:Boolean = False);
+Procedure TDriverRequest.ProcessStack(ASymStore:TModuleSymbolStore; AFormat:ERequestLogFormat; ALines:TStrings);
+Var
+  I : Integer;
+  err : Cardinal;
+  tmp : WideString;
+  paddress : PPointer;
+  jsonString : WideString;
+  moduleName : WideString;
+  functionName : WideString;
+  offset : NativeUInt;
+begin
+jsonString := '';
+If FStackFrameCount > 0 Then
+  begin
+  paddress := FStackFrames;
+  For I := 0 To FStackFrameCount - 1 Do
+    begin
+    moduleName := '';
+    functionName := '';
+    offset := 0;
+    If (Assigned(ASymStore)) And
+      (Assigned(FProcess)) And
+      (ASymStore.TranslateAddress(FProcess, paddress^, moduleName, functionName, offset)) Then
+      begin
+      Case AFormat Of
+        rlfText : begin
+          If functionName <> '' Then
+            ALines.Add(Format('  %u: 0x%p %s!%s+%u', [I, paddress^, moduleName, functionName, offset]))
+          Else ALines.Add(Format('  %u: 0x%p %s+%u', [I, paddress^, moduleName, offset]));
+          end;
+        rlfJSONArray,
+        rlfJSONLines : begin
+          If I <> 0 Then
+            jsonString := jsonString + ', ';
+
+          jsonString := jsonString + '{';
+          jsonString := jsonString + Format('"Address" : 0x%p, ', [paddress^]);
+          jsonString := jsonString + Format('"Module" : "%s", ', [moduleName]);
+          If functionName <> '' Then
+            jsonString := jsonString + Format('"Function" : "%s", ', [functionName]);
+
+          jsonString := jsonString + Format('"Offset" : %u', [offset]);
+          jsonString := jsonString + ')';
+          end;
+        end;
+      end
+    Else begin
+      Case AFormat Of
+        rlfText : ALines.Add(Format('  %u: 0x%p', [I, paddress^]));
+        rlfJSONArray,
+        rlfJSONLines : begin
+          If I <> 0 Then
+            jsonString := jsonString + ', ';
+
+          jsonString := jsonString + '{';
+          jsonString := jsonString + Format('"Address" : 0x%p, ', [paddress^]);
+          jsonString := jsonString + '), ';
+          end;
+        end;
+      end;
+
+    Inc(paddress);
+    end;
+  end;
+
+If jsonString <> '' Then
+  ALines.Add(jsonString);
+end;
+
+
+Procedure TDriverRequest.SaveToStream(AStream: TStream; AParsers:TObjectList<TDataParser>; AFormat:ERequestLogFormat; ASymStore:TModuleSymbolStore);
 Var
   tmpJson : WideString;
   jsonString : WideString;
@@ -297,28 +369,25 @@ Case AFormat Of
         end;
       end;
 
-    If DataSize > 0 Then
+    If FDataSize > 0 Then
       ProcessParsers(AParsers, AFormat, s);
+
+    If FStackFrameCount > 0 Then
+      begin
+      s.Add('Stack:');
+      ProcessStack(ASymStore, AFormat, s);
+      end;
 
     s.SaveToStream(AStream);
     s.Free;
     end;
   rlfBinary : begin
     tmp := FRaw;
-    If ACompress Then
-      begin
-      tmp := RequestCopy(FRaw);
-      If Not Assigned(tmp) Then
-        Raise Exception.Create('Not enough memory');
-      end;
-
     Try
       reqSize := RequestGetSize(tmp);
       AStream.Write(reqSize, SizeOf(reqSize));
       AStream.Write(tmp^, reqSize);
     Finally
-      If ACompress Then
-        RequestMemoryFree(tmp);
       end;
     end;
   rlfJSONArray,
@@ -345,6 +414,17 @@ Case AFormat Of
         begin
         jsonString := jsonString + ', "Parsers" : {';
         jsonString := jsonString + s[0] + '}';
+        s.Clear;
+        end;
+      end;
+
+    If FStackFrameCount > 0 Then
+      begin
+      ProcessStack(ASymStore, AFormat, s);
+      If s.Count > 0 Then
+        begin
+        jsonString := jsonString + ', "Stack" : [';
+        jsonString := jsonString + s[0] + ']';
         end;
       end;
 
@@ -356,13 +436,13 @@ Case AFormat Of
   end;
 end;
 
-Procedure TDriverRequest.SaveToFile(AFileName: WideString; AParsers:TObjectList<TDataParser>; AFormat:ERequestLogFormat; ACompress:Boolean = False);
+Procedure TDriverRequest.SaveToFile(AFileName: WideString; AParsers:TObjectList<TDataParser>; AFormat:ERequestLogFormat; ASymStore:TModuleSymbolStore);
 Var
   F : TFileStream;
 begin
 F := TFileStream.Create(AFileName, fmCreate Or fmOpenWrite);
 Try
-  SaveToStream(F, AParsers, AFormat, ACompress);
+  SaveToStream(F, AParsers, AFormat, ASymStore);
 Finally
   F.Free;
   end;

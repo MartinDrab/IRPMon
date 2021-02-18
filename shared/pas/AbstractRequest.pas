@@ -7,10 +7,12 @@ Unit AbstractRequest;
 Interface
 
 Uses
-  IRPMonDll;
+  IRPMonDll,
+  RefObject,
+  ProcessList;
 
 Type
-  TGeneralRequest = Class
+  TGeneralRequest = Class (TRefObject)
   Private
     FDataBufferAllocated : Boolean;
   Protected
@@ -39,6 +41,12 @@ Type
     FAdmin : Boolean;
     FImpersonated : Boolean;
     FImpersonatedAdmin : Boolean;
+    FStackFrames : PPointer;
+    FStackFrameCount : Cardinal;
+    FProcess : TProcessEntry;
+  Protected
+    Function GetProcess:TProcessEntry;
+    Procedure SetProcess(AProcess:TProcessEntry);
   Public
     Constructor Create(Var ARequest:REQUEST_HEADER); Overload;
     Destructor Destroy; Override;
@@ -87,6 +95,9 @@ Type
     Property DataStripped : Boolean Read FDataStripped;
     Property ProcessName : WideString Read FProcessName;
     Property ImpersonatedAdmin : Boolean Read FImpersonatedAdmin;
+    Property StackFrames : PPointer Read FStackFrames;
+    Property StackFrameCount : Cardinal Read FStackFrameCount;
+    Property Process : TProcessEntry Read GetProcess Write SetProcess;
   end;
 
 Implementation
@@ -98,6 +109,8 @@ Uses
 (** TGeneralRequest **)
 
 Constructor TGeneralRequest.Create(Var ARequest:REQUEST_HEADER);
+Var
+  frame : Pointer;
 begin
 Inherited Create;
 FId := ARequest.Id;
@@ -129,10 +142,22 @@ FDataStripped := (ARequest.Flags And REQUEST_FLAG_DATA_STRIPPED) <> 0;
 FAdmin := (ARequest.Flags And REQUEST_FLAG_ADMIN) <> 0;
 FImpersonated := (ARequest.Flags And REQUEST_FLAG_IMPERSONATED) <> 0;
 FImpersonatedAdmin := (ARequest.Flags And REQUEST_FLAG_IMPERSONATED_ADMIN) <> 0;
+If (ARequest.Flags And REQUEST_FLAG_STACKTRACE) <> 0 Then
+  begin
+  FStackFrames := PPointer(PByte(FRaw) + FRawSize - SizeOf(Pointer)*REQUEST_STACKTRACE_SIZE);
+  FStackFrameCount := REQUEST_STACKTRACE_SIZE;
+  Repeat
+  frame := PPointer(PByte(FStackFrames) + SizeOf(Pointer)*(FStackFrameCount - 1))^;
+  If Not Assigned(frame) Then
+    Dec(FStackFrameCount);
+
+  Until (FStackFrameCount = 0) Or (Assigned(frame));
+  end;
 end;
 
 Destructor TGeneralRequest.Destroy;
 begin
+FProcess.Free;
 If Assigned(FRaw) Then
   RequestMemoryFree(FRaw);
 
@@ -166,6 +191,8 @@ If ASize > 0 Then
   Else begin
     FDataSize := ASize;
     FData := PByte(FRaw) + FRawSize - FDataSize;
+    If (FRaw.Flags And REQUEST_FLAG_STACKTRACE) <> 0 Then
+      Dec(PByte(FData), REQUEST_STACKTRACE_SIZE*SizeOf(Pointer));
     end;
   end;
 end;
@@ -195,6 +222,22 @@ begin
 FFileObject := AObject;
 end;
 
+Function TGeneralRequest.GetProcess:TProcessEntry;
+begin
+If Assigned(FProcess) Then
+  FProcess.Reference;
+
+Result := FProcess;
+end;
+
+Procedure TGeneralRequest.SetProcess(AProcess:TProcessEntry);
+begin
+FProcess.Free;
+If Assigned(AProcess) Then
+  AProcess.Reference;
+
+FProcess := AProcess;
+end;
 
 Class Function TGeneralRequest.IOCTLToString(AControlCode:Cardinal):WideString;
 begin
@@ -463,4 +506,6 @@ Case ALevel Of
 end;
 
 
+
 End.
+

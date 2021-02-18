@@ -22,6 +22,8 @@ typedef struct _PROCESS_RECORD {
 	LARGE_INTEGER CreateTime;
 	UNICODE_STRING ImageName;
 	UNICODE_STRING CommandLine;
+	size_t FrameCount;
+	void *Stack[REQUEST_STACKTRACE_SIZE];
 } PROCESS_RECORD, *PPROCESS_RECORD;
 
 
@@ -53,15 +55,16 @@ static void _PsRecordFree(void *PsContext)
 }
 
 
-static NTSTATUS _ProcessCreateEventAlloc(HANDLE ProcessId, const PS_CREATE_NOTIFY_INFO *NotifyInfo, PREQUEST_PROCESS_CREATED *Record)
+static NTSTATUS _ProcessCreateEventAlloc(HANDLE ProcessId, const PS_CREATE_NOTIFY_INFO *NotifyInfo, const void *Frames, size_t FrameCount, PREQUEST_PROCESS_CREATED *Record)
 {
 	size_t cmdLineOffset = 0;
 	size_t imageNameOffset = 0;
+	size_t totalSize = 0;
 	size_t cmdLineSize = 0;
 	size_t imageNameSize = 0;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	PREQUEST_PROCESS_CREATED tmpRecord = NULL;
-	DEBUG_ENTER_FUNCTION("ProcessId=0x%p; NotifyInfo=0x%p; Record=0x%p", ProcessId, NotifyInfo, Record);
+	DEBUG_ENTER_FUNCTION("ProcessId=0x%p; NotifyInfo=0x%p; Frames=0x%p; FrameCount=%zu; Record=0x%p", ProcessId, NotifyInfo, Frames, FrameCount, Record);
 
 	if (NotifyInfo->ImageFileName != NULL)
 		imageNameSize = NotifyInfo->ImageFileName->Length;
@@ -69,7 +72,8 @@ static NTSTATUS _ProcessCreateEventAlloc(HANDLE ProcessId, const PS_CREATE_NOTIF
 	if (NotifyInfo->CommandLine != NULL)
 		cmdLineSize = NotifyInfo->CommandLine->Length;
 
-	tmpRecord = (PREQUEST_PROCESS_CREATED)RequestMemoryAlloc(sizeof(REQUEST_PROCESS_CREATED) + imageNameSize + cmdLineSize);
+	totalSize = sizeof(REQUEST_PROCESS_CREATED) + imageNameSize + cmdLineSize + FrameCount * sizeof(void*);
+	tmpRecord = (PREQUEST_PROCESS_CREATED)RequestMemoryAlloc(totalSize);
 	if (tmpRecord != NULL) {
 		RequestHeaderInit(&tmpRecord->Header, NULL, NULL, ertProcessCreated);
 		tmpRecord->ProcessId = ProcessId;
@@ -85,6 +89,11 @@ static NTSTATUS _ProcessCreateEventAlloc(HANDLE ProcessId, const PS_CREATE_NOTIF
 		if (cmdLineSize > 0)
 			memcpy((unsigned char *)tmpRecord + cmdLineOffset, NotifyInfo->CommandLine->Buffer, tmpRecord->CommandLineLength);
 		
+		if (FrameCount > 0) {
+			memcpy((unsigned char *)tmpRecord + totalSize - sizeof(void *)*FrameCount, Frames, sizeof(void *)*FrameCount);
+			tmpRecord->Header.Flags |= REQUEST_FLAG_STACKTRACE;
+		}
+
 		*Record = tmpRecord;
 		status = STATUS_SUCCESS;
 	} else status = STATUS_INSUFFICIENT_RESOURCES;
@@ -113,20 +122,57 @@ static NTSTATUS _ProcessExittedEventAlloc(HANDLE ProcessId, PREQUEST_PROCESS_EXI
 }
 
 
+static NTSTATUS _ImageLoadEventAlloc(HANDLE ProcessId, const PROCESS_DLL_ENTRY *Entry, PREQUEST_IMAGE_LOAD *Request)
+{
+	size_t totalSize = 0;
+	PREQUEST_IMAGE_LOAD tmpRequest = NULL;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION("ProcessId=0x%p; Entry=0x%p; Request=0x%p", ProcessId, Entry, Request);
+
+	totalSize = sizeof(REQUEST_IMAGE_LOAD) + Entry->InageNameLen + Entry->FrameCount*sizeof(void *);
+	tmpRequest = (PREQUEST_IMAGE_LOAD)RequestMemoryAlloc(totalSize);
+	if (tmpRequest != NULL) {
+		RequestHeaderInit(&tmpRequest->Header, NULL, NULL, ertImageLoad);
+		tmpRequest->Header.ProcessId = ProcessId;
+		tmpRequest->ImageBase = Entry->ImageBase;
+		tmpRequest->ImageSize = Entry->ImageSize;
+		tmpRequest->DataSize = Entry->InageNameLen;
+		memcpy(tmpRequest + 1, Entry + 1, tmpRequest->DataSize);
+		if (Entry->FrameCount > 0) {
+			tmpRequest->Header.Flags |= REQUEST_FLAG_STACKTRACE;
+			memcpy((unsigned char *)tmpRequest + totalSize - Entry->FrameCount*sizeof(void *), Entry->Stack, Entry->FrameCount*sizeof(void *));
+		}
+
+		*Request = tmpRequest;
+		status = STATUS_SUCCESS;
+	} else status = STATUS_INSUFFICIENT_RESOURCES;
+
+	DEBUG_EXIT_FUNCTION("0x%x, *Request=0x%p", status, *Request);
+	return status;
+}
+
+
 static void _ProcessNotifyEx(PEPROCESS Process, HANDLE ProcessId, PPS_CREATE_NOTIFY_INFO CreateInfo)
 {
 	PPROCESS_RECORD pr = NULL;
 	BASIC_CLIENT_INFO clientInfo;
+	size_t frameCount = 0;
+	size_t stackTraceSize = 0;
+	void *frames[REQUEST_STACKTRACE_SIZE];
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("Process=0x%p; ProcessId=0x%p; CreateInfo=0x%p", Process, ProcessId, CreateInfo);
 
 	status = STATUS_SUCCESS;
 	QueryClientBasicInformation(&clientInfo);
 	if (CreateInfo != NULL) {
+		frameCount = UtilsCaptureStackTrace(sizeof(frames) / sizeof(frames[0]), frames);
+		if (frameCount > 0)
+			stackTraceSize = sizeof(frames);
+
 		if (_driverSettings->ProcessEventsCollect) {
 			PREQUEST_PROCESS_CREATED createRecord = NULL;
 
-			status = _ProcessCreateEventAlloc(ProcessId, CreateInfo, &createRecord);
+			status = _ProcessCreateEventAlloc(ProcessId, CreateInfo, frames, frameCount, &createRecord);
 			if (NT_SUCCESS(status)) {
 				_SetRequestFlags(&createRecord->Header, &clientInfo);
 				RequestQueueInsert(&createRecord->Header);
@@ -148,9 +194,15 @@ static void _ProcessNotifyEx(PEPROCESS Process, HANDLE ProcessId, PPS_CREATE_NOT
 			if (!NT_SUCCESS(status) && CreateInfo->ImageFileName != NULL)
 				HeapMemoryFree(pr->ImageName.Buffer);
 
-			if (NT_SUCCESS(status))
+			if (NT_SUCCESS(status)) {
+				if (frameCount > 0) {
+					pr->FrameCount = frameCount;
+					memcpy(pr->Stack, frames, frameCount*sizeof(void *));
+				}
+
 				status = PsTableInsert(&_processTable, pr->ProcessId, pr, sizeof(PROCESS_RECORD));
-								
+			}
+
 			HeapMemoryFree(pr);
 		} else status = STATUS_INSUFFICIENT_RESOURCES;
 	} else {
@@ -241,16 +293,18 @@ NTSTATUS ListProcessesByEvents(PLIST_ENTRY EventListHead)
 	ULONG count = 0;
 	PS_CREATE_NOTIFY_INFO info;
 	PPROCESS_RECORD record = NULL;
+	PREQUEST_IMAGE_LOAD ilr = NULL;
 	PPROCESS_OBJECT_CONTEXT psc = NULL;
 	PREQUEST_PROCESS_CREATED request = NULL;
 	PPROCESS_OBJECT_CONTEXT *contexts = NULL;
+	const PROCESS_DLL_ENTRY *dllEntry = NULL;
 	NTSTATUS status = STATUS_INSUFFICIENT_RESOURCES;
 	DEBUG_ENTER_FUNCTION("EventListHead=0x%p", EventListHead);
 
 	status = PsTableEnum(&_processTable, &contexts, &count);
 	if (NT_SUCCESS(status)) {
 		if (count > 0) {
-			for (ULONG i = 0; i < count; ++i) {
+			for (size_t i = 0; i < count; ++i) {
 				psc = contexts[i];
 				if (NT_SUCCESS(status)) {
 					record = (PPROCESS_RECORD)PS_CONTEXT_TO_DATA(psc);
@@ -259,10 +313,23 @@ NTSTATUS ListProcessesByEvents(PLIST_ENTRY EventListHead)
 					info.CommandLine = &record->CommandLine;
 					info.ImageFileName = &record->ImageName;
 					info.ParentProcessId = record->ParentId;
-					status = _ProcessCreateEventAlloc(record->ProcessId, &info, &request);
+					status = _ProcessCreateEventAlloc(record->ProcessId, &info, record->Stack, record->FrameCount, &request);
 					if (NT_SUCCESS(status)) {
 						request->Header.Flags |= REQUEST_FLAG_EMULATED;
 						InsertTailList(EventListHead, &request->Header.Entry);
+						FltAcquirePushLockShared(&psc->DllListLock);
+						dllEntry = CONTAINING_RECORD(psc->DllListHead.Flink, PROCESS_DLL_ENTRY, Entry);
+						while (&dllEntry->Entry != &psc->DllListHead) {
+							status = _ImageLoadEventAlloc(record->ProcessId, dllEntry, &ilr);
+							if (NT_SUCCESS(status)) {
+								ilr->Header.Flags |= REQUEST_FLAG_EMULATED;
+								InsertTailList(EventListHead, &ilr->Header.Entry);
+							}
+
+							dllEntry = CONTAINING_RECORD(dllEntry->Entry.Flink, PROCESS_DLL_ENTRY, Entry);
+						}
+
+						FltReleasePushLock(&psc->DllListLock);
 					}
 				}
 
@@ -278,6 +345,44 @@ NTSTATUS ListProcessesByEvents(PLIST_ENTRY EventListHead)
 }
 
 
+NTSTATUS RecordImageLoad(const REQUEST_IMAGE_LOAD *Request)
+{
+	size_t requestSize = 0;
+	PPROCESS_DLL_ENTRY pde = NULL;
+	PPROCESS_OBJECT_CONTEXT psc = NULL;
+	NTSTATUS status = STATUS_UNSUCCESSFUL;
+	DEBUG_ENTER_FUNCTION("Request=0x%p", Request);
+
+	requestSize = RequestGetSize(&Request->Header);
+	status = STATUS_SUCCESS;
+	psc = PsTableGet(&_processTable, Request->Header.ProcessId);
+	if (psc != NULL) {
+		pde = HeapMemoryAllocPaged(sizeof(PROCESS_DLL_ENTRY) + Request->DataSize);
+		if (pde != NULL) {
+			RtlSecureZeroMemory(pde, sizeof(PROCESS_DLL_ENTRY) + Request->DataSize);
+			InitializeListHead(&pde->Entry);
+			pde->ImageBase = Request->ImageBase;
+			pde->ImageSize = Request->ImageSize;
+			pde->InageNameLen = Request->DataSize;
+			memcpy(pde + 1, Request + 1, pde->InageNameLen);
+			if (Request->Header.Flags & REQUEST_FLAG_STACKTRACE) {
+				pde->FrameCount = REQUEST_STACKTRACE_SIZE;
+				memcpy(pde->Stack, (unsigned char *)Request + requestSize - pde->FrameCount*sizeof(void *), pde->FrameCount*sizeof(void *));
+			}
+
+			FltAcquirePushLockExclusive(&psc->DllListLock);
+			InsertTailList(&psc->DllListHead, &pde->Entry);
+			FltReleasePushLock(&psc->DllListLock);
+		} else status = STATUS_INSUFFICIENT_RESOURCES;
+
+		PsContextDereference(psc);
+	} else status = STATUS_NOT_FOUND;
+
+	DEBUG_EXIT_FUNCTION("0x%x", status);
+	return status;
+}
+
+
 /************************************************************************/
 /*                   INITIALIZATION AND FINALIZATION                    */
 /************************************************************************/
@@ -285,7 +390,6 @@ NTSTATUS ListProcessesByEvents(PLIST_ENTRY EventListHead)
 
 NTSTATUS ProcessEventsModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context)
 {
-//	PKLDR_DATA_TABLE_ENTRY loaderEntry = NULL;
 	UNICODE_STRING uRoutineName;
 	OSVERSIONINFOW vi;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;

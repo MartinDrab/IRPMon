@@ -181,12 +181,11 @@ static VOID _UnhookFastIoRoutine(PVOID *DriverRoutine, PVOID RecordRoutine)
 
 static VOID _HookDriverObject(PDRIVER_OBJECT DriverObject, PDRIVER_HOOK_RECORD HookRecord)
 {
-	ULONG i = 0;
 	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; HookRecord=0x%p", DriverObject, HookRecord);
 
 	HookRecord->DriverObject = DriverObject;
 	if (HookRecord->MonitorIRP && !HookRecord->DeviceExtensionHook) {
-		for (i = 0; i < IRP_MJ_MAXIMUM_FUNCTION + 1; ++i)
+		for (size_t i = 0; i < IRP_MJ_MAXIMUM_FUNCTION + 1; ++i)
 			HookRecord->OldMajorFunction[i] = (PDRIVER_DISPATCH)InterlockedExchangePointer((PVOID *)&DriverObject->MajorFunction[i], HookHandlerIRPDisptach);
 	}
 
@@ -249,13 +248,12 @@ static VOID _HookDriverObject(PDRIVER_OBJECT DriverObject, PDRIVER_HOOK_RECORD H
 
 static VOID _UnhookDriverObject(PDRIVER_HOOK_RECORD HookRecord)
 {
-	ULONG i = 0;
 	PDRIVER_OBJECT driverObject = NULL;
 	DEBUG_ENTER_FUNCTION("HookRecord=0x%p", HookRecord);
 
 	driverObject = HookRecord->DriverObject;
 	if (HookRecord->MonitorIRP && !HookRecord->DeviceExtensionHook) {
-		for (i = 0; i < IRP_MJ_MAXIMUM_FUNCTION + 1; ++i)
+		for (size_t i = 0; i < IRP_MJ_MAXIMUM_FUNCTION + 1; ++i)
 			driverObject->MajorFunction[i] = HookRecord->OldMajorFunction[i];
 	}
 
@@ -321,7 +319,7 @@ static NTSTATUS _DriverHookRecordCreate(PDRIVER_OBJECT DriverObject, const DRIVE
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("DriverObject=0x%p; MonitorSettings=0x%p; MonitoringEnabled=%u; DeviceExtensionHook=0x%p; Record=0x%p", DriverObject, MonitorSettings, MonitoringEnabled, DeviceExtensionHook, Record);
 
-	tmpRecord = (PDRIVER_HOOK_RECORD)HeapMemoryAllocNonPaged(sizeof(DRIVER_HOOK_RECORD));
+	tmpRecord = HeapMemoryAllocNonPaged(sizeof(DRIVER_HOOK_RECORD));
 	if (tmpRecord != NULL) {
 		status = IoAcquireRemoveLock(&_rundownLock, tmpRecord);
 		if (NT_SUCCESS(status)) {
@@ -339,6 +337,7 @@ static NTSTATUS _DriverHookRecordCreate(PDRIVER_OBJECT DriverObject, const DRIVE
 				tmpRecord->MonitorIRPCompletion = MonitorSettings->MonitorIRPCompletion;
 				tmpRecord->MonitorData = MonitorSettings->MonitorData;
 				tmpRecord->MonitorFastIo = MonitorSettings->MonitorFastIo;
+				tmpRecord->MonitorStackTrace = MonitorSettings->MonitorStackTrace;
 				tmpRecord->DeviceExtensionHook = DeviceExtensionHook;
 				memcpy(tmpRecord->IRPSettings, MonitorSettings->IRPSettings, sizeof(tmpRecord->IRPSettings));
 				memcpy(tmpRecord->FastIoSettings, MonitorSettings->FastIoSettings, sizeof(tmpRecord->FastIoSettings));
@@ -363,6 +362,7 @@ static NTSTATUS _DriverHookRecordCreate(PDRIVER_OBJECT DriverObject, const DRIVE
 	return status;
 }
 
+
 static VOID _DriverHookRecordFree(PDRIVER_HOOK_RECORD Record)
 {
 	DEBUG_ENTER_FUNCTION("Record=0x%p", Record);
@@ -376,13 +376,14 @@ static VOID _DriverHookRecordFree(PDRIVER_HOOK_RECORD Record)
 	return;
 }
 
+
 static NTSTATUS _DeviceHookRecordCreate(PDRIVER_HOOK_RECORD DriverRecord, PDEVICE_HOOK_RECORD *Record, PUCHAR IRPSettings, PUCHAR FastIoSettings, BOOLEAN MonitoringEnabled, EDeviceRecordCreateReason CreateReason, PDEVICE_OBJECT DeviceObject)
 {
 	PDEVICE_HOOK_RECORD tmpRecord = NULL;
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("DriverRecord=0x%p; Record=0x%p; IRPSettings=0x%p; FastIoSettings=0x%p; MonitoringEnabled=%u; CreateReason=%u", DriverRecord, Record, IRPSettings, FastIoSettings, MonitoringEnabled, CreateReason, DeviceObject);
 
-	tmpRecord = (PDEVICE_HOOK_RECORD)HeapMemoryAllocNonPaged(sizeof(DEVICE_HOOK_RECORD));
+	tmpRecord = HeapMemoryAllocNonPaged(sizeof(DEVICE_HOOK_RECORD));
 	if (tmpRecord != NULL) {
 		status = IoAcquireRemoveLock(&_rundownLock, tmpRecord);
 		if (NT_SUCCESS(status)) {
@@ -418,6 +419,7 @@ static NTSTATUS _DeviceHookRecordCreate(PDRIVER_HOOK_RECORD DriverRecord, PDEVIC
 	return status;
 }
 
+
 static VOID _DeviceHookRecordFree(PDEVICE_HOOK_RECORD Record)
 {
 	DEBUG_ENTER_FUNCTION("Record=0x%p", Record);
@@ -434,7 +436,6 @@ static VOID _DeviceHookRecordFree(PDEVICE_HOOK_RECORD Record)
 
 static NTSTATUS _CreateRecordsForExistingDevices(PDRIVER_HOOK_RECORD DriverRecord, PDEVICE_HOOK_RECORD **Records, PULONG Count)
 {
-	ULONG i = 0;
 	ULONG deviceCount = 0;
 	PDEVICE_OBJECT *devices = NULL;
 	PDEVICE_HOOK_RECORD *hookRecords = NULL;
@@ -447,9 +448,9 @@ static NTSTATUS _CreateRecordsForExistingDevices(PDRIVER_HOOK_RECORD DriverRecor
 	status = UtilsEnumDriverDevices(driverObject, &devices, &deviceCount);
 	if (NT_SUCCESS(status)) {
 		hookRecordCount = deviceCount;
-		hookRecords = (PDEVICE_HOOK_RECORD *)HeapMemoryAllocNonPaged(sizeof(PDEVICE_HOOK_RECORD)*hookRecordCount);
+		hookRecords = HeapMemoryAllocNonPaged(sizeof(PDEVICE_HOOK_RECORD)*hookRecordCount);
 		if (hookRecords != NULL) {
-			for (i = 0; i < deviceCount; ++i) {
+			for (size_t i = 0; i < deviceCount; ++i) {
 				PDEVICE_HOOK_RECORD deviceRecord = NULL;
 
 				status = _DeviceHookRecordCreate(DriverRecord, &deviceRecord, NULL, NULL, FALSE, edrcrDriverHooked, devices[i]);
@@ -457,9 +458,7 @@ static NTSTATUS _CreateRecordsForExistingDevices(PDRIVER_HOOK_RECORD DriverRecor
 					hookRecords[i] = deviceRecord;
 
 				if (!NT_SUCCESS(status)) {
-					ULONG j = 0;
-
-					for (j = 0; j < i; ++j)
+					for (size_t j = 0; j < i; ++j)
 						DeviceHookRecordDereference(hookRecords[j]);
 
 					break;
@@ -548,12 +547,11 @@ NTSTATUS HookDriverObject(PDRIVER_OBJECT DriverObject, const DRIVER_MONITOR_SETT
 			KeAcquireSpinLock(&_driverTableLock, &irql);
 			if (HashTableGet(_driverTable, DriverObject) == NULL) {
 				KIRQL irql2;
-				ULONG i = 0;
 
 				DriverHookRecordReference(record);
 				HashTableInsert(_driverTable, &record->HashItem, DriverObject);
 				KeAcquireSpinLock(&record->SelectedDevicesLock, &irql2);
-				for (i = 0; i < existingDeviceCount; ++i) {
+				for (size_t i = 0; i < existingDeviceCount; ++i) {
 					PDEVICE_HOOK_RECORD deviceRecord = existingDevices[i];
 
 					DeviceHookRecordReference(deviceRecord);
@@ -637,7 +635,7 @@ PDRIVER_HOOK_RECORD DriverHookRecordGet(PDRIVER_OBJECT DriverObject)
 	return ret;
 }
 
-NTSTATUS DriverHookRecordSetInfo(PDRIVER_HOOK_RECORD Record, PDRIVER_MONITOR_SETTINGS DriverSettings)
+NTSTATUS DriverHookRecordSetInfo(PDRIVER_HOOK_RECORD Record, const DRIVER_MONITOR_SETTINGS *DriverSettings)
 {
 	NTSTATUS status = STATUS_UNSUCCESSFUL;
 	DEBUG_ENTER_FUNCTION("Record=0x%x; DriverSettings=0x%p", Record, DriverSettings);
@@ -645,6 +643,7 @@ NTSTATUS DriverHookRecordSetInfo(PDRIVER_HOOK_RECORD Record, PDRIVER_MONITOR_SET
 	Record->MonitorNewDevices = DriverSettings->MonitorNewDevices;
 	Record->MonitorIRPCompletion = DriverSettings->MonitorIRPCompletion;
 	Record->MonitorData = DriverSettings->MonitorData;
+	Record->MonitorStackTrace = DriverSettings->MonitorStackTrace;
 	if (!Record->MonitoringEnabled) {
 		Record->MonitorAddDevice = DriverSettings->MonitorAddDevice;
 		Record->MonitorStartIo = DriverSettings->MonitorStartIo;
@@ -673,6 +672,7 @@ VOID DriverHookRecordGetInfo(PDRIVER_HOOK_RECORD Record, PDRIVER_MONITOR_SETTING
 	DriverSettings->MonitorStartIo = Record->MonitorStartIo;
 	DriverSettings->MonitorUnload = Record->MonitorDriverUnload;
 	DriverSettings->MonitorData = Record->MonitorData;
+	DriverSettings->MonitorStackTrace = Record->MonitorStackTrace;
 	memcpy(DriverSettings->IRPSettings, Record->IRPSettings, sizeof(DriverSettings->IRPSettings));
 	memcpy(DriverSettings->FastIoSettings, Record->FastIoSettings, sizeof(DriverSettings->FastIoSettings));
 	*Enabled = Record->MonitoringEnabled;
@@ -940,6 +940,7 @@ NTSTATUS HookObjectsEnumerate(PVOID Buffer, ULONG BufferLength, PULONG ReturnLen
 				driverInfo->MonitorSettings.MonitorIRPCompletion = driverRecord->MonitorIRPCompletion;
 				driverInfo->MonitorSettings.MonitorFastIo = driverRecord->MonitorFastIo;
 				driverInfo->MonitorSettings.MonitorData = driverRecord->MonitorData;
+				driverInfo->MonitorSettings.MonitorStackTrace = driverRecord->MonitorStackTrace;
 				memcpy(driverInfo->MonitorSettings.IRPSettings, driverRecord->IRPSettings, sizeof(driverInfo->MonitorSettings.IRPSettings));
 				memcpy(driverInfo->MonitorSettings.FastIoSettings, driverRecord->FastIoSettings, sizeof(driverInfo->MonitorSettings.FastIoSettings));
 				driverInfo->NumberOfHookedDevices = 0;

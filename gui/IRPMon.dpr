@@ -49,7 +49,13 @@ uses
   AddDeviceRequest in '..\shared\pas\AddDeviceRequest.pas',
   IRPCompleteRequest in '..\shared\pas\IRPCompleteRequest.pas',
   StartIoRequest in '..\shared\pas\StartIoRequest.pas',
-  RequestList in '..\shared\pas\RequestList.pas';
+  RequestList in '..\shared\pas\RequestList.pas',
+  ProcessList in '..\shared\pas\ProcessList.pas',
+  RefObject in '..\shared\pas\RefObject.pas',
+  SymTables in '..\shared\pas\SymTables.pas',
+  DbgHelpDll in '..\shared\pas\DbgHelpDll.pas',
+  SetSymPathForm in 'SetSymPathForm.pas' {SetSymPathFrm},
+  AddEditSymServerForm in 'AddEditSymServerForm.pas' {AddEditSymServerFrm};
 
 {$R *.res}
 
@@ -85,71 +91,71 @@ Var
   connType : EIRPMonConnectorType;
   initInfo : IRPMON_INIT_INFO;
 Begin
-connType := ictNone;
-driverStarted := False;
-Application.Initialize;
-Application.MainFormOnTaskbar := True;
-err := TablesInit('ntstatus.txt', 'ioctl.txt');
-If err = ERROR_SUCCESS Then
-  begin
-  FillChar(initInfo, SizeOf(initInfo), 0);
-  initInfo.AddressFamily := 2;
-  connectorForm := TConnectorSelectionFrm.Create(Application);
-  With connectorForm Do
+  connType := ictNone;
+  driverStarted := False;
+  Application.Initialize;
+  Application.MainFormOnTaskbar := True;
+  err := TablesInit('ntstatus.txt', 'ioctl.txt');
+  If err = ERROR_SUCCESS Then
     begin
-    ShowModal;
-    If Not Cancelled Then
+    FillChar(initInfo, SizeOf(initInfo), 0);
+    initInfo.AddressFamily := 2;
+    connectorForm := TConnectorSelectionFrm.Create(Application);
+    With connectorForm Do
       begin
-      connType := ConnectionType;
-      case connType of
-        ictDevice : initInfo.DeviceName := PWideChar(DeviceName);
-        ictNetwork : begin
-          initInfo.NetworkHost := PWideChar(NetworkAddress);
-          initInfo.NetworkPort := PWideChar(NetworkPort);
+      ShowModal;
+      If Not Cancelled Then
+        begin
+        connType := ConnectionType;
+        case connType of
+          ictDevice : initInfo.DeviceName := PWideChar(DeviceName);
+          ictNetwork : begin
+            initInfo.NetworkHost := PWideChar(NetworkAddress);
+            initInfo.NetworkPort := PWideChar(NetworkPort);
+            end;
           end;
         end;
       end;
-    end;
 
-  If Not connectorForm.Cancelled Then
-    begin
-    initInfo.ConnectionType := connType;
-    hScm := 0;
-    If connType = ictDevice Then
-      hScm := OpenSCManagerW(Nil, Nil, scmAccess);
-
-    taskList := TTaskOperationList.Create;
-    serviceTask := TDriverTaskObject.Create(initInfo, hScm, serviceName, serviceDescription, serviceDescription, 'system32\drivers\\IRPMon\irpmndrv.sys');
-    serviceTask.SetCompletionCallback(OnServiceTaskComplete, Nil);
-    If (connType = ictDevice) And (hScm <> 0) Then
+    If Not connectorForm.Cancelled Then
       begin
-      taskList.Add(hooHook, serviceTask);
-      taskList.Add(hooStart, serviceTask);
+      initInfo.ConnectionType := connType;
+      hScm := 0;
+      If connType = ictDevice Then
+        hScm := OpenSCManagerW(Nil, Nil, scmAccess);
+
+      taskList := TTaskOperationList.Create;
+      serviceTask := TDriverTaskObject.Create(initInfo, hScm, serviceName, serviceDescription, serviceDescription, 'system32\drivers\\IRPMon\irpmndrv.sys');
+      serviceTask.SetCompletionCallback(OnServiceTaskComplete, Nil);
+      If (connType = ictDevice) And (hScm <> 0) Then
+        begin
+        taskList.Add(hooHook, serviceTask);
+        taskList.Add(hooStart, serviceTask);
+        end;
+
+      taskList.Add(hooLibraryInitialize, serviceTask);
+      With THookProgressFrm.Create(Application, taskList) Do
+        begin
+        ShowModal;
+        Free;
+        end;
+
+      Application.CreateForm(TMainFrm, MainFrm);
+      MainFrm.ServiceTask := serviceTask;
+      MainFrm.TaskList := taskList;
+      MainFrm.ConnectorType := connType;
+      Application.Run;
+      IRPMonDllFinalize;
+      If (connType = ictDevice) And (hScm <> 0) Then
+        CloseServiceHandle(hScm);
+
+      serviceTask.Free;
+      taskList.Free;
       end;
 
-    taskList.Add(hooLibraryInitialize, serviceTask);
-    With THookProgressFrm.Create(Application, taskList) Do
-      begin
-      ShowModal;
-      Free;
-      end;
-
-    Application.CreateForm(TMainFrm, MainFrm);
-  MainFrm.ServiceTask := serviceTask;
-    MainFrm.TaskList := taskList;
-    MainFrm.ConnectorType := connType;
-    Application.Run;
-    IRPMonDllFinalize;
-    If (connType = ictDevice) And (hScm <> 0) Then
-      CloseServiceHandle(hScm);
-
-    serviceTask.Free;
-    taskList.Free;
-    end;
-
-  connectorForm.Free;
-  TablesFinit;
-  end
-Else WinErrorMessage('Unable to initialize name tables', err);
+    connectorForm.Free;
+    TablesFinit;
+    end
+  Else WinErrorMessage('Unable to initialize name tables', err);
 End.
 

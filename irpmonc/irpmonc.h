@@ -24,6 +24,10 @@ typedef enum _EOptionType {
 	otBootLog,
 	otSettingsSave,
 	
+	otSymPath,
+	otSymFile,
+	otSymDirectory,
+
 	otHelp,
 	otStop,
 	otLoad,

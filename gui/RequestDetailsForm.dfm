@@ -898,10 +898,6 @@ object RequestDetailsFrm: TRequestDetailsFrm
     TabOrder = 1
     object HeadersTabSheet: TTabSheet
       Caption = 'Headers'
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
       object NameValueListView: TListView
         Left = 0
         Top = 0
@@ -923,6 +919,48 @@ object RequestDetailsFrm: TRequestDetailsFrm
         ShowColumnHeaders = False
         TabOrder = 0
         ViewStyle = vsReport
+      end
+    end
+    object StackTabSheet: TTabSheet
+      Caption = 'Stack'
+      ImageIndex = 1
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
+      object StackListView: TListView
+        Left = 0
+        Top = 0
+        Width = 552
+        Height = 253
+        Align = alClient
+        Columns = <
+          item
+            Caption = '#'
+          end
+          item
+            Caption = 'Address'
+            Width = 125
+          end
+          item
+            AutoSize = True
+            Caption = 'Module'
+          end
+          item
+            AutoSize = True
+            Caption = 'Function'
+          end
+          item
+            Caption = 'Offset'
+            Width = 100
+          end>
+        ReadOnly = True
+        RowSelect = True
+        ShowWorkAreas = True
+        TabOrder = 0
+        ViewStyle = vsReport
+        ExplicitLeft = 32
+        ExplicitWidth = 520
       end
     end
   end

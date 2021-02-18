@@ -9,7 +9,7 @@ Interface
 Uses
   Windows, Classes, Generics.Collections, Generics.Defaults,
   IRPMonDll, ListModel, IRPMonRequest, DataParsers, ComCtrls,
-  Graphics, RequestList;
+  Graphics, RequestList, SymTables;
 
 Type
   TRequestListModel = Class (TListModel<TDriverRequest>)
@@ -27,6 +27,8 @@ Type
       Function GetOnRequestProcessed:TRequestListOnRequestProcessed;
       Procedure SetParsers(AValue:TObjectList<TDataParser>);
       Function GetParsers:TObjectList<TDataParser>;
+      Procedure SetSymStore(AStore:TModuleSymbolStore);
+      Function GetSymStore:TModuleSymbolStore;
     Public
       UpdateRequest : TList<PREQUEST_GENERAL>;
       Constructor Create; Reintroduce;
@@ -36,8 +38,8 @@ Type
       Procedure Clear; Override;
       Function RowCount : Cardinal; Override;
       Function Update:Cardinal; Override;
-      Procedure SaveToStream(AStream:TStream; AFormat:ERequestLogFormat; ACompress:Boolean = False);
-      Procedure SaveToFile(AFileName:WideString; AFormat:ERequestLogFormat; ACompress:Boolean = False);
+      Procedure SaveToStream(AStream:TStream; AFormat:ERequestLogFormat);
+      Procedure SaveToFile(AFileName:WideString; AFormat:ERequestLogFormat);
       Procedure LoadFromStream(AStream:TStream; ARequireHeader:Boolean = True);
       Procedure LoadFromFile(AFileName:WideString; ARequireHeader:Boolean = True);
       Procedure Reevaluate;
@@ -46,6 +48,8 @@ Type
       Property OnRequestProcessed : TRequestListOnRequestProcessed Read GetOnRequestProcessed Write SetOnRequestProcessed;
       Property TotalCount : Integer Read GetTotalCount;
       Property Parsers : TObjectList<TDataParser> Read GetParsers Write SetParsers;
+      Property SymStore : TModuleSymbolStore Read GetSymStore Write SetSymStore;
+      Property List : TRequestList Read FList;
     end;
 
 Implementation
@@ -124,14 +128,14 @@ FList.Free;
 Inherited Destroy;
 end;
 
-Procedure TRequestListModel.SaveToStream(AStream:TStream; AFormat:ERequestLogFormat; ACompress:Boolean = False);
+Procedure TRequestListModel.SaveToStream(AStream:TStream; AFormat:ERequestLogFormat);
 begin
-FList.SaveToStream(AStream, AFormat, ACompress);
+FList.SaveToStream(AStream, AFormat);
 end;
 
-Procedure TRequestListModel.SaveToFile(AFileName:WideString; AFormat:ERequestLogFormat; ACompress:Boolean = False);
+Procedure TRequestListModel.SaveToFile(AFileName:WideString; AFormat:ERequestLogFormat);
 begin
-FList.SaveToFile(AFilename, AFormat, ACompress);
+FList.SaveToFile(AFilename, AFormat);
 end;
 
 Procedure TRequestListModel.LoadFromStream(AStream:TStream; ARequireHeader:Boolean = True);
@@ -205,6 +209,17 @@ Function TRequestListModel.GetParsers:TObjectList<TDataParser>;
 begin
 Result := FList.Parsers;
 end;
+
+Procedure TRequestListModel.SetSymStore(AStore:TModuleSymbolStore);
+begin
+FList.SymStore := AStore;
+end;
+
+Function TRequestListModel.GetSymStore:TModuleSymbolStore;
+begin
+Result := FList.SymStore;
+end;
+
 
 
 End.

@@ -70,6 +70,7 @@ If DriverNameEdit.Text <> '' Then
   FDriverSettings.MonitorStartIo := MonitorSettingsCheckListBox.Checked[5];
   FDriverSettings.MonitorAddDevice := MonitorSettingsCheckListBox.Checked[6];
   FDriverSettings.MonitorUnload := MonitorSettingsCheckListBox.Checked[7];
+  FDriverSettings.MonitorStackTrace := MonitorSettingsCheckListBox.Checked[8];
   FillChar(FDriverSettings.IRPSettings, SizeOf(FDriverSettings.IRPSettings), Ord(True));
   FillChar(FDriverSettings.FastIoSettings, SizeOf(FDriverSettings.FastIoSettings), Ord(True));
   FCancelled := False;

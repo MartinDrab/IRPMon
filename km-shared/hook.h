@@ -97,6 +97,7 @@ typedef struct _DRIVER_HOOK_RECORD {
 	BOOLEAN MonitorIRPCompletion;
 	BOOLEAN MonitorData;
 	BOOLEAN DeviceExtensionHook;
+	BOOLEAN MonitorStackTrace;
 	UCHAR IRPSettings[IRP_MJ_MAXIMUM_FUNCTION + 1];
 	UCHAR FastIoSettings[FastIoMax];
 	/** Indicates whether the driver actively monitors incoming requests. */
@@ -116,7 +117,7 @@ BOOLEAN DeviceHookRecordValid(PDEVICE_HOOK_RECORD DeviceRecord);
 
 NTSTATUS HookDriverObject(PDRIVER_OBJECT DriverObject, const DRIVER_MONITOR_SETTINGS *MonitorSettings, BOOLEAN DeviceExtensionHook, PDRIVER_HOOK_RECORD *DriverRecord);
 NTSTATUS UnhookDriverObject(PDRIVER_HOOK_RECORD DriverRecord);
-NTSTATUS DriverHookRecordSetInfo(PDRIVER_HOOK_RECORD Record, PDRIVER_MONITOR_SETTINGS DriverSettings);
+NTSTATUS DriverHookRecordSetInfo(PDRIVER_HOOK_RECORD Record, const DRIVER_MONITOR_SETTINGS *DriverSettings);
 VOID DriverHookRecordGetInfo(PDRIVER_HOOK_RECORD Record, PDRIVER_MONITOR_SETTINGS DriverSettings, PBOOLEAN Enabled);
 NTSTATUS DriverHookRecordEnable(PDRIVER_HOOK_RECORD Record, BOOLEAN Enable);
 PDRIVER_HOOK_RECORD DriverHookRecordGet(PDRIVER_OBJECT DriverObject);

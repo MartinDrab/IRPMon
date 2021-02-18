@@ -80,6 +80,8 @@ NTSTATUS FileNameFromFileObject(PFILE_OBJECT FileObject, PUNICODE_STRING Name);
 
 NTSTATUS UtilsGetCurrentControlSetNumber(PULONG Number);
 
+ULONG UtilsCaptureStackTrace(size_t FrameCount, void **Frames);
+
 NTSTATUS UtilsModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context);
 void UtilsModuleFinit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context);
 

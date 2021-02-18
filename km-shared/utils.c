@@ -744,6 +744,19 @@ NTSTATUS UtilsGetCurrentControlSetNumber(PULONG Number)
 }
 
 
+ULONG UtilsCaptureStackTrace(size_t FrameCount, void **Frames)
+{
+	ULONG ret = 0;
+
+	RtlSecureZeroMemory(Frames, FrameCount * sizeof(void*));
+	if (KeGetCurrentIrql() == PASSIVE_LEVEL &&
+		ExGetPreviousMode() == UserMode)
+		ret = RtlWalkFrameChain(Frames, (ULONG)FrameCount, 1);
+
+	return ret;
+}
+
+
 NTSTATUS UtilsModuleInit(PDRIVER_OBJECT DriverObject, PUNICODE_STRING RegistryPath, PVOID Context)
 {
 	UNICODE_STRING uRoutineName;

@@ -262,6 +262,7 @@ static NTSTATUS _LoadDriverMonitoringSettings(HANDLE KeyHandle, PDRIVER_MONITOR_
 		L"AddDevice",
 		L"Unload",
 		L"Data",
+		L"StackTrace",
 	};
 	PBOOLEAN values[] = {
 		&Settings->MonitorNewDevices,
@@ -272,6 +273,7 @@ static NTSTATUS _LoadDriverMonitoringSettings(HANDLE KeyHandle, PDRIVER_MONITOR_
 		&Settings->MonitorAddDevice,
 		&Settings->MonitorUnload,
 		&Settings->MonitorData,
+		&Settings->MonitorStackTrace,
 	};
 	ULONG value = 0;
 	UNICODE_STRING uValueName;
@@ -315,6 +317,7 @@ static NTSTATUS _SaveDriverMonitoringSettings(HANDLE KeyHandle, const DRIVER_MON
 		L"AddDevice",
 		L"Unload",
 		L"Data",
+		L"StackTrace",
 	};
 	const BOOLEAN *values[] = {
 		&Settings->MonitorNewDevices,
@@ -325,6 +328,7 @@ static NTSTATUS _SaveDriverMonitoringSettings(HANDLE KeyHandle, const DRIVER_MON
 		&Settings->MonitorAddDevice,
 		&Settings->MonitorUnload,
 		&Settings->MonitorData,
+		&Settings->MonitorStackTrace,
 	};
 	ULONG value = 0;
 	UNICODE_STRING uValueName;
