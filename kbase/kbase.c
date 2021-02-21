@@ -2,6 +2,7 @@
 #include <ntifs.h>
 #include "preprocessor.h"
 #include "allocator.h"
+#include "thread-context.h"
 #include "utils.h"
 #include "driver-settings.h"
 #include "data-loggers.h"
@@ -21,6 +22,7 @@
 static volatile LONG _initialized = 0;
 
 static DRIVER_MODULE_ENTRY_PARAMETERS _modules[] = {
+	{ThreadContextModuleInit, ThreadContextModuleFinit, NULL},
 	{UtilsModuleInit, UtilsModuleFinit, NULL},
 	{DriverSettingsInit, DriverSettingsFinit, NULL},
 	{DataLoggerModuleInit, DataLoggerModuleFinit, NULL},

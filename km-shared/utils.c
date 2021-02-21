@@ -6,6 +6,7 @@
 #include "allocator.h"
 #include "kernel-shared.h"
 #include "utils-dym-array.h"
+#include "thread-context.h"
 #include "utils.h"
 
 #undef DEBUG_TRACE_ENABLED
@@ -747,11 +748,22 @@ NTSTATUS UtilsGetCurrentControlSetNumber(PULONG Number)
 ULONG UtilsCaptureStackTrace(size_t FrameCount, void **Frames)
 {
 	ULONG ret = 0;
+	PTHREAD_CONTEXT_RECORD threadContext = NULL;
+	LONG count = 0;
 
 	RtlSecureZeroMemory(Frames, FrameCount * sizeof(void*));
 	if (KeGetCurrentIrql() == PASSIVE_LEVEL &&
-		ExGetPreviousMode() == UserMode)
-		ret = RtlWalkFrameChain(Frames, (ULONG)FrameCount, 1);
+		ExGetPreviousMode() == UserMode) {
+		threadContext = ThreadContextGet();
+		if (threadContext != NULL) {
+			count = InterlockedIncrement(&threadContext->StackTraceInProgress);
+			if (count == 1)
+				ret = RtlWalkFrameChain(Frames, (ULONG)FrameCount, 1);
+			
+			InterlockedDecrement(&threadContext->StackTraceInProgress);
+			ThreadContextDereference(threadContext);
+		}
+	}
 
 	return ret;
 }
