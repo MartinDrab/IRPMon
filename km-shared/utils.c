@@ -745,9 +745,9 @@ NTSTATUS UtilsGetCurrentControlSetNumber(PULONG Number)
 }
 
 
-ULONG UtilsCaptureStackTrace(size_t FrameCount, void **Frames)
+size_t UtilsCaptureStackTrace(size_t FrameCount, void **Frames)
 {
-	ULONG ret = 0;
+	size_t ret = 0;
 	PTHREAD_CONTEXT_RECORD threadContext = NULL;
 	LONG count = 0;
 
@@ -757,9 +757,12 @@ ULONG UtilsCaptureStackTrace(size_t FrameCount, void **Frames)
 		threadContext = ThreadContextGet();
 		if (threadContext != NULL) {
 			count = InterlockedIncrement(&threadContext->StackTraceInProgress);
-			if (count == 1)
+			if (count == 1) {
 				ret = RtlWalkFrameChain(Frames, (ULONG)FrameCount, 1);
-			
+				if (ret != 0)
+					ret = FrameCount;
+			}
+
 			InterlockedDecrement(&threadContext->StackTraceInProgress);
 			ThreadContextDereference(threadContext);
 		}

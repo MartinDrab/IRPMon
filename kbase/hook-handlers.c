@@ -35,7 +35,7 @@ static PREQUEST_FASTIO _CreateFastIoRequest(const DRIVER_HOOK_RECORD *DriverReco
 	PREQUEST_FASTIO ret = NULL;
 	BASIC_CLIENT_INFO clientInfo;
 	PFILE_OBJECT_CONTEXT foc = NULL;
-	ULONG frameCount = 0;
+	size_t frameCount = 0;
 	void *frames[REQUEST_STACKTRACE_SIZE];
 	size_t stackTraceSize = 0;
 	size_t totalSize = 0;
@@ -1447,7 +1447,7 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 
 			if (driverRecord->MonitorIRP) {
 				DATA_LOGGER_RESULT loggedData;
-				ULONG frameCount = 0;
+				size_t frameCount = 0;
 				void *frames[REQUEST_STACKTRACE_SIZE];
 				size_t stackTraceSize = 0;
 				size_t totalSize = 0;
