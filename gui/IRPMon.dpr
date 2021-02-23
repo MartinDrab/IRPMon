@@ -55,7 +55,8 @@ uses
   SymTables in '..\shared\pas\SymTables.pas',
   DbgHelpDll in '..\shared\pas\DbgHelpDll.pas',
   SetSymPathForm in 'SetSymPathForm.pas' {SetSymPathFrm},
-  AddEditSymServerForm in 'AddEditSymServerForm.pas' {AddEditSymServerFrm};
+  AddEditSymServerForm in 'AddEditSymServerForm.pas' {AddEditSymServerFrm},
+  ColumnForm in 'ColumnForm.pas' {ColumnFrm};
 
 {$R *.res}
 

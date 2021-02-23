@@ -103,6 +103,8 @@ Type
     N7: TMenuItem;
     SymbolSearchPathMenuItem: TMenuItem;
     SymbolDirectoryDialog: TFileOpenDialog;
+    ColumnCustomizeMenuItem: TMenuItem;
+    N8: TMenuItem;
     Procedure ClearMenuItemClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure CaptureEventsMenuItemClick(Sender: TObject);
@@ -145,6 +147,7 @@ Type
       Selected: Boolean);
     procedure SymbolSearchPathMenuItemClick(Sender: TObject);
     procedure SymAddDirectoryMenuItemClick(Sender: TObject);
+    procedure ColumnCustomizeMenuItemClick(Sender: TObject);
   Private
 {$IFDEF FPC}
     FAppEvents: TApplicationProperties;
@@ -200,6 +203,7 @@ Uses
   Utils, TreeForm, RequestDetailsForm, AboutForm,
   ClassWatchAdd, ClassWatch, DriverNameWatchAddForm,
   SetSymPathForm,
+  ColumnForm,
   WatchedDriverNames, FillterForm, RequestList;
 
 
@@ -501,6 +505,31 @@ end;
 Procedure TMainFrm.ClearMenuItemClick(Sender: TObject);
 begin
 FModel.Clear;
+end;
+
+Procedure TMainFrm.ColumnCustomizeMenuItemClick(Sender: TObject);
+Var
+  b : Boolean;
+  index : Integer;
+begin
+With TColumnFrm.Create(Application, FModel) Do
+  begin
+  ShowModal;
+  If Not Cancelled Then
+    begin
+    index := 0;
+    FModel.ColumnUpdateBegin;
+    For b In Checked Do
+      begin
+      FModel.ColumnSetVisible(index, b);
+      Inc(index);
+      end;
+
+    FModel.ColumnUpdateEnd;
+    end;
+
+  Free;
+  end;
 end;
 
 Procedure TMainFrm.CompressMenuItemClick(Sender: TObject);

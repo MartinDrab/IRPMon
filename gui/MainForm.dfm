@@ -1258,6 +1258,13 @@ object MainFrm: TMainFrm
     end
     object ColumnsMenuItem: TMenuItem
       Caption = 'Columns'
+      object ColumnCustomizeMenuItem: TMenuItem
+        Caption = 'Customize...'
+        OnClick = ColumnCustomizeMenuItemClick
+      end
+      object N8: TMenuItem
+        Caption = '-'
+      end
     end
     object HelpMenuItem: TMenuItem
       Caption = 'Help'
