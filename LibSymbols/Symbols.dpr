@@ -76,7 +76,7 @@ If Not mss.AddDirectory(dn, m) Then
   Result := GetLastError;
 end;
 
-Function SymPathSetSymPath(AHandle:Pointer; APath:PWideChar):Cardinal; Cdecl;
+Function SymStoreSetSymPath(AHandle:Pointer; APath:PWideChar):Cardinal; Cdecl;
 Var
   p : WideString;
   mss : TModuleSymbolStore;
@@ -88,8 +88,48 @@ If Not mss.SetSymPath(p) Then
   Result := GetLastError;
 end;
 
+Function SymStoreTranslate(AHandle:Pointer; AModuleName:PWideChar; AOffset:NativeUInt; Var ATranslation:SYM_TRANSLATION):Cardinal; Cdecl;
+Var
+  st : TSymTable;
+  ms : TModuleSymbol;
+  modName : WideString;
+  mss : TModuleSymbolStore;
+begin
+Result := 0;
+mss := TModuleSymbolStore(AHandle);
+modName := WideCharToString(AModuleName);
+st := mss.Module[modName];
+If Assigned(st) Then
+  begin
+  ms := st.FindSymbol(AOffset);
+  If Assigned(ms) Then
+    begin
+    ATranslation.Offset := AOffset;
+    ATranslation.ModuleName := StrAlloc(Length(modName));
+    If Assigned(ATranslation.ModuleName) Then
+      begin
+      StringToWideChar(modName, ATranslation.ModuleName, Length(modName) + 1);
+      ATranslation.FunctionName := StrAlloc(Length(ms.Name));
+      If Assigned(ATranslation.FunctionName) Then
+        begin
+        StringToWideChar(ms.Name, ATranslation.FunctionName, Length(ms.Name) + 1);
+        ATranslation.Address := Pointer(ATranslation.Offset);
+        end
+      Else Result := ERROR_NOT_ENOUGH_MEMORY;
 
-Procedure SymTranslationFree(Var ATranslation:SYM_TRANSLATION); Cdecl;
+      If Result <> 0 Then
+        StrDispose(ATranslation.ModuleName);
+      end
+    Else Result := ERROR_NOT_ENOUGH_MEMORY;
+
+    ms.Free;
+    end
+  Else Result := ERROR_FILE_NOT_FOUND;
+  end
+Else Result := ERROR_FILE_NOT_FOUND;
+end;
+
+Procedure SymStoreTranslationFree(Var ATranslation:SYM_TRANSLATION); Cdecl;
 begin
 If Assigned(ATranslation.FunctionName) Then
   StrDispose(ATranslation.FunctionName);
@@ -104,8 +144,8 @@ Exports
   SymStoreFree,
   SymStoreAddFile,
   SymStoreAddDirectory,
-  SymPathSetSymPath,
-  SymTranslationFree;
+  SymStoreSetSymPath,
+  SymStoreTranslationFree;
 
 begin
 end.

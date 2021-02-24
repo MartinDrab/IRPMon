@@ -10,6 +10,8 @@ typedef void (cdecl SYMSTOREFREE)(HANDLE Handle);
 typedef DWORD (cdecl SYMSTOREADDFILE)(HANDLE Handle, const wchar_t *FileName);
 typedef DWORD(cdecl SYMSTOREADDDIRECTORY)(HANDLE Handle, const wchar_t *DirName, const wchar_t *Mask);
 typedef DWORD (cdecl SYMSTORESETSYMPATH)(HANDLE Handle, const wchar_t *SymPath);
+typedef DWORD (cdecl SYMSTORETRANSLATE)(HANDLE Handle, const wchar_t* ModuleName, size_t Offset, PSYM_TRANSLATION Translation);
+typedef void (cdecl SYMSTORETRANSLATIONFREE)(PSYM_TRANSLATION Translation);
 
 
 static HMODULE _hLibrary = NULL;
@@ -18,6 +20,8 @@ static SYMSTOREFREE *_SymStoreFree = NULL;
 static SYMSTOREADDFILE *_SymStoreAddFile = NULL;
 static SYMSTOREADDDIRECTORY *_SymStoreAddDirectory = NULL;
 static SYMSTORESETSYMPATH *_SymStoreSetSymPath = NULL;
+static SYMSTORETRANSLATE *_SymStoreTranslate = NULL;
+static SYMSTORETRANSLATIONFREE *_SymStoreTranslationFree = NULL;
 
 
 #define PREPARE_ROUTINE(aLibrary, aRoutine)	do {\
@@ -62,6 +66,19 @@ extern "C" DWORD SymStoreSetSymPath(HANDLE Handle, const wchar_t *SymPath)
 }
 
 
+extern "C" DWORD SymStoreTranslate(HANDLE Handle, const wchar_t* ModuleName, size_t Offset, PSYM_TRANSLATION Translation)
+{
+	return _SymStoreTranslate(Handle, ModuleName, Offset, Translation);
+}
+
+
+extern "C" void SymStoreTranslationFree(PSYM_TRANSLATION Translation)
+{
+	_SymStoreTranslationFree(Translation);
+
+	return;
+}
+
 
 extern "C" DWORD SymbolsModuleInit(const wchar_t *LibraryName)
 {
@@ -75,6 +92,8 @@ extern "C" DWORD SymbolsModuleInit(const wchar_t *LibraryName)
 		PREPARE_ROUTINE(_hLibrary, SymStoreAddFile);
 		PREPARE_ROUTINE(_hLibrary, SymStoreAddDirectory);
 		PREPARE_ROUTINE(_hLibrary, SymStoreSetSymPath);
+		PREPARE_ROUTINE(_hLibrary, SymStoreTranslate);
+		PREPARE_ROUTINE(_hLibrary, SymStoreTranslationFree);
 	} else ret = GetLastError();
 
 	return ret;
