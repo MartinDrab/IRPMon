@@ -49,15 +49,20 @@ Name: "Kernel"; Description: "Kernel driver for monitoring device driver request
 Name: "Application"; Description: "Application for setting up the monitoring, browsing log files and managing IRPMon as a whole"; Types: full custom;
 Name: "Server"; Description: "Console application and service for receiving commands accross the network"; Types: full custom;
 Name: "Parsers"; Description: "Libraries customizing data parsing mechanisms of the IRPMon application"; Types: full custom;
+Name: "Symbols"; Description: "Debug symbols"; Types: full custom;
 
 [Files]
 Source: "..\bin\x64\{#ConfigMode}\server\*.exe"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Server;
 Source: "..\bin\x64\{#ConfigMode}\server\*.dll"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Server;
+Source: "..\bin\x64\{#ConfigMode}\server\*.pdb"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Symbols;
 Source: "..\bin\Win32\{#ConfigMode}\server\*.exe"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: Server;
 Source: "..\bin\Win32\{#ConfigMode}\server\*.dll"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: Server;
+Source: "..\bin\Win32\{#ConfigMode}\server\*.pdb"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: Symbols;
 
 Source: "..\bin\x64\{#ConfigMode}\parser\*.dll"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Server;
+Source: "..\bin\x64\{#ConfigMode}\parser\*.pdb"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Symbols;
 Source: "..\bin\Win32\{#ConfigMode}\parser\*.dll"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: Server;
+Source: "..\bin\Win32\{#ConfigMode}\parser\*.pdb"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: Symbols;
 
 Source: "..\bin\Win64\{#ConfigMode}\IRPMon.exe"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Application;
 Source: "..\bin\Win32\{#ConfigMode}\IRPMon.exe"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: Application;
@@ -65,15 +70,21 @@ Source: "..\bin\Win32\{#ConfigMode}\IRPMon.exe"; DestDir: "{app}\x86"; Flags: ig
 Source: "..\bin\Win64\{#ConfigMode}\*.dll"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: CmdLine;
 Source: "..\bin\Win32\{#ConfigMode}\*.dll"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: CmdLine;
 Source: "..\bin\x64\{#ConfigMode}\IRPMonc.exe"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: CmdLine;
+Source: "..\bin\x64\{#ConfigMode}\*.pdb"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Symbols;
 Source: "..\bin\Win32\{#ConfigMode}\IRPMonc.exe"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: CmdLine;
+Source: "..\bin\Win32\{#ConfigMode}\*.pdb"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: Symbols;
 
 Source: "..\bin\x64\{#ConfigMode}\kernel\*.dll"; DestDir: "{sysnative}\drivers\IRPMon\"; Check: Is64BitInstallMode; Flags: ignoreversion; Components: Kernel;
 Source: "..\bin\x64\{#ConfigMode}\kernel\*.sys"; DestDir: "{sysnative}\drivers\IRPMon\"; Check: Is64BitInstallMode; Flags: ignoreversion; Components: Kernel;
+Source: "..\bin\x64\{#ConfigMode}\kernel\*.pdb"; DestDir: "{sysnative}\drivers\IRPMon\"; Check: Is64BitInstallMode; Flags: ignoreversion; Components: Symbols;
 Source: "..\bin\Win32\{#ConfigMode}\kernel\*.dll"; DestDir: "{sysnative}\drivers\IRPMon\"; Check: not Is64BitInstallMode; Flags: ignoreversion; Components: Kernel;
 Source: "..\bin\Win32\{#ConfigMode}\kernel\*.sys"; DestDir: "{sysnative}\drivers\IRPMon\"; Check: not Is64BitInstallMode; Flags: ignoreversion; Components: Kernel;
+Source: "..\bin\Win32\{#ConfigMode}\kernel\*.pdb"; DestDir: "{sysnative}\drivers\IRPMon\"; Check: not Is64BitInstallMode; Flags: ignoreversion; Components: Symbols;
 
 Source: "..\bin\x64\{#ConfigMode}\dlls\*.dll"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Libraries;
+Source: "..\bin\x64\{#ConfigMode}\dlls\*.pdb"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Symbols;
 Source: "..\bin\Win32\{#ConfigMode}\dlls\*.dll"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: Libraries;
+Source: "..\bin\Win32\{#ConfigMode}\dlls\*.pdb"; DestDir: "{app}\x86"; Flags: ignoreversion; Components: Symbols;
 Source: "..\resources\ioctl.txt"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Libraries;
 Source: "..\resources\ntstatus.txt"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Libraries;
 Source: "..\resources\winerr.txt"; DestDir: "{app}\x64"; Flags: ignoreversion; Components: Libraries;
