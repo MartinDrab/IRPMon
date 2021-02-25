@@ -10,8 +10,6 @@ Type
   TFastIoRequest = Class (TDriverRequest)
   Private
     FPreviousMode : Byte;
-    FIOSBStatus : Cardinal;
-    FIOSBInformation : NativeUInt;
     FFastIoType : EFastIoOperationType;
     FArg1 : Pointer;
     FArg2 : Pointer;
@@ -24,8 +22,6 @@ Type
     Class Function FastIoTypeToString(AFastIoType:EFastIoOperationType):WideString;
 
     Property PreviousMode : Byte Read FPreviousMode;
-    Property IOSBStatus : Cardinal Read FIOSBStatus;
-    Property IOSBInformation : NativeUInt Read FIOSBInformation;
     Property FastIoType : EFastIoOperationType Read FFastIoType;
   end;
 
@@ -46,8 +42,6 @@ d := PByte(@ARequest) + SizeOf(ARequest);
 AssignData(d, ARequest.DataSize);
 FFastIoType := ARequest.FastIoType;
 FPreviousMode := ARequest.PreviousMode;
-FIOSBStatus := ARequest.IOSBStatus;
-FIOSBInformation := ARequest.IOSBInformation;
 SetFileObject(ARequest.FileObject);
 FArg1 := ARequest.Arg1;
 FArg2 := ARequest.Arg2;

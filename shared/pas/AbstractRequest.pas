@@ -41,6 +41,8 @@ Type
     FAdmin : Boolean;
     FImpersonated : Boolean;
     FImpersonatedAdmin : Boolean;
+    FIOSBStatus : Cardinal;
+    FIOSBInformation : NativeUInt;
     FStackFrames : PPointer;
     FStackFrameCount : Cardinal;
     FProcess : TProcessEntry;
@@ -95,6 +97,8 @@ Type
     Property DataStripped : Boolean Read FDataStripped;
     Property ProcessName : WideString Read FProcessName;
     Property ImpersonatedAdmin : Boolean Read FImpersonatedAdmin;
+    Property IOSBStatus : Cardinal Read FIOSBStatus;
+    Property IOSBInformation : NativeUInt Read FIOSBInformation;
     Property StackFrames : PPointer Read FStackFrames;
     Property StackFrameCount : Cardinal Read FStackFrameCount;
     Property Process : TProcessEntry Read GetProcess Write SetProcess;
@@ -125,6 +129,8 @@ FResultValue := NativeUInt(ARequest.Other);
 FProcessId := ARequest.ProcessId;
 FThreadId := ARequest.ThreadId;
 FIRQL := ARequest.Irql;
+FIOSBStatus := ARequest.IOSBStatus;
+FIOSBInformation := ARequest.IOSBInformation;
 FData := Nil;
 FDataSize := 0;
 FRaw := RequestCopy(@ARequest);

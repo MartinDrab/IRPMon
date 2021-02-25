@@ -22,8 +22,6 @@ Type
     FIRPFlags : Cardinal;
     FProcessId : THandle;
     FThreadId : THandle;
-    FIOSBStatus : Cardinal;
-    FIOSBInformation : NativeUInt;
     FRequestorProcessId : NativeUInt;
   Public
     Constructor Create(Var ARequest:REQUEST_IRP); Overload;
@@ -51,8 +49,6 @@ Type
     Property IRPFlags : Cardinal Read FIRPFlags;
     Property ProcessId : THandle Read FProcessId;
     Property ThreadId : THandle Read FThreadId;
-    Property IOSBStatus : Cardinal Read FIOSBStatus;
-    Property IOSBInformation : NativeUInt Read FIOSBInformation;
     Property RequestorProcessId : NativeUInt Read FRequestorProcessId;
   end;
 
@@ -272,14 +268,6 @@ Case AColumnType Of
     AValue := @FRequestorMode;
     AValueSize := SizeOf(FRequestorMode);
     end;
-  rlmctIOSBStatusValue: begin
-    AValue := @FIOSBStatus;
-    AValueSize := SizeOf(FIOSBStatus);
-    end;
-  rlmctIOSBInformation: begin
-    AValue := @FIOSBInformation;
-    AValueSize := SizeOf(FIOSBInformation);
-    end;
   rlmctRequestorPID: begin
     AValue := @FRequestorProcessId;
     AValueSize := SizeOf(FRequestorProcessId);
@@ -303,9 +291,6 @@ Case AColumnType Of
   rlmctArg4: AResult := Format('0x%p', [FArgs.Other.Arg4]);
   rlmctPreviousMode: AResult := AccessModeToString(FPreviousMode);
   rlmctRequestorMode: AResult := AccessModeToString(FRequestorMode);
-  rlmctIOSBStatusValue : AResult := Format('0x%x', [FIOSBStatus]);
-  rlmctIOSBStatusConstant : AResult := Format('%s', [NTSTATUSToString(FIOSBStatus)]);
-  rlmctIOSBInformation : AResult := Format('%u (0x%p)', [FIOSBInformation, Pointer(FIOSBInformation)]);
   Else Result := Inherited GetColumnValue(AColumnType, AResult);
   end;
 end;

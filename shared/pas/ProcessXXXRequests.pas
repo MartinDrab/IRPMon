@@ -14,12 +14,16 @@ Type
   TProcessCreatedRequest = Class (TDriverRequest)
    Public
     Constructor Create(Var ARequest:REQUEST_PROCESS_CREATED); Overload;
+
     Function GetColumnName(AColumnType:ERequestListModelColumnType):WideString; Override;
+    Function GetColumnValueRaw(AColumnType:ERequestListModelColumnType; Var AValue:Pointer; Var AValueSize:Cardinal):Boolean; Override;
+    Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
   end;
 
   TProcessExittedRequest = Class (TDriverRequest)
    Public
     Constructor Create(Var ARequest:REQUEST_PROCESS_EXITTED); Overload;
+
     Function GetColumnValueRaw(AColumnType:ERequestListModelColumnType; Var AValue:Pointer; Var AValueSize:Cardinal):Boolean; Override;
     Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
   end;
@@ -64,6 +68,42 @@ case AColumnType of
   end;
 end;
 
+Function TProcessCreatedRequest.GetColumnValueRaw(AColumnType:ERequestListModelColumnType; Var AValue:Pointer; Var AValueSize:Cardinal):Boolean;
+begin
+Case AColumnType Of
+  rlmctDeviceObject,
+  rlmctDeviceName,
+  rlmctDriverObject,
+  rlmctDriverName,
+  rlmctFileObject,
+  rlmctIOSBStatusValue,
+  rlmctIOSBStatusConstant,
+  rlmctIOSBInformation,
+  rlmctResultValue,
+  rlmctResultConstant,
+  rlmctFileName : Result := False;
+  Else Result := Inherited GetColumnValueRaw(AColumnType, AValue, AValueSize);
+  end;
+end;
+
+Function TProcessCreatedRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
+begin
+Case AColumnType Of
+  rlmctDeviceObject,
+  rlmctDeviceName,
+  rlmctDriverObject,
+  rlmctDriverName,
+  rlmctFileObject,
+  rlmctIOSBStatusValue,
+  rlmctIOSBStatusConstant,
+  rlmctIOSBInformation,
+  rlmctResultValue,
+  rlmctResultConstant,
+  rlmctFileName : Result := False;
+  Else Result := Inherited GetColumnValue(AColumnType, AResult);
+  end;
+end;
+
 (** TProcessExittedRequest **)
 
 Constructor TProcessExittedRequest.Create(Var ARequest:REQUEST_PROCESS_EXITTED);
@@ -79,6 +119,11 @@ Case AColumnType Of
   rlmctDriverObject,
   rlmctDriverName,
   rlmctFileObject,
+  rlmctIOSBStatusValue,
+  rlmctIOSBStatusConstant,
+  rlmctIOSBInformation,
+  rlmctResultValue,
+  rlmctResultConstant,
   rlmctFileName : Result := False;
   Else Result := Inherited GetColumnValueRaw(AColumnType, AValue, AValueSize);
   end;
@@ -92,6 +137,11 @@ Case AColumnType Of
   rlmctDriverObject,
   rlmctDriverName,
   rlmctFileObject,
+  rlmctIOSBStatusValue,
+  rlmctIOSBStatusConstant,
+  rlmctIOSBInformation,
+  rlmctResultValue,
+  rlmctResultConstant,
   rlmctFileName : Result := False;
   Else Result := Inherited GetColumnValue(AColumnType, AResult);
   end;

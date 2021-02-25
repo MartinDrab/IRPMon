@@ -61,8 +61,6 @@ static PREQUEST_FASTIO _CreateFastIoRequest(const DRIVER_HOOK_RECORD *DriverReco
 		ret->Arg6 = Arg6;
 		ret->Arg7 = Arg7;
 		ret->DataSize = (ULONG)ExtraBytes;
-		ret->IOSBInformation = 0;
-		ret->IOSBStatus = STATUS_UNSUCCESSFUL;
 		if (frameCount > 0) {
 			ret->Header.Flags |= REQUEST_FLAG_STACKTRACE;
 			memcpy((unsigned char *)ret + totalSize - stackTraceSize, frames, stackTraceSize);
@@ -167,10 +165,8 @@ BOOLEAN HookHandlerFastIoCheckIfPossible(PFILE_OBJECT FileObject, PLARGE_INTEGER
 		
 		if (request != NULL) {
 			RequestHeaderSetResult(request->Header, BOOLEAN, ret);
-			if (ret && IoStatusBlock != NULL) {
-				request->IOSBStatus = IoStatusBlock->Status;
-				request->IOSBInformation = IoStatusBlock->Information;
-			}
+			if (ret && IoStatusBlock != NULL)
+				RequestIOSBSet(&request->Header, IoStatusBlock);
 
 			RequestQueueInsert(&request->Header);
 		}
@@ -237,10 +233,8 @@ BOOLEAN HookHandlerFastIoDeviceControl(PFILE_OBJECT FileObject, BOOLEAN Wait, PV
 		
 		if (request != NULL) {
 			RequestHeaderSetResult(request->Header, BOOLEAN, ret);
-			if (ret && IoStatusBlock != NULL) {
-				request->IOSBInformation = IoStatusBlock->Information;
-				request->IOSBStatus = IoStatusBlock->Status;
-			}
+			if (ret && IoStatusBlock != NULL)
+				RequestIOSBSet(&request->Header, IoStatusBlock);
 
 			RequestQueueInsert(&request->Header);
 		}
@@ -276,10 +270,8 @@ BOOLEAN HookHandlerFastIoLock(PFILE_OBJECT FileObject, PLARGE_INTEGER FileOffset
 		
 		if (request != NULL) {
 			RequestHeaderSetResult(request->Header, BOOLEAN, ret);
-			if (ret && StatusBlock != NULL) {
-				request->IOSBInformation = StatusBlock->Information;
-				request->IOSBStatus = StatusBlock->Status;
-			}
+			if (ret && StatusBlock != NULL)
+				RequestIOSBSet(&request->Header, StatusBlock);
 
 			RequestQueueInsert(&request->Header);
 		}
@@ -330,8 +322,7 @@ BOOLEAN HookHandlerFastIoQueryBasicInfo(PFILE_OBJECT FileObject, BOOLEAN Wait, P
 					}
 				}
 
-				request->IOSBInformation = IoStatusBlock->Information;
-				request->IOSBStatus = IoStatusBlock->Status;
+				RequestIOSBSet(&request->Header, IoStatusBlock);
 			}
 
 			RequestQueueInsert(&request->Header);
@@ -383,8 +374,7 @@ BOOLEAN HookHandlerFastIoQueryNetworkOpenInfo(PFILE_OBJECT FileObject, BOOLEAN W
 					}
 				}
 
-				request->IOSBInformation = IoStatusBlock->Information;
-				request->IOSBStatus = IoStatusBlock->Status;
+				RequestIOSBSet(&request->Header, IoStatusBlock);
 			}
 
 			RequestQueueInsert(&request->Header);
@@ -488,8 +478,7 @@ BOOLEAN HookHandlerFastIoQueryStandardInfo(PFILE_OBJECT FileObject, BOOLEAN Wait
 					}
 				}
 
-				request->IOSBInformation = IoStatusBlock->Information;
-				request->IOSBStatus = IoStatusBlock->Status;
+				RequestIOSBSet(&request->Header, IoStatusBlock);
 			}
 
 			RequestQueueInsert(&request->Header);
@@ -527,13 +516,15 @@ BOOLEAN HookHandlerFastIoRead(PFILE_OBJECT FileObject, PLARGE_INTEGER FileOffset
 		if (request != NULL) {
 			RequestHeaderSetResult(request->Header, BOOLEAN, ret);
 			if (ret && IoStatusBlock != NULL) {
-				request->IOSBInformation = IoStatusBlock->Information;
-				request->IOSBStatus = IoStatusBlock->Status;
+				RequestIOSBSet(&request->Header, IoStatusBlock);
 				__try {
 					memcpy(request + 1, Buffer, IoStatusBlock->Information);
 				} __except (EXCEPTION_EXECUTE_HANDLER) {
 				}
 			}
+
+			if (ret && IoStatusBlock != NULL)
+				RequestIOSBSet(&request->Header, IoStatusBlock);
 
 			RequestQueueInsert(&request->Header);
 		}
@@ -569,10 +560,9 @@ BOOLEAN HookHandlerFastIoUnlockAll(PFILE_OBJECT FileObject, PEPROCESS ProcessId,
 		
 		if (request != NULL) {
 			RequestHeaderSetResult(request->Header, BOOLEAN, ret);
-			if (ret && IoStatusBlock != NULL) {
-				request->IOSBInformation = IoStatusBlock->Information;
-				request->IOSBStatus = IoStatusBlock->Status;
-			}
+			if (ret && IoStatusBlock != NULL)
+				RequestIOSBSet(&request->Header, IoStatusBlock);
+
 			RequestQueueInsert(&request->Header);
 		}
 
@@ -607,10 +597,8 @@ BOOLEAN HookHandlerFastIoUnlockByKey(PFILE_OBJECT FileObject, PVOID ProcessId, U
 		
 		if (request != NULL) {
 			RequestHeaderSetResult(request->Header, BOOLEAN, ret);
-			if (ret && IoStatusBlock != NULL) {
-				request->IOSBInformation = IoStatusBlock->Information;
-				request->IOSBStatus = IoStatusBlock->Status;
-			}
+			if (ret && IoStatusBlock != NULL)
+				RequestIOSBSet(&request->Header, IoStatusBlock);
 
 			RequestQueueInsert(&request->Header);
 		}
@@ -646,10 +634,8 @@ BOOLEAN HookHandlerFastIoUnlockSingle(PFILE_OBJECT FileObject, PLARGE_INTEGER Fi
 		
 		if (request != NULL) {
 			RequestHeaderSetResult(request->Header, BOOLEAN, ret);
-			if (ret && StatusBlock != NULL) {
-				request->IOSBInformation = StatusBlock->Information;
-				request->IOSBStatus = StatusBlock->Status;
-			}
+			if (ret && StatusBlock != NULL)
+				RequestIOSBSet(&request->Header, StatusBlock);
 
 			RequestQueueInsert(&request->Header);
 		}
@@ -690,10 +676,8 @@ BOOLEAN HookHandlerFastIoWrite(PFILE_OBJECT FileObject, PLARGE_INTEGER FileOffse
 			}
 
 			RequestHeaderSetResult(request->Header, BOOLEAN, ret);
-			if (ret && IoStatusBlock != NULL) {
-				request->IOSBInformation = IoStatusBlock->Information;
-				request->IOSBStatus = IoStatusBlock->Status;
-			}
+			if (ret && IoStatusBlock != NULL)
+				RequestIOSBSet(&request->Header, IoStatusBlock);
 
 			RequestQueueInsert(&request->Header);
 		}
@@ -730,10 +714,8 @@ BOOLEAN HookHandlerFastIoMdlRead(PFILE_OBJECT FileObject, PLARGE_INTEGER FileOff
 		
 		if (request != NULL) {
 			RequestHeaderSetResult(request->Header, BOOLEAN, ret);
-			if (ret && IoStatusBlock != NULL) {
-				request->IOSBInformation = IoStatusBlock->Information;
-				request->IOSBStatus = IoStatusBlock->Status;
-			}
+			if (ret && IoStatusBlock != NULL)
+				RequestIOSBSet(&request->Header, IoStatusBlock);
 
 			RequestQueueInsert(&request->Header);
 		}
@@ -770,10 +752,8 @@ BOOLEAN HookHandlerFastIoMdlWrite(PFILE_OBJECT FileObject, PLARGE_INTEGER FileOf
 		
 		if (request != NULL) {
 			RequestHeaderSetResult(request->Header, BOOLEAN, ret);
-			if (ret && IoStatusBlock != NULL) {
-				request->IOSBInformation = IoStatusBlock->Information;
-				request->IOSBStatus = IoStatusBlock->Status;
-			}
+			if (ret && IoStatusBlock != NULL)
+				RequestIOSBSet(&request->Header, IoStatusBlock);
 
 			RequestQueueInsert(&request->Header);
 		}
@@ -886,8 +866,7 @@ BOOLEAN HookHandlerFastIoReadCompressed(PFILE_OBJECT FileObject, PLARGE_INTEGER 
 						request->Arg7 = *MdlChain;				
 				}
 
-				request->IOSBInformation = IoStatusBlock->Information;
-				request->IOSBStatus = IoStatusBlock->Status;
+				RequestIOSBSet(&request->Header, IoStatusBlock);
 			}
 
 			RequestQueueInsert(&request->Header);
@@ -931,8 +910,7 @@ BOOLEAN HookHandlerFastIoWriteCompressed(PFILE_OBJECT FileObject, PLARGE_INTEGER
 						request->Arg7 = *MdlChain;				
 				}
 
-				request->IOSBInformation = IoStatusBlock->Information;
-				request->IOSBStatus = IoStatusBlock->Status;
+				RequestIOSBSet(&request->Header, IoStatusBlock);
 			}
 
 			RequestQueueInsert(&request->Header);
@@ -1204,8 +1182,6 @@ VOID HookHandlerStartIoDispatch(PDEVICE_OBJECT DeviceObject, PIRP Irp)
 				request->MinorFunction = IrpStack->MinorFunction;
 				request->IrpFlags = Irp->Flags;
 				request->FileObject = IrpStack->FileObject;
-				request->Status = STATUS_UNSUCCESSFUL;
-				request->Information = 0;
 				if (loggedData.Stripped)
 					request->Header.Flags |= REQUEST_FLAG_DATA_STRIPPED;
 				
@@ -1225,10 +1201,8 @@ VOID HookHandlerStartIoDispatch(PDEVICE_OBJECT DeviceObject, PIRP Irp)
 
 		driverRecord->OldStartIo(DeviceObject, Irp);
 		if (request != NULL) {
-			if (iosb != NULL) {
-				request->Status = iosb->Status;
-				request->Information = iosb->Information;
-			}
+			if (iosb != NULL)
+				RequestIOSBSet(&request->Header, iosb);
 
 			RequestQueueInsert(&request->Header);
 		}
@@ -1290,8 +1264,7 @@ static NTSTATUS _HookHandlerIRPCompletion(PDEVICE_OBJECT DeviceObject, PIRP Irp,
 	if (completionRequest != NULL) {
 		RequestHeaderInit(&completionRequest->Header, cc->DriverObject, cc->DeviceObject, ertIRPCompletion);
 		completionRequest->IRPAddress = Irp;
-		completionRequest->CompletionInformation = Irp->IoStatus.Information;
-		completionRequest->CompletionStatus = Irp->IoStatus.Status;
+		RequestIOSBSet(&completionRequest->Header, &Irp->IoStatus);
 		completionRequest->FileObject = cc->StackLocation.FileObject;
 		memcpy(completionRequest->Arguments, &cc->StackLocation.Parameters.Others, sizeof(completionRequest->Arguments));
 		completionRequest->MajorFunction = cc->StackLocation.MajorFunction;
@@ -1478,8 +1451,7 @@ NTSTATUS HookHandlerIRPDisptach(PDEVICE_OBJECT Deviceobject, PIRP Irp)
 					request->Arg4 = irpStack->Parameters.Others.Argument4;
 					request->IrpFlags = Irp->Flags;
 					request->FileObject = irpStack->FileObject;
-					request->IOSBStatus = Irp->IoStatus.Status;
-					request->IOSBInformation = Irp->IoStatus.Information;
+					RequestIOSBSet(&request->Header, &Irp->IoStatus);
 					request->RequestorProcessId = IoGetRequestorProcessId(Irp);
 					_SetRequestFlags(&request->Header, &clientInfo);
 					IRPDataLoggerSetRequestFlags(&request->Header, &loggedData);
