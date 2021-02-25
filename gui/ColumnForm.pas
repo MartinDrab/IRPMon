@@ -68,7 +68,12 @@ For I := 0 To FModel.ColumnCount - 1 Do
 end;
 
 Procedure TColumnFrm.OkButtonClick(Sender: TObject);
+Var
+  I : Integer;
 begin
+For I := 0 To COlumnListView.Items.Count - 1 Do
+  FChecked[I] := ColumnListView.Items[I].Checked;
+
 FCancelled := False;
 Close;
 end;
@@ -78,4 +83,6 @@ begin
 Close;
 end;
 
+
 End.
+

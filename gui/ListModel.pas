@@ -71,6 +71,7 @@ Type
     Procedure ColumnSetVisible(AIndex:Integer; AVisible:Boolean);
     Procedure ColumnUpdateEnd;
     Procedure CreateColumnsMenu(AParent:TMenuItem);
+    Procedure RefreshColumnMenu;
 
     Procedure Clear; Virtual;
     Procedure ToCSV(AStrings:TStrings);
@@ -274,7 +275,6 @@ end;
 
 Procedure TListModel<T>.CreateColumnsMenu(AParent:TMenuItem);
 Var
-  I : Integer;
   M : TMenuItem;
   c : TListModelColumn;
 begin
@@ -289,6 +289,19 @@ For c In FColumns Do
   AParent.Add(M);
   end;
 end;
+
+Procedure TListModel<T>.RefreshColumnMenu;
+Var
+  M : TMenuItem;
+  c : TListModelColumn;
+begin
+For c In FColumns Do
+  begin
+  M := c.MenuItem;
+  M.Checked := c.Visible;
+  end;
+end;
+
 
 Function TListModel<T>.GetSelected:T;
 Var
