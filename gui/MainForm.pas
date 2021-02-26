@@ -526,6 +526,7 @@ With TColumnFrm.Create(Application, FModel) Do
       end;
 
     FModel.ColumnUpdateEnd;
+    FModel.RefreshColumnMenu;
     end;
 
   Free;

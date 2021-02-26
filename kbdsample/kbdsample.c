@@ -165,7 +165,7 @@ int main(int argc, char* argv[])
 												break;
 											case ertIRPCompletion:
 												irpc = CONTAINING_RECORD(request, REQUEST_IRP_COMPLETION, Header);
-												fprintf(stderr, "[IRPCOMPLETE]: irp=0x%p, status=0x%lx, info=%zu, datasize=%zu\n", irpc->IRPAddress, irpc->CompletionStatus, irpc->CompletionInformation, irpc->DataSize);
+												fprintf(stderr, "[IRPCOMPLETE]: irp=0x%p, status=0x%lx, info=%zu, datasize=%zu\n", irpc->IRPAddress, irpc->Header.IOSBStatus, irpc->Header.IOSBInformation, irpc->DataSize);
 												break;
 											case ertAddDevice:
 												ad = CONTAINING_RECORD(request, REQUEST_ADDDEVICE, Header);

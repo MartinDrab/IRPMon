@@ -15,6 +15,7 @@ Type
   TDriverUnloadRequest = Class (TDriverRequest)
   Public
     Constructor Create(Var ARequest:REQUEST_UNLOAD); Overload;
+
     Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
   end;
 
@@ -32,6 +33,11 @@ Case AColumnType Of
   rlmctDeviceObject,
   rlmctDeviceName,
   rlmctResultValue,
+  rlmctFileObject,
+  rlmctFileName,
+  rlmctIOSBStatusValue,
+  rlmctIOSBStatusConstant,
+  rlmctIOSBInformation,
   rlmctResultConstant  : Result := False;
   Else Result := Inherited GetColumnValue(AColumnType, AResult);
   end;

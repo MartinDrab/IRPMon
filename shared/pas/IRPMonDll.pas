@@ -437,6 +437,8 @@ Type
     ThreadId : THandle;
     Flags : Word;
     Irql : Byte;
+    IOSBStatus : Cardinal;
+    IOSBInformation : NativeUInt;
 	  (** Result of the request servicing. The type of this field
 	    differs depending the type of the request.
 
@@ -474,10 +476,6 @@ Type
 	  (** Irp->FileObject *)
 	  FileObject : Pointer;
     Args : TIRPArguments;
-    (** Value of Irp->IoStatus.Status at time of IRP detection. **)
-    IOSBStatus : Cardinal;
-    (** Value of Irp->IoStatus.Information at time of IRP detection. **)
-    IOSBInformation : NativeUInt;
 	  (** PID of the process originally requesting the operation. **)
     RequestorProcessId : NativeUInt;
     DataSize : NativeUInt;
@@ -489,8 +487,6 @@ Type
   _REQUEST_IRP_COMPLETION = Record
     Header : REQUEST_HEADER;
 	  IRPAddress : Pointer;
-	  CompletionStatus : Cardinal;
-	  CompletionInformation : NativeUInt;
     MajorFunction : Cardinal;
     MinorFunction : Cardinal;
     Arguments : Packed Array [0..3] Of Pointer;
@@ -526,8 +522,6 @@ Type
 	  Arg8 : Pointer;
 	  Arg9 : Pointer;
 	  FileObject : Pointer;
-	  IOSBStatus : Cardinal;
-	  IOSBInformation : NativeUInt;
     DataSize : Cardinal;
     end;
   REQUEST_FASTIO = _REQUEST_FASTIO;
@@ -570,12 +564,6 @@ Type
 	  Arg4 : Pointer;
 	  IrpFlags : Cardinal;
 	  FileObject : Pointer;
-	  (** Value of the Irp->IoStatus.Information after calling the original
-	    dispatch routine. *)
-	  Information : NativeUInt;
-	  (** Value of the Irp->IoStatus.Status after calling the original
-	    dispatch routine. *)
-	  Status : Cardinal;
     (** Length of data associated with the request. *)
     DataSize : NativeUInt;
     end;

@@ -144,6 +144,10 @@ typedef struct _REQUEST_HEADER {
 	USHORT Flags;
 	/// IRQL on the time of request generation.
 	UCHAR Irql;
+	/// the Status member of the IO_STATUS_BLOCK
+	NTSTATUS IOSBStatus;
+	/// The Information member of the IO_STATUS_BLOCK
+	ULONG_PTR IOSBInformation;
 	/// Result of the request servicing. The type of this field
 	/// differs depending the type of the request. 
 	/// 
@@ -180,6 +184,20 @@ typedef struct _REQUEST_HEADER {
 		(aHeader).Result.aResultType##Value = (aResultValue);							\
 	}																		\
 
+ /// <summary>Sets IOSBL of a given request, 
+/// </summary>
+/// <param name="aHeader">
+/// Header of the request.
+/// </param>
+/// <param name="aIOSB">
+/// Address of an IO_STATUS_BLOCK structure to be used as a source.
+/// </param>
+#define RequestIOSBSet(aHeader, aIOSB) do {	\
+	(aHeader)->IOSBStatus = (aIOSB)->Status;	\
+	(aHeader)->IOSBInformation = (aIOSB)->Information;	\
+	} while (0)	\
+
+
 /** Represents an IRP request. */
 typedef struct _REQUEST_IRP {
 	/** The header. */
@@ -207,10 +225,6 @@ typedef struct _REQUEST_IRP {
 	PVOID Arg3;
 	/** The fourth argument of the request. */
 	PVOID Arg4;
-	/** Value of the Irp->IoStatus.Status at time of IRP detection. */
-	NTSTATUS IOSBStatus;
-	/** Value of the Irp->IoStatus.Information at time of IRP detection. */
-	ULONG_PTR IOSBInformation;
 	/** PID of the process originally requesting the operation. */
 	ULONG_PTR RequestorProcessId;
 	/** Number of data bytes associated with the request. */
@@ -221,8 +235,6 @@ typedef struct _REQUEST_IRP {
 typedef struct _REQUEST_IRP_COMPLETION {
 	REQUEST_HEADER Header;
 	PVOID IRPAddress;
-	NTSTATUS CompletionStatus;
-	ULONG_PTR CompletionInformation;
 	ULONG MajorFunction;
 	ULONG MinorFunction;
 	PVOID Arguments[4];
@@ -289,8 +301,6 @@ typedef struct _REQUEST_FASTIO {
 	PVOID Arg8;
 	PVOID Arg9;
 	PVOID FileObject;
-	LONG IOSBStatus;
-	ULONG_PTR IOSBInformation;
 	ULONG DataSize;
 } REQUEST_FASTIO, *PREQUEST_FASTIO;
 
@@ -327,12 +337,6 @@ typedef struct _REQUEST_STARTIO {
 	PVOID Arg4;
 	ULONG IrpFlags;
 	PVOID FileObject;
-	/** Value of the Irp->IoStatus.Information after calling the original
-	    dispatch routine. */
-	ULONG_PTR Information;
-	/** Value of the Irp->IoStatus.Status after calling the original
-	    dispatch routine. */
-	LONG Status;
 	/** Length of data associated with the request. */
 	SIZE_T DataSize;
 	// Data

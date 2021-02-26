@@ -15,8 +15,6 @@ Type
   TIRPCompleteRequest = Class (TDriverRequest)
   Private
     FIRPAddress : Pointer;
-    FIOSBStatus : Cardinal;
-    FIOSBInformation : NativeUInt;
     FMajorFunction : Cardinal;
     FMinorFunction : Cardinal;
     FRequestorProcessId : NativeUInt;
@@ -30,8 +28,6 @@ Type
     Function GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean; Override;
 
     Property Address : Pointer Read FIRPAddress;
-    Property IOSBStatus : Cardinal Read FIOSBStatus;
-    Property IOSBInformation : NativeUInt Read FIOSBInformation;
     Property MajorFunction : Cardinal Read FMajorFunction;
     Property MinorFunction : Cardinal Read FMinorFunction;
     Property RequestorProcessId : NativeUInt Read FRequestorProcessId;
@@ -53,8 +49,6 @@ Inherited Create(ARequest.Header);
 d := PByte(@ARequest) + SizeOf(ARequest);
 AssignData(d, ARequest.DataSize);
 FIRPAddress := ARequest.IRPAddress;
-FIOSBStatus := ARequest.CompletionStatus;
-FIOSBInformation := ARequest.CompletionInformation;
 FMajorFunction := ARequest.MajorFunction;
 FMinorFunction := ARequest.MinorFunction;
 FPreviousMode := ARequest.PreviousMode;
@@ -108,9 +102,6 @@ Case AColumnType Of
   rlmctSubType : AResult := MajorFunctionToString(FMajorFunction);
   rlmctMinorFunction : AResult := MinorFunctionToString(FMajorFunction, FMinorFunction);
   rlmctIRPAddress: AResult := Format('0x%p', [FIRPAddress]);
-  rlmctIOSBStatusValue : AResult := Format('0x%x', [FIOSBStatus]);
-  rlmctIOSBStatusConstant : AResult := Format('%s', [NTSTATUSToString(FIOSBStatus)]);
-  rlmctIOSBInformation : AResult := Format('0x%p', [Pointer(IOSBInformation)]);
   rlmctPreviousMode: AResult := AccessModeToString(FPreviousMode);
   rlmctRequestorMode: AResult := AccessModeToString(FRequestorMode);
   rlmctRequestorPID : AResult := Format('%d', [FRequestorProcessId]);

@@ -85,6 +85,11 @@ Case AColumnType Of
   rlmctDeviceObject,
   rlmctDeviceName,
   rlmctDriverObject,
+  rlmctIOSBStatusValue,
+  rlmctIOSBStatusConstant,
+  rlmctIOSBInformation,
+  rlmctResultValue,
+  rlmctResultConstant,
   rlmctDriverName : Result := False;
   rlmctArg1 : begin
     AValue := @FImageBase;
@@ -113,6 +118,11 @@ Case AColumnType Of
   rlmctDeviceObject,
   rlmctDeviceName,
   rlmctDriverObject,
+  rlmctIOSBStatusValue,
+  rlmctIOSBStatusConstant,
+  rlmctIOSBInformation,
+  rlmctResultValue,
+  rlmctResultConstant,
   rlmctDriverName : Result := False;
   rlmctArg1 : AResult := Format('0x%p', [FImageBase]);
   rlmctArg2 : AResult := Format('%u', [FImageSize]);

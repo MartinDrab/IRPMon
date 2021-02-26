@@ -535,6 +535,14 @@ Case AColumnType Of
   rlmctFileName: begin
     AValue := PWideChar(FileName);
     AValueSize := 0;
+    end;
+  rlmctIOSBStatusValue : begin
+    AValue := @FIOSBStatus;
+    AValueSize := SizeOf(FIOSBStatus);
+    end;
+  rlmctIOSBInformation : begin
+    AValue := @FIOSBInformation;
+    AValueSize := SizeOf(FIOSBInformation);
     end
   Else Result := False;
   end;
@@ -565,6 +573,9 @@ Case AColumnType Of
   rlmctThreadId :  AResult := Format('%u', [FThreadId]);
   rlmctProcessName : AResult := FProcessName;
   rlmctIRQL : AResult := IRQLToString(FIRQL);
+  rlmctIOSBStatusValue : AResult := Format('0x%x', [FIOSBStatus]);
+  rlmctIOSBStatusConstant : AResult := Format('%s', [NTSTATUSToString(FIOSBStatus)]);
+  rlmctIOSBInformation : AResult := Format('0x%p', [Pointer(IOSBInformation)]);
   rlmctEmulated : AResult := BoolToStr(FEmulated, True);
   rlmctDataAssociated : AResult := BoolToStr(FDataPresent, True);
   rlmctDataStripped : AResult := BoolToStr(FDataStripped, True);

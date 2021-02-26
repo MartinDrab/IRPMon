@@ -66,6 +66,9 @@ Case AColumnType Of
   rlmctDeviceObject,
   rlmctDeviceName,
   rlmctResultValue,
+  rlmctIOSBStatusValue,
+  rlmctIOSBStatusConstant,
+  rlmctIOSBInformation,
   rlmctResultConstant : Result := False;
   rlmctDriverObject : AResult := Format('0x%p', [FDriverObject]);
   rlmctDriverName : AResult := FDriverName;
@@ -96,6 +99,9 @@ begin
 Result := True;
 Case AColumnType Of
   rlmctResultValue,
+  rlmctIOSBStatusValue,
+  rlmctIOSBStatusConstant,
+  rlmctIOSBInformation,
   rlmctResultConstant : Result := False;
   rlmctDriverObject : AResult := Format('0x%p', [FDriverObject]);
   rlmctDeviceObject : AResult := Format('0x%p', [FDeviceObject]);

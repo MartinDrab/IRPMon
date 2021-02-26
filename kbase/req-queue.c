@@ -332,6 +332,8 @@ void RequestHeaderInitNoId(PREQUEST_HEADER Header, PDRIVER_OBJECT DriverObject, 
 	Header->ProcessId = PsGetCurrentProcessId();
 	Header->ThreadId = PsGetCurrentThreadId();
 	Header->Irql = KeGetCurrentIrql();
+	Header->IOSBStatus = 0x103;
+	Header->IOSBInformation = 0;
 	ASSERT(Header->Flags == REQUEST_FLAG_PAGED || Header->Flags == REQUEST_FLAG_NONPAGED);
 
 	return;
