@@ -820,7 +820,8 @@ Type
   _EIRPMonConnectorType = (
     ictNone,
     ictDevice,
-    ictNetwork
+    ictNetwork,
+    ictVSockets
   );
   EIRPMonConnectorType = _EIRPMonConnectorType;
   PEIRPMonConnectorType = ^EIRPMonConnectorType;
@@ -836,6 +837,10 @@ Type
           NetworkPort : PWideChar;
           AddressFamily : Word;
         );
+      ictVSockets : (
+        VMCICID : Cardinal;
+        VMCIPort : Cardinal;
+      );
     end;
   IRPMON_INIT_INFO = _IRPMON_INIT_INFO;
   PIRPMON_INIT_INFO = ^IRPMON_INIT_INFO;

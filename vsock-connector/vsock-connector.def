@@ -1,0 +1,9 @@
+LIBRARY vsock-connector
+EXPORTS
+	DriverCommInterface	PRIVATE
+	VSockConn_SynchronousOtherIOCTL
+	VSockConn_Connect
+	VSockConn_Disconnect
+	VSockConn_Active
+	VSockConn_LocalId
+	VSockConn_VMCIVersion

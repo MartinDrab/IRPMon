@@ -1122,6 +1122,9 @@ DWORD DriverComModuleInit(const IRPMON_INIT_INFO *Info)
 					case ictNetwork:
 						libraryName = L"network-connector.dll";
 						break;
+					case ictVSockets:
+						libraryName = L"vsock-connector.dll";
+						break;
 					default:
 						ret = ERROR_NOT_SUPPORTED;
 						break;

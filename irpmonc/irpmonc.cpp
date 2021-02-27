@@ -49,6 +49,7 @@
 //		W = Name watch
 //		E = device extension hook
 //		a = all devices
+//		s = capture stacktrace
 //
 //	--unhook-driver=[W]:<drivername>
 //		W = name watch
@@ -68,7 +69,7 @@
 // --snapshot-events={yes|no|true|false}
 // --process-emulate={yes|no|true|false}
 // --snapshot-emulate={yes|no|true|false}
-// --strip-threshold={yes|no|true|false}
+// --strip-threshold=<integer>
 // --strip-data={yes|no|true|false}
 //	--boot-log={yes|no|true|false}
 // --save-settings={yes|no|true|false}
@@ -267,6 +268,7 @@ static int _parse_hookdriver(const wchar_t *Value)
 				case L'U': dms.MonitorUnload = TRUE; break;
 				case L'N': dms.MonitorNewDevices = TRUE; break;
 				case L'D': dms.MonitorData = TRUE; break;
+				case 's': dms.MonitorStackTrace = TRUE; break;
 				case L'E': devExtHook = true; break;
 				case L'W': nameWatch = true; break;
 				case L'a': allDevices = true; break;

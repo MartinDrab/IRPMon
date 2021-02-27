@@ -52,23 +52,33 @@ object ConnectorSelectionFrm: TConnectorSelectionFrm
     object NetworkTabSheet: TTabSheet
       Caption = 'Network'
       ImageIndex = 2
-      ExplicitLeft = 0
-      ExplicitTop = 0
-      ExplicitWidth = 0
-      ExplicitHeight = 0
-      object Label2: TLabel
-        Left = 16
-        Top = 3
-        Width = 35
+      object DomainLabel: TLabel
+        Left = 3
+        Top = 0
+        Width = 49
         Height = 13
-        Caption = 'Domain'
+        Caption = 'Domain/IP'
       end
-      object Label3: TLabel
-        Left = 16
+      object PortLabel: TLabel
+        Left = 3
         Top = 38
         Width = 20
         Height = 13
         Caption = 'Port'
+      end
+      object VSockVersionLabel: TLabel
+        Left = 0
+        Top = 88
+        Width = 66
+        Height = 13
+        Caption = 'vSock version'
+      end
+      object VSockAddressLabel: TLabel
+        Left = 5
+        Top = 115
+        Width = 69
+        Height = 13
+        Caption = 'vSock address'
       end
       object NetworkDomainEdit: TEdit
         Left = 80
@@ -83,6 +93,31 @@ object ConnectorSelectionFrm: TConnectorSelectionFrm
         Width = 129
         Height = 21
         TabOrder = 1
+      end
+      object VSocketCheckBox: TCheckBox
+        Left = 80
+        Top = 62
+        Width = 129
+        Height = 17
+        Caption = 'Use VMWare sockets'
+        TabOrder = 2
+        OnClick = VSocketCheckBoxClick
+      end
+      object VSockVersionEdit: TEdit
+        Left = 80
+        Top = 85
+        Width = 129
+        Height = 21
+        ReadOnly = True
+        TabOrder = 3
+      end
+      object VSockAddressEdit: TEdit
+        Left = 80
+        Top = 112
+        Width = 129
+        Height = 21
+        ReadOnly = True
+        TabOrder = 4
       end
     end
   end

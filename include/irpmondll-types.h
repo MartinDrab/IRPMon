@@ -82,13 +82,15 @@ typedef enum _EIRPMonConnectorType {
 	ictDevice,
 	/// Connect to an IRPMon instance running on a remote computer.
 	ictNetwork,
+	/// Connect via VMWare vSockets
+	ictVSockets,
 } EConnectorType, *PEConnectorType;
 
 /// Defines parameter necessary for connecting to IRPMon driver's control device.
 typedef struct _IRPMON_DEVICE_INIT_INFO {
 	/// Specifies name of the device object belonging to the
 	/// local IRPMon driver.
-	wchar_t* DeviceName;
+	wchar_t *DeviceName;
 } IRPMON_DEVICE_INIT_INFO, *PIRPMON_DEVICE_INIT_INFO;
 
 /// Defines parameter necessary for connecting to IRPMon instance over
@@ -96,9 +98,9 @@ typedef struct _IRPMON_DEVICE_INIT_INFO {
 typedef struct _IRPMON_NETWORK_INIT_INFO {
 	/// Domain or IP address where the remote IRPMon instance
 	/// is running.
-	wchar_t* Address;
+	wchar_t *Address;
 	/// Port number (in its string form) at which the instance listens.
-	wchar_t* Service;
+	wchar_t *Service;
 	/// Version of IP protocol used to establish the connection.
 	/// <list type="bullets">
 	/// <item>
@@ -114,12 +116,19 @@ typedef struct _IRPMON_NETWORK_INIT_INFO {
 	uint16_t AddressFamily;
 } IRPMON_NETWORK_INIT_INFO, *PIRPMON_NETWORK_INIT_INFO;
 
+typedef struct _IRPMON_VSOCKETS_INIT_INFO {
+	unsigned int CID;
+	unsigned int Port;
+} IRPMON_VSOCKETS_INIT_INFO, *PIRPMON_VSOCKETS_INIT_INFO;
+
 /// Defines data specific to individual connection methods.
 typedef union _IRPMON_INIT_INFO_DATA {
 	/// Parameters for connecting to a local IRPMon driver instance.
 	IRPMON_DEVICE_INIT_INFO Device;
 	/// Parameters for making network connections.
 	IRPMON_NETWORK_INIT_INFO Network;
+	/// Parameters for making a connection through vSockets
+	IRPMON_VSOCKETS_INIT_INFO VSockets;
 } IRPMON_INIT_INFO_DATA, *PIRPMON_INIT_INFO_DATA;
 
 /// Information required to initialize the IRPMon library.

@@ -56,7 +56,8 @@ uses
   DbgHelpDll in '..\shared\pas\DbgHelpDll.pas',
   SetSymPathForm in 'SetSymPathForm.pas' {SetSymPathFrm},
   AddEditSymServerForm in 'AddEditSymServerForm.pas' {AddEditSymServerFrm},
-  ColumnForm in 'ColumnForm.pas' {ColumnFrm};
+  ColumnForm in 'ColumnForm.pas' {ColumnFrm},
+  VSockConnector in '..\shared\pas\VSockConnector.pas';
 
 {$R *.res}
 
@@ -114,6 +115,10 @@ Begin
             initInfo.NetworkHost := PWideChar(NetworkAddress);
             initInfo.NetworkPort := PWideChar(NetworkPort);
             end;
+          ictVSockets : begin
+            initInfo.VMCICID := VSockTargetAddress;
+            initInfo.VMCIPort := VSockTargetPort;
+            end;
           end;
         end;
       end;
@@ -142,7 +147,7 @@ Begin
         end;
 
       Application.CreateForm(TMainFrm, MainFrm);
-      MainFrm.ServiceTask := serviceTask;
+  MainFrm.ServiceTask := serviceTask;
       MainFrm.TaskList := taskList;
       MainFrm.ConnectorType := connType;
       Application.Run;
