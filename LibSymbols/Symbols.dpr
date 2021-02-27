@@ -2,6 +2,7 @@ Library Symbols;
 
 
 uses
+  ShareMem,
   Windows,
   System.SysUtils,
   System.Classes,
@@ -145,6 +146,7 @@ Exports
   SymStoreAddFile,
   SymStoreAddDirectory,
   SymStoreSetSymPath,
+  SymStoreTranslate,
   SymStoreTranslationFree;
 
 begin

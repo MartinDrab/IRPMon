@@ -485,7 +485,10 @@ begin
 FSymStore.Free;
 FSymStore := Nil;
 If Assigned(AStore) Then
-  FSymStore := AStore.Reference As TModuleSymbolStore;
+  begin
+  FSymStore := AStore;
+  FSymStore.Reference;
+  end;
 end;
 
 

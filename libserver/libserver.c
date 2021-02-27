@@ -42,7 +42,7 @@ static int _Listener(const ADDRINFOA *Address, HANDLE ExitEvent)
 	WSAPOLLFD fds;
 	BOOLEAN terminated = FALSE;
 
-	listenSocket = socket(Address->ai_family, SOCK_STREAM, IPPROTO_TCP);
+	listenSocket = socket(Address->ai_family, SOCK_STREAM, 0);
 	if (listenSocket == INVALID_SOCKET) {
 		ret = WSAGetLastError();
 		goto Exit;
@@ -258,35 +258,22 @@ DWORD IRPMonServerStart(const char *Address, const char *Port, HANDLE ExitEvent)
 		goto Exit;
 	}
 
-	useVSockets = memcmp(Address, "vsock://", sizeof("vsock://") - sizeof(char)) == 0;
+	useVSockets = strcmp(Address, "vsock") == 0;
 	if (useVSockets) {
 		ADDRINFOA localAddrs;
 		struct sockaddr *a = NULL;
 		int aLen = 0;
-		unsigned int cid = 0;
 		unsigned int port = 0;
 		char *endptr = NULL;
 
-		Address = sizeof("vsock://") - 1;
-		if (LibVSockGetVersion() == 0xffffffff) {
-			ret = ERROR_NOT_SUPPORTED;
-			goto Cleanup;
-		}
-
 		memset(&localAddrs, 0, sizeof(localAddrs));
-		cid = strtoul(Address, &endptr, 0);
-		if (*endptr != '\0' || (cid == ULONG_MAX && errno == ERANGE)) {
-			ret = ERROR_INVALID_PARAMETER;
-			goto Cleanup;
-		}
-
 		port = strtoul(Port, &endptr, 0);
-		if (*endptr != '\0' || (cid == ULONG_MAX && errno == ERANGE)) {
+		if (*endptr != '\0' || (port == ULONG_MAX && errno == ERANGE)) {
 			ret = ERROR_INVALID_PARAMETER;
 			goto Cleanup;
 		}
 
-		ret = LibVSockAddressAlloc(cid, port, &a, &aLen);
+		ret = LibVSockAddressAlloc((unsigned int)-1, port, &a, &aLen);
 		if (ret != 0)
 			goto Cleanup;
 

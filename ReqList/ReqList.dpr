@@ -4,6 +4,7 @@ Library ReqList;
 {$MINENUMSIZE 4}
 
 uses
+  ShareMem,
   Windows,
   System.SysUtils,
   System.Classes,

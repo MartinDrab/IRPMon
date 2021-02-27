@@ -4,6 +4,7 @@ Library DParser;
 {$R *.RES}
 
 uses
+  ShareMem,
   Windows,
   Generics.Collections,
   DataParsers in '..\shared\pas\DataParsers.pas',

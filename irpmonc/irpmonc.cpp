@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <map>
 #include <vector>
+#include <winsock2.h>
 #include <windows.h>
 #include <cerrno>
 #include <cstdio>
@@ -22,6 +23,7 @@
 #include "driver-settings.h"
 #include "request-output.h"
 #include "stop-event.h"
+#include "libvsock.h"
 #include "irpmonc.h"
 
 
@@ -30,6 +32,7 @@
 //		D:\\.\IRPMon
 //		N:localhost:1234
 //		L:C:\binarylog.log
+//		V:<CID>:<port>
 //
 //	--output=<T|J|B>:<filename|->
 //		T = text lines
@@ -143,7 +146,7 @@ static std::wstring _unloadServiceName;
 static int _parse_input(const wchar_t *Value)
 {
 	int ret = 0;
-	const wchar_t* delimiter = NULL;
+	const wchar_t *delimiter = NULL;
 
 	delimiter = wcschr(Value, L':');
 	if (delimiter == NULL) {
@@ -162,6 +165,7 @@ static int _parse_input(const wchar_t *Value)
 		case L'L': _initInfo.ConnectorType = ictNone; break;
 		case L'D': _initInfo.ConnectorType = ictDevice; break;
 		case L'N': _initInfo.ConnectorType = ictNetwork; break;
+		case L'V': _initInfo.ConnectorType = ictVSockets; break;
 		default:
 			ret = -9;
 			fprintf(stderr, "[ERROR]: Unknown input modifier \"%lc\"\n", *Value);
@@ -188,6 +192,48 @@ static int _parse_input(const wchar_t *Value)
 				if (_initInfo.Data.Network.Address == NULL)
 					ret = ENOMEM;
 				break;
+			case ictVSockets: {
+				wchar_t *endptr = NULL;
+				unsigned int vmciVersion = 0xffffffff;
+				unsigned int vmciAddress = 0xffffffff;
+
+				vmciVersion = LibVSockGetVersion();
+				if (vmciVersion == 0xffffffff) {
+					ret = EINVAL;
+					fprintf(stderr, "[ERROR]: VMWare vSockets not supported by this machine\n");
+					goto Exit;
+				}
+
+				vmciAddress = LibVSockGetLocalId();
+				if (vmciAddress == 0xffffffff) {
+					ret = EINVAL;
+					fprintf(stderr, "[ERROR]: Invalid local vSocket address\n");
+					goto Exit;
+				}
+
+				fprintf(stderr, "[INFO]: vSockets version: %u.%u\n", vmciVersion & 0xffff, vmciVersion >> 16);
+				fprintf(stderr, "[INFO]: vSocket address:  %u\n", vmciAddress);
+				_initInfo.Data.VSockets.CID = wcstoul(Value, &endptr, 0);
+				if (*endptr != L':') {
+					ret = EINVAL;
+					fprintf(stderr, "[ERROR]: Invalid vSocket address delimiter\n");
+					goto Exit;
+				}
+
+				if (endptr == Value || (_initInfo.Data.VSockets.CID == ULONG_MAX && errno == ERANGE)) {
+					ret = ERANGE;
+					fprintf(stderr, "[ERROR]: Unable to parse vSocket CID\n");
+					goto Exit;
+				}
+
+				Value = endptr + 1;
+				_initInfo.Data.VSockets.Port = wcstoul(Value, &endptr, 0);
+				if (endptr == Value || *endptr != L'\0' || (_initInfo.Data.VSockets.Port == ULONG_MAX && errno == ERANGE)) {
+					ret = ERANGE;
+					fprintf(stderr, "[ERROR]: Unable to parse vSocket port\n");
+					goto Exit;
+				}
+			} break;
 		}
 
 		if (ret != 0) {
@@ -1151,7 +1197,8 @@ int wmain(int argc, wchar_t *argv[])
 						if (ret == 0) {
 							switch (_initInfo.ConnectorType) {
 								case ictDevice:
-								case ictNetwork: {
+								case ictNetwork:
+								case ictVSockets: {
 									fprintf(stderr, "[INFO]: Connecting to the driver...\n");
 									ret = IRPMonDllConnect();
 									if (ret == 0) {

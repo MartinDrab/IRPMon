@@ -1,6 +1,7 @@
 Library CallbackStream;
 
 uses
+  ShareMem,
   System.SysUtils,
   System.Classes,
   CallbackStreamImpl in '..\shared\pas\CallbackStreamImpl.pas';
