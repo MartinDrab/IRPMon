@@ -39,6 +39,9 @@
     <ProjectReference Include="..\device-connector\device-connector.vcxproj">
       <Project>{59868606-0068-49d8-a54d-25f5f30d793c}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\libvsock\libvsock.vcxproj">
+      <Project>{4747a8be-e868-4b23-a50d-4960d9b49319}</Project>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
