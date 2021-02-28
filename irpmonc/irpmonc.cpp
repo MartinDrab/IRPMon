@@ -233,6 +233,9 @@ static int _parse_input(const wchar_t *Value)
 					fprintf(stderr, "[ERROR]: Unable to parse vSocket port\n");
 					goto Exit;
 				}
+
+				fprintf(stderr, "[INFO]: vSock address: 0x%x (%u)\n", _initInfo.Data.VSockets.CID, _initInfo.Data.VSockets.CID);
+				fprintf(stderr, "[INFO]: vSock port:    0x%x (%u)\n", _initInfo.Data.VSockets.Port, _initInfo.Data.VSockets.Port);
 			} break;
 		}
 
