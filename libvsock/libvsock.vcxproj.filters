@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="DEF File">
+      <UniqueIdentifier>{174f147e-2335-41bd-ab62-9674a5bce93b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="libvsock.c">
@@ -23,5 +26,10 @@
     <ClInclude Include="..\include\libvsock.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="libvsock.def">
+      <Filter>DEF File</Filter>
+    </None>
   </ItemGroup>
 </Project>
