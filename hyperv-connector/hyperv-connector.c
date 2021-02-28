@@ -5,7 +5,7 @@
 #include <winternl.h>
 #include "debug.h"
 #include "libvsock.h"
-#include "vsock-connector.h"
+#include "hyperv-connector.h"
 
 
 
@@ -17,14 +17,13 @@ static SOCKET _socket = INVALID_SOCKET;
 static CRITICAL_SECTION _ioctlLock;
 static HANDLE _pingingThreadHandle = NULL;
 static volatile BOOL _pindingThreadTerminate = FALSE;
-static int _family = AF_UNSPEC;
 
 IRPMON_DRIVER_COMM_INTERFACE DriverCommInterface = {
-	ictVSockets,
-	VSockConn_SynchronousOtherIOCTL,
-	VSockConn_Connect,
-	VSockConn_Disconnect,
-	VSockConn_Active,
+	ictHyperV,
+	HyperVConn_SynchronousOtherIOCTL,
+	HyperVConn_Connect,
+	HyperVConn_Disconnect,
+	HyperVConn_Active,
 };
 
 
@@ -37,7 +36,7 @@ static DWORD WINAPI _PingingThread(PVOID Context)
 	int ret = ERROR_SUCCESS;
 	int bytesTransferred = 0;
 	SOCKET s = (SOCKET)Context;
-	VSOCK_MSG_IOCTL msg;
+	HYPERV_MSG_IOCTL msg;
 	DEBUG_ENTER_FUNCTION("Context=0x%p", Context);
 
 	while (!_pindingThreadTerminate) {
@@ -73,10 +72,10 @@ static DWORD WINAPI _PingingThread(PVOID Context)
 /************************************************************************/
 
 
-DWORD VSockConn_SynchronousOtherIOCTL(DWORD Code, PVOID InputBuffer, ULONG InputBufferLength, PVOID OutputBuffer, ULONG OutputBufferLength)
+DWORD HyperVConn_SynchronousOtherIOCTL(DWORD Code, PVOID InputBuffer, ULONG InputBufferLength, PVOID OutputBuffer, ULONG OutputBufferLength)
 {
 	void *tmp = NULL;
-	VSOCK_MSG_IOCTL msg;
+	HYPERV_MSG_IOCTL msg;
 	int bytesTransferred = 0;
 	DWORD ret = ERROR_GEN_FAILURE;
 	DEBUG_ENTER_FUNCTION("Code=0x%x; InputBuffer=0x%p; InputBufferLength=%u; OutputBuffer=0x%p; OutputBufferLength=%u", Code, InputBuffer, InputBufferLength, OutputBuffer, OutputBufferLength);
@@ -123,12 +122,12 @@ DWORD VSockConn_SynchronousOtherIOCTL(DWORD Code, PVOID InputBuffer, ULONG Input
 }
 
 
-DWORD VSockConn_Connect(const IRPMON_INIT_INFO *Info)
+DWORD HyperVConn_Connect(const IRPMON_INIT_INFO *Info)
 {
 	uint32_t timeout;
 	uint32_t wVersionRequested = MAKEWORD(2, 2);
 	WSADATA wsaData;
-	VSOCK_MSG_IOCTL msg;
+	HYPERV_MSG_IOCTL msg;
 	int bytesReceived = 0;
 	struct sockaddr *addr = NULL;
 	int addrLen = 0;
@@ -139,10 +138,9 @@ DWORD VSockConn_Connect(const IRPMON_INIT_INFO *Info)
 		if (InitializeCriticalSectionAndSpinCount(&_ioctlLock, 0x1000)) {
 			ret = WSAStartup(wVersionRequested, &wsaData);
 			if (ret == 0) {
-				_family = LibVSockGetAddressFamily();
-				_socket = socket(_family, SOCK_STREAM, 0);
+				_socket = socket(AF_HYPERV, SOCK_STREAM, 0);
 				if (_socket != INVALID_SOCKET) {
-					ret = LibVSockAddressAlloc(Info->Data.VSockets.CID, Info->Data.VSockets.Port, &addr, &addrLen);
+					ret = LibVSockHyperVAddressAlloc(&Info->Data.HyperV.VMId, &Info->Data.HyperV.AppId, &addr, &addrLen);
 					if (ret == 0) {
 						ret = connect(_socket, addr, addrLen);
 						if (ret == 0) {
@@ -208,7 +206,7 @@ DWORD VSockConn_Connect(const IRPMON_INIT_INFO *Info)
 }
 
 
-void VSockConn_Disconnect(void)
+void HyperVConn_Disconnect(void)
 {
 	DEBUG_ENTER_FUNCTION_NO_ARGS();
 
@@ -228,19 +226,7 @@ void VSockConn_Disconnect(void)
 }
 
 
-BOOL VSockConn_Active(void)
+BOOL HyperVConn_Active(void)
 {
 	return (_socket != INVALID_SOCKET);
-}
-
-
-unsigned int VSockConn_LocalId(void)
-{
-	return LibVSockGetLocalId();
-}
-
-
-unsigned int VSockConn_VMCIVersion(void)
-{
-	return LibVSockGetVersion();
 }

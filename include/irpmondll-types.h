@@ -84,6 +84,8 @@ typedef enum _EIRPMonConnectorType {
 	ictNetwork,
 	/// Connect via VMWare vSockets
 	ictVSockets,
+	/// Hyper-V
+	ictHyperV,
 } EConnectorType, *PEConnectorType;
 
 /// Defines parameter necessary for connecting to IRPMon driver's control device.
@@ -121,6 +123,11 @@ typedef struct _IRPMON_VSOCKETS_INIT_INFO {
 	unsigned int Port;
 } IRPMON_VSOCKETS_INIT_INFO, *PIRPMON_VSOCKETS_INIT_INFO;
 
+typedef struct _IRPMON_HYPERV_INIT_INFO {
+	GUID VMId;
+	GUID AppId;
+} IRPMON_HYPERV_INIT_INFO, *PIRPMON_HYPERV_INIT_INFO;
+
 /// Defines data specific to individual connection methods.
 typedef union _IRPMON_INIT_INFO_DATA {
 	/// Parameters for connecting to a local IRPMon driver instance.
@@ -129,6 +136,8 @@ typedef union _IRPMON_INIT_INFO_DATA {
 	IRPMON_NETWORK_INIT_INFO Network;
 	/// Parameters for making a connection through vSockets
 	IRPMON_VSOCKETS_INIT_INFO VSockets;
+	/// Parameters for making a connection using Hyper-V
+	IRPMON_HYPERV_INIT_INFO HyperV;
 } IRPMON_INIT_INFO_DATA, *PIRPMON_INIT_INFO_DATA;
 
 /// Information required to initialize the IRPMon library.

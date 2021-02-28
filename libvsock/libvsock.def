@@ -7,3 +7,4 @@ EXPORTS
 	LibVSockAddressFree
 	LibVSockAddressPrintA
 	LibVSockAddressPrintW
+	LibVSockHyperVAddressAlloc

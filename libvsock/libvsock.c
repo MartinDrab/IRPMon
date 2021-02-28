@@ -4,17 +4,9 @@
 #include <string.h>
 #include <winsock2.h>
 #include <windows.h>
-#include <ws2tcpip.h>
+#include <Objbase.h>
 #include <vmci_sockets.h>
 #include "libvsock.h"
-
-
-typedef struct SOCKADDR_HV {
-	ADDRESS_FAMILY Family;
-	USHORT Reserved;
-	GUID VmId;
-	GUID ServiceId;
-};
 
 
 unsigned short LibVSockGetAddressFamily(void)
@@ -54,6 +46,26 @@ int LibVSockAddressAlloc(unsigned int CID, unsigned int Port, struct sockaddr **
 }
 
 
+int LibVSockHyperVAddressAlloc(const GUID *VMId, const GUID *AppId, struct sockaddr **Address, int *Len)
+{
+	int ret = 0;
+	struct SOCKADDR_HV *addr;
+
+	addr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct SOCKADDR_HV));
+	if (addr != NULL) {
+		addr->Family = AF_HYPERV;
+		addr->VmId = *VMId;
+		addr->ServiceId = *AppId;
+		*Address = (struct sockaddr*)addr;
+		*Len = sizeof(struct SOCKADDR_HV);
+		ret = 0;
+	}
+	else ret = GetLastError();
+
+	return ret;
+}
+
+
 void LibVSockAddressFree(struct sockaddr *Address)
 {
 	HeapFree(GetProcessHeap(), 0, Address);
@@ -78,9 +90,18 @@ int LibVSockAddressPrintA(const struct sockaddr *Address, char *Buffer, size_t C
 
 		} break;
 		case AF_HYPERV: {
+			wchar_t vmGuid[100];
+			wchar_t appGuid[100];
 			const struct SOCKADDR_HV *a = (const struct SOCKADDR_HV *)Address;
 
+			memset(vmGuid, 0, sizeof(vmGuid));
+			memset(appGuid, 0, sizeof(appGuid));
+			ret = StringFromGUID2(&a->VmId, vmGuid, sizeof(vmGuid) / sizeof(vmGuid[0]));
+			if (ret != 0)
+				ret = StringFromGUID2(&a->ServiceId, appGuid, sizeof(appGuid) / sizeof(appGuid[0]));
 			
+			if (ret != 0)
+				snprintf(Buffer, CharCount, "%ls:%ls", vmGuid, appGuid);
 		} break;
 		default:
 			if (Address->sa_family == LibVSockGetAddressFamily()) {
@@ -111,9 +132,18 @@ int LibVSockAddressPrintW(const struct sockaddr *Address, wchar_t *Buffer, size_
 
 		} break;
 		case AF_HYPERV: {
+			wchar_t vmGuid[100];
+			wchar_t appGuid[100];
 			const struct SOCKADDR_HV* a = (const struct SOCKADDR_HV*)Address;
 
+			memset(vmGuid, 0, sizeof(vmGuid));
+			memset(appGuid, 0, sizeof(appGuid));
+			ret = StringFromGUID2(&a->VmId, vmGuid, sizeof(vmGuid) / sizeof(vmGuid[0]));
+			if (ret != 0)
+				ret = StringFromGUID2(&a->ServiceId, appGuid, sizeof(appGuid) / sizeof(appGuid[0]));
 
+			if (ret != 0)
+				swprintf(Buffer, CharCount, L"%ls:%ls", vmGuid, appGuid);
 		} break;
 		default:
 			if (Address->sa_family == LibVSockGetAddressFamily()) {

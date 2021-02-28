@@ -821,10 +821,18 @@ Type
     ictNone,
     ictDevice,
     ictNetwork,
-    ictVSockets
-  );
+    ictVSockets,
+    ictHyperV);
   EIRPMonConnectorType = _EIRPMonConnectorType;
   PEIRPMonConnectorType = ^EIRPMonConnectorType;
+
+  _IRPMON_HYPERV_INIT_INFO = Record
+    VMId : TGuid;
+	  AppId : TGuid;
+    end;
+  IRPMON_HYPERV_INIT_INFO = _IRPMON_HYPERV_INIT_INFO;
+  PIRPMON_HYPERV_INIT_INFO = ^IRPMON_HYPERV_INIT_INFO;
+
 
   _IRPMON_INIT_INFO = Record
     ConnectionType : EIRPMonConnectorType;
@@ -840,6 +848,10 @@ Type
       ictVSockets : (
         VMCICID : Cardinal;
         VMCIPort : Cardinal;
+      );
+      ictHyperV : (
+        VMId : TGuid;
+        AppGuid : TGuid;
       );
     end;
   IRPMON_INIT_INFO = _IRPMON_INIT_INFO;

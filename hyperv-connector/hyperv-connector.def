@@ -1,0 +1,7 @@
+LIBRARY hyperv-connector
+EXPORTS
+	DriverCommInterface	PRIVATE
+	HyperVConn_SynchronousOtherIOCTL
+	HyperVConn_Connect
+	HyperVConn_Disconnect
+	HyperVConn_Active

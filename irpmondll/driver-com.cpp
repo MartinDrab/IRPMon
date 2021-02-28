@@ -1125,6 +1125,9 @@ DWORD DriverComModuleInit(const IRPMON_INIT_INFO *Info)
 					case ictVSockets:
 						libraryName = L"vsock-connector.dll";
 						break;
+					case ictHyperV:
+						libraryName = L"hyperv-connector.h";
+						break;
 					default:
 						ret = ERROR_NOT_SUPPORTED;
 						break;

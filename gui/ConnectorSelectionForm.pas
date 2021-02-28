@@ -22,15 +22,19 @@ Type
     PortLabel: TLabel;
     NetworkDomainEdit: TEdit;
     NetworkPortEdit: TEdit;
-    VSocketCheckBox: TCheckBox;
     VSockVersionEdit: TEdit;
     VSockAddressEdit: TEdit;
     VSockVersionLabel: TLabel;
     VSockAddressLabel: TLabel;
+    NetworkTypeComboBox: TComboBox;
+    HyperVVMIdEdit: TEdit;
+    HyperVAppIdEdit: TEdit;
+    HyperVVMLabel: TLabel;
+    HyperVAppLabel: TLabel;
     procedure StornoButtonClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure OkButtonClick(Sender: TObject);
-    procedure VSocketCheckBoxClick(Sender: TObject);
+    procedure NetworkTypeComboBoxClick(Sender: TObject);
   Private
     FConnectionType : EIRPMonConnectorType;
     FCancelled : Boolean;
@@ -39,6 +43,8 @@ Type
     FNetworkPort : WideString;
     FVSockTargetAddress : Cardinal;
     FVSockTargetPort : Cardinal;
+    FHyperVVMId : TGuid;
+    FHyperVAppId : TGuid;
     Function IsWOW64:Boolean;
   Public
     Property Cancelled : Boolean Read FCancelled;
@@ -48,6 +54,8 @@ Type
     Property NetworkPort : WideString Read FNetworkPort;
     Property VSockTargetAddress : Cardinal Read FVSockTargetAddress;
     Property VSockTargetPort : Cardinal Read FVSockTargetPort;
+    Property HyperVVMId : TGuid Read FHyperVVMId;
+    Property HyperVAppId : TGuid Read FHyperVAppId;
   end;
 
 Implementation
@@ -72,6 +80,24 @@ If IsWow64Process(GetCurrentProcess, b) Then
   Result := b;
 end;
 
+Procedure TConnectorSelectionFrm.NetworkTypeComboBoxClick(Sender: TObject);
+begin
+Case NetworkTypeComboBox.ItemIndex Of
+  0 : begin
+    DomainLabel.Caption := 'Domain/IP';
+    PortLabel.Caption := 'Port';
+    end;
+  1 : begin
+    DomainLabel.Caption := 'CID';
+    PortLabel.Caption := 'Port';
+    end;
+  2 : begin
+    DomainLabel.Caption := 'VM GUID';
+    PortLabel.Caption := 'App GUID';
+    end;
+  end;
+end;
+
 Procedure TConnectorSelectionFrm.FormCreate(Sender: TObject);
 Var
   vnciVersion : Cardinal;
@@ -85,7 +111,6 @@ If (IsWOW64) Or (Not IsAdmin) Then
   end;
 
 vnciVersion := VSockConn_VMCIVersion;
-VSocketCheckBox.Enabled := (vnciVersion <> VNCI_VERSION_INVALID);
 If vnciVersion <> VNCI_VERSION_INVALID Then
   begin
   vnciAddress := VSockConn_LocalId;
@@ -105,15 +130,21 @@ Case FConnectionType Of
   ictNone: ;
   ictDevice: FDeviceName := DeviceNameEdit.Text;
   ictNetwork: begin
-    If VSocketCheckBox.Checked THen
-      begin
-      FConnectionType := ictVSockets;
-      FVSockTargetAddress := StrToUInt(NetworkDomainEdit.Text);
-      FVSockTargetPort := StrToUInt(NetworkPortEdit.Text);
-      end
-    Else begin
-      FNetworkAddress := NetworkDomainEdit.Text;
-      FNetworkPort := NetworkPortEdit.Text;
+    Case NetworkTypeComboBox.ItemIndex Of
+      0 : begin
+        FNetworkAddress := NetworkDomainEdit.Text;
+        FNetworkPort := NetworkPortEdit.Text;
+        end;
+      1 : begin
+        FConnectionType := ictVSockets;
+        FVSockTargetAddress := StrToUInt(NetworkDomainEdit.Text);
+        FVSockTargetPort := StrToUInt(NetworkPortEdit.Text);
+        end;
+      2 : begin
+        FConnectionType := ictHyperV;
+        FHyperVVMId := StringToGuid(NetworkDomainEdit.Text);
+        FHyperVAppId := StringToGuid(NetworkPortEdit.Text);
+        end;
       end;
     end;
   end;
@@ -125,15 +156,6 @@ end;
 Procedure TConnectorSelectionFrm.StornoButtonClick(Sender: TObject);
 begin
 Close;
-end;
-
-Procedure TConnectorSelectionFrm.VSocketCheckBoxClick(Sender: TObject);
-begin
-If VSocketCheckBox.Checked Then
-  begin
-  DomainLabel.Caption := 'Context ID';
-  end
-Else DomainLabel.Caption := 'Domain/IP';
 end;
 
 End.

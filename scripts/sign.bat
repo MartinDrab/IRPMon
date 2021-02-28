@@ -23,6 +23,7 @@ set FILES=^
 	..\bin\x64\%CONFIG%\dlls\network-connector.dll^
 	..\bin\x64\%CONFIG%\dlls\device-connector.dll^
 	..\bin\x64\%CONFIG%\dlls\vsock-connector.dll^
+	..\bin\x64\%CONFIG%\dlls\hyperv-connector.dll^
 	..\bin\x64\%CONFIG%\dlls\libvsock.dll^
 	..\bin\Win32\%CONFIG%\irpmon.exe^
 	..\bin\Win32\%CONFIG%\DParser.dll^
@@ -45,6 +46,7 @@ set FILES=^
 	..\bin\Win32\%CONFIG%\dlls\network-connector.dll^
 	..\bin\Win32\%CONFIG%\dlls\device-connector.dll^
 	..\bin\Win32\%CONFIG%\dlls\vsock-connector.dll^
+	..\bin\Win32\%CONFIG%\dlls\hyperv-connector.dll^
 	..\bin\Win32\%CONFIG%\dlls\libvsock.dll^
 	..\bin\Win32\%CONFIG%\parser\ea.dll^
 	..\bin\x64\%CONFIG%\parser\ea.dll^

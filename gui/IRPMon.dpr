@@ -119,6 +119,10 @@ Begin
             initInfo.VMCICID := VSockTargetAddress;
             initInfo.VMCIPort := VSockTargetPort;
             end;
+          ictHyperV : begin
+            initInfo.VMId := HyperVVMId;
+            initInfo.AppGuid := HyperVAppId;
+            end;
           end;
         end;
       end;
