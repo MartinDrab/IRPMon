@@ -28,6 +28,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="driver-settings.cpp" />
+    <ClCompile Include="guid-api.c" />
     <ClCompile Include="irpmonc.cpp" />
     <ClCompile Include="stop-event.c" />
   </ItemGroup>
@@ -57,6 +58,7 @@
   <ItemGroup>
     <ClInclude Include="driver-hook.h" />
     <ClInclude Include="driver-settings.h" />
+    <ClInclude Include="guid-api.h" />
     <ClInclude Include="irpmonc.h" />
     <ClInclude Include="request-output.h" />
     <ClInclude Include="stop-event.h" />

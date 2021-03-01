@@ -24,6 +24,9 @@
     <ClCompile Include="stop-event.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="guid-api.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="driver-hook.h">
@@ -42,6 +45,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="stop-event.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="guid-api.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

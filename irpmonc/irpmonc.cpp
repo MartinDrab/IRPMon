@@ -24,6 +24,7 @@
 #include "request-output.h"
 #include "stop-event.h"
 #include "libvsock.h"
+#include "guid-api.h"
 #include "irpmonc.h"
 
 
@@ -33,6 +34,7 @@
 //		N:localhost:1234
 //		L:C:\binarylog.log
 //		V:<CID>:<port>
+//		H:<vmGuid>:<appGuid>
 //
 //	--output=<T|J|B>:<filename|->
 //		T = text lines
@@ -166,6 +168,7 @@ static int _parse_input(const wchar_t *Value)
 		case L'D': _initInfo.ConnectorType = ictDevice; break;
 		case L'N': _initInfo.ConnectorType = ictNetwork; break;
 		case L'V': _initInfo.ConnectorType = ictVSockets; break;
+		case L'H': _initInfo.ConnectorType = ictHyperV; break;
 		default:
 			ret = -9;
 			fprintf(stderr, "[ERROR]: Unknown input modifier \"%lc\"\n", *Value);
@@ -236,6 +239,45 @@ static int _parse_input(const wchar_t *Value)
 
 				fprintf(stderr, "[INFO]: vSock address: 0x%x (%u)\n", _initInfo.Data.VSockets.CID, _initInfo.Data.VSockets.CID);
 				fprintf(stderr, "[INFO]: vSock port:    0x%x (%u)\n", _initInfo.Data.VSockets.Port, _initInfo.Data.VSockets.Port);
+			} break;
+			case ictHyperV: {
+				wchar_t vmIdBuffer[100];
+				wchar_t appIdBuffer[100];
+
+				memset(vmIdBuffer, 0, sizeof(vmIdBuffer));
+				memset(appIdBuffer, 0, sizeof(appIdBuffer));
+				delimiter = wcschr(Value, L':');
+				if (delimiter == NULL)
+					delimiter = Value + wcslen(Value);
+
+				if (delimiter - Value > sizeof(vmIdBuffer) / sizeof(vmIdBuffer[0]) + 1) {
+					ret = -1;
+					fprintf(stderr, "[ERROR]: Argument \"%ls\" is too long\n", Value);
+					goto Exit;
+				}
+
+				memcpy(vmIdBuffer, Value, (delimiter - Value)*sizeof(wchar_t));
+				if (wcslen(delimiter) - 1 > sizeof(vmIdBuffer) / sizeof(vmIdBuffer[0]) + 1) {
+					ret = -1;
+					fprintf(stderr, "[ERROR]: Argument \"%ls\" is too long\n", delimiter + 1);
+					goto Exit;
+				}
+
+				if (*delimiter == L'\0')
+					memcpy(appIdBuffer, delimiter + 1, (wcslen(delimiter) - 1) * sizeof(wchar_t));
+				else wcscpy(appIdBuffer, L"{5629ad96-eb15-4906-855b-388b49877838}");
+			
+				ret = GAStringToGUIDW(vmIdBuffer, &_initInfo.Data.HyperV.VMId);
+				if (ret != 0) {
+					fprintf(stderr, "[ERROR]: Unable to convert \"%ls\" to GUID: %u\n", vmIdBuffer, ret);
+					goto Exit;
+				}
+
+				ret = GAStringToGUIDW(appIdBuffer, &_initInfo.Data.HyperV.AppId);
+				if (ret != 0) {
+					fprintf(stderr, "[ERROR]: Unable to convert \"%ls\" to GUID: %u\n", appIdBuffer, ret);
+					goto Exit;
+				}
 			} break;
 		}
 
@@ -956,33 +998,36 @@ static int _init_dlls(void)
 {
 	int ret = 0;
 
-	ret = DPListModuleInit(L"dparser.dll");
+	ret = GUIDApiInit();
 	if (ret == 0) {
-		ret = ReqListModuleInit(L"reqlist.dll");
+		ret = DPListModuleInit(L"dparser.dll");
 		if (ret == 0) {
-			ret = CallbackStreamModuleInit(L"callbackstream.dll");
+			ret = ReqListModuleInit(L"reqlist.dll");
 			if (ret == 0) {
-				ret = SymbolsModuleInit(L"symbols.dll");
+				ret = CallbackStreamModuleInit(L"callbackstream.dll");
 				if (ret == 0) {
-					ret = SymStoreCreate(NULL, &_symStore);
-					if (ret != 0)
-						fprintf(stderr, "[ERROR]: Unable to initialize the symbol store: %u\n", ret);
+					ret = SymbolsModuleInit(L"symbols.dll");
+					if (ret == 0) {
+						ret = SymStoreCreate(NULL, &_symStore);
+						if (ret != 0)
+							fprintf(stderr, "[ERROR]: Unable to initialize the symbol store: %u\n", ret);
+
+						if (ret != 0)
+							SymbolsModuleFinit();
+					} else fprintf(stderr, "[ERROR]: Unable to initialize symbols.dll: %u\n", ret);
 
 					if (ret != 0)
 						SymbolsModuleFinit();
-				} else fprintf(stderr, "[ERROR]: Unable to initialize symbols.dll: %u\n", ret);
+				} else fprintf(stderr, "[ERROR]: Unable to initialize callbackstream.dll: %u\n", ret);
 
 				if (ret != 0)
-					SymbolsModuleFinit();
-			} else fprintf(stderr, "[ERROR]: Unable to initialize callbackstream.dll: %u\n", ret);
+					ReqListModuleFinit();
+			} else fprintf(stderr, "[ERROR]: Unable to initialize reqlist.dll: %u\n", ret);
 
 			if (ret != 0)
-				ReqListModuleFinit();
-		} else fprintf(stderr, "[ERROR]: Unable to initialize reqlist.dll: %u\n", ret);
-
-		if (ret != 0)
-			DPListModuleFinit();
-	} else fprintf(stderr, "[ERROR]: Unable to initialize dparser.dll: %u\n", ret);
+				DPListModuleFinit();
+		} else fprintf(stderr, "[ERROR]: Unable to initialize dparser.dll: %u\n", ret);
+	} else fprintf(stderr, "[ERROR]: Unable to initialize GUID API Library: %u\n", ret);
 
 	return ret;
 }
@@ -1201,7 +1246,8 @@ int wmain(int argc, wchar_t *argv[])
 							switch (_initInfo.ConnectorType) {
 								case ictDevice:
 								case ictNetwork:
-								case ictVSockets: {
+								case ictVSockets:
+								case ictHyperV: {
 									fprintf(stderr, "[INFO]: Connecting to the driver...\n");
 									ret = IRPMonDllConnect();
 									if (ret == 0) {
