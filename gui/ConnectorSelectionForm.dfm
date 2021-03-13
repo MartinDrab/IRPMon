@@ -21,17 +21,15 @@ object ConnectorSelectionFrm: TConnectorSelectionFrm
     Top = 0
     Width = 320
     Height = 255
-    ActivePage = NetworkTabSheet
+    ActivePage = DeviceTabSheet
     Align = alTop
     TabOrder = 0
     object NoneTabSheet: TTabSheet
       Caption = 'None'
-      ExplicitHeight = 157
     end
     object DeviceTabSheet: TTabSheet
       Caption = 'Device'
       ImageIndex = 1
-      ExplicitHeight = 157
       object Label1: TLabel
         Left = 8
         Top = 8
@@ -50,8 +48,6 @@ object ConnectorSelectionFrm: TConnectorSelectionFrm
     object NetworkTabSheet: TTabSheet
       Caption = 'Network'
       ImageIndex = 2
-      ExplicitLeft = 0
-      ExplicitTop = 28
       object DomainLabel: TLabel
         Left = 3
         Top = 8
@@ -144,16 +140,20 @@ object ConnectorSelectionFrm: TConnectorSelectionFrm
         Top = 139
         Width = 129
         Height = 21
+        Enabled = False
         ReadOnly = True
         TabOrder = 5
+        Text = '<not implemented>'
       end
       object HyperVAppIdEdit: TEdit
         Left = 80
         Top = 166
         Width = 129
         Height = 21
+        Enabled = False
         ReadOnly = True
         TabOrder = 6
+        Text = '<not implemented>'
       end
     end
   end
