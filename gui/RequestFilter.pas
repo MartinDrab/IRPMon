@@ -16,6 +16,7 @@ Type
 Const
   RequestFilterOperatorNames : Array [0..Ord(rfoDLLDecider)] Of WideString = (
     '==',
+    '<>',
     '<=',
     '>=',
     '<',
@@ -29,6 +30,7 @@ Const
 
   RequestFilterIntegerOperators : RequestFilterOperatorSet = [
     rfoEquals,
+    rfoDiffers,
     rfoLowerEquals,
     rfoGreaterEquals,
     rfoLower,
@@ -39,6 +41,7 @@ Const
 
   RequestFilterStringOperators : RequestFilterOperatorSet = [
     rfoEquals,
+    rfoDiffers,
     rfoContains,
     rfoBegins,
     rfoEnds,
@@ -380,6 +383,7 @@ If (FEnabled) And
           Move(d^, iValue, l);
           Case FOp Of
             rfoEquals: ret := (iValue = FIntValue);
+            rfoDiffers: ret := (iValue <> FIntValue);
             rfoLowerEquals: ret := (iValue <= FIntValue);
             rfoGreaterEquals: ret := (iValue >= FIntValue);
             rfoLower: ret := (iValue < FIntValue);
@@ -392,6 +396,7 @@ If (FEnabled) And
           stringConstant := WideUpperCase(FStringValue);
           Case FOp Of
             rfoEquals: ret := (WideCompareText(sValue, stringConstant) = 0);
+            rfoDiffers: ret := (WideCompareText(sValue, stringConstant) <> 0);
             rfoContains: ret := (Pos(stringConstant, sValue) > 0);
             rfoBegins: ret := (Pos(stringConstant, sValue) = 1);
             rfoEnds: ret := (Pos(stringConstant, sValue) = Length(sValue) - Length(stringConstant) + 1);

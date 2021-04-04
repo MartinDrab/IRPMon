@@ -304,7 +304,7 @@ With Item  Do
   SubItems.Add(FilterTypeComboBox.Items[Ord(f.RequestType)]);
   SubItems.Add(f.ColumnName);
   SubItems.Add(RequestFilterOperatorNames[Ord(f.Op)]);
-  SubItems.Add(BoolToStr(f.Negate));
+  SubItems.Add(BoolToStr(f.Negate, True));
   SubItems.Add(f.StringValue);
   SubItems.Add(FilterActionComboBox.Items[Ord(f.Action)]);
   nextFilterName := '<not applicable>';
@@ -670,6 +670,7 @@ Try
   f.Enabled := EnabledCheckBox.Checked;
   f.Ephemeral := EphemeralCheckBox.Checked;
   FilterListViewData(FilterListView, L);
+  FilterListView.Invalidate;
   f := Nil;
 Finally
   If (Not modifyFilter) And (Assigned(f)) Then

@@ -879,6 +879,7 @@ Type
 
   ERequestFilterOperator = (
     rfoEquals,
+    rfoDiffers,
     rfoLowerEquals,
     rfoGreaterEquals,
     rfoLower,
