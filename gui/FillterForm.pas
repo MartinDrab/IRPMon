@@ -52,6 +52,11 @@ Type
     NameEdit: TEdit;
     ApplyButton: TButton;
     EphemeralCheckBox: TCheckBox;
+    ExportButton: TButton;
+    ImportButton: TButton;
+    ClearButton: TButton;
+    FilterSaveDialog: TSaveDialog;
+    FilterOpenDialog: TOpenDialog;
     Procedure FormCreate(Sender: TObject);
     procedure FilterTypeComboBoxChange(Sender: TObject);
     procedure FilterColumnComboBoxChange(Sender: TObject);
@@ -72,6 +77,9 @@ Type
     procedure UpDownButtonClick(Sender: TObject);
     procedure FilterListViewSelectItem(Sender: TObject; Item: TListItem;
       Selected: Boolean);
+    procedure ClearButtonClick(Sender: TObject);
+    procedure ExportButtonClick(Sender: TObject);
+    procedure ImportButtonClick(Sender: TObject);
   Private
     FFilterList : TObjectList<TRequestFilter>;
     FCBs : Array [0..Ord(fctMax)-1] of TComboBox;
@@ -296,10 +304,7 @@ With Item  Do
   SubItems.Add(FilterTypeComboBox.Items[Ord(f.RequestType)]);
   SubItems.Add(f.ColumnName);
   SubItems.Add(RequestFilterOperatorNames[Ord(f.Op)]);
-  If f.Negate Then
-    SubItems.Add('Yes')
-  Else SubItems.Add('No');
-
+  SubItems.Add(BoolToStr(f.Negate));
   SubItems.Add(f.StringValue);
   SubItems.Add(FilterActionComboBox.Items[Ord(f.Action)]);
   nextFilterName := '<not applicable>';
@@ -479,6 +484,56 @@ begin
 FFilterList.Free;
 end;
 
+Procedure TFilterFrm.ImportButtonClick(Sender: TObject);
+Var
+  L : TListItem;
+  newName : WideString;
+  processed : Boolean;
+  rf : TRequestFilter;
+  fl : TObjectList<TRequestFilter>;
+begin
+If FilterOpenDialog.Execute Then
+  begin
+  fl := TObjectList<TRequestFilter>.Create;
+  If TRequestFilter.LoadList(FilterOpenDialog.FileName, fl) Then
+    begin
+    processed := True;
+    For rf In fl Do
+      begin
+      If Assigned(TRequestFilter.GetByName(rf.Name, FFilterList)) Then
+        begin
+        Repeat
+        newName := InputBox('Rename a filter', Format('Filter with name of "%s" already exists. Rename it', [rf.Name]), rf.Name);
+        Until (newName = '') Or ((Not Assigned(TRequestFilter.GetByName(newName, FFilterList))) And (Not Assigned(TRequestFilter.GetByName(newName, fl))));
+        processed := (newName <> '');
+        If processed Then
+          rf.Name := newName;
+
+        If Not processed Then
+          Break;
+        end;
+      end;
+
+    If processed Then
+      begin
+      fl.OwnsObjects := False;
+      FilterListView.Items.BeginUpdate;
+      For rf In fl Do
+        begin
+        L := FilterListView.Items.Add;
+        FFilterList.Add(rf);
+        FilterListViewData(FilterListView, L);
+        end;
+
+      FilterListVIew.Items.EndUpdate;
+      end;
+    end
+  Else ErrorMessage('Unable to load the filters');
+
+  fl.Free;
+  end;
+end;
+
 Procedure TFilterFrm.OkButtonClick(Sender: TObject);
 begin
 FCancelled := False;
@@ -622,6 +677,11 @@ Finally
   end;
 end;
 
+Procedure TFilterFrm.ClearButtonClick(Sender: TObject);
+begin
+FilterListView.Clear;
+end;
+
 Procedure TFilterFrm.CloseButtonClick(Sender: TObject);
 begin
 Close;
@@ -648,6 +708,15 @@ Case c.Enabled Of
   end;
 end;
 
+
+Procedure TFilterFrm.ExportButtonClick(Sender: TObject);
+begin
+If FilterSaveDialog.Execute Then
+  begin
+  If Not TRequestFilter.SaveList(FilterSaveDialog.FileName, FFilterList) Then
+    ErrorMessage('Failed to export the filters');
+  end;
+end;
 
 End.
 

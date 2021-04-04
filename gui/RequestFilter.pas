@@ -76,6 +76,7 @@ Type
     FRequestPrototype : TDriverRequest;
   Protected
     Procedure SetEnable(AValue:Boolean);
+    Procedure SetEphemeral(AValue:Boolean);
     Procedure RemoveFromChain;
     Procedure AddMapping(ASources:TList<UInt64>; ATargets:TList<WideString>; AIntValue:UInt64; AStringValue:WideString);
   Public
@@ -106,7 +107,7 @@ Type
     Property IntValue : UInt64 Read FIntValue;
     Property RequestType : ERequesttype Read FRequestType;
     Property Enabled : Boolean Read FEnabled Write SetEnable;
-    Property Ephemeral : Boolean Read FEphemeral Write FEphemeral;
+    Property Ephemeral : Boolean Read FEphemeral Write SetEphemeral;
     Property Action : EFilterAction Read FAction;
     Property HighlightColor : Cardinal Read FHighlightColor;
     Property Negate : Boolean Read FNegate Write FNegate;
@@ -455,6 +456,26 @@ tmp := FNextFilter;
 While Assigned(tmp) And (tmp <> Self) Do
   begin
   tmp.FEnabled := AValue;
+  tmp := tmp.FNextFilter;
+  end;
+end;
+
+Procedure TRequestFilter.SetEphemeral(AValue:Boolean);
+Var
+  tmp : TRequestFilter;
+begin
+FEnabled := AValue;
+tmp := FPreviousFilter;
+While Assigned(tmp) And (tmp <> Self) Do
+  begin
+  tmp.FEphemeral := AValue;
+  tmp := tmp.FPreviousFilter;
+  end;
+
+tmp := FNextFilter;
+While Assigned(tmp) And (tmp <> Self) Do
+  begin
+  tmp.FEphemeral := AValue;
   tmp := tmp.FNextFilter;
   end;
 end;

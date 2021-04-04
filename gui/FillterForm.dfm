@@ -202,7 +202,7 @@ object FilterFrm: TFilterFrm
     end
     object EphemeralCheckBox: TCheckBox
       Left = 346
-      Top = 80
+      Top = 82
       Width = 73
       Height = 17
       Caption = 'Ephemeral'
@@ -216,23 +216,51 @@ object FilterFrm: TFilterFrm
     Height = 49
     Align = alBottom
     TabOrder = 1
+    ExplicitTop = 288
     object CloseButton: TButton
-      Left = 480
-      Top = 8
+      Left = 591
+      Top = 6
       Width = 57
-      Height = 33
+      Height = 27
       Caption = 'Close'
       TabOrder = 0
       OnClick = CloseButtonClick
     end
     object OkButton: TButton
-      Left = 417
+      Left = 528
       Top = 6
       Width = 57
-      Height = 33
+      Height = 27
       Caption = 'Ok'
       TabOrder = 1
       OnClick = OkButtonClick
+    end
+    object ExportButton: TButton
+      Left = 465
+      Top = 6
+      Width = 57
+      Height = 27
+      Caption = 'Export...'
+      TabOrder = 2
+      OnClick = ExportButtonClick
+    end
+    object ImportButton: TButton
+      Left = 405
+      Top = 6
+      Width = 57
+      Height = 27
+      Caption = 'Import...'
+      TabOrder = 3
+      OnClick = ImportButtonClick
+    end
+    object ClearButton: TButton
+      Left = 342
+      Top = 6
+      Width = 57
+      Height = 27
+      Caption = 'Clear'
+      TabOrder = 4
+      OnClick = ClearButtonClick
     end
   end
   object FilterListView: TListView
@@ -284,5 +312,16 @@ object FilterFrm: TFilterFrm
     OnDeletion = FilterListViewDeletion
     OnSelectItem = FilterListViewSelectItem
     OnItemChecked = FilterListViewItemChecked
+  end
+  object FilterSaveDialog: TSaveDialog
+    Filter = 'INI Files [*.ini]|*.ini|All files [*.*]|*.*'
+    FilterIndex = 0
+    Left = 376
+    Top = 224
+  end
+  object FilterOpenDialog: TOpenDialog
+    Filter = 'INI files [*.ini]|*.ini|All files {*.*]|*.*'
+    Left = 416
+    Top = 224
   end
 end
