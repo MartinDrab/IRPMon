@@ -1,5 +1,8 @@
 
 #include <ntifs.h>
+#include <bthdef.h>
+#include <BthIoctl.h>
+#include <Bthddi.h>
 #include "preprocessor.h"
 #include "allocator.h"
 #include "utils.h"
@@ -63,6 +66,35 @@ static SIZE_T _DeviceRelationSize(const DEVICE_RELATIONS *R)
 
 	DEBUG_EXIT_FUNCTION("%Iu", ret);
 	return ret;
+}
+
+
+static void _ProcessBluetooth(PDEVICE_OBJECT DeviceObject, PIRP Irp, PIO_STACK_LOCATION IrpStack, BOOLEAN Completion, PDATA_LOGGER_RESULT Result)
+{
+	ULONG controlCode = 0;
+	BRB_HEADER *brbHeader = NULL;
+	DEBUG_ENTER_FUNCTION("DeviceObject=0x%p; Irp=0x%p; IrpStack=0x%p; Completion=%u; Result=0x%p", DeviceObject, Irp, IrpStack, Completion, Result);
+
+	switch (IrpStack->MajorFunction) {
+		case IRP_MJ_INTERNAL_DEVICE_CONTROL:
+			controlCode = IrpStack->Parameters.DeviceIoControl.IoControlCode;
+			switch (controlCode) {
+				case IOCTL_INTERNAL_BTH_SUBMIT_BRB:
+					brbHeader = IrpStack->Parameters.Others.Argument1;
+
+					if ((ULONG_PTR)brbHeader >= MmUserProbeAddress) {
+						Result->Buffer = brbHeader;
+						if (!Completion)
+							Result->BufferSize = brbHeader->Length;
+						else Result->BufferSize = Irp->IoStatus.Information;
+					}
+					break;
+			}
+			break;
+	}
+
+	DEBUG_EXIT_FUNCTION("void, *Buffer=0x%p, *BufferSize=%Iu, *BfferMdl=0x%p", Result->Buffer, Result->BufferSize, Result->BufferMdl);
+	return;
 }
 
 
@@ -165,70 +197,72 @@ void IRPDataLogger(PDEVICE_OBJECT DeviceObject, PIRP Irp, PIO_STACK_LOCATION Irp
 				IrpStack->MinorFunction == IRP_MN_USER_FS_REQUEST) {
 				ULONG method = IrpStack->Parameters.DeviceIoControl.IoControlCode & 3;
 
-				switch (method) {
-					case METHOD_NEITHER:
-						if (!Completion) {
-							Result->Buffer = IrpStack->Parameters.DeviceIoControl.Type3InputBuffer;
-							Result->BufferSize = IrpStack->Parameters.DeviceIoControl.InputBufferLength;
-							if (IrpStack->MajorFunction == IRP_MJ_DEVICE_CONTROL ||
-								(IrpStack->MajorFunction == IRP_MJ_FILE_SYSTEM_CONTROL && IrpStack->MinorFunction == IRP_MN_USER_FS_REQUEST)) {
-								if (reqMode == UserMode &&
-									Result->BufferSize > 0) {
-									__try {
-										ProbeForRead(Result->Buffer, Result->BufferSize, 1);
-									} __except (EXCEPTION_EXECUTE_HANDLER) {
-										DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, "DANGEROUS BUFFER: Irp=0x%p; IrpStack=0x%p; Buffer=0x%p; Size=%zu\n", Irp, IrpStack, Result->Buffer, Result->BufferSize);
-										Result->Buffer = NULL;
-										Result->BufferSize = 0;
+				if (IrpStack->MajorFunction != IRP_MJ_INTERNAL_DEVICE_CONTROL || IrpStack->Parameters.DeviceIoControl.IoControlCode != IOCTL_INTERNAL_BTH_SUBMIT_BRB) {
+					switch (method) {
+						case METHOD_NEITHER:
+							if (!Completion) {
+								Result->Buffer = IrpStack->Parameters.DeviceIoControl.Type3InputBuffer;
+								Result->BufferSize = IrpStack->Parameters.DeviceIoControl.InputBufferLength;
+								if (IrpStack->MajorFunction == IRP_MJ_DEVICE_CONTROL ||
+									(IrpStack->MajorFunction == IRP_MJ_FILE_SYSTEM_CONTROL && IrpStack->MinorFunction == IRP_MN_USER_FS_REQUEST)) {
+									if (reqMode == UserMode &&
+										Result->BufferSize > 0) {
+										__try {
+											ProbeForRead(Result->Buffer, Result->BufferSize, 1);
+										} __except (EXCEPTION_EXECUTE_HANDLER) {
+											DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, "DANGEROUS BUFFER: Irp=0x%p; IrpStack=0x%p; Buffer=0x%p; Size=%zu\n", Irp, IrpStack, Result->Buffer, Result->BufferSize);
+											Result->Buffer = NULL;
+											Result->BufferSize = 0;
+										}
 									}
-								}
 
-								if (reqMode == UserMode &&
-									IrpStack->Parameters.DeviceIoControl.OutputBufferLength > 0) {
-									__try {
-										ProbeForRead(Irp->UserBuffer, IrpStack->Parameters.DeviceIoControl.OutputBufferLength, 1);
-									} __except (EXCEPTION_EXECUTE_HANDLER) {
-										DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, "DANGEROUS BUFFER: Irp=0x%p; IrpStack=0x%p; Buffer=0x%p; Size=%zu\n", Irp, IrpStack, Irp->UserBuffer, IrpStack->Parameters.DeviceIoControl.OutputBufferLength);
-										Result->Buffer = NULL;
-										Result->BufferSize = 0;
+									if (reqMode == UserMode &&
+										IrpStack->Parameters.DeviceIoControl.OutputBufferLength > 0) {
+										__try {
+											ProbeForRead(Irp->UserBuffer, IrpStack->Parameters.DeviceIoControl.OutputBufferLength, 1);
+										} __except (EXCEPTION_EXECUTE_HANDLER) {
+											DbgPrintEx(DPFLTR_DEFAULT_ID, DPFLTR_ERROR_LEVEL, "DANGEROUS BUFFER: Irp=0x%p; IrpStack=0x%p; Buffer=0x%p; Size=%zu\n", Irp, IrpStack, Irp->UserBuffer, IrpStack->Parameters.DeviceIoControl.OutputBufferLength);
+											Result->Buffer = NULL;
+											Result->BufferSize = 0;
+										}
 									}
 								}
+							} else {
+								Result->Buffer = Irp->UserBuffer;
+								Result->BufferSize = IrpStack->Parameters.DeviceIoControl.OutputBufferLength;
 							}
-						} else {
-							Result->Buffer = Irp->UserBuffer;
-							Result->BufferSize = IrpStack->Parameters.DeviceIoControl.OutputBufferLength;
-						}
-						break;
-					case METHOD_IN_DIRECT:
-						if (!Completion) {
-							Result->BufferMdl = Irp->MdlAddress;
-							if (Irp->MdlAddress != NULL)
-								Result->Buffer = MmGetSystemAddressForMdlSafe(Irp->MdlAddress, NormalPagePriority);
-							else Result->Buffer = Irp->AssociatedIrp.SystemBuffer;
+							break;
+						case METHOD_IN_DIRECT:
+							if (!Completion) {
+								Result->BufferMdl = Irp->MdlAddress;
+								if (Irp->MdlAddress != NULL)
+									Result->Buffer = MmGetSystemAddressForMdlSafe(Irp->MdlAddress, NormalPagePriority);
+								else Result->Buffer = Irp->AssociatedIrp.SystemBuffer;
 
-							Result->BufferSize = IrpStack->Parameters.DeviceIoControl.InputBufferLength;
-						}
-						break;
-					case METHOD_OUT_DIRECT:
-						if (Completion) {
-							Result->BufferMdl = Irp->MdlAddress;
-							if (Irp->MdlAddress != NULL)
-								Result->Buffer = MmGetSystemAddressForMdlSafe(Irp->MdlAddress, NormalPagePriority);
-							else Result->Buffer = Irp->AssociatedIrp.SystemBuffer;
+								Result->BufferSize = IrpStack->Parameters.DeviceIoControl.InputBufferLength;
+							}
+							break;
+						case METHOD_OUT_DIRECT:
+							if (Completion) {
+								Result->BufferMdl = Irp->MdlAddress;
+								if (Irp->MdlAddress != NULL)
+									Result->Buffer = MmGetSystemAddressForMdlSafe(Irp->MdlAddress, NormalPagePriority);
+								else Result->Buffer = Irp->AssociatedIrp.SystemBuffer;
 
-							Result->BufferSize = Irp->IoStatus.Information;
-						} else {
+								Result->BufferSize = Irp->IoStatus.Information;
+							} else {
+								Result->Buffer = Irp->AssociatedIrp.SystemBuffer;
+								Result->BufferSize = IrpStack->Parameters.DeviceIoControl.InputBufferLength;
+							}
+							break;
+						case METHOD_BUFFERED:
 							Result->Buffer = Irp->AssociatedIrp.SystemBuffer;
-							Result->BufferSize = IrpStack->Parameters.DeviceIoControl.InputBufferLength;
-						}
-						break;
-					case METHOD_BUFFERED:
-						Result->Buffer = Irp->AssociatedIrp.SystemBuffer;
-						if (!Completion)
-							Result->BufferSize = IrpStack->Parameters.DeviceIoControl.InputBufferLength;
-						else Result->BufferSize = Irp->IoStatus.Information;
-						break;
-				}
+							if (!Completion)
+								Result->BufferSize = IrpStack->Parameters.DeviceIoControl.InputBufferLength;
+							else Result->BufferSize = Irp->IoStatus.Information;
+							break;
+					}
+				} else _ProcessBluetooth(DeviceObject, Irp, IrpStack, Completion, Result);
 			} else {
 				if (!Completion) {
 					switch (IrpStack->MinorFunction) {
