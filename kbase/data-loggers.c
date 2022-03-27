@@ -1,5 +1,6 @@
 
 #include <ntifs.h>
+#include <tdikrnl.h>
 #include <bthdef.h>
 #include <BthIoctl.h>
 #include <Bthddi.h>
@@ -89,6 +90,64 @@ static void _ProcessBluetooth(PDEVICE_OBJECT DeviceObject, PIRP Irp, PIO_STACK_L
 						else Result->BufferSize = Irp->IoStatus.Information;
 					}
 					break;
+			}
+			break;
+	}
+
+	DEBUG_EXIT_FUNCTION("void, *Buffer=0x%p, *BufferSize=%Iu, *BfferMdl=0x%p", Result->Buffer, Result->BufferSize, Result->BufferMdl);
+	return;
+}
+
+
+static void _ProcessTDI(PDEVICE_OBJECT DeviceObject, PIRP Irp, PIO_STACK_LOCATION IrpStack, BOOLEAN Completion, PDATA_LOGGER_RESULT Result)
+{
+	ULONG minorFunction = 0;
+	ULONG controlCode = 0;
+	DEBUG_ENTER_FUNCTION("DeviceObject=0x%p; Irp=0x%p; IrpStack=0x%p; Completion=%u; Result=0x%p", DeviceObject, Irp, IrpStack, Completion, Result);
+
+	switch (IrpStack->MajorFunction) {
+		case IRP_MJ_INTERNAL_DEVICE_CONTROL:
+			controlCode = IrpStack->Parameters.DeviceIoControl.IoControlCode;
+			if (controlCode == 3) {
+				minorFunction = IrpStack->MinorFunction;
+				Result->Buffer = &IrpStack->Parameters.Others;
+				Result->BufferSize = sizeof(IrpStack->Parameters.Others);
+				switch (minorFunction) {
+					case TDI_ASSOCIATE_ADDRESS:
+						break;
+					case TDI_DISASSOCIATE_ADDRESS:
+						break;
+					case TDI_CONNECT:
+						break;
+					case TDI_LISTEN:
+						break;
+					case TDI_ACCEPT:
+						break;
+					case TDI_DISCONNECT:
+						break;
+					case TDI_SEND:
+						break;
+					case TDI_RECEIVE:
+						break;
+					case TDI_SEND_DATAGRAM:
+						break;
+					case TDI_RECEIVE_DATAGRAM:
+						break;
+					case TDI_SET_EVENT_HANDLER:
+						break;
+					case TDI_QUERY_INFORMATION:
+						break;
+					case TDI_SET_INFORMATION:
+						break;
+					case TDI_ACTION:
+						break;
+					case TDI_DIRECT_SEND:
+						break;
+					case TDI_DIRECT_SEND_DATAGRAM:
+						break;
+					case TDI_DIRECT_ACCEPT:
+						break;
+				}
 			}
 			break;
 	}
@@ -195,9 +254,10 @@ void IRPDataLogger(PDEVICE_OBJECT DeviceObject, PIRP Irp, PIO_STACK_LOCATION Irp
 			if (IrpStack->MajorFunction != IRP_MJ_FILE_SYSTEM_CONTROL ||
 				IrpStack->MinorFunction == IRP_MN_KERNEL_CALL ||
 				IrpStack->MinorFunction == IRP_MN_USER_FS_REQUEST) {
-				ULONG method = IrpStack->Parameters.DeviceIoControl.IoControlCode & 3;
+				ULONG ioctl = IrpStack->Parameters.DeviceIoControl.IoControlCode;
+				ULONG method = ioctl & 3;
 
-				if (IrpStack->MajorFunction != IRP_MJ_INTERNAL_DEVICE_CONTROL || IrpStack->Parameters.DeviceIoControl.IoControlCode != IOCTL_INTERNAL_BTH_SUBMIT_BRB) {
+				if (IrpStack->MajorFunction != IRP_MJ_INTERNAL_DEVICE_CONTROL || (ioctl != IOCTL_INTERNAL_BTH_SUBMIT_BRB && ioctl != 3)) {
 					switch (method) {
 						case METHOD_NEITHER:
 							if (!Completion) {
@@ -262,7 +322,16 @@ void IRPDataLogger(PDEVICE_OBJECT DeviceObject, PIRP Irp, PIO_STACK_LOCATION Irp
 							else Result->BufferSize = Irp->IoStatus.Information;
 							break;
 					}
-				} else _ProcessBluetooth(DeviceObject, Irp, IrpStack, Completion, Result);
+				} else {
+					switch (ioctl) {
+						case 3:
+							_ProcessTDI(DeviceObject, Irp, IrpStack, Completion, Result);
+							break;
+						case IOCTL_INTERNAL_BTH_SUBMIT_BRB:
+							_ProcessBluetooth(DeviceObject, Irp, IrpStack, Completion, Result);
+							break;
+					}
+				}
 			} else {
 				if (!Completion) {
 					switch (IrpStack->MinorFunction) {

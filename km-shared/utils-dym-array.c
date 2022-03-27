@@ -1,5 +1,6 @@
 
 #include <ntifs.h>
+#include <tdikrnl.h>
 #include "preprocessor.h"
 #include "allocator.h"
 #include "utils-dym-array.h"

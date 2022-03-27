@@ -636,23 +636,64 @@ end;
 Function TDeviceControlRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
 begin
 Result := True;
-Case AColumnType Of
-  rlmctArg1: AResult := Format('%u', [FArgs.DeviceControl.OutputBufferLength]);
-  rlmctArg2: AResult := Format('%u', [FArgs.DeviceControl.InputBufferLength]);
-  rlmctArg3: AResult := IOCTLToString(FArgs.DeviceControl.IoControlCode);
-  rlmctArg4: AResult := Format('0x%p', [FArgs.DeviceControl.Type3InputBuffer]);
-  Else Result := Inherited GetColumnValue(AColumnType, AResult);
+If (MajorFunction = 15) And (Cardinal(Args.Other.Arg3) = 3) Then
+  begin
+  Case AColumnType Of
+    rlmctArg3 : AResult := 'TDI_REQUEST';
+    rlmctMinorFunction : begin
+      Case MinorFunction Of
+        1 : AResult := 'TDI_ASSOCIATE_ADDRESS';
+        2 : AResult := 'TDI_DISASSOCIATE_ADDRESS';
+        3 : AResult := 'TDI_CONNECT';
+        4 : AResult := 'TDI_LISTEN';
+        5 : AResult := 'TDI_ACCEPT';
+        6 : AResult := 'TDI_DISCONNECT';
+        7 : AResult := 'TDI_SEND';
+        8 : AResult := 'TDI_RECEIVE';
+        9 : AResult := 'TDI_SEND_DATAGRAM';
+        10 : AResult := 'TDI_RECEIVE_DATAGRAM';
+        11 : AResult := 'TDI_SET_EVENT_HANDLER';
+        12 : AResult := 'TDI_QUERY_INFORMATION';
+        13 : AResult := 'TDI_SET_INFORMATION';
+        14 : AResult := 'TDI_ACTION';
+        39 : AResult := 'TDI_DIRECT_SEND';
+        41 : AResult := 'TDI_DIRECT_SEND_DATAGRAM';
+        42 : AResult := 'TDI_DIRECT_ACCEPT';
+        Else AResult := Format('TDI_UNKNOWN (0x%x)', [MinorFunction]);
+        end;
+      end
+    Else Result := Inherited GetColumnValue(AColumnType, AResult);
+    end;
+  end
+Else begin
+  Case AColumnType Of
+    rlmctArg1: AResult := Format('%u', [FArgs.DeviceControl.OutputBufferLength]);
+    rlmctArg2: AResult := Format('%u', [FArgs.DeviceControl.InputBufferLength]);
+    rlmctArg3: AResult := IOCTLToString(FArgs.DeviceControl.IoControlCode);
+    rlmctArg4: AResult := Format('0x%p', [FArgs.DeviceControl.Type3InputBuffer]);
+    Else Result := Inherited GetColumnValue(AColumnType, AResult);
+    end;
   end;
 end;
 
 Function TDeviceControlRequest.GetColumnName(AColumnType:ERequestListModelColumnType):WideString;
 begin
-Case AColumnType Of
-  rlmctArg1 : Result := 'Output length';
-  rlmctArg2 : Result := 'Input length';
-  rlmctArg3 : Result := 'IOCTL';
-  rlmctArg4 : Result := 'Type3 input';
-  Else Result := Inherited GetColumnName(AColumnType);
+If (MajorFunction = 15) And (Cardinal(Args.Other.Arg3) = 3) Then
+  begin
+  Case AColumnType Of
+    rlmctArg3 : Result := 'IOCTL';
+    rlmctMinorFunction : Result := 'TDI Type';
+    Else Result := Inherited GetColumnName(AColumnType);
+    end;
+  end
+Else begin
+  Case AColumnType Of
+    rlmctArg1 : Result := 'Output length';
+    rlmctArg2 : Result := 'Input length';
+    rlmctArg3 : Result := 'IOCTL';
+    rlmctArg4 : Result := 'Type3 input';
+    Else Result := Inherited GetColumnName(AColumnType);
+    end;
   end;
 end;
 
