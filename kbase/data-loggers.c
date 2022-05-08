@@ -98,55 +98,128 @@ static void _ProcessBluetooth(PDEVICE_OBJECT DeviceObject, PIRP Irp, PIO_STACK_L
 	return;
 }
 
+typedef struct _TDI_DATA {
+	ULONG TotalLength;
+	ULONG MinorFunction;
+	ULONG LocalLength;
+	ULONG RemoteLength;
+	unsigned char LocalAddress[16];
+	unsigned char RemoteAddress[16];
+	ULONG Flags;
+	ULONG Length;
+	// Buffer
+} TDI_DATA, *PTDI_DATA;
+
+
+static PTDI_DATA _TDIDataAlloc(ULONG MinorFunction, BOOLEAN Completed, PVOID Parameters, PMDL Mdl)
+{
+	PMDL mdl = NULL;
+	void *buffer = NULL;
+	PTDI_DATA ret = NULL;
+	ULONG totalLength = 0;
+	ULONG addrLen = 0;
+	PTDI_CONNECTION_INFORMATION ci = NULL;
+	DEBUG_ENTER_FUNCTION("MinorFunction=%u; Completed=%u; Parameters=0x%p; Mdl=0x%p", MinorFunction, Completed, Parameters, Mdl);
+
+	totalLength = sizeof(TDI_DATA);
+	if (!Completed && (MinorFunction == TDI_SEND || MinorFunction == TDI_SEND_DATAGRAM || MinorFunction == TDI_DIRECT_SEND || MinorFunction == TDI_DIRECT_SEND_DATAGRAM || MinorFunction == TDI_SET_INFORMATION))
+		mdl = Mdl;
+	else if (Completed && (MinorFunction == TDI_RECEIVE || MinorFunction == TDI_RECEIVE_DATAGRAM || MinorFunction == TDI_QUERY_INFORMATION))
+		mdl = Mdl;
+
+	if (mdl != NULL)
+		buffer = MmGetSystemAddressForMdlSafe(mdl, NormalPagePriority);
+
+	switch (MinorFunction) {
+		case TDI_ASSOCIATE_ADDRESS:
+			break;
+		case TDI_DISASSOCIATE_ADDRESS:
+			if (!Completed)
+				ci = ((PTDI_REQUEST_KERNEL_DISASSOCIATE)Parameters)->RequestConnectionInformation;
+			break;
+		case TDI_LISTEN:
+			if (Completed)
+				ci = ((PTDI_REQUEST_KERNEL_LISTEN)Parameters)->ReturnConnectionInformation;
+			break;
+		case TDI_ACCEPT:
+			if (Completed)
+				ci = ((PTDI_REQUEST_KERNEL_ACCEPT)Parameters)->ReturnConnectionInformation;
+			break;
+		case TDI_CONNECT:
+			if (!Completed)
+				ci = ((PTDI_REQUEST_KERNEL_CONNECT)Parameters)->RequestConnectionInformation;
+			break;
+		case TDI_SEND:
+			if (!Completed)
+				totalLength += ((PTDI_REQUEST_KERNEL_SEND)Parameters)->SendLength;
+			break;
+		case TDI_SEND_DATAGRAM:
+			if (!Completed) {
+				totalLength += ((PTDI_REQUEST_KERNEL_SENDDG)Parameters)->SendLength;
+				ci = ((PTDI_REQUEST_KERNEL_SENDDG)Parameters)->SendDatagramInformation;
+			}
+			break;
+		case TDI_RECEIVE:
+			if (Completed)
+				totalLength += ((PTDI_REQUEST_KERNEL_RECEIVE)Parameters)->ReceiveLength;
+			break;
+		case TDI_RECEIVE_DATAGRAM:
+			if (Completed) {
+				totalLength += ((PTDI_REQUEST_KERNEL_RECEIVEDG)Parameters)->ReceiveLength;
+				ci = ((PTDI_REQUEST_KERNEL_RECEIVEDG)Parameters)->ReturnDatagramInformation;
+			}
+			break;
+		case TDI_SET_EVENT_HANDLER:
+			break;
+		case TDI_QUERY_INFORMATION:
+			if (Completed)
+				ci = ((PTDI_REQUEST_KERNEL_QUERY_INFORMATION)Parameters)->RequestConnectionInformation;
+			break;
+		case TDI_SET_INFORMATION:
+			if (!Completed)
+				ci = ((PTDI_REQUEST_KERNEL_SET_INFORMATION)Parameters)->RequestConnectionInformation;
+			break;
+	}
+
+	ret = HeapMemoryAllocNonPaged(totalLength);
+	if (ret != NULL) {
+		memset(ret, 0, totalLength);
+		ret->MinorFunction = MinorFunction;
+		ret->TotalLength = totalLength;
+		ret->Length = totalLength - sizeof(TDI_DATA);
+		if (buffer != NULL)
+			memcpy(ret + 1, buffer, ret->Length);
+
+		if (ci != NULL) {
+			addrLen = ci->RemoteAddressLength;
+			if (addrLen > sizeof(ret->RemoteAddress))
+				addrLen = sizeof(ret->RemoteAddress);
+
+			ret->RemoteLength = addrLen;
+			memcpy(ret->RemoteAddress, ci->RemoteAddress, ret->RemoteLength);
+		}
+	}
+
+	DEBUG_EXIT_FUNCTION("0x%p", ret);
+	return ret;
+}
+
 
 static void _ProcessTDI(PDEVICE_OBJECT DeviceObject, PIRP Irp, PIO_STACK_LOCATION IrpStack, BOOLEAN Completion, PDATA_LOGGER_RESULT Result)
 {
 	ULONG minorFunction = 0;
-	ULONG controlCode = 0;
+	PTDI_DATA tdiData = NULL;
 	DEBUG_ENTER_FUNCTION("DeviceObject=0x%p; Irp=0x%p; IrpStack=0x%p; Completion=%u; Result=0x%p", DeviceObject, Irp, IrpStack, Completion, Result);
 
 	switch (IrpStack->MajorFunction) {
 		case IRP_MJ_INTERNAL_DEVICE_CONTROL:
-			controlCode = IrpStack->Parameters.DeviceIoControl.IoControlCode;
-			if (controlCode == 3) {
-				minorFunction = IrpStack->MinorFunction;
-				Result->Buffer = &IrpStack->Parameters.Others;
-				Result->BufferSize = sizeof(IrpStack->Parameters.Others);
-				switch (minorFunction) {
-					case TDI_ASSOCIATE_ADDRESS:
-						break;
-					case TDI_DISASSOCIATE_ADDRESS:
-						break;
-					case TDI_CONNECT:
-						break;
-					case TDI_LISTEN:
-						break;
-					case TDI_ACCEPT:
-						break;
-					case TDI_DISCONNECT:
-						break;
-					case TDI_SEND:
-						break;
-					case TDI_RECEIVE:
-						break;
-					case TDI_SEND_DATAGRAM:
-						break;
-					case TDI_RECEIVE_DATAGRAM:
-						break;
-					case TDI_SET_EVENT_HANDLER:
-						break;
-					case TDI_QUERY_INFORMATION:
-						break;
-					case TDI_SET_INFORMATION:
-						break;
-					case TDI_ACTION:
-						break;
-					case TDI_DIRECT_SEND:
-						break;
-					case TDI_DIRECT_SEND_DATAGRAM:
-						break;
-					case TDI_DIRECT_ACCEPT:
-						break;
+			minorFunction = IrpStack->MinorFunction;
+			if (minorFunction != 0) {
+				tdiData = _TDIDataAlloc(minorFunction, Completion, &IrpStack->Parameters, Irp->MdlAddress);
+				if (tdiData != NULL) {
+					Result->Buffer = tdiData;
+					Result->BufferAllocated = TRUE;
+					Result->BufferSize = tdiData->TotalLength;
 				}
 			}
 			break;
@@ -173,16 +246,20 @@ void IRPDataLogger(PDEVICE_OBJECT DeviceObject, PIRP Irp, PIO_STACK_LOCATION Irp
 	memset(Result, 0, sizeof(DATA_LOGGER_RESULT));
 	switch (IrpStack->MajorFunction) {
 		case IRP_MJ_CREATE: {
-			if (!Completion && IrpStack->Parameters.Create.SecurityContext != NULL) {
-				SIZE_T bufSize = 0;
+			if (!Completion) {
+				SIZE_T bufSize = IrpStack->Parameters.Create.EaLength;
 				POOL_TYPE pt = (KeGetCurrentIrql() < DISPATCH_LEVEL) ? PagedPool : NonPagedPool;
 
-				bufSize = sizeof(IrpStack->Parameters.Create.SecurityContext->DesiredAccess);
+				if (IrpStack->Parameters.Create.SecurityContext != NULL)
+					bufSize += sizeof(ACCESS_MASK);
+
 				Result->Buffer = HeapMemoryAlloc(pt, bufSize);
 				if (Result->Buffer != NULL) {
 					Result->BufferAllocated = TRUE;
 					Result->BufferSize = bufSize;
-					memcpy(Result->Buffer, &IrpStack->Parameters.Create.SecurityContext->DesiredAccess, Result->BufferSize);
+					memcpy(Result->Buffer, Irp->AssociatedIrp.SystemBuffer, IrpStack->Parameters.Create.EaLength);
+					if (IrpStack->Parameters.Create.SecurityContext != NULL)
+						memcpy((unsigned char *)Result->Buffer + Result->BufferSize - sizeof(ACCESS_MASK), &IrpStack->Parameters.Create.SecurityContext->DesiredAccess, sizeof(ACCESS_MASK));
 				}
 			}
 		} break;
@@ -257,7 +334,7 @@ void IRPDataLogger(PDEVICE_OBJECT DeviceObject, PIRP Irp, PIO_STACK_LOCATION Irp
 				ULONG ioctl = IrpStack->Parameters.DeviceIoControl.IoControlCode;
 				ULONG method = ioctl & 3;
 
-				if (IrpStack->MajorFunction != IRP_MJ_INTERNAL_DEVICE_CONTROL || (ioctl != IOCTL_INTERNAL_BTH_SUBMIT_BRB && ioctl != 3)) {
+				if (IrpStack->MajorFunction != IRP_MJ_INTERNAL_DEVICE_CONTROL || (ioctl != IOCTL_INTERNAL_BTH_SUBMIT_BRB && IrpStack->MinorFunction == 0)) {
 					switch (method) {
 						case METHOD_NEITHER:
 							if (!Completion) {
@@ -324,11 +401,11 @@ void IRPDataLogger(PDEVICE_OBJECT DeviceObject, PIRP Irp, PIO_STACK_LOCATION Irp
 					}
 				} else {
 					switch (ioctl) {
-						case 3:
-							_ProcessTDI(DeviceObject, Irp, IrpStack, Completion, Result);
-							break;
 						case IOCTL_INTERNAL_BTH_SUBMIT_BRB:
 							_ProcessBluetooth(DeviceObject, Irp, IrpStack, Completion, Result);
+							break;
+						default:
+							_ProcessTDI(DeviceObject, Irp, IrpStack, Completion, Result);
 							break;
 					}
 				}

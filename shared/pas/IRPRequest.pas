@@ -636,10 +636,45 @@ end;
 Function TDeviceControlRequest.GetColumnValue(AColumnType:ERequestListModelColumnType; Var AResult:WideString):Boolean;
 begin
 Result := True;
-If (MajorFunction = 15) And (Cardinal(Args.Other.Arg3) = 3) Then
+If (MajorFunction = 15) And (MinorFunction <> 0) Then
   begin
   Case AColumnType Of
-    rlmctArg3 : AResult := 'TDI_REQUEST';
+    rlmctArg1 : begin
+      Case MinorFunction Of
+        11 : begin
+          Case NativeUInt(Self.Args.Other.Arg1) Of
+            0 : AResult := 'Connect';
+            1 : AResult := 'Disconnect';
+            2 : AResult := 'Error';
+            3 : AResult := 'Receive';
+            4 : AResult := 'ReceiveDGM';
+            5 : AResult := 'ReceiveEXP';
+            6 : AResult := 'SnedPossible';
+            7 : AResult := 'ReceiveChain';
+            8 : AResult := 'ReceiveChainDGM';
+            9 : AResult := 'ReceiveChainEXP';
+            10 : AResult := 'ErrorEx';
+            Else Result := Inherited GetColumnValue(AColumnType, AResult);
+            end;
+          end;
+        12,
+        13 : begin
+          Case NativeUInt(Args.Other.Arg1) Of
+            1 : AResult := 'BroadcastAddress';
+            2 : AResult := 'ProviderInfo';
+            3 : AResult := 'AddressInfo';
+            4 : AResult := 'ConnectionInfo';
+            5 : AResult := 'ProviderStatistics';
+            6 : AResult := 'DatagramInfo';
+            7 : AResult := 'LinkAddress';
+            8 : AResult := 'NetworkAddress';
+            9 : AResult := 'MaxDGMInfo';
+            $a : AResult := 'RoutingInfo';
+            Else Result := Inherited GetColumnValue(AColumnType, AResult);
+            end;
+          end;
+        end;
+      end;
     rlmctMinorFunction : begin
       Case MinorFunction Of
         1 : AResult := 'TDI_ASSOCIATE_ADDRESS';
@@ -678,10 +713,29 @@ end;
 
 Function TDeviceControlRequest.GetColumnName(AColumnType:ERequestListModelColumnType):WideString;
 begin
-If (MajorFunction = 15) And (Cardinal(Args.Other.Arg3) = 3) Then
+If (MajorFunction = 15) And (MinorFunction <> 0) Then
   begin
   Case AColumnType Of
-    rlmctArg3 : Result := 'IOCTL';
+    rlmctArg1 : begin
+      Case MinorFunction Of
+        11 : Result := 'Event type';
+        12,
+        13 : Result := 'Query type'
+        Else Result := Inherited GetColumnName(AColumnType);
+        end;
+      end;
+    rlmctArg2 : begin
+      Case MinorFunction Of
+        11 : Result := 'Event handler';
+        Else Result := Inherited GetColumnName(AColumnType);
+        end;
+      end;
+    rlmctArg3 : begin
+      Case MinorFunction Of
+        11 : Result := 'Event context';
+        Else Result := Inherited GetColumnName(AColumnType);
+        end;
+      end;
     rlmctMinorFunction : Result := 'TDI Type';
     Else Result := Inherited GetColumnName(AColumnType);
     end;

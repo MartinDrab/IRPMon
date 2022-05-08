@@ -8,6 +8,7 @@
 
 
 
+#define IRP_MJ_CREATE					0x0
 #define IRP_MJ_QUERY_EA					0x7
 #define IRP_MJ_SET_EA					0x8
 
@@ -102,6 +103,13 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 			irp = CONTAINING_RECORD(Request, REQUEST_IRP, Header);
 			if (irp->DataSize > 0) {
 				switch (irp->MajorFunction) {
+					case IRP_MJ_CREATE:
+						if (irp->DataSize >= sizeof(FILE_FULL_EA_INFORMATION)) {
+							eaBuffer = (FILE_FULL_EA_INFORMATION*)(irp + 1);
+							ret = _ProcessEABuffer(&p, eaBuffer);
+							parsed = TRUE;
+						}
+						break;
 					case IRP_MJ_SET_EA:
 						eaBuffer = (FILE_FULL_EA_INFORMATION *)(irp + 1);
 						ret = _ProcessEABuffer(&p, eaBuffer);
