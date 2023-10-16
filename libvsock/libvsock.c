@@ -4,7 +4,7 @@
 #include <string.h>
 #include <winsock2.h>
 #include <windows.h>
-#include <Objbase.h>
+#include <objbase.h>
 #include <vmci_sockets.h>
 #include "libvsock.h"
 
