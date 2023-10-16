@@ -65,7 +65,7 @@ public:
 			ret = IRPMonDllHookDriver(DriverName_.c_str(), &Settings_, DevExtHook_, &Handle_, &ObjectId_);
 			if (ret == 0) {
 				if (AllDevices_) {
-					void* obješctId = nullptr;
+					void* objectId = nullptr;
 					HANDLE hookHandle = nullptr;
 					ULONG driverCount = 0;
 					PIRPMON_DRIVER_INFO *driverInfo = nullptr;
@@ -79,7 +79,7 @@ public:
 							if (wcsicmp(DriverName_.c_str(), tmpDriver->DriverName) == 0) {
 								for (size_t j = 0; j < tmpDriver->DeviceCount; ++j) {
 									tmpDevice = tmpDriver->Devices[j];
-									ret = IRPMonDllHookDeviceByAddress(tmpDevice->DeviceObject, &hookHandle, &obješctId);
+									ret = IRPMonDllHookDeviceByAddress(tmpDevice->DeviceObject, &hookHandle, &objectId);
 									if (ret == 0)
 										IRPMonDllCloseHookedDeviceHandle(hookHandle);
 
