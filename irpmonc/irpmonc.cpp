@@ -23,7 +23,9 @@
 #include "driver-settings.h"
 #include "request-output.h"
 #include "stop-event.h"
+#ifndef NOVSOCKETS
 #include "libvsock.h"
+#endif
 #include "guid-api.h"
 #include "irpmonc.h"
 
@@ -212,6 +214,7 @@ static int _parse_input(const wchar_t *Value)
 				if (_initInfo.Data.Network.Address == NULL)
 					ret = ENOMEM;
 				break;
+#ifndef NOVSOCKETS
 			case ictVSockets: {
 				wchar_t *endptr = NULL;
 				unsigned int vmciVersion = 0xffffffff;
@@ -257,6 +260,7 @@ static int _parse_input(const wchar_t *Value)
 				fprintf(stderr, "[INFO]: vSock address: 0x%x (%u)\n", _initInfo.Data.VSockets.CID, _initInfo.Data.VSockets.CID);
 				fprintf(stderr, "[INFO]: vSock port:    0x%x (%u)\n", _initInfo.Data.VSockets.Port, _initInfo.Data.VSockets.Port);
 			} break;
+#endif
 			case ictHyperV: {
 				wchar_t vmIdBuffer[100];
 				wchar_t appIdBuffer[100];
