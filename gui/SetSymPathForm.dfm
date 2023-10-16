@@ -53,7 +53,7 @@ object SetSymPathFrm: TSetSymPathFrm
     Top = 279
     Width = 59
     Height = 34
-    Caption = 'Storno'
+    Caption = 'Cancel'
     TabOrder = 1
     OnClick = StornoButtonClick
   end

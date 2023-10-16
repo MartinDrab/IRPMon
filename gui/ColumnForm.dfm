@@ -28,7 +28,7 @@ object ColumnFrm: TColumnFrm
       Top = 5
       Width = 57
       Height = 33
-      Caption = 'Storno'
+      Caption = 'Cancel'
       TabOrder = 0
       OnClick = StornoButtonClick
     end

@@ -171,7 +171,7 @@ object ConnectorSelectionFrm: TConnectorSelectionFrm
     Top = 261
     Width = 57
     Height = 30
-    Caption = 'Storno'
+    Caption = 'Cancel'
     TabOrder = 2
     OnClick = StornoButtonClick
   end

@@ -66,7 +66,7 @@ object AddEditSymServerFrm: TAddEditSymServerFrm
     Top = 87
     Width = 65
     Height = 33
-    Caption = 'Storno'
+    Caption = 'Cancel'
     TabOrder = 1
     OnClick = StornoButtonClick
   end
