@@ -1108,7 +1108,7 @@ static int _add_parsers(HANDLE ListHandle)
 			}
 		} else {
 			ret = EINVAL;
-			fprintf(stderr, "[ERROR]: Unable to find backlash in the application file name of \"%ls\"\n", appDir);
+			fprintf(stderr, "[ERROR]: Unable to find backslash in the application file name of \"%ls\"\n", appDir);
 		}
 	}
 
@@ -1137,7 +1137,7 @@ static int _service_action(bool Load)
 						ret = GetLastError();
 						if (ret == ERROR_SERVICE_ALREADY_RUNNING) {
 							ret = 0;
-							fprintf(stderr, "[WARNING]: The \"%ls\" service is already running, nothing to sart\n", serviceName);
+							fprintf(stderr, "[WARNING]: The \"%ls\" service is already running, nothing to start\n", serviceName);
 						}
 
 						if (ret != 0) {
