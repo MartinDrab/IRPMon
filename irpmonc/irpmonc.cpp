@@ -145,6 +145,23 @@ static std::wstring _loadServiceName;
 static std::wstring _unloadServiceName;
 
 
+static void _print_sys_errmsg(DWORD err)
+{
+	LPVOID msg;
+
+	if (!FormatMessage(
+	    FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
+	    FORMAT_MESSAGE_IGNORE_INSERTS,
+	    NULL, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+	    (LPTSTR) &msg, 0, NULL)) {
+		fprintf(stderr, "Could't get error string for error %ld\n", err);
+		return;
+	}
+	fwprintf(stderr, L"%s", msg);
+	LocalFree(msg);
+}
+
+
 static int _parse_input(const wchar_t *Value)
 {
 	int ret = 0;
@@ -1056,6 +1073,7 @@ static int _add_parsers(HANDLE ListHandle)
 	if (GetModuleFileNameW(nullptr, appDir, sizeof(appDir) / sizeof(appDir[0])) == 0) {
 		ret = GetLastError();
 		fprintf(stderr, "[ERROR]: Unable to get application file name: %u\n", ret);
+		_print_sys_errmsg(ret);
 	}
 
 	if (ret == 0) {
@@ -1118,8 +1136,10 @@ static int _service_action(bool Load)
 							fprintf(stderr, "[WARNING]: The \"%ls\" service is already running, nothing to sart\n", serviceName);
 						}
 
-						if (ret != 0)
+						if (ret != 0) {
 							fprintf(stderr, "[ERROR]: Unable to start the \"%ls\" service: %u\n", serviceName, ret);
+							_print_sys_errmsg(ret);
+						}
 					}
 				} else {
 					SERVICE_STATUS ss;
@@ -1131,8 +1151,10 @@ static int _service_action(bool Load)
 							fprintf(stderr, "[WARNING]: The \"%ls\" service is not active, nothing to stop\n", serviceName);
 						}
 
-						if (ret != 0)
+						if (ret != 0) {
 							fprintf(stderr, "[ERROR]: Unable to stop the \"%ls\" service: %u\n", serviceName, ret);
+							_print_sys_errmsg(ret);
+						}
 					}
 				}
 
@@ -1144,14 +1166,17 @@ static int _service_action(bool Load)
 					fprintf(stderr, "[WARNING]: Not enough privileges to access the \"%ls\" service, no action taken\n",serviceName);
 				}
 
-				if (ret != 0)
+				if (ret != 0) {
 					fprintf(stderr, "[ERROR]: Unable to access driver service: %u\n", ret);
+					_print_sys_errmsg(ret);
+				}
 			}
 
 			CloseServiceHandle(hScm);
 		} else {
 			ret = GetLastError();
 			fprintf(stderr, "[ERROR]: Unable to open SCM: %u\n", ret);
+			_print_sys_errmsg(ret);
 		}
 	}
 
@@ -1237,6 +1262,7 @@ int wmain(int argc, wchar_t *argv[])
 						} else {
 							ret = GetLastError();
 							fprintf(stderr, "[ERROR]: Unable to create the global stopping event: %u\n", ret);
+							_print_sys_errmsg(ret);
 						}
 					}
 
