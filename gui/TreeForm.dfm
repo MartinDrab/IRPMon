@@ -935,7 +935,7 @@ object TreeFrm: TTreeFrm
       Top = 6
       Width = 49
       Height = 25
-      Caption = 'Storno'
+      Caption = 'Cancel'
       TabOrder = 0
       OnClick = StornoButtonClick
     end
