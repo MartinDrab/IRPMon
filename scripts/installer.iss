@@ -107,7 +107,7 @@ Name: AppStartMenu; Description: "Create Start Menu shortcuts"; Components: Appl
 Name: envPath; Description: "Add to PATH variable"; 
 
 [Run]
-Filename: "sc.exe"; Parameters: "start IRPMonDrv"; Description: "Start IRPMon driver"; Flags: postinstall shellexec unchecked;
+Filename: "sc.exe"; Parameters: "start IRPMnDrv"; Description: "Start IRPMon driver"; Flags: postinstall shellexec unchecked;
 Filename: "sc.exe"; Parameters: "start IRPMonSvc"; Description: "Start tIRPMon server service"; Flags: postinstall shellexec unchecked;
 Filename: "{app}\README.md"; Description: "View documentation"; Flags: skipifsilent postinstall shellexec unchecked;
 
