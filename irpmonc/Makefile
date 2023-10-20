@@ -1,12 +1,13 @@
 
 CPPFLAGS += -DNOVSOCKETS
 
-LDFLAGS += \
-	   -L../irpmondll -lirpmondll \
-	   -L../libdparserdll -llibdparser \
-	   -L../libreqlistdll -llibreqlist \
-	   -L../libsymbolsdll -llibsymbols \
-	   -L../libcallbackstreamdll -lcallbackstream
+LDFLAGS += -municode \
+   -L../irpmondll -L../libdparserdll -L../libreqlistdll \
+   -L../libsymbolsdll -L../libcallbackstreamdll
+
+LDLIBS += \
+   -lirpmondll -llibdparser -llibreqlist \
+   -llibsymbols -lcallbackstream
 
 EXE = irpmonc
 OBJS = driver-settings.o irpmonc.o guid-api.o stop-event.o

@@ -1,20 +1,27 @@
 
-dlls = \
+depdirs = \
     libcallbackstreamdll \
     libdparserdll \
     libreqlistdll \
     libsymbolsdll \
-    irpmondll
+    irpmondll \
+    libserver
 
-main = irpmonc
+maindirs = irpmonc irpmon-server
 
-.PHONY: all clean $(dlls) $(main)
+otherdirs = device-connector shared
 
-all: $(dlls)
-	$(MAKE) -C $(main)
+.PHONY: all clean $(depdirs) $(maindirs) $(otherdirs)
 
-$(dlls):
+all: $(otherdirs) $(maindirs)
+
+$(maindirs): $(depdirs)
 	$(MAKE) -C $@
 
+$(depdirs) $(otherdirs):
+	$(MAKE) -C $@
+
+libserver: device-connector
+
 clean:
-	$(foreach dir,$(dlls) $(main),$(MAKE) -C $(dir) $@ &&) :
+	$(foreach dir,$(depdirs) $(maindirs) $(otherdirs),$(MAKE) -C $(dir) $@ &&) :
