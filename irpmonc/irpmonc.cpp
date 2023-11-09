@@ -31,66 +31,70 @@
 
 
 
-//	--input=[L|D|N]:<value>
-//		D:\\.\IRPMon
-//		N:localhost:1234
-//		L:C:\binarylog.log
-//		V:<CID>:<port>
-//		H:<vmGuid>:<appGuid>
-//
-//	--output=<T|J|B>:<filename|->
-//		T = text lines
-//		J = JSON lines, the array mode is not supported
-//		B = output to IRPMon's binary log format
-//		- = stdout
-//
-//	--hook-driver=[I][C][F][A][S][U][N][D][W][E][a]:<drivername>
-//		I = IRP
-//		C = IRP completion
-//		F = fast IO
-//		A = AddDevice
-//		S = StartIo
-//		U = Unload
-//		N = New devices
-//		D = Associated data
-//		W = Name watch
-//		E = device extension hook
-//		a = all devices
-//		s = capture stacktrace
-//
-//	--unhook-driver=[W]:<drivername>
-//		W = name watch
-//
-//  --hook-device=<A|N>:<devicename|address>
-//		A = address
-//		N = name
-//
-//  --unhook-device=<A|N>:<devicename|address>
-//		A = address
-//		N = name
-//
-// --clear-on-disconnect={yes|no|true|false}
-// --collect-disconnected={yes|no|true|false}
-// --process-events={yes|no|true|false}
-// --file-object-events={yes|no|true|false}
-// --snapshot-events={yes|no|true|false}
-// --process-emulate={yes|no|true|false}
-// --snapshot-emulate={yes|no|true|false}
-// --strip-threshold=<integer>
-// --strip-data={yes|no|true|false}
-//	--boot-log={yes|no|true|false}
-// --save-settings={yes|no|true|false}
-//
-// --sym-path=<Path>
-// --sym-file=<filename>
-// --sym-dir=<dir>|[mask]
-//
-// --help
-// --stop[=<PID>]
-// --load=<ServiceName>
-// --unload=<ServiceName>
-//
+const char help_text[] =
+"Available options:\n" \
+"\n" \
+"  --input=[L|D|N]:<value>\n" \
+"	D:\\\\.\\IRPMon\n" \
+"	N:localhost:1234\n" \
+"	L:C:\binarylog.log\n" \
+"	V:<CID>:<port>\n" \
+"	H:<vmGuid>:<appGuid>\n" \
+"\n" \
+"  --output=<T|J|B>:<filename|->\n" \
+"	T = text lines\n" \
+"	J = JSON lines, the array mode is not supported\n" \
+"	B = output to IRPMon's binary log format\n" \
+"	- = stdout\n" \
+"\n" \
+"  --hook-driver=[I][C][F][A][S][U][N][D][W][E][a]:<drivername>\n" \
+"	I = IRP\n" \
+"	C = IRP completion\n" \
+"	F = fast IO\n" \
+"	A = AddDevice\n" \
+"	S = StartIo\n" \
+"	U = Unload\n" \
+"	N = New devices\n" \
+"	D = Associated data\n" \
+"	W = Name watch\n" \
+"	E = device extension hook\n" \
+"	a = all devices\n" \
+"	s = capture stacktrace\n" \
+"\n" \
+"  --unhook-driver=[W]:<drivername>\n" \
+"	W = name watch\n" \
+"\n" \
+"  --hook-device=<A|N>:<devicename|address>\n" \
+"	A = address\n" \
+"	N = name\n" \
+"\n" \
+"  --unhook-device=<A|N>:<devicename|address>\n" \
+"	A = address\n" \
+"	N = name\n" \
+"\n" \
+"  --clear-on-disconnect={yes|no|true|false}\n" \
+"  --collect-disconnected={yes|no|true|false}\n" \
+"  --process-events={yes|no|true|false}\n" \
+"  --file-object-events={yes|no|true|false}\n" \
+"  --snapshot-events={yes|no|true|false}\n" \
+"  --process-emulate={yes|no|true|false}\n" \
+"  --snapshot-emulate={yes|no|true|false}\n" \
+"  --strip-threshold=<integer>\n" \
+"  --strip-data={yes|no|true|false}\n" \
+"  --boot-log={yes|no|true|false}\n" \
+"  --save-settings={yes|no|true|false}\n" \
+"\n" \
+"  --sym-path=<Path>\n" \
+"  --sym-file=<filename>\n" \
+"  --sym-dir=<dir>|[mask]\n" \
+"\n" \
+"  --help\n" \
+"  --stop[=<PID>]\n" \
+"  --load=<ServiceName>\n" \
+"  --unload=<ServiceName>\n" \
+;
 
+const char help_hint[] = "Use --help to see available options";
 
 
 static 	OPTION_RECORD opts[] = {
@@ -595,6 +599,7 @@ static int _parse_arg(wchar_t *Arg)
 	if (wcslen(Arg) < 2 || memcmp(Arg, L"--", sizeof(L"--") - sizeof(wchar_t)) != 0) {
 		ret = -1;
 		fprintf(stderr, "[ERROR]: The argument \"%ls\" does not start with \"--\"\n", Arg);
+		fprintf(stderr, "%s", help_hint);
 		goto Exit;
 	}
 
@@ -1200,12 +1205,21 @@ int wmain(int argc, wchar_t *argv[])
 				break;
 		}
 
+		if (_help) {
+			fprintf(stderr, "%s", help_text);
+			return 0;
+		} else if (ret != 0) {
+			fprintf(stderr, "%s", help_hint);
+			return ret;
+		}
+
 		if (ret == 0) {
 			opRec = opts;
 			for (size_t i = 0; i < sizeof(opts) / sizeof(opts[0]); ++i) {
 				if (opRec->Count == 0 && opRec->Required) {
 					ret = -5;
 					fprintf(stderr, "[ERROR]: The required argument \"--%ls\" not specified\n", opRec->Name);
+					fprintf(stderr, "%s", help_hint);
 					break;
 				}
 			}
@@ -1215,8 +1229,7 @@ int wmain(int argc, wchar_t *argv[])
 		}
 
 		if (ret == 0) {
-			if (_help) {
-			} else if (_stop) {
+			if (_stop) {
 				if (_stopProcessId != 0)
 					fprintf(stderr, "[INFO]: Sending a stop signal to irpmonc process with PID %u...\n", _stopProcessId);
 				else fprintf(stderr, "[INFO]: Sending a stop signal to all irpmonc processes...\n");
