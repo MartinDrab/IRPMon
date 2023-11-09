@@ -1255,11 +1255,16 @@ int wmain(int argc, wchar_t *argv[])
 									ret = _driver_action(true);
 									if (ret == 0) {
 										ret = _device_action(true);
-										if (ret != 0)
+										if (ret != 0) {
+											_print_sys_errmsg(ret);
 											_device_action(false);
+										}
 									}
 								} else fprintf(stderr, "[ERROR]: Unable to enumerate hooked objects: %u\n", ret);
-							} else fprintf(stderr, "[ERROR]: Unable to sync driver settings: %u\n", ret);
+							} else {
+								fprintf(stderr, "[ERROR]: Unable to sync driver settings: %u\n", ret);
+								_print_sys_errmsg(ret);
+							}
 						
 							if (ret != 0)
 								stop_event_finit();
@@ -1357,7 +1362,10 @@ int wmain(int argc, wchar_t *argv[])
 					}
 
 					IRPMonDllFinalize();
-				} else fprintf(stderr, "[ERROR]: Unable to initialize IRPMon library: %u\n", ret);
+				} else {
+					fprintf(stderr, "[ERROR]: Unable to initialize IRPMon library: %u\n", ret);
+					_print_sys_errmsg(ret);
+				}
 				
 				if (_reqListHandle != NULL)
 					ReqListFree(_reqListHandle);
