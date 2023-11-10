@@ -16,7 +16,9 @@ typedef struct _NV_PAIR {
 } NV_PAIR, *PNV_PAIR;
 
 
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 DWORD PBaseAddNameValue(PNV_PAIR Pair, const wchar_t *Name, const wchar_t *Value);
 DWORD PBaseAddNameFormat(PNV_PAIR Pair, const wchar_t *Name, const wchar_t *Format, ...);
@@ -27,6 +29,9 @@ void PBaseFreeNameValue(wchar_t **Names, wchar_t **Values, size_t Count);
 DWORD PBaseDataParserAlloc(uint32_t Version, PIRPMON_DATA_PARSER *Parser);
 void PBaseDataParserFree(PIRPMON_DATA_PARSER Parser);
 
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif
