@@ -21,6 +21,9 @@
     <ClInclude Include="wpd-parser.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="wpd-data.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\..\resources\version.rc">

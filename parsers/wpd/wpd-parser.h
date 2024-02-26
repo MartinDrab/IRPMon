@@ -1,6 +1,6 @@
 
-#ifndef __KEYBOARD_PARSER_H__
-#define __KEYBOARD_PARSER_H__
+#ifndef __WPD_PARSER_H__
+#define __WPD_PARSER_H__
 
 
 
@@ -9,27 +9,27 @@
 
 
 
-#ifdef KEYBOARD_EXPORTS
+#ifdef WPD_EXPORTS
 
-#define KEYBOARD_API			__declspec(dllexport)
+#define WPD_API			__declspec(dllexport)
 
 #else
 
-#define KEYBOARD_API			__declspec(dllimport)
+#define WPD_API			__declspec(dllimport)
 
 #endif
 
 
-KEYBOARD_API
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+WPD_API
 DWORD cdecl DP_INIT_ROUTINE_NAME(uint32_t RequestedVersion, PIRPMON_DATA_PARSER *Parser);
 
-
-
-
-
-
-
-
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif
