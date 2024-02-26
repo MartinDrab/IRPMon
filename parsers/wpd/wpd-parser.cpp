@@ -63,7 +63,7 @@ static std::unordered_map<PROPERTYKEY, std::wstring> _props;
 static std::unordered_map<GUID, std::wstring> _gMap;
 
 
-static DWORD _AddProperty(PNV_PAIR Pair, const PROPERTYKEY *Key, const wchar_t *Value)
+static DWORD _AddProperty(uint32_t Level, PNV_PAIR Pair, const PROPERTYKEY *Key, const wchar_t *Value)
 {
 	DWORD ret = ERROR_GEN_FAILURE;
 
@@ -216,8 +216,10 @@ static DWORD _ProcessValues(uint32_t Level, PNV_PAIR Pairs, IPortableDeviceValue
 					if (ret == S_OK) {
 						ret = _ProcessValues(Level + 1, Pairs, pvs);
 						pvs->Release();
+						break;
 					}
 
+					swprintf(valueStr, L"<IUnknown error 0x%x>", ret);
 					ret = S_OK;
 				} break;
 				case VT_CLSID: {
@@ -234,7 +236,7 @@ static DWORD _ProcessValues(uint32_t Level, PNV_PAIR Pairs, IPortableDeviceValue
 			}
 
 			if (valueStr[0] != L'\0')
-				_AddProperty(Pairs, &key, valueStr);
+				_AddProperty(Level, Pairs, &key, valueStr);
 			
 			PropVariantClear(&value);
 		}
