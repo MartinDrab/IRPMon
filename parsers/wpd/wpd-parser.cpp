@@ -183,6 +183,67 @@ static DWORD _ProcessBool(PNV_PAIR Pair, PWPD_STREAM Stream)
 }
 
 
+static DWORD _ProcessValues(uint32_t Level, PNV_PAIR Pairs, IPortableDeviceValues* Values)
+{
+	DWORD pvsCount = 0;
+	DWORD ret = ERROR_GEN_FAILURE;
+
+	ret = Values->GetCount(&pvsCount);
+	if (ret == S_OK) {
+		for (DWORD i = 0; i < pvsCount; ++i) {
+			PROPERTYKEY key;
+			PROPVARIANT value;
+			wchar_t valueStr[MAX_PATH];
+
+			memset(&value, 0, sizeof(value));
+			ret = Values->GetAt(i, &key, &value);
+			if (ret != S_OK) {
+				ret = S_OK;
+				continue;
+			}
+
+			memset(valueStr, 0, sizeof(valueStr));
+			switch (value.vt) {
+				case VT_ERROR:
+				case VT_HRESULT: {
+
+					swprintf(valueStr, L"0x%x", value.uintVal);
+				} break;
+				case VT_UNKNOWN: {
+					IPortableDeviceValues *pvs = NULL;
+
+					ret = Values->GetIPortableDeviceValuesValue(key, &pvs);
+					if (ret == S_OK) {
+						ret = _ProcessValues(Level + 1, Pairs, pvs);
+						pvs->Release();
+					}
+
+					ret = S_OK;
+				} break;
+				case VT_CLSID: {
+					auto it = _gMap.find(*(GUID*)&value.cauuid);
+					if (it != _gMap.end()) {
+						wcsncpy(valueStr, it->second.data(), sizeof(valueStr) / sizeof(valueStr[0]) - 1);
+						break;
+					}
+				} default:
+					ret = PropVariantToString(value, valueStr, sizeof(valueStr) / sizeof(valueStr[0]));
+					if (ret != S_OK)
+						swprintf(valueStr, L"<conversion error for type %u>", value.vt);
+					break;
+			}
+
+			if (valueStr[0] != L'\0')
+				_AddProperty(Pairs, &key, valueStr);
+			
+			PropVariantClear(&value);
+		}
+	}
+
+	return ret;
+}
+
+
 static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST_EXTRA_INFO *ExtraInfo, PBOOLEAN Handled, wchar_t ***Names, wchar_t ***Values, size_t *RowCount)
 {
 	NV_PAIR p;
@@ -224,48 +285,9 @@ static DWORD cdecl _ParseRoutine(const REQUEST_HEADER *Request, const DP_REQUEST
 		memset(&p, 0, sizeof(p));
 		ret = _serializer->GetIPortableDeviceValuesFromBuffer((PBYTE)buffer, bufferSize, &pvs);		
 		if (ret == ERROR_SUCCESS) {
-			ret = pvs->GetCount(&pvsCount);
-			if (ret == S_OK) {
-				for (DWORD i = 0; i < pvsCount; ++i) {
-					PROPERTYKEY key;
-					PROPVARIANT value;
-					wchar_t valueStr[MAX_PATH];
-
-					memset(&value, 0, sizeof(value));
-					ret = pvs->GetAt(i, &key, &value);
-					if (ret != S_OK) {
-						ret = S_OK;
-						continue;
-					}
-
-					memset(valueStr, 0, sizeof(valueStr));
-					switch (value.vt) {
-						case VT_ERROR:
-						case VT_HRESULT: {
-						
-							swprintf(valueStr, L"0x%x", value.uintVal);
-						} break;
-						case VT_CLSID: {
-							auto it = _gMap.find(*(GUID *)&value.cauuid);
-							if (it != _gMap.end()) {
-								wcsncpy(valueStr, it->second.data(), sizeof(valueStr) / sizeof(valueStr[0]) - 1);
-								break;
-							}
-						} default:
-							ret = PropVariantToString(value, valueStr, sizeof(valueStr) / sizeof(valueStr[0]));
-							if (ret != S_OK)
-								wcsncpy(valueStr, L"<conversion error>", sizeof(valueStr) / sizeof(valueStr[0]) - 1);
-							break;
-					}
-
-					_AddProperty(&p, &key, valueStr);
-					PropVariantClear(&value);
-				}
-
-				ret = VerifyWpdCommandAccessFromMap(IOCTL_WPD_MESSAGE_READ_ACCESS, pvs, _wpdAccessMap);
-				ret = PBaseAddNameFormat(&p, L"ReadOnly", L"0x%x", ret);
-			}
-
+			_ProcessValues(0, &p, pvs);
+			ret = VerifyWpdCommandAccessFromMap(IOCTL_WPD_MESSAGE_READ_ACCESS, pvs, _wpdAccessMap);
+			ret = PBaseAddNameFormat(&p, L"ReadOnly", L"0x%x", ret);
 			pvs->Release();
 		}
 
