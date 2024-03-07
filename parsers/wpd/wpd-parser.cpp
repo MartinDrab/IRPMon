@@ -228,11 +228,26 @@ static DWORD _ProcessValues(uint32_t Level, PNV_PAIR Pairs, IPortableDeviceValue
 						wcsncpy(valueStr, it->second.data(), sizeof(valueStr) / sizeof(valueStr[0]) - 1);
 						break;
 					}
-				} default:
+				} default: {
+					GUID g;
+
 					ret = PropVariantToString(value, valueStr, sizeof(valueStr) / sizeof(valueStr[0]));
-					if (ret != S_OK)
+					if (ret != S_OK) {
 						swprintf(valueStr, L"<conversion error for type %u>", value.vt);
-					break;
+						break;
+					}
+
+					ret = IIDFromString(valueStr, &g);
+					if (ret == S_OK) {
+						auto it = _gMap.find(g);
+						if (it != _gMap.end()) {
+							wcsncpy(valueStr, it->second.data(), sizeof(valueStr) / sizeof(valueStr[0]) - 1);
+							break;
+						}
+					}
+
+					ret = S_OK;
+				} break;
 			}
 
 			if (valueStr[0] != L'\0')
