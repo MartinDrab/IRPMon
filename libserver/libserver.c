@@ -1,11 +1,15 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include <winsock2.h>
+#include <mswsock.h>
 #include <ws2tcpip.h>
 #include <windows.h>
 #include <winsvc.h>
+#ifndef NOVSOCKETS
 #include "libvsock.h"
+#endif
 #include "irpmondll-types.h"
 #include "network-connector.h"
 #include "device-connector.h"
@@ -258,8 +262,11 @@ DWORD IRPMonServerStart(const char *Address, const char *Port, HANDLE ExitEvent)
 		goto Exit;
 	}
 
+#ifndef NOVSOCKETS
 	useVSockets = strcmp(Address, "vsock") == 0;
+#endif
 	if (useVSockets) {
+#ifndef NOVSOCKETS
 		ADDRINFOA localAddrs;
 		struct sockaddr *a = NULL;
 		int aLen = 0;
@@ -282,6 +289,7 @@ DWORD IRPMonServerStart(const char *Address, const char *Port, HANDLE ExitEvent)
 		addrs->ai_addrlen = aLen;
 		addrs->ai_family = LibVSockGetAddressFamily();
 		addrs->ai_socktype = SOCK_STREAM;
+#endif
 	} else {
 		memset(&hints, 0, sizeof(hints));
 		hints.ai_family = AF_UNSPEC;
@@ -295,9 +303,13 @@ DWORD IRPMonServerStart(const char *Address, const char *Port, HANDLE ExitEvent)
 	}
 
 	ret = _Listener(addrs, ExitEvent);
+#ifndef NOVSOCKETS
 	if (useVSockets)
 		LibVSockAddressFree(addrs->ai_addr);
 	else freeaddrinfo(addrs);
+#else
+	freeaddrinfo(addrs);
+#endif
 Cleanup:
 	WSACleanup();
 Exit:
